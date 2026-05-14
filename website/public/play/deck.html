@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Party Decks - PartyBot</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+/* ---------- Self-hosted fonts ---------- */
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+
+:root{
+  --bg:#070708;
+  --bg-2:#0b0b0e;
+  --surface:#0f0f13;
+  --surface-2:#16161c;
+  --border:rgba(255,255,255,0.08);
+  --text:#ffffff;
+  --text-2:#a7a7b3;
+  --orange:#FF5C1A;
+  --pink:#FF1A6E;
+  --purple:#A855F7;
+  --blue:#3B82F6;
+  --grad:linear-gradient(135deg,#FF5C1A 0%,#FF1A6E 100%);
+  --grad-truth:linear-gradient(135deg, #3B82F6, #06B6D4);
+  --grad-dare:linear-gradient(135deg, #EF4444, #F97316);
+  --grad-mlt:linear-gradient(135deg, #FACC15, #F97316);
+  --grad-default:linear-gradient(135deg, #A855F7, #EC4899);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
+}
+header {
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:10;
+}
+.back-btn {
+  color:var(--text);
+  text-decoration:none;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  opacity:0.8;
+  transition:0.2s;
+}
+.back-btn:hover { opacity:1; }
+.deck-title {
+  font-family:'Instrument Serif', serif;
+  font-size:24px;
+}
+.deck-container {
+  flex:1;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  perspective:1000px;
+}
+.card {
+  position:absolute;
+  width:100%;
+  max-width:340px;
+  height:480px;
+  border-radius:24px;
+  background:var(--surface-2);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:32px;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  transition:transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
+  cursor:pointer;
+  user-select:none;
+  transform-origin:50% 100%;
+}
+.card.hidden {
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(100px) scale(0.8) rotateX(-20deg);
+}
+.card.front {
+  z-index:3;
+  transform:translateY(0) scale(1) rotateX(0deg);
+}
+.card.next {
+  z-index:2;
+  transform:translateY(20px) scale(0.95) rotateX(5deg);
+  opacity:0.6;
+}
+.card.next-next {
+  z-index:1;
+  transform:translateY(40px) scale(0.9) rotateX(10deg);
+  opacity:0.3;
+}
+.card.swipe-out-left {
+  transform:translateX(-120%) rotate(-15deg);
+  opacity:0;
+}
+.card.swipe-out-right {
+  transform:translateX(120%) rotate(15deg);
+  opacity:0;
+}
+.card-type {
+  font-size:14px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  margin-bottom:24px;
+  padding:6px 12px;
+  border-radius:100px;
+  background:rgba(255,255,255,0.1);
+}
+.card-text {
+  font-size:28px;
+  font-weight:600;
+  line-height:1.3;
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.card-spicy {
+  font-size:24px;
+  margin-top:20px;
+}
+.controls {
+  padding:20px;
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  z-index:10;
+  margin-bottom:env(safe-area-inset-bottom, 20px);
+}
+.btn {
+  background:var(--surface-2);
+  color:var(--text);
+  border:1px solid var(--border);
+  padding:16px 32px;
+  border-radius:100px;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.2s;
+  font-family:inherit;
+}
+.btn:hover { background:var(--surface-3); transform:scale(1.05); }
+.btn:active { transform:scale(0.95); }
+
+/* Truth or Dare specific buttons */
+.btn-truth { background:var(--grad-truth); border:none; }
+.btn-dare { background:var(--grad-dare); border:none; }
+.btn-truth:hover, .btn-dare:hover { background:var(--surface-3); opacity:0.9; }
+
+.loading {
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  font-size:18px;
+  color:var(--text-2);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/index.html#cards" class="back-btn">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    Back
+  </a>
+  <div class="deck-title" id="deckTitle">Loading Deck...</div>
+  <div style="width:70px"></div>
+</header>
+
+<div class="deck-container" id="deckContainer">
+  <div class="loading" id="loadingEl">Shuffling cards...</div>
+</div>
+
+<div class="controls" id="controls">
+  <button class="btn" id="nextBtn">Next Card</button>
+</div>
+
+<script src="../cards-data.js"></script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const deckType = urlParams.get('deck') || 'tod';
+
+const deckContainer = document.getElementById('deckContainer');
+const deckTitle = document.getElementById('deckTitle');
+const loadingEl = document.getElementById('loadingEl');
+const controls = document.getElementById('controls');
+const nextBtn = document.getElementById('nextBtn');
+
+let allCards = window.ALL_CARDS || [];
+let deckCards = [];
+let currentCardIndex = 0;
+let uiCards = []; // DOM elements
+
+function init() {
+  if (!allCards || allCards.length === 0) {
+    loadingEl.textContent = 'Failed to load cards.';
+    return;
+  }
+  setupDeck();
+}
+
+function setupDeck() {
+  if(deckType === 'tod') {
+    deckTitle.textContent = 'Truth or Dare';
+    deckCards = allCards.filter(c => c.subtype === 'truth' || c.subtype === 'dare');
+    
+    // Add specific buttons for Truth or Dare
+    controls.innerHTML = `
+      <button class="btn btn-truth" id="truthBtn">Truth</button>
+      <button class="btn btn-dare" id="dareBtn">Dare</button>
+    `;
+    document.getElementById('truthBtn').addEventListener('click', () => nextCard('truth'));
+    document.getElementById('dareBtn').addEventListener('click', () => nextCard('dare'));
+  } 
+  else if(deckType === 'nhie') {
+    deckTitle.textContent = 'Never Have I Ever';
+    // Use personal/icebreaker for NHIE vibe, or prefix text with "Never have I ever..."
+    // We'll just filter personal and discussion
+    deckCards = allCards.filter(c => c.subtype === 'personal' || c.subtype === 'icebreaker' || c.subtype === 'embarrassing');
+    deckCards = deckCards.map(c => ({...c, displayType: 'Never Have I Ever', text: 'Never have I ever ' + c.text.toLowerCase()}));
+  }
+  else if(deckType === 'wyr') {
+    deckTitle.textContent = 'Would You Rather';
+    deckCards = allCards.filter(c => c.subtype === 'groupChoice' || c.category === 'talk');
+    deckCards = deckCards.map(c => ({...c, displayType: 'Would You Rather', text: 'Would you rather ' + c.text.toLowerCase() + '?'}));
+  }
+  else if(deckType === 'mlt') {
+    deckTitle.textContent = 'Most Likely To';
+    deckCards = allCards.filter(c => c.category === 'mostLikelyTo');
+    deckCards = deckCards.map(c => ({...c, displayType: 'Most Likely To', text: 'Who is most likely to ' + c.text.toLowerCase() + '?'}));
+  }
+  else {
+    deckTitle.textContent = 'Party Deck';
+    deckCards = allCards;
+  }
+
+  // Shuffle
+  deckCards.sort(() => Math.random() - 0.5);
+  
+  if(deckType !== 'tod') {
+    nextBtn.addEventListener('click', () => nextCard());
+  }
+
+  loadingEl.style.display = 'none';
+  renderCards();
+}
+
+function createCardEl(cardData) {
+  const el = document.createElement('div');
+  el.className = 'card hidden';
+  
+  let bgGrad = 'var(--grad-default)';
+  if(cardData.subtype === 'truth') bgGrad = 'var(--grad-truth)';
+  else if(cardData.subtype === 'dare') bgGrad = 'var(--grad-dare)';
+  else if(cardData.category === 'mostLikelyTo') bgGrad = 'var(--grad-mlt)';
+  
+  el.style.background = bgGrad;
+
+  const type = cardData.displayType || cardData.subtype;
+  const spicy = cardData.isSpicy ? '🌶️' : '';
+
+  el.innerHTML = `
+    <div class="card-type">${type}</div>
+    <div class="card-text">${cardData.text}</div>
+    ${spicy ? \`<div class="card-spicy">${spicy}</div>\` : ''}
+  `;
+  
+  return el;
+}
+
+function renderCards() {
+  deckContainer.innerHTML = ''; // clear old cards
+  uiCards = [];
+  
+  // Create top 3 cards to save memory/DOM
+  for(let i=0; i<Math.min(3, deckCards.length - currentCardIndex); i++) {
+    const data = deckCards[currentCardIndex + i];
+    const el = createCardEl(data);
+    deckContainer.prepend(el); // Prepend so first card is on top in DOM z-index naturally
+    uiCards.unshift(el);
+  }
+  
+  updateCardClasses();
+}
+
+function updateCardClasses() {
+  if(uiCards.length > 0) {
+    uiCards[uiCards.length-1].className = 'card front';
+  }
+  if(uiCards.length > 1) {
+    uiCards[uiCards.length-2].className = 'card next';
+  }
+  if(uiCards.length > 2) {
+    uiCards[uiCards.length-3].className = 'card next-next';
+  }
+}
+
+function nextCard(filterSubtype = null) {
+  if(uiCards.length === 0) {
+    alert("Out of cards! Refresh to play again.");
+    return;
+  }
+  
+  const currentEl = uiCards.pop();
+  
+  // Random swipe direction
+  const dir = Math.random() > 0.5 ? 'swipe-out-right' : 'swipe-out-left';
+  currentEl.classList.add(dir);
+  currentEl.classList.remove('front');
+  
+  setTimeout(() => {
+    currentEl.remove();
+  }, 400);
+
+  currentCardIndex++;
+
+  // If filterSubtype is provided (Truth or Dare), we must find the next card that matches the subtype
+  if(filterSubtype) {
+    let foundIdx = -1;
+    for(let i = currentCardIndex; i < deckCards.length; i++) {
+      if(deckCards[i].subtype === filterSubtype) {
+        foundIdx = i;
+        break;
+      }
+    }
+    if(foundIdx !== -1) {
+      // Move it to currentCardIndex position by swapping
+      const temp = deckCards[currentCardIndex];
+      deckCards[currentCardIndex] = deckCards[foundIdx];
+      deckCards[foundIdx] = temp;
+    } else {
+      alert("Out of " + filterSubtype + " cards!");
+    }
+  }
+
+  // Refill deck DOM
+  if(currentCardIndex + 2 < deckCards.length) {
+    const data = deckCards[currentCardIndex + 2];
+    const newEl = createCardEl(data);
+    deckContainer.prepend(newEl);
+    uiCards.unshift(newEl);
+  }
+
+  updateCardClasses();
+}
+
+init();
+</script>
+</body>
+</html>
