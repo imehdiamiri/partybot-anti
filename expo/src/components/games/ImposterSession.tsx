@@ -86,7 +86,11 @@ export function ImposterSession({ session }: Props) {
     const randomImposter = session.players[Math.floor(Math.random() * session.players.length)];
     const randomWord = pickWord(category);
     
-    const shuffled = [...session.players].sort(() => Math.random() - 0.5);
+    const shuffled = [...session.players];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     setRoundPlayers(shuffled);
 
     setImposterId(randomImposter.id);
@@ -121,6 +125,12 @@ export function ImposterSession({ session }: Props) {
   const handleStartDiscussion = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (gameStyle === 'clue') {
+      const clueOrder = [...roundPlayers];
+      for (let i = clueOrder.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [clueOrder[i], clueOrder[j]] = [clueOrder[j], clueOrder[i]];
+      }
+      setRoundPlayers(clueOrder);
       setActivePlayerIndex(0);
       setPhase('clueGiving');
     } else {

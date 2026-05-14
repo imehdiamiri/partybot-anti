@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useRef } from 'react';
 import { AppState, AppStateStatus, View } from 'react-native';
 import 'react-native-reanimated';
+import { Audio } from 'expo-av';
 import {
   useFonts,
   Fredoka_400Regular,
@@ -58,6 +59,13 @@ export default function RootLayout() {
     setIsMounted(true);
     Observability.install();
     initialize();
+
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    }).catch(() => {});
   }, [initialize]);
 
   // Bridge Firebase auth → economy listener + RevenueCat configure.

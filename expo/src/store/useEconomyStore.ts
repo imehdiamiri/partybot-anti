@@ -45,7 +45,7 @@ let unsubscribe: (() => void) | null = null;
 
 export const useEconomyStore = create<EconomyState>()((set, get) => ({
   starsBalance: 0,
-  isPremium: false,
+  isPremium: true, // TEMPORARY FOR TEST
   isLifetime: false,
   lastDailyClaim: null,
   isProcessingWalletAction: false,
@@ -65,7 +65,7 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
         set({
           starsBalance: typeof wallet.balance === 'number' ? wallet.balance : 0,
           lastDailyClaim: wallet.lastDailyClaim || null,
-          isPremium: !!v.isPremium,
+          isPremium: true, // TEMPORARY FOR TEST: !!v.isPremium,
           isLifetime: !!v.isLifetime,
           isHydrated: true,
         });
@@ -87,7 +87,7 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
     attachedUid = null;
     set({
       starsBalance: 0,
-      isPremium: false,
+      isPremium: true, // TEMPORARY FOR TEST
       isLifetime: false,
       lastDailyClaim: null,
       isHydrated: false,

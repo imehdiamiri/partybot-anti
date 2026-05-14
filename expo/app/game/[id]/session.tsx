@@ -30,9 +30,8 @@ export default function GameSessionScreen() {
           text: 'Leave Game', 
           style: 'destructive',
           onPress: () => {
-            const gameId = activeSession.game.id;
             exitActiveSession();
-            router.replace(`/(tabs)/game/${gameId}` as any);
+            router.navigate(`/game/${activeSession.game.id}`);
           }
         }
       ]

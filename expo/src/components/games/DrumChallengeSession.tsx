@@ -53,6 +53,7 @@ export function DrumChallengeSession({ session }: Props) {
   const [attemptIdx, setAttemptIdx] = useState(0);
   const [lastDiff, setLastDiff] = useState<number | null>(null);
   const [tapped, setTapped] = useState(false);
+  const [metronomeTaps, setMetronomeTaps] = useState<number[]>([]);
   const [records, setRecords] = useState<PlayerRecord[]>(() =>
     players.map(p => ({ playerId: p.id, attempts: [] }))
   );
@@ -84,6 +85,7 @@ export function DrumChallengeSession({ session }: Props) {
           playsInSilentModeIOS: true,
           staysActiveInBackground: false,
           shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
         });
         // Preload drum hit (player tap feedback)
         const { sound: drumSound } = await Audio.Sound.createAsync(DRUM_HIT_AUDIO, { shouldPlay: false });
@@ -143,6 +145,7 @@ export function DrumChallengeSession({ session }: Props) {
   const startListening = useCallback(async () => {
     setPhase('listening');
     setTapped(false);
+    setMetronomeTaps([]);
     setLastDiff(null);
     diffRef.current = null;
 
@@ -229,6 +232,7 @@ export function DrumChallengeSession({ session }: Props) {
           playsInSilentModeIOS: true,
           staysActiveInBackground: false,
           shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
         });
 
         // Load the audio file first, then play explicitly
@@ -261,10 +265,53 @@ export function DrumChallengeSession({ session }: Props) {
 
   const handleDrumTap = useCallback(async () => {
     if (phase !== 'listening' || tapped) return;
-    setTapped(true);
 
     const tapTime = performance.now();
     let diff = 0;
+
+    if (modeKey === 'metronome') {
+      const elapsed = tapTime - playStartRef.current;
+      const bpm = metronomeRhythm === 'fast' ? 160 : metronomeRhythm === '3/4' ? 100 : 120;
+      const beatsPerCycle = metronomeRhythm === '3/4' ? 3 : 4;
+      const msPerBeat = 60000 / bpm;
+      
+      const expectedTime = (metronomeCycles + metronomeTaps.length) * beatsPerCycle * msPerBeat;
+      diff = Math.round(elapsed - (expectedTime + 50));
+      
+      const newTaps = [...metronomeTaps, diff];
+      setMetronomeTaps(newTaps);
+      setLastDiff(diff);
+      diffRef.current = diff;
+      
+      try {
+        if (drumRef.current) {
+          await drumRef.current.setPositionAsync(0);
+          await drumRef.current.playAsync();
+        }
+      } catch {}
+
+      cancelAnimation(drumScale);
+      drumScale.value = withSequence(
+        withSpring(1.3, { damping: 4, stiffness: 300 }),
+        withSpring(1.0, { damping: 8 }),
+      );
+      drumGlow.value = withSequence(
+        withTiming(1, { duration: 100 }),
+        withTiming(0, { duration: 600 }),
+      );
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+      if (newTaps.length >= metronomeCycles) {
+        setTapped(true);
+        const avgAbs = Math.round(newTaps.reduce((a,b) => a + Math.abs(b), 0) / newTaps.length);
+        diffRef.current = avgAbs; // This will be passed to finishAttempt via timeout
+        setTimeout(() => finishAttempt(avgAbs), 500);
+      }
+      return;
+    }
+
+    setTapped(true);
 
     if (modeKey === 'metronome') {
       const elapsed = tapTime - playStartRef.current;
@@ -315,8 +362,7 @@ export function DrumChallengeSession({ session }: Props) {
     );
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    // Audio keeps playing to the end!
-  }, [phase, tapped, modeConfig.beatTime, drumScale, drumGlow, modeKey]);
+  }, [phase, tapped, modeConfig.beatTime, drumScale, drumGlow, modeKey, metronomeRhythm, metronomeCycles, metronomeTaps, finishAttempt]);
 
   const continueAfterAttempt = () => {
     const done = currentRecord?.attempts.length ?? 0;
@@ -395,7 +441,11 @@ export function DrumChallengeSession({ session }: Props) {
         </Pressable>
 
         <Text style={st.listenHint}>
-          {tapped && lastDiff != null ? `🎯 ${Math.abs(lastDiff)}ms ${lastDiff < 0 ? 'early' : lastDiff > 0 ? 'late' : 'perfect'}!` : 'Wait for it...'}
+          {modeKey === 'metronome' && metronomeTaps.length > 0
+            ? `Hit ${metronomeTaps.length}/${metronomeCycles}: ${Math.abs(lastDiff!)}ms ${lastDiff! < 0 ? 'early' : lastDiff! > 0 ? 'late' : 'perfect'}`
+            : tapped && lastDiff != null 
+              ? `🎯 ${Math.abs(lastDiff)}ms ${lastDiff < 0 ? 'early' : lastDiff > 0 ? 'late' : 'perfect'}!` 
+              : 'Wait for it...'}
         </Text>
 
         {tapped && (
@@ -439,7 +489,7 @@ export function DrumChallengeSession({ session }: Props) {
             <>
               <Text style={st.resultBig}>{absDiff} ms</Text>
               <Text style={[st.resultDir, { color: getAccuracyColor(absDiff!) }]}>
-                {direction === 'perfect' ? '🎯 PERFECT!' : direction === 'early' ? `⏪ ${Math.abs(lastDiff!)} ms early` : `⏩ ${Math.abs(lastDiff!)} ms late`}
+                {modeKey === 'metronome' ? `📊 Average absolute error` : direction === 'perfect' ? '🎯 PERFECT!' : direction === 'early' ? `⏪ ${Math.abs(lastDiff!)} ms early` : `⏩ ${Math.abs(lastDiff!)} ms late`}
               </Text>
               <Text style={st.sub}>{describeAccuracy(absDiff!)}</Text>
             </>

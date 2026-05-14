@@ -48,6 +48,7 @@ class _AudioManager {
         playsInSilentModeIOS: true,
         staysActiveInBackground: false,
         shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
       });
       this.initialized = true;
     } catch (e) {
