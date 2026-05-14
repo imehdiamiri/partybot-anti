@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Coin Flip — PartyBot</title>
+<meta name="description" content="Flip a golden coin — heads or tails? Free online coin flipper with 3D animation.">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;display:flex;flex-direction:column;user-select:none;overflow:hidden}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:20px}.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto;padding:8px 16px 0}
+
+/* Stats row */
+.stats-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.stat-pill{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.stat-dot{width:8px;height:8px;border-radius:50%}
+.stat-title{font-size:11px;font-weight:900;letter-spacing:1.4px;color:rgba(255,255,255,.6)}
+.stat-value{font-size:13px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums}
+.stat-spacer{flex:1}
+.reset-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:18px;transition:all .15s}
+.reset-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+.reset-btn:disabled{opacity:.4;cursor:default}
+
+/* Result label */
+.result-area{text-align:center;margin-bottom:20px}
+.result-header{font-size:12px;font-weight:900;letter-spacing:2.5px;color:rgba(255,255,255,.55);margin-bottom:6px}
+.result-text{font-size:34px;font-weight:900;color:rgba(255,255,255,.85);min-height:42px;transition:all .3s}
+.result-text.has-result{color:#FFD60A;text-shadow:0 4px 16px rgba(255,214,10,.5)}
+
+/* Coin */
+.coin-stage{flex:1;display:flex;align-items:center;justify-content:center;perspective:800px}
+.coin-container{width:200px;height:200px;cursor:pointer;position:relative}
+.coin{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 1.4s cubic-bezier(.25,.1,.25,1)}
+.coin-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.coin-face img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.coin-heads{/* front — default visible */}
+.coin-tails{transform:rotateX(180deg)}
+
+/* Flip button */
+.flip-container{padding:0 20px 28px}
+.flip-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border:none;border-radius:999px;font-size:16px;font-weight:900;color:#000;cursor:pointer;background:linear-gradient(90deg,#FFD60A,#FF9F0A);box-shadow:0 6px 24px rgba(255,214,10,.35);transition:transform .15s,opacity .15s}
+.flip-btn:active{transform:scale(.96)}
+.flip-btn:disabled{opacity:.6;cursor:default}
+.flip-btn svg{width:20px;height:20px}
+
+/* CTA */
+.app-cta{text-align:center;padding:12px 16px}
+.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+</style>
+</head>
+<body>
+<nav class="nav"><a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a><a href="/play/" class="nav-back">← All Games</a></nav>
+
+<div class="wrap">
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-pill">
+      <div class="stat-dot" style="background:#FFD60A"></div>
+      <span class="stat-title">HEADS</span>
+      <span class="stat-value" id="headsCount">0</span>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-dot" style="background:#FF9F0A"></div>
+      <span class="stat-title">TAILS</span>
+      <span class="stat-value" id="tailsCount">0</span>
+    </div>
+    <div class="stat-spacer"></div>
+    <button class="reset-btn" id="resetBtn" disabled onclick="resetStats()" title="Reset stats">↺</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-area">
+    <div class="result-header" id="resultHeader">READY</div>
+    <div class="result-text" id="resultText">Tap to flip</div>
+  </div>
+
+  <!-- Coin -->
+  <div class="coin-stage" onclick="flip()">
+    <div class="coin-container">
+      <div class="coin" id="coin">
+        <div class="coin-face coin-heads">
+          <img src="assets/coin-heads.png" alt="Heads">
+        </div>
+        <div class="coin-face coin-tails">
+          <img src="assets/coin-tails.png" alt="Tails">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Flip Button -->
+<div class="flip-container">
+  <button class="flip-btn" id="flipBtn" onclick="flip()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2.5 12a10 10 0 0 1 16.5-6.5L21.5 8M21.5 12a10 10 0 0 1-16.5 6.5L2.5 16"/></svg>
+    Flip Coin
+  </button>
+</div>
+
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+
+<script>
+let flipping=false,heads=0,tails=0,rotation=0;
+
+function flip(){
+  if(flipping)return;
+  flipping=true;
+  const btn=document.getElementById('flipBtn');
+  btn.disabled=true;
+  btn.querySelector('span,svg')&&0;// keep text
+  
+  const isHeads=Math.random()>0.5;
+  // Multiple full spins (14-18) + land on correct face
+  const extraSpins=Math.floor(Math.random()*5)+14;
+  rotation+=extraSpins*360+(isHeads?0:180);
+  
+  const coin=document.getElementById('coin');
+  coin.style.transition='transform 2.8s cubic-bezier(.25,.1,.25,1)';
+  coin.style.transform=`rotateX(${rotation}deg)`;
+  
+  document.getElementById('resultHeader').textContent='FLIPPING';
+  document.getElementById('resultText').textContent='...';
+  document.getElementById('resultText').classList.remove('has-result');
+  
+  setTimeout(()=>{
+    if(isHeads){
+      heads++;
+      document.getElementById('headsCount').textContent=heads;
+      document.getElementById('resultText').textContent='HEADS';
+    }else{
+      tails++;
+      document.getElementById('tailsCount').textContent=tails;
+      document.getElementById('resultText').textContent='TAILS';
+    }
+    document.getElementById('resultHeader').textContent='RESULT';
+    document.getElementById('resultText').classList.add('has-result');
+    document.getElementById('resetBtn').disabled=false;
+    btn.disabled=false;
+    flipping=false;
+  },2900);
+}
+
+function resetStats(){
+  heads=0;tails=0;
+  document.getElementById('headsCount').textContent='0';
+  document.getElementById('tailsCount').textContent='0';
+  document.getElementById('resetBtn').disabled=true;
+  document.getElementById('resultHeader').textContent='READY';
+  document.getElementById('resultText').textContent='Tap to flip';
+  document.getElementById('resultText').classList.remove('has-result');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+node_modules
+.env
+.env.*
+.expo
+.rork
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+ui-debug.log
+firestore-debug.log
+database-debug.log
+
+# Service account keys — NEVER commit these
+service-account*.json
+*-credentials.json
+*-key.json
+google-services.json
+GoogleService-Info.plist
+
+# OS
+.DS_Store
+Thumbs.db

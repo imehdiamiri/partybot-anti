@@ -1,0 +1,168 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Reverse Singing — PartyBot</title>
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;display:flex;flex-direction:column;user-select:none}a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}.nav-logo{height:20px}.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.game-wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto;padding:0 16px}
+.screen{flex:1;display:none;flex-direction:column}.screen.active{display:flex}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.icon-box{width:88px;height:88px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+.title{font-size:22px;font-weight:800}.sub{color:rgba(255,255,255,.5);font-size:14px;margin-top:6px;line-height:1.5}
+.btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:20px}
+.btn-blue{background:#007AFF}.btn-pink{background:linear-gradient(135deg,#FF69B4,#FF3B30)}
+/* Recording */
+.rec-ring{width:140px;height:140px;border-radius:50%;border:3px solid rgba(255,105,180,.3);display:flex;align-items:center;justify-content:center;margin-bottom:20px;transition:all .3s}
+.rec-ring.recording{border-color:#FF3B30;box-shadow:0 0 40px rgba(255,59,48,.3);animation:recPulse 1s infinite}
+.rec-ring.playing{border-color:#5AC8FA;box-shadow:0 0 40px rgba(90,200,250,.3);animation:recPulse 1s infinite}
+@keyframes recPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.rec-icon{font-size:48px}
+.rec-time{font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;margin-top:8px}
+.rec-label{font-size:13px;color:rgba(255,255,255,.4);margin-top:4px}
+/* Controls */
+.audio-controls{display:flex;gap:10px;width:100%;margin-top:16px}
+.ac-btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.ac-play{background:rgba(90,200,250,.15);color:#5AC8FA}
+.ac-reverse{background:rgba(175,82,222,.15);color:#AF52DE}
+.ac-record{background:rgba(255,59,48,.15);color:#FF3B30}
+/* Status */
+.status-pill{padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;margin-bottom:12px}
+.app-cta{text-align:center;padding:12px 16px}.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+</style>
+</head>
+<body>
+<nav class="nav"><a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a><a href="/play/" class="nav-back">← All Games</a></nav>
+<div class="game-wrap">
+
+<div id="ready" class="screen active">
+  <div class="center">
+    <div class="icon-box" style="background:rgba(255,105,180,.14)">🎤</div>
+    <div class="title">Reverse Singing</div>
+    <div class="sub">
+      1️⃣ Record yourself singing a short clip<br>
+      2️⃣ Listen to it reversed<br>
+      3️⃣ Try to mimic the reversed version<br>
+      4️⃣ Listen to your attempt reversed — does it match?
+    </div>
+    <button class="btn btn-pink" onclick="startRecording('original')">🎙 Start Recording</button>
+  </div>
+</div>
+
+<div id="recording" class="screen">
+  <div class="center">
+    <div class="status-pill" id="recStatus" style="background:rgba(255,59,48,.15);color:#FF3B30">🔴 Recording</div>
+    <div class="rec-ring recording" id="recRing">
+      <div class="rec-icon">🎤</div>
+    </div>
+    <div class="rec-time" id="recTime">0.0</div>
+    <div class="rec-label" id="recLabel">Sing something!</div>
+    <button class="btn" style="background:#FF3B30" onclick="stopRecording()">⏹ Stop Recording</button>
+  </div>
+</div>
+
+<div id="playback" class="screen">
+  <div class="center">
+    <div class="status-pill" id="pbStatus" style="background:rgba(90,200,250,.15);color:#5AC8FA">Original recorded!</div>
+    <div class="rec-ring" id="pbRing">
+      <div class="rec-icon" id="pbIcon">🎵</div>
+    </div>
+    <div class="rec-label" id="pbLabel">Now listen to your recording reversed</div>
+    <div class="audio-controls">
+      <button class="ac-btn ac-play" onclick="playOriginal()">▶️ Original</button>
+      <button class="ac-btn ac-reverse" onclick="playReversed()">🔄 Reversed</button>
+    </div>
+    <button class="btn btn-pink" onclick="startRecording('mimic')" id="mimicBtn">🎙 Now Mimic the Reversed Version!</button>
+    <button class="btn btn-blue" onclick="resetAll()" style="margin-top:10px">Start Over</button>
+  </div>
+</div>
+
+<div id="final" class="screen">
+  <div class="center">
+    <div style="font-size:52px;margin-bottom:12px">🤯</div>
+    <div class="title">Listen & Compare!</div>
+    <div class="sub">Play your mimic reversed — does it sound like the original?</div>
+    <div class="audio-controls" style="margin-top:20px">
+      <button class="ac-btn ac-play" onclick="playOriginal()">▶️ Original</button>
+      <button class="ac-btn ac-reverse" onclick="playMimicReversed()">🔄 Mimic Reversed</button>
+    </div>
+    <div class="audio-controls">
+      <button class="ac-btn ac-record" onclick="playMimic()">▶️ Your Mimic</button>
+    </div>
+    <button class="btn btn-pink" onclick="resetAll()">🔁 Try Again</button>
+  </div>
+</div>
+
+</div>
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+
+<script>
+let mediaRecorder,chunks=[],audioCtx,originalBuffer,mimicBuffer,recordingType='original',recStart=0,recTick;
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+async function startRecording(type){
+  recordingType=type;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder=new MediaRecorder(stream);
+    chunks=[];
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+    mediaRecorder.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(chunks,{type:'audio/webm'});
+      const arrayBuf=await blob.arrayBuffer();
+      if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+      const decoded=await audioCtx.decodeAudioData(arrayBuf);
+      if(recordingType==='original'){originalBuffer=decoded;show('playback');document.getElementById('pbStatus').textContent='✅ Original recorded!';}
+      else{mimicBuffer=decoded;show('final');}
+    };
+    mediaRecorder.start();
+    recStart=performance.now();
+    document.getElementById('recTime').textContent='0.0';
+    document.getElementById('recLabel').textContent=type==='original'?'Sing something!':'Mimic the reversed version!';
+    document.getElementById('recStatus').textContent='🔴 Recording'+(type==='mimic'?' Mimic':'');
+    recTick=setInterval(()=>{document.getElementById('recTime').textContent=((performance.now()-recStart)/1000).toFixed(1)},100);
+    show('recording');
+  }catch(e){alert('Microphone access required! '+e.message)}
+}
+
+function stopRecording(){clearInterval(recTick);if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop()}
+
+function playBuffer(buffer,reverse=false){
+  if(!buffer)return;
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const source=audioCtx.createBufferSource();
+  if(reverse){
+    const rev=audioCtx.createBuffer(buffer.numberOfChannels,buffer.length,buffer.sampleRate);
+    for(let ch=0;ch<buffer.numberOfChannels;ch++){
+      const inp=buffer.getChannelData(ch);
+      const out=rev.getChannelData(ch);
+      for(let i=0;i<inp.length;i++)out[i]=inp[inp.length-1-i];
+    }
+    source.buffer=rev;
+  }else{source.buffer=buffer;}
+  source.connect(audioCtx.destination);
+  source.start();
+}
+
+function playOriginal(){playBuffer(originalBuffer,false)}
+function playReversed(){playBuffer(originalBuffer,true)}
+function playMimic(){playBuffer(mimicBuffer,false)}
+function playMimicReversed(){playBuffer(mimicBuffer,true)}
+
+function resetAll(){originalBuffer=null;mimicBuffer=null;show('ready')}
+</script>
+</body>
+</html>

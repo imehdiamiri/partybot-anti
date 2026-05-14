@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play — PartyBot Web Games</title>
+<meta name="description" content="Play PartyBot mini-games free in your browser. Memory Grid, Color Trap, Tap in Order, and more!">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:rgba(28,28,30,.85);--border:rgba(255,255,255,.06);--text:#f5f5f7;--text2:rgba(255,255,255,.5)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:100;padding:12px 16px;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:22px;filter:drop-shadow(0 2px 6px rgba(168,85,247,.3))}
+.nav-home{font-size:13px;color:var(--text2);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06);transition:all .2s}
+.nav-home:hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;padding:16px 16px 0;position:sticky;top:52px;z-index:90;background:var(--bg)}
+.tab{flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:600;border-radius:12px;cursor:pointer;color:var(--text2);background:rgba(255,255,255,.03);border:1px solid transparent;transition:all .2s}
+.tab.active{color:#fff;background:rgba(0,122,255,.15);border-color:rgba(0,122,255,.3)}
+.tab:hover:not(.active){background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+
+/* Hero */
+.hero{text-align:center;padding:40px 20px 32px}
+.hero h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.6) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--text2);font-size:14px;margin-top:8px;max-width:420px;margin-inline:auto}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:20px 16px 40px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr);max-width:900px;margin:0 auto}}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;transition:transform .2s,box-shadow .2s,border-color .2s;cursor:pointer;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4);border-color:rgba(255,255,255,.12)}
+.card::before{content:'';position:absolute;inset:0;background:var(--accent-grad);opacity:.06;transition:opacity .2s}
+.card:hover::before{opacity:.12}
+
+.card-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--accent-bg)}
+.card-title{font-size:14px;font-weight:700;color:#fff}
+.card-desc{font-size:11px;color:var(--text2);line-height:1.4}
+.card-badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(52,199,89,.15);color:#34C759;border:1px solid rgba(52,199,89,.2)}
+
+/* Panel states */
+.panel{display:none}.panel.active{display:block}
+
+/* CTA */
+.cta-bar{text-align:center;padding:0 16px 40px}
+.cta-bar a{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px;box-shadow:0 8px 24px rgba(255,26,110,.3);transition:transform .2s}
+.cta-bar a:hover{transform:translateY(-2px)}
+
+.coming-soon{opacity:.5;pointer-events:none}
+.coming-soon .card-badge{background:rgba(255,149,0,.15);color:#FF9500;border-color:rgba(255,149,0,.2)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a>
+  <a href="/" class="nav-home">← Back to Home</a>
+</nav>
+
+<div class="hero">
+  <h1>🎮 Play in Browser</h1>
+  <p>Try PartyBot's mini-games right here — no download needed. Single-player mode, instant fun.</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('games')">🎯 Games</div>
+  <div class="tab" onclick="switchTab('tools')">🛠️ Tools</div>
+</div>
+
+<!-- GAMES PANEL -->
+<div id="panel-games" class="panel active">
+<div class="grid">
+
+  <a href="/play/memory-grid.html" class="card" style="--accent-grad:linear-gradient(135deg,#007AFF,#5856D6);--accent-bg:rgba(0,122,255,.15)">
+    <div class="card-icon">🧩</div>
+    <div class="card-title">Memory Grid</div>
+    <div class="card-desc">Flip tiles, find matching pairs, beat the clock</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/color-trap.html" class="card" style="--accent-grad:linear-gradient(135deg,#FF3B30,#FF69B4);--accent-bg:rgba(255,59,48,.15)">
+    <div class="card-icon">🎨</div>
+    <div class="card-title">Color Trap</div>
+    <div class="card-desc">Tap every color except the forbidden one</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/tap-in-order.html" class="card" style="--accent-grad:linear-gradient(135deg,#30B0C7,#34C759);--accent-bg:rgba(48,176,199,.15)">
+    <div class="card-icon">🔢</div>
+    <div class="card-title">Tap in Order</div>
+    <div class="card-desc">Race to tap numbered tiles 1→25 as fast as you can</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/guess-the-seconds.html" class="card" style="--accent-grad:linear-gradient(135deg,#32ADE6,#00C7BE);--accent-bg:rgba(50,173,230,.15)">
+    <div class="card-icon">⏱️</div>
+    <div class="card-title">Guess the Seconds</div>
+    <div class="card-desc">Count in your head, stop as close to the target as you can</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/reverse-singing.html" class="card" style="--accent-grad:linear-gradient(135deg,#FF69B4,#FF3B30);--accent-bg:rgba(255,105,180,.15)">
+    <div class="card-icon">🎤</div>
+    <div class="card-title">Reverse Singing</div>
+    <div class="card-desc">Record, reverse, and mimic — pure chaos</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+</div>
+</div>
+
+<!-- TOOLS PANEL -->
+<div id="panel-tools" class="panel">
+<div class="grid">
+
+  <a href="/play/tools/bottle.html" class="card" style="--accent-grad:linear-gradient(135deg,#AF52DE,#FF69B4);--accent-bg:rgba(175,82,222,.15)">
+    <div class="card-icon">🍾</div>
+    <div class="card-title">Spin the Bottle</div>
+    <div class="card-desc">Classic bottle spinner with smooth physics</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/tools/coin.html" class="card" style="--accent-grad:linear-gradient(135deg,#FFD700,#FF9500);--accent-bg:rgba(255,204,0,.15)">
+    <div class="card-icon">🪙</div>
+    <div class="card-title">Coin Flip</div>
+    <div class="card-desc">Heads or tails with 3D flip animation</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/tools/dice.html" class="card" style="--accent-grad:linear-gradient(135deg,#FF3B30,#FF9500);--accent-bg:rgba(255,59,48,.15)">
+    <div class="card-icon">🎲</div>
+    <div class="card-title">Dice Roller</div>
+    <div class="card-desc">Roll 1-6 dice with beautiful animations</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/tools/hourglass.html" class="card" style="--accent-grad:linear-gradient(135deg,#32ADE6,#007AFF);--accent-bg:rgba(50,173,230,.15)">
+    <div class="card-icon">⏳</div>
+    <div class="card-title">Hourglass Timer</div>
+    <div class="card-desc">Countdown timer with preset durations</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/tools/wheel.html" class="card" style="--accent-grad:linear-gradient(135deg,#34C759,#00C7BE);--accent-bg:rgba(52,199,89,.15)">
+    <div class="card-icon">🎡</div>
+    <div class="card-title">Spin Wheel</div>
+    <div class="card-desc">Custom wheel spinner — add your own options</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+  <a href="/play/tools/teams.html" class="card" style="--accent-grad:linear-gradient(135deg,#007AFF,#5856D6);--accent-bg:rgba(0,122,255,.15)">
+    <div class="card-icon">👥</div>
+    <div class="card-title">Team Picker</div>
+    <div class="card-desc">Randomly split players into balanced teams</div>
+    <div class="card-badge">Free</div>
+  </a>
+
+</div>
+</div>
+
+<div class="cta-bar">
+  <a href="/#download">📲 Get the Full App — iOS & Android</a>
+</div>
+
+<script>
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+</script>
+</body>
+</html>

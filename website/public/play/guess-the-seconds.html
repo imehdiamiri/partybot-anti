@@ -1,0 +1,210 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Guess the Seconds — PartyBot</title>
+<meta name="description" content="Count in your head and stop as close to the target time as you can. Play free!">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;display:flex;flex-direction:column;user-select:none}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:20px}.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.game-wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto;padding:0 16px}
+.screen{flex:1;display:none;flex-direction:column}.screen.active{display:flex}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.icon-box{width:88px;height:88px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+.title{font-size:22px;font-weight:800}.sub{color:rgba(255,255,255,.5);font-size:14px;margin-top:6px}
+.btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:28px}
+.btn-blue{background:#007AFF}.btn-green{background:#34C759}
+/* Counting screen */
+.target-ring{width:160px;height:160px;border-radius:50%;border:3px solid rgba(50,173,230,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;margin-bottom:24px;background:rgba(50,173,230,.06);transition:all .3s}
+.target-ring.counting{border-color:rgba(50,173,230,.8);box-shadow:0 0 40px rgba(50,173,230,.2);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.target-num{font-size:48px;font-weight:900;color:#5AC8FA}
+.target-label{font-size:13px;color:rgba(255,255,255,.4);margin-top:4px}
+.hint{color:rgba(255,255,255,.3);font-size:13px;margin-top:8px}
+.stop-btn{width:100%;padding:20px;border:none;border-radius:16px;font-size:18px;font-weight:800;color:#fff;cursor:pointer;margin-top:32px;background:linear-gradient(135deg,#FF3B30,#FF6B35);box-shadow:0 8px 30px rgba(255,59,48,.3);transition:transform .15s}
+.stop-btn:active{transform:scale(.96)}
+/* Results */
+.result-card{background:rgba(28,28,30,.85);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:24px;margin-top:20px;text-align:center}
+.diff-display{font-size:48px;font-weight:900;margin-bottom:4px}
+.diff-good{background:linear-gradient(135deg,#34C759,#00C7BE);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.diff-ok{background:linear-gradient(135deg,#FFCC00,#FF9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.diff-bad{background:linear-gradient(135deg,#FF3B30,#FF6B35);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.result-stats{display:flex;gap:16px;justify-content:center;margin-top:16px}
+.stat{padding:10px 18px;border-radius:12px;background:rgba(255,255,255,.05);text-align:center}
+.stat-val{font-size:18px;font-weight:800;color:#fff}.stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+.accuracy-bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;margin-top:16px;overflow:hidden}
+.accuracy-fill{height:100%;border-radius:4px;transition:width .5s}
+/* History */
+.history{margin-top:20px}
+.history-title{font-size:13px;color:rgba(255,255,255,.3);margin-bottom:8px}
+.history-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.03);margin-bottom:4px}
+.history-row span{font-size:13px;font-weight:600}
+.app-cta{text-align:center;padding:12px 16px}
+.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+/* Time picker */
+.time-picker{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.time-picker-label{font-size:12px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.stepper{display:flex;align-items:center;gap:0}
+.stepper-btn{width:52px;height:52px;border-radius:50%;border:2px solid rgba(90,200,250,.25);background:rgba(90,200,250,.08);color:#5AC8FA;font-size:26px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.stepper-btn:hover{background:rgba(90,200,250,.18);border-color:rgba(90,200,250,.5)}
+.stepper-btn:active{transform:scale(.9)}
+.stepper-val{width:100px;text-align:center;font-size:42px;font-weight:900;color:#5AC8FA;font-variant-numeric:tabular-nums}
+.stepper-unit{font-size:14px;color:rgba(255,255,255,.4);font-weight:600;margin-top:-4px}
+.presets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.preset{padding:8px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:13px;font-weight:700;color:rgba(255,255,255,.5);transition:all .2s}
+.preset.active{border-color:rgba(90,200,250,.5);background:rgba(90,200,250,.15);color:#5AC8FA}
+.preset:hover:not(.active){background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
+</style>
+</head>
+<body>
+<nav class="nav"><a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a><a href="/play/" class="nav-back">← All Games</a></nav>
+<div class="game-wrap">
+
+<div id="ready" class="screen active">
+  <div class="center">
+    <div class="icon-box" style="background:rgba(50,173,230,.14)">⏱️</div>
+    <div class="title">Guess the Seconds</div>
+    <div class="sub">Choose a target time, then count in your head and press stop when you think the time is up.</div>
+    <div class="time-picker">
+      <div class="time-picker-label">Target Time</div>
+      <div class="stepper">
+        <button class="stepper-btn" onclick="adjustTarget(-1)">−</button>
+        <div>
+          <div class="stepper-val" id="pickerVal">5</div>
+          <div class="stepper-unit">seconds</div>
+        </div>
+        <button class="stepper-btn" onclick="adjustTarget(1)">+</button>
+      </div>
+      <div class="presets" id="presets"></div>
+    </div>
+    <button class="btn btn-blue" onclick="startRound()">Start</button>
+  </div>
+</div>
+
+<div id="counting" class="screen">
+  <div class="center">
+    <div class="target-ring counting" id="targetRing">
+      <div class="target-num" id="targetNum">5</div>
+      <div class="target-label">seconds</div>
+    </div>
+    <div class="sub">Count in your head...</div>
+    <div class="hint">No peeking at the clock! 👀</div>
+    <button class="stop-btn" onclick="stopCounting()">STOP!</button>
+  </div>
+</div>
+
+<div id="results" class="screen">
+  <div class="center" style="justify-content:flex-start;padding-top:40px">
+    <div style="font-size:48px;margin-bottom:8px" id="resEmoji">🎯</div>
+    <div class="title" id="resTitle">Close!</div>
+    <div class="result-card">
+      <div class="diff-display" id="resDiff">+0.3s</div>
+      <div style="color:rgba(255,255,255,.4);font-size:13px">Difference</div>
+      <div class="accuracy-bar"><div class="accuracy-fill" id="accFill"></div></div>
+      <div style="color:rgba(255,255,255,.4);font-size:12px;margin-top:6px" id="accLabel">90% accuracy</div>
+      <div class="result-stats">
+        <div class="stat"><div class="stat-val" id="resTarget">5</div><div class="stat-label">Target</div></div>
+        <div class="stat"><div class="stat-val" id="resActual">5.3</div><div class="stat-label">Yours</div></div>
+      </div>
+    </div>
+    <div class="history" id="historySection"></div>
+    <button class="btn btn-blue" onclick="startRound()">Next Round</button>
+    <button class="btn btn-green" onclick="resetAll()" style="margin-top:10px">Reset</button>
+  </div>
+</div>
+
+</div>
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+
+<script>
+const PRESETS=[3,5,7,10,15,20,30,45,60];
+let target=5,startTime=0,history=[];
+
+// Build presets
+const presetsEl=document.getElementById('presets');
+PRESETS.forEach(t=>{
+  const d=document.createElement('div');
+  d.className='preset'+(t===target?' active':'');
+  d.textContent=t+'s';
+  d.onclick=()=>{target=t;updatePicker()};
+  presetsEl.appendChild(d);
+});
+
+function adjustTarget(delta){
+  target=Math.max(1,Math.min(60,target+delta));
+  updatePicker();
+}
+
+function updatePicker(){
+  document.getElementById('pickerVal').textContent=target;
+  presetsEl.querySelectorAll('.preset').forEach((p,i)=>{
+    p.classList.toggle('active',PRESETS[i]===target);
+  });
+}
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function startRound(){
+  document.getElementById('targetNum').textContent=target;
+  startTime=performance.now();
+  show('counting');
+}
+
+function stopCounting(){
+  const actual=(performance.now()-startTime)/1000;
+  const diff=actual-target;
+  const absDiff=Math.abs(diff);
+  const accuracy=Math.max(0,Math.min(100,100-absDiff/target*100));
+
+  history.unshift({target,actual:actual.toFixed(2),diff:diff.toFixed(2),accuracy:accuracy.toFixed(0)});
+  if(history.length>10)history.pop();
+
+  // Emoji & title
+  let emoji='🎯',title='Perfect!',cls='diff-good';
+  if(absDiff<.3){emoji='🎯';title='Perfect!';cls='diff-good'}
+  else if(absDiff<1){emoji='👏';title='Close!';cls='diff-good'}
+  else if(absDiff<2){emoji='😅';title='Not bad';cls='diff-ok'}
+  else{emoji='😬';title='Way off!';cls='diff-bad'}
+
+  document.getElementById('resEmoji').textContent=emoji;
+  document.getElementById('resTitle').textContent=title;
+  const dd=document.getElementById('resDiff');
+  dd.textContent=(diff>=0?'+':'')+diff.toFixed(2)+'s';
+  dd.className='diff-display '+cls;
+  document.getElementById('resTarget').textContent=target;
+  document.getElementById('resActual').textContent=actual.toFixed(2);
+  const fill=document.getElementById('accFill');
+  fill.style.width=accuracy+'%';
+  fill.style.background=accuracy>80?'linear-gradient(90deg,#34C759,#00C7BE)':accuracy>50?'linear-gradient(90deg,#FFCC00,#FF9500)':'linear-gradient(90deg,#FF3B30,#FF6B35)';
+  document.getElementById('accLabel').textContent=Math.round(accuracy)+'% accuracy';
+
+  // History
+  const hs=document.getElementById('historySection');
+  if(history.length>1){
+    hs.innerHTML='<div class="history-title">Recent Rounds</div>';
+    history.forEach((h,i)=>{
+      if(i===0)return;
+      hs.innerHTML+=`<div class="history-row"><span style="color:rgba(255,255,255,.5)">${h.target}s target</span><span style="color:${Math.abs(parseFloat(h.diff))<1?'#34C759':'#FF9500'}">${parseFloat(h.diff)>=0?'+':''}${h.diff}s</span></div>`;
+    });
+  }else{hs.innerHTML=''}
+
+  show('results');
+}
+
+function resetAll(){history=[];show('ready')}
+</script>
+</body>
+</html>

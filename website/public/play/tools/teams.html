@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Team Picker — PartyBot</title>
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;display:flex;flex-direction:column;user-select:none}a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}.nav-logo{height:20px}.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.wrap{flex:1;display:flex;flex-direction:column;gap:16px;padding:16px;max-width:500px;margin:0 auto;width:100%;overflow-y:auto}
+.title{font-size:22px;font-weight:800;text-align:center;margin-top:8px}
+.sub{color:rgba(255,255,255,.4);font-size:13px;text-align:center}
+/* Input */
+.section-title{font-size:13px;color:rgba(255,255,255,.4);margin-top:8px}
+.names-input{width:100%;min-height:100px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;resize:vertical}
+.names-input:focus{border-color:rgba(0,122,255,.4)}
+.team-count{display:flex;gap:8px;align-items:center;justify-content:center}
+.tc-btn{width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#fff;font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tc-val{font-size:20px;font-weight:800;min-width:30px;text-align:center}
+.gen-btn{width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;background:#007AFF;transition:transform .15s}.gen-btn:active{transform:scale(.95)}
+/* Results */
+.teams-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.team-card{background:rgba(28,28,30,.85);border:1px solid;border-radius:14px;padding:14px}
+.team-name{font-size:14px;font-weight:800;margin-bottom:8px}
+.team-member{font-size:13px;color:rgba(255,255,255,.7);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.team-member:last-child{border:none}
+.app-cta{text-align:center;padding:12px 16px}.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+</style>
+</head>
+<body>
+<nav class="nav"><a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a><a href="/play/" class="nav-back">← All Games</a></nav>
+<div class="wrap">
+  <div class="title">👥 Team Picker</div>
+  <div class="sub">Enter player names, pick team count, and shuffle!</div>
+  <div class="section-title">Players (one per line)</div>
+  <textarea class="names-input" id="namesInput" placeholder="Alice&#10;Bob&#10;Charlie&#10;Diana&#10;Eve&#10;Frank">Alice
+Bob
+Charlie
+Diana
+Eve
+Frank</textarea>
+  <div class="section-title" style="text-align:center">Number of Teams</div>
+  <div class="team-count">
+    <button class="tc-btn" onclick="changeTeams(-1)">−</button>
+    <span class="tc-val" id="teamNum">2</span>
+    <button class="tc-btn" onclick="changeTeams(1)">+</button>
+  </div>
+  <button class="gen-btn" onclick="generateTeams()">🔀 Shuffle Teams</button>
+  <div id="teamsResult"></div>
+</div>
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+<script>
+const COLORS=['#007AFF','#FF3B30','#34C759','#FF9500','#AF52DE','#5AC8FA'];
+const NAMES=['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Epsilon','Team Zeta'];
+let numTeams=2;
+function changeTeams(d){numTeams=Math.max(2,Math.min(6,numTeams+d));document.getElementById('teamNum').textContent=numTeams}
+function generateTeams(){
+  const names=document.getElementById('namesInput').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(names.length<numTeams){alert('Need at least '+numTeams+' players');return}
+  // Shuffle
+  for(let i=names.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
+  const teams=Array.from({length:numTeams},()=>[]);
+  names.forEach((n,i)=>teams[i%numTeams].push(n));
+  const res=document.getElementById('teamsResult');
+  res.innerHTML='<div class="teams-grid">'+teams.map((t,i)=>`<div class="team-card" style="border-color:${COLORS[i]}30"><div class="team-name" style="color:${COLORS[i]}">${NAMES[i]}</div>${t.map(m=>`<div class="team-member">${m}</div>`).join('')}</div>`).join('')+'</div>';
+}
+</script>
+</body>
+</html>

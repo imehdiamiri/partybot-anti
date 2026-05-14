@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Memory Grid — PartyBot</title>
+<meta name="description" content="Flip tiles, find matching pairs, beat the clock. Play Memory Grid free in your browser.">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;overflow-x:hidden;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:20px;filter:drop-shadow(0 2px 6px rgba(168,85,247,.3))}
+.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.nav-back:hover{background:rgba(255,255,255,.12);color:#fff}
+.game-wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto;padding:0 8px}
+
+/* Shared game styles */
+.screen{flex:1;display:none;flex-direction:column}
+.screen.active{display:flex}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.icon-box{width:88px;height:88px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+.title{font-size:22px;font-weight:800;color:#fff}
+.sub{color:rgba(255,255,255,.5);font-size:14px;margin-top:6px}
+.btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:28px;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.97)}
+.btn-blue{background:#007AFF;box-shadow:0 6px 20px rgba(0,122,255,.3)}
+.btn-green{background:#34C759;box-shadow:0 6px 20px rgba(52,199,89,.3)}
+.stat-row{display:flex;gap:12px;margin-top:20px}
+.stat{padding:10px 18px;border-radius:12px;background:rgba(255,255,255,.05);text-align:center}
+.stat-val{font-size:18px;font-weight:800;color:#fff}
+.stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+
+/* Header bar */
+.game-header{display:flex;align-items:center;justify-content:space-between;padding:8px 8px 8px}
+.game-header-left{display:flex;flex-direction:column;gap:2px}
+.game-header-title{font-size:15px;font-weight:700;color:#fff}
+.game-header-sub{font-size:12px;color:rgba(255,255,255,.4)}
+.pills{display:flex;gap:8px}
+.pill{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px}
+.pill-orange{background:rgba(255,149,0,.1);color:#FF9500}
+.pill-cyan{background:rgba(90,200,250,.1);color:#5AC8FA}
+
+/* Progress bar */
+.progress-bar{height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin:0 8px 8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#5AC8FA,#007AFF);transition:width .3s}
+
+/* Grid */
+.grid-container{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:4px}
+.grid{display:grid;gap:6px;width:100%}
+.tile{aspect-ratio:1;border-radius:12px;cursor:pointer;perspective:600px;-webkit-tap-highlight-color:transparent;user-select:none}
+.tile-inner{width:100%;height:100%;position:relative;transition:transform .5s;transform-style:preserve-3d}
+.tile.flipped .tile-inner,.tile.matched .tile-inner{transform:rotateY(180deg)}
+.tile-face{position:absolute;inset:0;border-radius:12px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.tile-back{background:linear-gradient(135deg,#38408C,#1E2359);border:1.5px solid rgba(90,200,250,.35);font-size:20px;color:rgba(90,200,250,.7)}
+.tile-front{transform:rotateY(180deg);border:2px solid;font-size:22px}
+.tile.matched{opacity:.45;transform:scale(.92);pointer-events:none}
+.tile:not(.flipped):not(.matched):hover .tile-back{border-color:rgba(90,200,250,.6);background:linear-gradient(135deg,#3E469A,#262D66)}
+.tile:not(.flipped):not(.matched):active{transform:scale(.94)}
+
+/* Results */
+.result-card{background:rgba(28,28,30,.85);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:20px;margin-top:16px;text-align:center}
+.result-val{font-size:36px;font-weight:900;background:linear-gradient(135deg,#5AC8FA,#007AFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.result-label{color:rgba(255,255,255,.4);font-size:13px;margin-top:4px}
+.result-stats{display:flex;gap:16px;justify-content:center;margin-top:16px}
+
+/* Size picker */
+.size-picker{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;justify-content:center}
+.size-opt{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);cursor:pointer;text-align:center;transition:all .2s}
+.size-opt.active{border-color:rgba(0,122,255,.5);background:rgba(0,122,255,.15)}
+.size-opt-val{font-size:15px;font-weight:700;color:#fff}
+.size-opt-label{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+
+/* CTA */
+.app-cta{text-align:center;padding:20px 16px 32px}
+.app-cta a{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px;box-shadow:0 6px 20px rgba(255,26,110,.25)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a>
+  <a href="/play/" class="nav-back">← All Games</a>
+</nav>
+
+<div class="game-wrap">
+
+<!-- READY SCREEN -->
+<div id="ready" class="screen active">
+  <div class="center">
+    <div class="icon-box" style="background:rgba(0,122,255,.14)">🧩</div>
+    <div class="title">Memory Grid</div>
+    <div class="sub">Flip tiles, find matching pairs!</div>
+
+    <div class="size-picker" id="sizePicker"></div>
+
+    <button class="btn btn-blue" onclick="startGame()">Start Game</button>
+  </div>
+</div>
+
+<!-- PLAYING SCREEN -->
+<div id="playing" class="screen">
+  <div class="game-header">
+    <div class="game-header-left">
+      <div class="game-header-title">Memory Grid</div>
+      <div class="game-header-sub" id="pairCount">0/6 pairs</div>
+    </div>
+    <div class="pills">
+      <div class="pill pill-orange">👆 <span id="moveCount">0</span></div>
+      <div class="pill pill-cyan">⏱ <span id="timer">0.0</span></div>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="grid-container">
+    <div class="grid" id="gameGrid"></div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="results" class="screen">
+  <div class="center">
+    <div style="font-size:52px;margin-bottom:12px">🎉</div>
+    <div class="title">Complete!</div>
+    <div class="result-card">
+      <div class="result-val" id="finalTime">0.0s</div>
+      <div class="result-label">Time</div>
+      <div class="result-stats">
+        <div class="stat"><div class="stat-val" id="finalMoves">0</div><div class="stat-label">Moves</div></div>
+        <div class="stat"><div class="stat-val" id="finalPairs">0</div><div class="stat-label">Pairs</div></div>
+      </div>
+    </div>
+    <div id="bestTime" style="color:rgba(255,255,255,.4);font-size:13px;margin-top:12px"></div>
+    <button class="btn btn-blue" onclick="startGame()">Play Again</button>
+    <button class="btn btn-green" onclick="showScreen('ready')" style="margin-top:10px">Change Size</button>
+  </div>
+</div>
+</div>
+
+<div class="app-cta"><a href="/#download">📲 Get the Full App</a></div>
+
+<script>
+const SYMBOLS=['⭐','❤️','🌙','☀️','⚡','🔥','🍃','💧','❄️','☁️','🌊','🌀','✨','🔔','🏁','👑','💎','🌍'];
+const COLORS=['#5AC8FA','#FF2D55','#FF9500','#34C759','#AF52DE','#FFCC00','#00C7BE','#FF3B30','#5856D6','#30B0C7'];
+const SIZES={
+  '3×4':{cols:3,rows:4},'4×4':{cols:4,rows:4},'4×5':{cols:4,rows:5},
+  '5×6':{cols:5,rows:6},'6×6':{cols:6,rows:6}
+};
+
+let currentSize='4×4',tiles=[],firstIdx=null,resolving=false,matched=0,moves=0,elapsed=0,timerInterval=null,pairCount=0;
+
+// Build size picker
+const picker=document.getElementById('sizePicker');
+Object.keys(SIZES).forEach(s=>{
+  const d=document.createElement('div');
+  d.className='size-opt'+(s===currentSize?' active':'');
+  d.innerHTML=`<div class="size-opt-val">${s}</div><div class="size-opt-label">${SIZES[s].cols*SIZES[s].rows/2} pairs</div>`;
+  d.onclick=()=>{currentSize=s;picker.querySelectorAll('.size-opt').forEach(x=>x.classList.remove('active'));d.classList.add('active')};
+  picker.appendChild(d);
+});
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function startGame(){
+  const{cols,rows}=SIZES[currentSize];
+  pairCount=Math.floor(cols*rows/2);
+  const syms=shuffle(SYMBOLS).slice(0,pairCount);
+  tiles=[];
+  for(let i=0;i<pairCount;i++){
+    const ci=i%10;
+    tiles.push({id:'a'+i,pairId:i,symbol:syms[i],color:COLORS[ci],flipped:false,matched:false});
+    tiles.push({id:'b'+i,pairId:i,symbol:syms[i],color:COLORS[ci],flipped:false,matched:false});
+  }
+  tiles=shuffle(tiles);
+  firstIdx=null;resolving=false;matched=0;moves=0;elapsed=0;
+  clearInterval(timerInterval);
+
+  const grid=document.getElementById('gameGrid');
+  grid.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  grid.innerHTML='';
+  tiles.forEach((t,i)=>{
+    const el=document.createElement('div');
+    el.className='tile';el.id='tile-'+i;
+    el.innerHTML=`<div class="tile-inner"><div class="tile-face tile-back">❓</div><div class="tile-face tile-front" style="background:${t.color}33;border-color:${t.color}">${t.symbol}</div></div>`;
+    el.onclick=()=>flipTile(i);
+    grid.appendChild(el);
+  });
+
+  document.getElementById('moveCount').textContent='0';
+  document.getElementById('timer').textContent='0.0';
+  document.getElementById('pairCount').textContent=`0/${pairCount} pairs`;
+  document.getElementById('progressFill').style.width='0%';
+
+  timerInterval=setInterval(()=>{elapsed+=0.1;document.getElementById('timer').textContent=fmtTime(elapsed)},100);
+  showScreen('playing');
+}
+
+function flipTile(i){
+  if(resolving||tiles[i].flipped||tiles[i].matched)return;
+  tiles[i].flipped=true;
+  document.getElementById('tile-'+i).classList.add('flipped');
+
+  if(firstIdx!==null){
+    moves++;
+    document.getElementById('moveCount').textContent=moves;
+    if(tiles[firstIdx].pairId===tiles[i].pairId){
+      tiles[firstIdx].matched=tiles[i].matched=true;
+      document.getElementById('tile-'+firstIdx).classList.add('matched');
+      document.getElementById('tile-'+i).classList.add('matched');
+      matched++;
+      document.getElementById('pairCount').textContent=`${matched}/${pairCount} pairs`;
+      document.getElementById('progressFill').style.width=`${(matched/pairCount)*100}%`;
+      firstIdx=null;
+      if(matched>=pairCount)finishGame();
+    }else{
+      resolving=true;
+      const a=firstIdx,b=i;
+      firstIdx=null;
+      setTimeout(()=>{
+        tiles[a].flipped=tiles[b].flipped=false;
+        document.getElementById('tile-'+a).classList.remove('flipped');
+        document.getElementById('tile-'+b).classList.remove('flipped');
+        resolving=false;
+      },800);
+    }
+  }else{firstIdx=i}
+}
+
+function finishGame(){
+  clearInterval(timerInterval);
+  document.getElementById('finalTime').textContent=fmtTime(elapsed)+'s';
+  document.getElementById('finalMoves').textContent=moves;
+  document.getElementById('finalPairs').textContent=pairCount;
+
+  const key='pb_mg_best_'+currentSize;
+  const best=localStorage.getItem(key);
+  if(!best||elapsed<parseFloat(best)){
+    localStorage.setItem(key,elapsed.toFixed(1));
+    document.getElementById('bestTime').textContent='🏆 New best time!';
+  }else{
+    document.getElementById('bestTime').textContent='Best: '+fmtTime(parseFloat(best))+'s';
+  }
+  showScreen('results');
+}
+
+function fmtTime(s){const m=Math.floor(s/60),sec=Math.floor(s)%60,t=Math.floor((s*10)%10);return m>0?`${m}:${String(sec).padStart(2,'0')}.${t}`:`${sec}.${t}`}
+</script>
+</body>
+</html>

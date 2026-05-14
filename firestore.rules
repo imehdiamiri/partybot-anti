@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // User profile docs — owner can write their own, anyone signed in can read.
+    // Wallet/entitlement fields are server-only (Cloud Functions use admin SDK).
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+                            && request.auth.uid == uid
+                            && !request.resource.data.keys().hasAny(['wallet', 'isPremium', 'isLifetime', 'starsBalance']);
+      allow delete: if false;
+    }
+
+    // Game history is append-only by the owning user.
+    match /users/{uid}/history/{eventId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update, delete: if false;
+    }
+
+    // Anything else: deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

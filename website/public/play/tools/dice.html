@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Dice Roller — PartyBot</title>
+<meta name="description" content="Roll 1-4 dice with realistic animation. Free online dice roller with blue pip design.">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;display:flex;flex-direction:column;user-select:none;overflow:hidden}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:20px}.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto}
+
+/* Count selector pills (matches iOS) */
+.count-selector{display:flex;justify-content:center;gap:8px;margin-top:20px;padding:0 16px}
+.count-btn{padding:9px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.08);color:#fff;font-size:13px;font-weight:900;cursor:pointer;transition:all .15s;font-family:inherit}
+.count-btn:active{transform:scale(.95)}
+.count-btn.active{background:#fff;color:#000;border-color:#fff}
+.count-btn:disabled{cursor:default}
+
+/* Dice area */
+.dice-area{flex:1;display:flex;align-items:center;justify-content:center}
+.dice-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:20px}
+.dice-grid.four{width:calc(2*var(--die-size) + 20px)}
+
+/* Single die */
+.die{position:relative;border-radius:18%;background:linear-gradient(180deg,#fff,#e0e0e0);border:1px solid rgba(0,0,0,.12);box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;transition:transform .15s}
+.die-shine{position:absolute;inset:0;border-radius:18%;background:linear-gradient(180deg,rgba(255,255,255,.7),transparent 60%);pointer-events:none}
+.pip{position:absolute;border-radius:50%;background:#0A84FF}
+
+/* Bottom area */
+.bottom-area{text-align:center;padding-bottom:0}
+.total-label{font-size:13px;font-weight:900;color:rgba(255,255,255,.55);letter-spacing:2.5px;margin-bottom:6px}
+.total-value{font-size:96px;font-weight:900;color:#0A84FF;text-shadow:0 4px 20px rgba(10,132,255,.5);transition:opacity .15s;line-height:1}
+.total-value.rolling{opacity:.35}
+
+/* Roll button */
+.roll-container{padding:0 20px 28px;margin-top:40px}
+.roll-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border:none;border-radius:999px;font-size:16px;font-weight:900;color:#fff;cursor:pointer;background:linear-gradient(90deg,#0A84FF,#5AC8FA);box-shadow:0 6px 24px rgba(10,132,255,.35);transition:transform .15s,opacity .15s;font-family:inherit}
+.roll-btn:active{transform:scale(.96)}
+.roll-btn:disabled{opacity:.6;cursor:default}
+.roll-btn svg{width:18px;height:18px}
+
+.app-cta{text-align:center;padding:12px 16px}
+.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+</style>
+</head>
+<body>
+<nav class="nav"><a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a><a href="/play/" class="nav-back">← All Games</a></nav>
+
+<div class="wrap">
+  <!-- Count Selector -->
+  <div class="count-selector" id="countSelector"></div>
+
+  <!-- Dice -->
+  <div class="dice-area">
+    <div class="dice-grid" id="diceGrid"></div>
+  </div>
+
+  <!-- Total -->
+  <div class="bottom-area">
+    <div class="total-label" id="totalLabel">VALUE</div>
+    <div class="total-value" id="totalValue">1</div>
+  </div>
+</div>
+
+<!-- Roll button -->
+<div class="roll-container">
+  <button class="roll-btn" id="rollBtn" onclick="roll()">
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.5"/><circle cx="16" cy="8" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="8" cy="16" r="1.5"/><circle cx="16" cy="16" r="1.5"/></svg>
+    Roll
+  </button>
+</div>
+
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+
+<script>
+let count=1, values=[1], rolling=false;
+
+// Pip positions (matching iOS)
+function getPips(v){
+  const tl={x:.22,y:.22},tr={x:.78,y:.22},ml={x:.22,y:.5},mc={x:.5,y:.5},mr={x:.78,y:.5},bl={x:.22,y:.78},br={x:.78,y:.78};
+  switch(v){
+    case 1:return[mc];case 2:return[tl,br];case 3:return[tl,mc,br];
+    case 4:return[tl,tr,bl,br];case 5:return[tl,tr,mc,bl,br];case 6:return[tl,tr,ml,mr,bl,br];
+    default:return[mc];
+  }
+}
+
+function initCountSelector(){
+  const el=document.getElementById('countSelector');
+  el.innerHTML='';
+  [1,2,3,4].forEach(n=>{
+    const btn=document.createElement('button');
+    btn.className='count-btn'+(count===n?' active':'');
+    btn.textContent=n+(n===1?' Die':' Dice');
+    btn.disabled=rolling;
+    btn.onclick=()=>{if(rolling)return;count=n;syncValues();renderAll()};
+    el.appendChild(btn);
+  });
+}
+
+function syncValues(){
+  while(values.length<count)values.push(Math.floor(Math.random()*6)+1);
+  if(values.length>count)values=values.slice(0,count);
+}
+
+function renderDice(){
+  const grid=document.getElementById('diceGrid');
+  grid.innerHTML='';
+  const dieSize=count===1?220:(count===2?140:120);
+  document.documentElement.style.setProperty('--die-size',dieSize+'px');
+  grid.classList.toggle('four',count===4);
+  const dotSize=dieSize*0.16;
+
+  values.forEach((v,i)=>{
+    const die=document.createElement('div');
+    die.className='die';
+    die.id='die-'+i;
+    die.style.width=die.style.height=dieSize+'px';
+
+    // Shine
+    const shine=document.createElement('div');
+    shine.className='die-shine';
+    die.appendChild(shine);
+
+    // Pips
+    getPips(v).forEach(p=>{
+      const pip=document.createElement('div');
+      pip.className='pip';
+      pip.style.width=pip.style.height=dotSize+'px';
+      pip.style.left=(p.x*dieSize-dotSize/2)+'px';
+      pip.style.top=(p.y*dieSize-dotSize/2)+'px';
+      die.appendChild(pip);
+    });
+
+    grid.appendChild(die);
+  });
+}
+
+function renderTotal(){
+  const total=values.reduce((a,b)=>a+b,0);
+  document.getElementById('totalLabel').textContent=count===1?'VALUE':'TOTAL';
+  const tv=document.getElementById('totalValue');
+  tv.textContent=total;
+  tv.classList.toggle('rolling',rolling);
+}
+
+function renderAll(){
+  initCountSelector();
+  renderDice();
+  renderTotal();
+}
+
+function roll(){
+  if(rolling)return;
+  rolling=true;
+  document.getElementById('rollBtn').disabled=true;
+  renderAll();
+
+  let ticks=0;
+  const interval=setInterval(()=>{
+    ticks++;
+    // Shake dice
+    document.querySelectorAll('.die').forEach((die,i)=>{
+      const angle=(Math.random()*36-18)*(i%2===0?1:-1);
+      die.style.transform=`rotate(${angle}deg)`;
+    });
+    // Random values
+    values=values.map(()=>Math.floor(Math.random()*6)+1);
+    renderDice();
+
+    if(ticks>=10){
+      clearInterval(interval);
+      document.querySelectorAll('.die').forEach(die=>{die.style.transform='rotate(0deg)'});
+      rolling=false;
+      document.getElementById('rollBtn').disabled=false;
+      renderAll();
+    }
+  },70);
+}
+
+syncValues();
+renderAll();
+</script>
+</body>
+</html>

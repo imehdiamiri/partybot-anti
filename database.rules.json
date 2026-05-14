@@ -1,0 +1,218 @@
+{
+  "rules": {
+    "users": {
+      ".indexOn": ["usernameLower", "inviteCode"],
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid",
+
+        "wallet":                    { ".write": false, "balance": { ".validate": "newData.isNumber() && newData.val() >= 0" } },
+        "isPremium":                 { ".write": false },
+        "isLifetime":                { ".write": false },
+        "entitlementUpdatedAt":      { ".write": false },
+        "processedTransactions":     { ".write": false },
+        "inviteStats":               { ".write": false },
+        "invitedBy":                 { ".write": false },
+
+        "username":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
+        "usernameLower": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
+        "inviteCode":    { ".validate": "newData.isString() && newData.val().length >= 4 && newData.val().length <= 12" }
+      }
+    },
+
+    "presence": {
+      "$uid": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.uid == $uid",
+        "online":   { ".validate": "newData.isBoolean()" },
+        "lastSeen": { ".validate": "newData.isNumber()" }
+      }
+    },
+
+    "friendships": {
+      "$uid": {
+        ".read":  "auth != null && auth.uid == $uid",
+        "$friendUid": {
+          ".write": "auth != null && (auth.uid == $uid || auth.uid == $friendUid)"
+        }
+      }
+    },
+
+    "friendRequests": {
+      ".indexOn": ["toUserId", "fromUserId"],
+      "$rid": {
+        ".read":  "auth != null && (data.child('toUserId').val() == auth.uid || data.child('fromUserId').val() == auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('fromUserId').val() == auth.uid) || data.child('toUserId').val() == auth.uid || data.child('fromUserId').val() == auth.uid)",
+        "fromUserId": { ".validate": "newData.val() == auth.uid || data.exists()" },
+        "toUserId":   { ".validate": "newData.isString()" },
+        "status":     { ".validate": "newData.val() == 'pending' || newData.val() == 'accepted' || newData.val() == 'declined'" },
+        "createdAt":  { ".validate": "newData.isNumber()" }
+      }
+    },
+
+    "rooms": {
+      "$code": {
+        ".read":  "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('hostId').val() == auth.uid || (newData.child('hostId').val() == auth.uid && !data.child('players').hasChild(data.child('hostId').val())))",
+        ".validate": "$code.matches(/^[0-9]{6}$/)",
+
+        "roomCode":       { ".validate": "newData.isString()" },
+        "gameId":         { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "hostId":         { ".validate": "newData.isString()" },
+        "status":         { ".validate": "newData.isString() && (newData.val() == 'waiting' || newData.val() == 'playing' || newData.val() == 'closed')" },
+        "createdAt":      { ".validate": "newData.isNumber()" },
+        "lastActivityAt": { ".validate": "newData.isNumber()" },
+
+        "players": {
+          "$pid": {
+            ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)",
+            ".validate": "newData.hasChildren(['id','displayName']) || !newData.exists()",
+            "id":          { ".validate": "newData.val() == $pid" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
+            "isHost":      { ".validate": "newData.isBoolean()" },
+            "isReady":     { ".validate": "newData.isBoolean()" },
+            "joinedAt":    { ".validate": "newData.isNumber()" }
+          }
+        },
+
+        "gameState": {
+          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid",
+          "version":       { ".validate": "newData.isNumber() && (!data.exists() || newData.val() >= data.val())" },
+          "phase":         { ".validate": "newData.isString() && newData.val().length <= 32" },
+          "lastUpdatedAt": { ".validate": "newData.isNumber()" },
+          "turnData": {
+            // Bound the host-authoritative turn payload to keep RTDB cost in
+            // check and reject room-griefing attempts. Accept either:
+            //   - nothing (deletion),
+            //   - a serialized JSON string up to 16 KB, OR
+            //   - a nested object with at most 200 children (values ≤ 4 KB each).
+            ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 16384) || newData.hasChildren()",
+            "$child": {
+              ".validate": "(!newData.isString() || newData.val().length <= 4096) && (!newData.isNumber() || true)"
+            }
+          }
+        },
+
+        "processedActions": {
+          // Watermark of action keys the host has drained, so a freshly
+          // promoted host doesn't replay them. Host-only writes; values are
+          // numeric server timestamps.
+          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid",
+          "$actionKey": {
+            ".validate": "newData.isNumber()"
+          }
+        },
+
+        "actions": {
+          ".read": "auth != null",
+          "$actionKey": {
+            ".write": "auth != null && (!newData.exists() || (newData.child('playerId').val() == auth.uid && newData.child('type').isString() && newData.child('type').val().length <= 64) || data.parent().parent().child('hostId').val() == auth.uid)",
+            "playerId": { ".validate": "newData.val() == auth.uid" },
+            "type":     { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64" },
+            "ts":       { ".validate": "newData.isNumber()" }
+          }
+        },
+
+        "presence": {
+          "$pid": {
+            ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)",
+            "online":   { ".validate": "newData.isBoolean()" },
+            "lastSeen": { ".validate": "newData.isNumber()" }
+          }
+        }
+      }
+    },
+
+    "sessions": {
+      "$sid": {
+        ".read":  "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('hostId').val() == auth.uid)",
+        ".validate": "newData.hasChild('hostId')",
+
+        "hostId":    { ".validate": "newData.isString()" },
+        "gameId":    { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "status":    { ".validate": "newData.isString() && (newData.val() == 'active' || newData.val() == 'finished' || newData.val() == 'cancelled')" },
+
+        "players": {
+          "$pid": {
+            ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)",
+            ".validate": "newData.hasChildren(['id','displayName']) || !newData.exists()",
+            "id":          { ".validate": "newData.val() == $pid" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" }
+          }
+        },
+
+        "state": {
+          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid",
+          ".validate": "!newData.isString() || newData.val().length <= 16384"
+        }
+      }
+    },
+
+    "aiUsage": {
+      "$uid": {
+        ".read":  "auth != null && auth.uid == $uid",
+        ".write": false
+      }
+    },
+
+    "telemetry": {
+      ".read": false,
+      "$eid": {
+        ".write": "auth != null && newData.child('userId').val() == auth.uid && newData.child('event').isString() && newData.child('event').val().length <= 64"
+      }
+    },
+
+    "appConfig":   { ".read": "auth != null", ".write": false },
+    "uiConfig":    { ".read": "auth != null", ".write": false },
+    "announcements": { ".read": "auth != null", ".write": false },
+
+    "adminAuditLog": {
+      ".read": false,
+      ".write": false
+    },
+
+    "aiModerationLog": {
+      ".read": false,
+      ".write": false
+    },
+
+    "blockedUsers": {
+      "$uid": {
+        ".read":  "auth != null && auth.uid == $uid",
+        ".write": false
+      }
+    },
+
+    "reports":       { ".read": false, ".write": false },
+    "reportsDedup":  { ".read": false, ".write": false },
+    "reportCounts":  { ".read": false, ".write": false },
+    "rateLimits":    { ".read": false, ".write": false },
+    "crashLogs": {
+      // Per-user scoped crash diagnostics. Owners can append; nobody can read
+      // from the client (admin SDK only). Each entry has a bounded shape so
+      // we don't end up with arbitrary blobs.
+      ".read": false,
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid",
+        "$pushId": {
+          ".validate": "newData.hasChildren(['message','at']) && newData.child('message').isString() && newData.child('message').val().length <= 1000 && newData.child('at').isNumber()",
+          "message":    { ".validate": "newData.isString() && newData.val().length <= 1000" },
+          "stack":      { ".validate": "newData.isString() && newData.val().length <= 4000" },
+          "severity":   { ".validate": "newData.isString() && newData.val().length <= 16" },
+          "platform":   { ".validate": "newData.isString() && newData.val().length <= 16" },
+          "appVersion": { ".validate": "newData.isString() && newData.val().length <= 32" },
+          "tags":       { ".validate": "newData.hasChildren() || !newData.exists()" },
+          "at":         { ".validate": "newData.isNumber()" },
+          "$other":     { ".validate": false }
+        }
+      }
+    },
+
+    "metrics": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Spin Wheel — PartyBot</title>
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;display:flex;flex-direction:column;user-select:none}a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}.nav-logo{height:20px}.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px;max-width:500px;margin:0 auto;width:100%;overflow-y:auto}
+.title{font-size:22px;font-weight:800}
+.wheel-container{position:relative;width:280px;height:280px}
+.wheel-pointer{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:28px;z-index:10;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+canvas{border-radius:50%;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.result-text{font-size:20px;font-weight:800;min-height:30px;text-align:center;color:#FFCC00}
+.spin-btn{padding:14px 48px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(135deg,#34C759,#00C7BE);box-shadow:0 6px 24px rgba(52,199,89,.3);transition:transform .15s}.spin-btn:active{transform:scale(.95)}
+/* Options editor */
+.options-area{width:100%}
+.opts-title{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:8px}
+.opt-row{display:flex;gap:6px;margin-bottom:6px}
+.opt-input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none}
+.opt-input:focus{border-color:rgba(52,199,89,.4)}
+.opt-del{width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,59,48,.15);color:#FF3B30;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.add-btn{width:100%;padding:10px;border:none;border-radius:10px;background:rgba(52,199,89,.1);color:#34C759;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+.app-cta{text-align:center;padding:12px 16px}.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+</style>
+</head>
+<body>
+<nav class="nav"><a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a><a href="/play/" class="nav-back">← All Games</a></nav>
+<div class="wrap">
+  <div class="title">🎡 Spin Wheel</div>
+  <div class="wheel-container">
+    <div class="wheel-pointer">▼</div>
+    <canvas id="wheelCanvas" width="280" height="280"></canvas>
+  </div>
+  <div class="result-text" id="resultText">&nbsp;</div>
+  <button class="spin-btn" onclick="spinWheel()">Spin!</button>
+  <div class="options-area">
+    <div class="opts-title">Customize Options</div>
+    <div id="optsList"></div>
+    <button class="add-btn" onclick="addOption()">+ Add Option</button>
+  </div>
+</div>
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+<script>
+const COLORS=['#FF3B30','#007AFF','#34C759','#FF9500','#AF52DE','#5AC8FA','#FFCC00','#00C7BE','#FF69B4','#5856D6'];
+let options=['Pizza 🍕','Movie 🎬','Park 🌳','Games 🎮','Sushi 🍣','Dance 💃'];
+let spinning=false,currentAngle=0;
+
+function renderOptions(){
+  const list=document.getElementById('optsList');
+  list.innerHTML='';
+  options.forEach((o,i)=>{
+    const row=document.createElement('div');row.className='opt-row';
+    row.innerHTML=`<input class="opt-input" value="${o}" oninput="options[${i}]=this.value;drawWheel()"><button class="opt-del" onclick="removeOption(${i})">✕</button>`;
+    list.appendChild(row);
+  });
+}
+
+function addOption(){if(options.length<12){options.push('Option '+(options.length+1));renderOptions();drawWheel()}}
+function removeOption(i){if(options.length>2){options.splice(i,1);renderOptions();drawWheel()}}
+
+function drawWheel(){
+  const c=document.getElementById('wheelCanvas'),ctx=c.getContext('2d');
+  const cx=140,cy=140,r=135,n=options.length,arc=2*Math.PI/n;
+  ctx.clearRect(0,0,280,280);
+  options.forEach((o,i)=>{
+    const start=currentAngle+i*arc,end=start+arc;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
+    ctx.fillStyle=COLORS[i%COLORS.length];ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=2;ctx.stroke();
+    // Text
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(start+arc/2);
+    ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 12px Inter,sans-serif';
+    ctx.fillText(o.length>10?o.slice(0,10)+'…':o,r*.6,4);
+    ctx.restore();
+  });
+  // Center circle
+  ctx.beginPath();ctx.arc(cx,cy,20,0,2*Math.PI);ctx.fillStyle='#1c1c1e';ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=2;ctx.stroke();
+}
+
+function spinWheel(){
+  if(spinning||options.length<2)return;spinning=true;
+  document.getElementById('resultText').textContent='...';
+  const spins=5+Math.random()*5;// 5-10 full rotations
+  const targetAngle=currentAngle+spins*2*Math.PI;
+  const startTime=performance.now();
+  const duration=3500;
+  const startAngle=currentAngle;
+
+  function animate(now){
+    const t=Math.min(1,(now-startTime)/duration);
+    const ease=1-Math.pow(1-t,3);// ease-out cubic
+    currentAngle=startAngle+(targetAngle-startAngle)*ease;
+    drawWheel();
+    if(t<1)requestAnimationFrame(animate);
+    else{
+      spinning=false;
+      // Determine winner: top position = -PI/2
+      const norm=(((-currentAngle-Math.PI/2)%(2*Math.PI))+(2*Math.PI))%(2*Math.PI);
+      const arc=2*Math.PI/options.length;
+      const idx=Math.floor(norm/arc);
+      document.getElementById('resultText').textContent='🎉 '+options[idx];
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+renderOptions();drawWheel();
+</script>
+</body>
+</html>

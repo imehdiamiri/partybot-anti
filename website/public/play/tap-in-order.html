@@ -1,0 +1,376 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tap in Order — PartyBot</title>
+<meta name="description" content="Memorize numbered tiles then tap them in order from memory! Play free in your browser.">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;overflow-x:hidden;display:flex;flex-direction:column;user-select:none}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:20px}.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.game-wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto;padding:0 8px}
+.screen{flex:1;display:none;flex-direction:column}.screen.active{display:flex}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.icon-box{width:88px;height:88px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+.title{font-size:22px;font-weight:800}.sub{color:rgba(255,255,255,.5);font-size:14px;margin-top:6px}
+.btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:28px}
+.btn-blue{background:#007AFF}.btn-green{background:#34C759}
+/* Size picker */
+.size-row{display:flex;gap:8px;margin-top:20px}
+.sz{padding:10px 18px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);cursor:pointer;text-align:center;transition:all .2s}
+.sz.active{border-color:rgba(48,176,199,.5);background:rgba(48,176,199,.15)}
+.sz-v{font-size:15px;font-weight:700;color:#fff}.sz-s{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+/* Tile count picker */
+.tc-row{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.tc{padding:8px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);cursor:pointer;text-align:center;transition:all .2s;font-size:13px;font-weight:700;color:rgba(255,255,255,.6)}
+.tc.active{border-color:rgba(255,149,0,.5);background:rgba(255,149,0,.15);color:#FF9500}
+/* Game header */
+.g-head{display:flex;align-items:center;justify-content:space-between;padding:8px 8px}
+.g-head-l{font-size:15px;font-weight:700}.g-head-sub{font-size:12px;color:rgba(255,255,255,.4)}
+.pills{display:flex;gap:8px}
+.pill{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.pill-red{background:rgba(255,59,48,.1);color:#FF3B30}
+.pill-green{background:rgba(52,199,89,.1);color:#34C759}
+.pill-orange{background:rgba(255,149,0,.1);color:#FF9500}
+.pill-cyan{background:rgba(90,200,250,.1);color:#5AC8FA}
+/* Stats row */
+.stats-row{display:flex;gap:8px;padding:4px 8px 8px}
+.stat-card{flex:1;text-align:center;padding:8px 0;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.stat-card-val{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat-card-lbl{font-size:11px;color:rgba(255,255,255,.5);font-weight:600;margin-top:2px}
+.progress-bar{height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin:0 8px 8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#FF9500,#FF2D55);transition:width .2s}
+/* Grid */
+.grid-area{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:4px}
+.grid{display:grid;gap:6px;width:100%}
+.num-tile{aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;cursor:pointer;border:2px solid;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.num-tile:active:not(.tapped){transform:scale(.92)}
+.num-tile.tapped{pointer-events:none}
+.num-tile.tapped-correct{background:rgba(52,199,89,.25)!important;border-color:rgba(52,199,89,.5)!important;color:#fff!important}
+.num-tile.wrong{animation:shake .4s;border-color:rgba(255,59,48,1)!important}
+.num-tile.preview{border-color:rgba(255,149,0,.5)!important;background:rgba(255,149,0,.15)!important;color:#fff!important}
+.num-tile.hidden-num .tile-num{visibility:hidden}
+.num-tile.empty{background:rgba(255,255,255,.04)!important;border-color:rgba(255,255,255,.08)!important}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* Give up */
+.give-up{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 8px 0;padding:12px;border-radius:14px;background:rgba(255,59,48,.1);border:1px solid rgba(255,59,48,.2);cursor:pointer;font-size:14px;font-weight:600;color:#FF3B30;transition:all .2s}
+.give-up:hover{background:rgba(255,59,48,.18)}
+/* Results */
+.result-card{background:rgba(28,28,30,.85);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:20px;margin-top:16px;text-align:center}
+.result-val{font-size:40px;font-weight:900;background:linear-gradient(135deg,#30B0C7,#34C759);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.result-stats{display:flex;gap:16px;justify-content:center;margin-top:16px}
+.stat{padding:10px 18px;border-radius:12px;background:rgba(255,255,255,.05);text-align:center}
+.stat-val{font-size:18px;font-weight:800;color:#fff}.stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+/* Overlay */
+.overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)}
+.overlay-card{padding:32px;border-radius:24px;text-align:center;background:rgba(0,0,0,.85);border:2px solid rgba(255,255,255,.1);max-width:300px}
+.app-cta{text-align:center;padding:12px 16px}
+.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+</style>
+</head>
+<body>
+<nav class="nav"><a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a><a href="/play/" class="nav-back">← All Games</a></nav>
+<div class="game-wrap">
+
+<!-- READY -->
+<div id="ready" class="screen active">
+  <div class="center">
+    <div class="icon-box" style="background:rgba(48,176,199,.14)">🔢</div>
+    <div class="title">Tap in Order</div>
+    <div class="sub">Memorize the numbers, then tap them in order from memory!</div>
+    <div style="margin-top:20px;color:rgba(255,255,255,.3);font-size:12px">Grid Size</div>
+    <div class="size-row" id="sizePicker"></div>
+    <div style="margin-top:12px;color:rgba(255,255,255,.3);font-size:12px">Number of Tiles</div>
+    <div class="tc-row" id="tileCountPicker"></div>
+    <button class="btn btn-blue" onclick="startGame()">Start Game</button>
+  </div>
+</div>
+
+<!-- PLAYING -->
+<div id="playing" class="screen">
+  <div class="g-head">
+    <div><div class="g-head-l">Tap in Order</div><div class="g-head-sub" id="phaseLabel">Memorize...</div></div>
+    <div class="pills" id="pillsArea">
+      <div class="pill pill-red">❌ <span id="missCount">0</span></div>
+      <div class="pill pill-green">✅ <span id="correctCount">0/8</span></div>
+      <div class="pill pill-cyan">⏱ <span id="timer">0.0</span></div>
+    </div>
+  </div>
+  <div class="stats-row" id="statsRow" style="display:none">
+    <div class="stat-card"><div class="stat-card-val" style="color:#FF3B30" id="statMiss">0</div><div class="stat-card-lbl">Mistakes</div></div>
+    <div class="stat-card"><div class="stat-card-val" style="color:#34C759" id="statCorrect">0/8</div><div class="stat-card-lbl">Correct</div></div>
+    <div class="stat-card"><div class="stat-card-val" style="color:#FF9500" id="statTimer">0.0</div><div class="stat-card-lbl">Preview</div></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+  <div class="grid-area"><div class="grid" id="grid"></div></div>
+  <div class="give-up" id="giveUpBtn" onclick="giveUp()" style="display:none">🏳️ Give Up</div>
+</div>
+
+<!-- OUTCOME OVERLAY -->
+<div id="outcome" class="overlay" style="display:none">
+  <div class="overlay-card">
+    <div style="font-size:56px;margin-bottom:8px" id="outcomeIcon">✅</div>
+    <div class="title" id="outcomeTitle" style="margin-bottom:8px">Done!</div>
+    <div class="sub" id="outcomeSub">3 mistakes · 12.4s</div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="screen">
+  <div class="center">
+    <div style="font-size:52px;margin-bottom:12px">⚡</div>
+    <div class="title">Complete!</div>
+    <div class="result-card">
+      <div class="result-val" id="finalTime">0.0s</div>
+      <div style="color:rgba(255,255,255,.4);font-size:13px;margin-top:4px">Time</div>
+      <div class="result-stats">
+        <div class="stat"><div class="stat-val" id="finalTiles">8</div><div class="stat-label">Tiles</div></div>
+        <div class="stat"><div class="stat-val" id="finalCorrect">8</div><div class="stat-label">Correct</div></div>
+        <div class="stat"><div class="stat-val" id="finalErrors">0</div><div class="stat-label">Errors</div></div>
+      </div>
+    </div>
+    <div id="bestTime" style="color:rgba(255,255,255,.4);font-size:13px;margin-top:12px"></div>
+    <button class="btn btn-blue" onclick="startGame()">Play Again</button>
+    <button class="btn btn-green" onclick="showScreen('ready')" style="margin-top:10px">Change Settings</button>
+  </div>
+</div>
+</div>
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+
+<script>
+const SIZES={'4×4':{c:4},'5×5':{c:5},'6×6':{c:6}};
+const TILE_COUNTS=[6,8,10,12,15];
+const TILE_COLORS=['#5AC8FA','#FF2D55','#FF9500','#34C759','#AF52DE','#FFCC00','#00C7BE','#FF3B30','#5856D6','#30B0C7'];
+let curSize='5×5',tileCount=8;
+let gridCols=5,totalCells=25;
+let selectedCells=[],numberForCell={},tappedCells=new Set();
+let nextExpected=1,correctCount=0,missTaps=0,elapsed=0,gaveUpFlag=false;
+let phase='ready'; // 'preview'|'playing'
+let tick=null,previewTick=null,previewLeft=0,previewTotal=0;
+
+// Build size picker
+const pk=document.getElementById('sizePicker');
+Object.entries(SIZES).forEach(([k,v])=>{
+  const d=document.createElement('div');d.className='sz'+(k===curSize?' active':'');
+  d.innerHTML=`<div class="sz-v">${k}</div><div class="sz-s">${v.c*v.c} cells</div>`;
+  d.onclick=()=>{curSize=k;pk.querySelectorAll('.sz').forEach(x=>x.classList.remove('active'));d.classList.add('active');updateTileCountOptions()};
+  pk.appendChild(d);
+});
+
+// Build tile count picker
+function updateTileCountOptions(){
+  const maxTiles=SIZES[curSize].c*SIZES[curSize].c;
+  const tcp=document.getElementById('tileCountPicker');tcp.innerHTML='';
+  TILE_COUNTS.filter(t=>t<=maxTiles).forEach(t=>{
+    const d=document.createElement('div');d.className='tc'+(t===tileCount?' active':'');
+    d.textContent=t+' tiles';
+    d.onclick=()=>{tileCount=t;tcp.querySelectorAll('.tc').forEach(x=>x.classList.remove('active'));d.classList.add('active')};
+    tcp.appendChild(d);
+  });
+  if(tileCount>maxTiles){tileCount=TILE_COUNTS.filter(t=>t<=maxTiles).pop()||6}
+}
+updateTileCountOptions();
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+// Preview duration: matches iOS: max(4.0, 3.5 + tileCount * 0.35)
+function getPreviewDuration(tc){return Math.max(4.0, 3.5 + tc * 0.35)}
+
+function startGame(){
+  const{c}=SIZES[curSize];gridCols=c;totalCells=c*c;
+  // Pick random cells
+  const allCells=Array.from({length:totalCells},(_,i)=>i);
+  const shuffled=shuffle(allCells);
+  selectedCells=shuffled.slice(0,tileCount);
+  numberForCell={};
+  selectedCells.forEach((cell,i)=>{numberForCell[cell]=i+1});
+  tappedCells=new Set();nextExpected=1;correctCount=0;missTaps=0;elapsed=0;gaveUpFlag=false;
+  clearInterval(tick);clearInterval(previewTick);
+
+  // Render grid
+  const grid=document.getElementById('grid');
+  grid.style.gridTemplateColumns=`repeat(${gridCols},1fr)`;
+  grid.innerHTML='';
+  for(let i=0;i<totalCells;i++){
+    const el=document.createElement('div');
+    el.className='num-tile';el.id='nt-'+i;
+    const isSelected=numberForCell[i]!==undefined;
+    if(isSelected){
+      const num=numberForCell[i];
+      const col=TILE_COLORS[(num-1)%10];
+      el.style.cssText=`background:rgba(255,149,0,.15);border-color:rgba(255,149,0,.5);color:#fff`;
+      el.innerHTML=`<span class="tile-num">${num}</span>`;
+      el.classList.add('preview');
+    }else{
+      el.style.cssText=`background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:transparent`;
+      el.classList.add('empty');
+    }
+    el.onclick=()=>tapTile(i);
+    grid.appendChild(el);
+  }
+
+  // Start preview phase
+  phase='preview';
+  previewTotal=getPreviewDuration(tileCount);
+  previewLeft=previewTotal;
+  updateUI();
+  document.getElementById('giveUpBtn').style.display='none';
+  document.getElementById('phaseLabel').textContent='Memorize the numbers...';
+  document.getElementById('outcome').style.display='none';
+
+  previewTick=setInterval(()=>{
+    previewLeft=Math.max(0,+(previewLeft-0.1).toFixed(1));
+    updatePreviewUI();
+    if(previewLeft<=0){
+      clearInterval(previewTick);
+      startPlaying();
+    }
+  },100);
+
+  showScreen('playing');
+}
+
+function startPlaying(){
+  phase='playing';
+  // Hide all numbers and change tile styles
+  for(let i=0;i<totalCells;i++){
+    const el=document.getElementById('nt-'+i);
+    if(!el)continue;
+    const isSelected=numberForCell[i]!==undefined;
+    if(isSelected){
+      el.classList.remove('preview');
+      el.classList.add('hidden-num');
+      // Change to default "untapped" look
+      el.style.background='rgba(255,255,255,.08)';
+      el.style.borderColor='rgba(255,255,255,.15)';
+    }
+  }
+  document.getElementById('phaseLabel').textContent=`Next: 1 · 0 mistakes`;
+  document.getElementById('giveUpBtn').style.display='flex';
+  elapsed=0;
+  tick=setInterval(()=>{elapsed+=.1;updateUI()},100);
+}
+
+function tapTile(i){
+  if(phase!=='playing')return;
+  if(tappedCells.has(i))return;
+  const el=document.getElementById('nt-'+i);
+  if(!el)return;
+  const num=numberForCell[i];
+
+  if(num===nextExpected){
+    // Correct!
+    tappedCells.add(i);
+    el.classList.remove('hidden-num');
+    el.classList.add('tapped','tapped-correct');
+    el.querySelector('.tile-num').style.visibility='visible';
+    nextExpected++;
+    correctCount++;
+    updateUI();
+    if(correctCount>=tileCount)handleComplete(true);
+  }else if(num!==undefined){
+    // Wrong numbered tile
+    missTaps++;
+    el.classList.add('wrong');
+    setTimeout(()=>el.classList.remove('wrong'),400);
+    updateUI();
+  }else{
+    // Tapped empty cell
+    missTaps++;
+    el.classList.add('wrong');
+    setTimeout(()=>el.classList.remove('wrong'),400);
+    updateUI();
+  }
+}
+
+function giveUp(){
+  gaveUpFlag=true;
+  handleComplete(false);
+}
+
+function handleComplete(didFinish){
+  clearInterval(tick);clearInterval(previewTick);
+
+  // Show outcome overlay
+  const icon=gaveUpFlag?'🏳️':'✅';
+  const title=gaveUpFlag?'Gave Up':'Done!';
+  const color=gaveUpFlag?'#FF9500':'#34C759';
+  document.getElementById('outcomeIcon').textContent=icon;
+  document.getElementById('outcomeTitle').textContent=title;
+  document.getElementById('outcomeTitle').style.color=color;
+  document.getElementById('outcomeSub').textContent=`${missTaps} mistakes · ${fmt(elapsed)}s`;
+  if(!didFinish)document.getElementById('outcomeSub').textContent+=` · ${correctCount}/${tileCount} found`;
+  document.getElementById('outcome').style.display='flex';
+
+  // Reveal all remaining numbers
+  selectedCells.forEach(cell=>{
+    if(!tappedCells.has(cell)){
+      const el=document.getElementById('nt-'+cell);
+      if(el){
+        el.classList.remove('hidden-num');
+        el.querySelector('.tile-num').style.visibility='visible';
+        el.style.background='rgba(255,149,0,.12)';
+        el.style.borderColor='rgba(255,149,0,.3)';
+      }
+    }
+  });
+
+  setTimeout(()=>{
+    document.getElementById('outcome').style.display='none';
+    showResults(didFinish);
+  },2000);
+}
+
+function showResults(didFinish){
+  document.getElementById('finalTime').textContent=fmt(elapsed)+'s';
+  document.getElementById('finalTiles').textContent=tileCount;
+  document.getElementById('finalCorrect').textContent=correctCount+'/'+tileCount;
+  document.getElementById('finalErrors').textContent=missTaps;
+
+  if(didFinish){
+    const key='pb_tio_best_'+curSize+'_'+tileCount;
+    const best=localStorage.getItem(key);
+    if(!best||elapsed<parseFloat(best)){localStorage.setItem(key,elapsed.toFixed(1));document.getElementById('bestTime').textContent='🏆 New best time!'}
+    else{document.getElementById('bestTime').textContent='Best: '+fmt(parseFloat(best))+'s'}
+  }else{
+    document.getElementById('bestTime').textContent='';
+  }
+  showScreen('results');
+}
+
+function updatePreviewUI(){
+  const prog=1-(previewLeft/previewTotal);
+  document.getElementById('progFill').style.width=(prog*100)+'%';
+  document.getElementById('timer').textContent=previewLeft.toFixed(1);
+  document.getElementById('missCount').textContent='0';
+  document.getElementById('correctCount').textContent='0/'+tileCount;
+  document.getElementById('phaseLabel').textContent='Memorize the numbers...';
+}
+
+function updateUI(){
+  if(phase==='playing'){
+    document.getElementById('timer').textContent=fmt(elapsed);
+    document.getElementById('missCount').textContent=missTaps;
+    document.getElementById('correctCount').textContent=correctCount+'/'+tileCount;
+    document.getElementById('progFill').style.width=(correctCount/tileCount*100)+'%';
+    document.getElementById('phaseLabel').textContent=nextExpected<=tileCount?`Next: ${nextExpected} · ${missTaps} mistakes`:'Done!';
+  }
+}
+
+function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s)%60,t=Math.floor((s*10)%10);return m>0?`${m}:${String(sec).padStart(2,'0')}.${t}`:`${sec}.${t}`}
+</script>
+</body>
+</html>

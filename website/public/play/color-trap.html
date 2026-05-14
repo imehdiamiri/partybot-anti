@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Color Trap — PartyBot</title>
+<meta name="description" content="Tap every color except the forbidden one. Three strikes and you're out! Play free.">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;overflow:hidden;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:20px;filter:drop-shadow(0 2px 6px rgba(168,85,247,.3))}
+.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.game-wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto}
+.screen{flex:1;display:none;flex-direction:column}.screen.active{display:flex}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.icon-box{width:88px;height:88px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+.title{font-size:22px;font-weight:800}.sub{color:rgba(255,255,255,.5);font-size:14px;margin-top:6px}
+.btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:28px}
+.btn-blue{background:#007AFF}.btn-green{background:#34C759}
+/* Difficulty */
+.diff-row{display:flex;gap:8px;margin-top:20px}
+.diff-opt{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);cursor:pointer;text-align:center;transition:all .2s}
+.diff-opt.active{border-color:rgba(0,122,255,.5);background:rgba(0,122,255,.15)}
+.diff-val{font-size:14px;font-weight:700;color:#fff}.diff-sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+/* Game */
+.game-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 16px}
+.forbidden-label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.forbidden-dot{width:18px;height:18px;border-radius:9px}
+.hearts{display:flex;gap:4px;font-size:18px}
+.timer-bar{height:4px;background:rgba(255,255,255,.08);margin:0 16px;border-radius:2px;overflow:hidden}
+.timer-fill{height:100%;background:#5AC8FA;border-radius:2px;transition:width .1s linear}
+.stats-row{display:flex;justify-content:space-between;padding:4px 16px;font-size:12px;color:rgba(255,255,255,.4);font-weight:600}
+.arena{flex:1;position:relative;margin:8px 16px;border-radius:16px;overflow:hidden;background:rgba(255,255,255,.02)}
+.falling-tile{position:absolute;border-radius:14px;cursor:pointer;transition:transform .15s,opacity .15s}
+.falling-tile:active{transform:scale(.85)!important}
+.falling-tile.hit{opacity:.15;transform:scale(.5)!important}
+/* Results */
+.result-card{background:rgba(28,28,30,.85);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:20px;margin-top:16px;text-align:center}
+.result-big{font-size:48px;font-weight:900;background:linear-gradient(135deg,#FF3B30,#FF69B4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.result-stats{display:flex;gap:16px;justify-content:center;margin-top:16px}
+.stat{padding:10px 18px;border-radius:12px;background:rgba(255,255,255,.05);text-align:center}
+.stat-val{font-size:18px;font-weight:800;color:#fff}.stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+.app-cta{text-align:center;padding:12px 16px}
+.app-cta a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff1a6e,#ff6b35);border-radius:99px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a>
+  <a href="/play/" class="nav-back">← All Games</a>
+</nav>
+<div class="game-wrap">
+<div id="ready" class="screen active">
+  <div class="center">
+    <div class="icon-box" style="background:rgba(255,59,48,.14)">🎨</div>
+    <div class="title">Color Trap</div>
+    <div class="sub">Tap every tile EXCEPT the forbidden color!<br>Miss 3 and you're out.</div>
+    <div class="diff-row" id="diffPicker"></div>
+    <button class="btn btn-blue" onclick="startGame()">Start Game</button>
+  </div>
+</div>
+<div id="playing" class="screen">
+  <div class="game-hud">
+    <div class="forbidden-label">Don't tap <div class="forbidden-dot" id="forbiddenDot"></div><span id="forbiddenName"></span></div>
+    <div class="hearts" id="hearts"></div>
+  </div>
+  <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+  <div class="stats-row"><span id="hitsStat">0 hits</span><span id="timeStat">20s</span></div>
+  <div class="arena" id="arena"></div>
+</div>
+<div id="results" class="screen">
+  <div class="center">
+    <div style="font-size:48px;margin-bottom:8px" id="resultEmoji">🎉</div>
+    <div class="title" id="resultTitle">Time's Up!</div>
+    <div class="result-card">
+      <div class="result-big" id="resultScore">0</div>
+      <div style="color:rgba(255,255,255,.4);font-size:13px;margin-top:4px">Score</div>
+      <div class="result-stats">
+        <div class="stat"><div class="stat-val" id="rHits">0</div><div class="stat-label">Hits</div></div>
+        <div class="stat"><div class="stat-val" id="rFails">0</div><div class="stat-label">Fails</div></div>
+        <div class="stat"><div class="stat-val" id="rTime">0s</div><div class="stat-label">Survived</div></div>
+      </div>
+    </div>
+    <button class="btn btn-blue" onclick="startGame()">Play Again</button>
+  </div>
+</div>
+</div>
+<div class="app-cta"><a href="/#download">📲 Full App</a></div>
+
+<script>
+const PAL=['#FF3B30','#007AFF','#34C759','#FFCC00','#AF52DE'];
+const PAL_N=['Red','Blue','Green','Yellow','Purple'];
+const COLS=4,MAX_F=3;
+const DIFF={easy:{si:.9,lt:1.9,dur:20,l:'Easy'},medium:{si:.65,lt:1.5,dur:30,l:'Medium'},hard:{si:.45,lt:1.15,dur:45,l:'Hard'}};
+let diff='medium',forbidden=0,spawns=[],active=[],elapsed=0,hits=0,fails=0,eliminated=false,tick=null,spawnCur=0;
+
+const dp=document.getElementById('diffPicker');
+Object.entries(DIFF).forEach(([k,v])=>{const d=document.createElement('div');d.className='diff-opt'+(k===diff?' active':'');d.innerHTML=`<div class="diff-val">${v.l}</div><div class="diff-sub">${v.dur}s</div>`;d.onclick=()=>{diff=k;dp.querySelectorAll('.diff-opt').forEach(x=>x.classList.remove('active'));d.classList.add('active')};dp.appendChild(d)});
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function seedRng(s){return()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff}}
+function genSpawns(d,seed){const r=seedRng(seed),sp=[];let t=.5,id=0;while(t<d.dur){sp.push({id:id++,at:t,col:Math.floor(r()*COLS),ci:Math.floor(r()*5),sz:.8+r()*.4});t+=d.si*(.7+r()*.6)}return sp}
+
+function startGame(){
+  const d=DIFF[diff];forbidden=Math.floor(Math.random()*5);
+  spawns=genSpawns(d,Date.now());active=[];elapsed=0;hits=0;fails=0;eliminated=false;spawnCur=0;
+  document.getElementById('forbiddenDot').style.background=PAL[forbidden];
+  document.getElementById('forbiddenName').textContent=PAL_N[forbidden];
+  document.getElementById('forbiddenName').style.color=PAL[forbidden];
+  updateHearts();updateStats();
+  document.getElementById('arena').innerHTML='';
+  show('playing');
+  clearInterval(tick);
+  tick=setInterval(()=>{
+    if(eliminated)return;
+    elapsed+=.05;
+    // Spawn
+    while(spawnCur<spawns.length&&spawns[spawnCur].at<=elapsed){const s=spawns[spawnCur];spawnTile(s);spawnCur++}
+    // Move & expire
+    const arena=document.getElementById('arena'),ah=arena.offsetHeight;
+    const toRemove=[];
+    active.forEach(t=>{
+      const prog=Math.min(1,(elapsed-t.spawned)/d.lt);
+      const el=document.getElementById('ft-'+t.id);
+      if(el)el.style.top=prog*(ah-t.px)+'px';
+      if(prog>=1&&!t.hit){
+        if(t.ci!==forbidden){fails++;updateHearts();if(fails>=MAX_F){eliminate();return}}
+        toRemove.push(t.id);
+      }
+      if(t.hit&&(elapsed-t.spawned)>.35)toRemove.push(t.id);
+    });
+    active=active.filter(t=>!toRemove.includes(t.id));
+    toRemove.forEach(id=>{const el=document.getElementById('ft-'+id);if(el)el.remove()});
+    updateStats();
+    if(elapsed>=d.dur&&!eliminated)finish(false);
+  },50);
+}
+
+function spawnTile(s){
+  const arena=document.getElementById('arena'),aw=arena.offsetWidth;
+  const cw=(aw-16)/COLS,px=Math.min(cw*.78,72)*s.sz;
+  const el=document.createElement('div');
+  el.className='falling-tile';el.id='ft-'+s.id;
+  el.style.cssText=`left:${8+s.col*cw+(cw-px)/2}px;top:0;width:${px}px;height:${px}px;background:${PAL[s.ci]}`;
+  el.onclick=()=>tapTile(s.id);
+  arena.appendChild(el);
+  active.push({...s,spawned:elapsed,hit:false,px});
+}
+
+function tapTile(id){
+  const t=active.find(x=>x.id===id&&!x.hit);if(!t)return;
+  const el=document.getElementById('ft-'+id);
+  if(t.ci===forbidden){fails++;updateHearts();if(el)el.classList.add('hit');t.hit=true;if(fails>=MAX_F)eliminate()}
+  else{t.hit=true;hits++;if(el)el.classList.add('hit')}
+  updateStats();
+}
+
+function updateHearts(){const h=document.getElementById('hearts');h.innerHTML='';for(let i=0;i<3;i++)h.innerHTML+=`<span style="opacity:${i<MAX_F-fails?1:.2}">❤️</span>`}
+function updateStats(){document.getElementById('hitsStat').textContent=hits+' hits';const tl=Math.max(0,DIFF[diff].dur-elapsed);document.getElementById('timeStat').textContent=Math.ceil(tl)+'s';document.getElementById('timerFill').style.width=(tl/DIFF[diff].dur*100)+'%'}
+function eliminate(){eliminated=true;clearInterval(tick);finish(true)}
+function finish(elim){
+  clearInterval(tick);
+  const score=Math.max(0,hits*10+Math.floor(elapsed*5)-fails*15);
+  document.getElementById('resultEmoji').textContent=elim?'💀':'🎉';
+  document.getElementById('resultTitle').textContent=elim?'Eliminated!':'Time\'s Up!';
+  document.getElementById('resultScore').textContent=score;
+  document.getElementById('rHits').textContent=hits;
+  document.getElementById('rFails').textContent=fails;
+  document.getElementById('rTime').textContent=elapsed.toFixed(1)+'s';
+  show('results');
+}
+</script>
+</body>
+</html>
