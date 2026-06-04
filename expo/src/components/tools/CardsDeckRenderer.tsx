@@ -101,7 +101,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       onPanResponderRelease: (_event, gesture) => {
         if (gesture.dx > SWIPE_THRESHOLD) {
           forceSwipeRef.current('right');
-        } else if (gesture.dx < -SWIPE_THRESHOLD && prevIndexRef.current > 0) {
+        } else if (gesture.dx < -SWIPE_THRESHOLD) {
           forceSwipeRef.current('left');
         } else {
           resetPositionRef.current();
@@ -122,12 +122,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     }).start(() => onSwipeComplete(direction));
   };
 
-  const onSwipeComplete = (direction: 'left' | 'right' | 'reverse') => {
-    if (direction === 'left' || direction === 'reverse') {
-      setCurrentIndex((prev) => Math.max(prev - 1, 0));
-    } else {
-      setCurrentIndex((prev) => Math.min(prev + 1, deckLengthRef.current));
-    }
+  const onSwipeComplete = (direction: 'left' | 'right') => {
+    setCurrentIndex((prev) => Math.min(prev + 1, deckLengthRef.current));
     position.setValue({ x: 0, y: 0 });
   };
 
@@ -306,7 +302,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
               <Text style={styles.stampText}>NEXT</Text>
             </Animated.View>
             <Animated.View style={[styles.stamp, styles.stampNope, { opacity: prevOpacity }]}>
-              <Text style={styles.stampText}>PREV</Text>
+              <Text style={styles.stampText}>NEXT</Text>
             </Animated.View>
           </Animated.View>
         );
@@ -502,7 +498,7 @@ function CardFace({ card, category }: { card: PartyCard, category: any }) {
       </View>
       <View style={styles.cardFooter}>
         <IconSymbol name="chevron.left" size={12} color="rgba(0,0,0,0.3)" />
-        <Text style={styles.cardFooterText}>prev · swipe · next</Text>
+        <Text style={styles.cardFooterText}>swipe left or right to next</Text>
         <IconSymbol name="chevron.right" size={12} color="rgba(0,0,0,0.3)" />
       </View>
       <IconSymbol name={category.icon as any} size={140} color={category.accentColor + '0E'} style={styles.watermark} />
