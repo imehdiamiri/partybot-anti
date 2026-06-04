@@ -31,7 +31,6 @@ interface Props {
 
 export function CardsDeckRenderer({ categoryId }: Props) {
   const category = CardCategoryInfo[categoryId];
-  const [includeSpicy, setIncludeSpicy] = useState<boolean>(false);
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
   
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -69,13 +68,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
   useEffect(() => {
     let cards = categoryCards;
-    if (!includeSpicy) cards = cards.filter(c => !c.isSpicy);
     if (selectedSubtype) cards = cards.filter(c => c.subtype === selectedSubtype);
     const next = [...cards].sort(() => Math.random() - 0.5);
     setDeck(next);
     deckLengthRef.current = next.length;
     setCurrentIndex(0);
-  }, [categoryCards, includeSpicy, selectedSubtype]);
+  }, [categoryCards, selectedSubtype]);
 
   const position = useRef(new Animated.ValueXY()).current;
   const prevIndexRef = useRef(currentIndex);
@@ -214,25 +212,6 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             );
           })}
         </View>
-
-        <View style={styles.divider} />
-
-        <Pressable
-          style={styles.spicyRow}
-          onPress={() => setIncludeSpicy(!includeSpicy)}
-        >
-          <View style={styles.spicyLeft}>
-            <View style={[styles.spicyIcon, includeSpicy && styles.spicyIconActive]}>
-              <IconSymbol name="flame.fill" size={13} color={includeSpicy ? '#FFF' : 'rgba(255,255,255,0.55)'} />
-            </View>
-            <View>
-              <Text style={[styles.spicyLabel, includeSpicy && styles.spicyLabelActive]}>Spicy</Text>
-            </View>
-          </View>
-          <View style={[styles.toggleTrack, includeSpicy && styles.toggleTrackActive]}>
-            <View style={[styles.toggleKnob, includeSpicy && styles.toggleKnobActive]} />
-          </View>
-        </Pressable>
       </View>
     );
 
