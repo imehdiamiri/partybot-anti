@@ -6,6 +6,7 @@ export enum CardCategory {
   Penalty = 'penalty',
   Couple = 'couple',
   MostLikelyTo = 'mostLikelyTo',
+  Favorites = 'favorites',
 }
 
 export enum CardSubtype {
@@ -77,6 +78,13 @@ export const CardCategoryInfo = {
     subtitle: "Point at the person who's most likely to…",
     icon: 'hand.point.up.left.fill',
     accentColor: '#FACC15', // Yellow
+  },
+  [CardCategory.Favorites]: {
+    id: CardCategory.Favorites,
+    title: 'Favorites',
+    subtitle: 'Your saved favorite cards',
+    icon: 'star.fill',
+    accentColor: '#FBBF24', // Amber
   },
 };
 

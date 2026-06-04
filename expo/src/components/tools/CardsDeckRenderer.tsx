@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, PanResponder, Dimensions, Pressable, Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard } from '@/src/models/CardModels';
+import { useSavedCardsStore } from '@/src/store/useSavedCardsStore';
+import { useCustomCardsStore } from '@/src/store/useCustomCardsStore';
 
 // One-time index by category so we don't scan all 800+ cards on every filter change.
 const CARDS_BY_CATEGORY: Record<string, PartyCard[]> = (() => {
@@ -32,9 +34,27 @@ export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
   const category = CardCategoryInfo[categoryId];
   const [includeSpicy, setIncludeSpicy] = useState<boolean>(false);
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
-  const [savedCards, setSavedCards] = useState<Set<string>>(new Set());
 
-  const categoryCards = useMemo(() => CARDS_BY_CATEGORY[categoryId] ?? [], [categoryId]);
+  const { savedCardIds, toggleCard, isCardSaved } = useSavedCardsStore();
+  const { customCards } = useCustomCardsStore();
+
+  const categoryCards = useMemo(() => {
+    // Combine built-in cards and custom cards for the category
+    let allCategoryCards = [...(CARDS_BY_CATEGORY[categoryId] ?? [])];
+    
+    // Add custom cards matching the current category
+    const customForCategory = customCards.filter(c => c.category === categoryId);
+    allCategoryCards = [...customForCategory, ...allCategoryCards];
+
+    if (categoryId === CardCategory.Favorites) {
+      // Find all saved cards (both from ALL_CARDS and customCards)
+      const savedBuiltIn = ALL_CARDS.filter(c => savedCardIds.includes(c.id));
+      const savedCustom = customCards.filter(c => savedCardIds.includes(c.id));
+      return [...savedCustom, ...savedBuiltIn];
+    }
+
+    return allCategoryCards;
+  }, [categoryId, customCards, savedCardIds]);
 
   const availableSubtypes = useMemo(
     () => Array.from(new Set(categoryCards.map(c => c.subtype))),
@@ -135,10 +155,7 @@ export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
   const handleSave = () => {
     if (currentIndex >= deck.length) return;
     const currentCard = deck[currentIndex];
-    const newSaved = new Set(savedCards);
-    if (newSaved.has(currentCard.id)) newSaved.delete(currentCard.id);
-    else newSaved.add(currentCard.id);
-    setSavedCards(newSaved);
+    toggleCard(currentCard.id);
   };
 
   const rotate = position.x.interpolate({
@@ -341,7 +358,7 @@ export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
   const renderActionBar = () => {
     if (currentIndex >= deck.length) return null;
     const currentCard = deck[currentIndex];
-    const isSaved = currentCard ? savedCards.has(currentCard.id) : false;
+    const isSaved = currentCard ? isCardSaved(currentCard.id) : false;
     const total = deck.length;
     const progress = (currentIndex + 1) / Math.max(total, 1);
 
@@ -380,7 +397,7 @@ export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
           </Pressable>
 
           <Pressable style={styles.actionButton} onPress={handleSave} hitSlop={8}>
-            <IconSymbol name={isSaved ? 'bookmark.fill' : 'bookmark'} size={22} color={isSaved ? category.accentColor : 'white'} />
+            <IconSymbol name={isSaved ? 'star.fill' : 'star'} size={22} color={isSaved ? category.accentColor : 'white'} />
           </Pressable>
         </View>
       </View>

@@ -20,7 +20,6 @@ import { PartyToolsSection } from '@/src/components/tools/PartyToolsSection';
 export default function ToolsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [showSaved, setShowSaved] = useState(false);
 
   const totalCardsCount = ALL_CARDS.length;
 
@@ -35,11 +34,6 @@ export default function ToolsScreen() {
             <Text style={styles.headerTitle}>Tools</Text>
           </View>
           <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={() => setShowSaved(true)} activeOpacity={0.85}>
-            <LiquidGlass variant="mid" radius={20} style={styles.bookmarkButton} shadow={false}>
-              <IconSymbol name={showSaved ? 'bookmark.fill' : 'bookmark'} size={18} color="white" />
-            </LiquidGlass>
-          </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/profile')} activeOpacity={0.85}>
             <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
               <IconSymbol name="person.crop.circle" size={22} color="white" />
