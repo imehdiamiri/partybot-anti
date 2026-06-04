@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ export default function CardsDeckScreen() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [shuffleTrigger, setShuffleTrigger] = useState(0);
   
   const category = CardCategoryInfo[categoryId as keyof typeof CardCategoryInfo];
 
@@ -34,10 +35,10 @@ export default function CardsDeckScreen() {
             paddingHorizontal: 8,
             paddingVertical: 6,
           }} 
-          onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}
+          onPress={() => setShuffleTrigger(prev => prev + 1)}
         >
-          <IconSymbol name="chevron.left" size={18} color="#007AFF" />
-          <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '400', marginLeft: 2 }}>Back</Text>
+          <IconSymbol name="shuffle" size={16} color={category.accentColor} />
+          <Text style={{ color: category.accentColor, fontSize: 17, fontWeight: '500', marginLeft: 6 }}>Shuffle</Text>
         </TouchableOpacity>
         
         <View style={styles.headerTitleContainer}>
@@ -47,10 +48,18 @@ export default function CardsDeckScreen() {
           <Text style={styles.titleText}>{category.title}</Text>
         </View>
         
-        <View style={{ width: 38 }} />
+        <TouchableOpacity 
+          style={{
+            paddingHorizontal: 8,
+            paddingVertical: 6,
+          }} 
+          onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}
+        >
+          <IconSymbol name="xmark" size={20} color="rgba(255,255,255,0.6)" />
+        </TouchableOpacity>
       </View>
 
-      <CardsDeckRenderer categoryId={categoryId as any} />
+      <CardsDeckRenderer categoryId={categoryId as any} shuffleTrigger={shuffleTrigger} />
     </View>
   );
 }

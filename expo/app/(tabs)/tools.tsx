@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { LiquidGlass } from '@/src/components/LiquidGlass';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { CardCategoriesList } from '@/src/models/CardModels';
+import { CardCategoriesList, ALL_CARDS } from '@/src/models/CardModels';
 import { PartyToolsSection } from '@/src/components/tools/PartyToolsSection';
 
 export default function ToolsScreen() {
@@ -22,7 +22,7 @@ export default function ToolsScreen() {
   const router = useRouter();
   const [showSaved, setShowSaved] = useState(false);
 
-  const totalCardsCount = 520; // Mock total count for now
+  const totalCardsCount = ALL_CARDS.length;
 
   return (
     <View style={styles.container}>

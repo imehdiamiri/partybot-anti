@@ -25,9 +25,10 @@ const SWIPE_OUT_DURATION = 240;
 
 interface Props {
   categoryId: CardCategory;
+  shuffleTrigger?: number;
 }
 
-export function CardsDeckRenderer({ categoryId }: Props) {
+export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
   const category = CardCategoryInfo[categoryId];
   const [includeSpicy, setIncludeSpicy] = useState<boolean>(false);
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
@@ -124,6 +125,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     setCurrentIndex(0);
     position.setValue({ x: 0, y: 0 });
   };
+
+  useEffect(() => {
+    if (shuffleTrigger && shuffleTrigger > 0) {
+      handleShuffle();
+    }
+  }, [shuffleTrigger]);
 
   const handleSave = () => {
     if (currentIndex >= deck.length) return;
