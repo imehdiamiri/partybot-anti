@@ -57,7 +57,14 @@ export function ReactionTimeSession({ session }: Props) {
       registerSkip(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
         cancelAnimation(pulse);
-        goToNextPlayer();
+        const isLast = playerIdx + 1 >= players.length;
+        if (isLast) {
+          setPhase('results');
+        } else {
+          setPlayerIdx(playerIdx + 1);
+          setAttemptIdx(0);
+          setPhase('ready');
+        }
       }, player?.displayName);
     } else {
       registerSkip(null);
@@ -154,12 +161,14 @@ export function ReactionTimeSession({ session }: Props) {
             accentColor={Colors.green}
             onReady={beginAttempt}
             onSkip={() => {
-              // Record empty attempts for skipped player
-              setRecords(prev => {
-                const next = prev.map(r => ({ ...r, attempts: [...r.attempts] }));
-                return next;
-              });
-              goToNextPlayer();
+              const isLast = playerIdx + 1 >= players.length;
+              if (isLast) {
+                setPhase('results');
+              } else {
+                setPlayerIdx(playerIdx + 1);
+                setAttemptIdx(0);
+                setPhase('ready');
+              }
             }}
           />
         </PhaseTransition>

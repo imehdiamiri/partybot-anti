@@ -153,7 +153,17 @@ export function EyeSightSession({ session }: Props) {
     if (phase === 'countdown' || phase === 'flash' || phase === 'input' || phase === 'correct' || phase === 'wrong') {
       registerSkip(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
-        goToNextPlayer();
+        const isLast = playerIdx + 1 >= players.length;
+        if (isLast) {
+          AudioManager.play('gameOver');
+          setPhase('results');
+        } else {
+          setPlayerIdx(playerIdx + 1);
+          setRound(1);
+          setInput('');
+          setTarget('');
+          setPhase('ready');
+        }
       }, player?.displayName);
     } else {
       registerSkip(null);
@@ -352,8 +362,17 @@ export function EyeSightSession({ session }: Props) {
             accentColor={ACCENT}
             onReady={() => startRound(round)}
             onSkip={() => {
-              // Record score of 0 for skipped player (bestRound/bestDigits already 0)
-              goToNextPlayer();
+              const isLast = playerIdx + 1 >= players.length;
+              if (isLast) {
+                AudioManager.play('gameOver');
+                setPhase('results');
+              } else {
+                setPlayerIdx(playerIdx + 1);
+                setRound(1);
+                setInput('');
+                setTarget('');
+                setPhase('ready');
+              }
             }}
           />
         </PhaseTransition>
