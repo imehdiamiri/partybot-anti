@@ -1,8 +1,8 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, PanResponder, Dimensions, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Animated, PanResponder, Dimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard } from '@/src/models/CardModels';
+import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard, CardSubtype } from '@/src/models/CardModels';
 import { useSavedCardsStore } from '@/src/store/useSavedCardsStore';
 import { useCustomCardsStore } from '@/src/store/useCustomCardsStore';
 
@@ -27,16 +27,18 @@ const SWIPE_OUT_DURATION = 240;
 
 interface Props {
   categoryId: CardCategory;
-  shuffleTrigger?: number;
 }
 
-export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
+export function CardsDeckRenderer({ categoryId }: Props) {
   const category = CardCategoryInfo[categoryId];
   const [includeSpicy, setIncludeSpicy] = useState<boolean>(false);
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
+  
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [newCardText, setNewCardText] = useState('');
 
   const { savedCardIds, toggleCard, isCardSaved } = useSavedCardsStore();
-  const { customCards } = useCustomCardsStore();
+  const { customCards, addCustomCard } = useCustomCardsStore();
 
   const categoryCards = useMemo(() => {
     // Combine built-in cards and custom cards for the category
@@ -146,11 +148,30 @@ export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
     position.setValue({ x: 0, y: 0 });
   };
 
-  useEffect(() => {
-    if (shuffleTrigger && shuffleTrigger > 0) {
-      handleShuffle();
-    }
-  }, [shuffleTrigger]);
+  const handleAddCard = () => {
+    if (!newCardText.trim()) return;
+
+    let subtype = CardSubtype.Personal;
+    if (categoryId === CardCategory.Act) subtype = CardSubtype.Dare;
+    else if (categoryId === CardCategory.Talk) subtype = CardSubtype.Discussion;
+    else if (categoryId === CardCategory.Challenges) subtype = CardSubtype.Behavior;
+    else if (categoryId === CardCategory.Penalty) subtype = CardSubtype.Penaltyfunny;
+    else if (categoryId === CardCategory.Couple) subtype = CardSubtype.Playful;
+    else if (categoryId === CardCategory.MostLikelyTo) subtype = CardSubtype.MLTFunny;
+
+    const newCard: PartyCard = {
+      id: `custom-${Date.now()}`,
+      category: categoryId,
+      subtype,
+      text: newCardText.trim(),
+      isSpicy: false,
+    };
+
+    addCustomCard(newCard);
+    setNewCardText('');
+    setIsAddModalVisible(false);
+    handleShuffle();
+  };
 
   const handleSave = () => {
     if (currentIndex >= deck.length) return;
@@ -372,33 +393,28 @@ export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
         </View>
 
         <View style={styles.actionBar}>
-          <Pressable 
-            style={[styles.actionButton, currentIndex === 0 && { opacity: 0.5 }]} 
-            onPress={() => {
-              if (currentIndex > 0) {
-                position.setValue({ x: -SCREEN_WIDTH * 1.5, y: 0 });
-                setCurrentIndex(c => c - 1);
-                Animated.spring(position, {
-                  toValue: { x: 0, y: 0 },
-                  friction: 6,
-                  useNativeDriver: false,
-                }).start();
-              }
-            }} 
-            disabled={currentIndex === 0}
-            hitSlop={8}
-          >
-            <IconSymbol name="arrow.uturn.backward" size={22} color="white" />
+          {/* Left: Shuffle */}
+          <Pressable style={styles.actionButton} onPress={handleShuffle} hitSlop={8}>
+            <IconSymbol name="shuffle" size={22} color="white" />
           </Pressable>
 
+          {/* Center: Next */}
           <Pressable style={styles.nextButton} onPress={() => forceSwipe('left')}>
             <Text style={styles.nextButtonText}>Next</Text>
             <IconSymbol name="arrow.right" size={18} color="black" />
           </Pressable>
 
-          <Pressable style={styles.actionButton} onPress={handleSave} hitSlop={8}>
-            <IconSymbol name={isSaved ? 'star.fill' : 'star'} size={22} color={isSaved ? category.accentColor : 'white'} />
-          </Pressable>
+          {/* Right: Add Card & Favorite */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            {categoryId !== CardCategory.Favorites && (
+              <Pressable style={styles.actionButton} onPress={() => setIsAddModalVisible(true)} hitSlop={8}>
+                <IconSymbol name="plus" size={22} color="white" />
+              </Pressable>
+            )}
+            <Pressable style={styles.actionButton} onPress={handleSave} hitSlop={8}>
+              <IconSymbol name={isSaved ? 'star.fill' : 'star'} size={22} color={isSaved ? category.accentColor : 'white'} />
+            </Pressable>
+          </View>
         </View>
       </View>
     );
@@ -411,6 +427,58 @@ export function CardsDeckRenderer({ categoryId, shuffleTrigger }: Props) {
         {renderCards()}
       </View>
       {renderActionBar()}
+
+      <Modal
+        visible={isAddModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsAddModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setIsAddModalVisible(false)}
+        >
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardView}
+          >
+            <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.modalTitle}>Add Custom Card</Text>
+              <Text style={styles.modalSubtitle}>Create your own custom prompt for {category?.title || 'this category'}.</Text>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Type your card prompt here..."
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                multiline={true}
+                value={newCardText}
+                onChangeText={setNewCardText}
+                maxLength={150}
+                autoFocus={true}
+              />
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelButton]} 
+                  onPress={() => {
+                    setNewCardText('');
+                    setIsAddModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.submitButton, { backgroundColor: category?.accentColor || '#FFF' }]} 
+                  onPress={handleAddCard}
+                >
+                  <Text style={styles.submitButtonText}>Add Card</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -804,5 +872,89 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'black',
     letterSpacing: 0.2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  keyboardView: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: 'rgba(25,25,35,0.95)',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontFamily: 'Viral-Black',
+    fontSize: 20,
+    color: 'white',
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  input: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    color: 'white',
+    padding: 16,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  cancelButtonText: {
+    fontFamily: 'Viral-Black',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  submitButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  submitButtonText: {
+    fontFamily: 'Viral-Black',
+    fontSize: 14,
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
