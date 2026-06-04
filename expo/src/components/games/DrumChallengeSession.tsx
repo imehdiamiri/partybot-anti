@@ -114,9 +114,9 @@ export function DrumChallengeSession({ session }: Props) {
     };
   }, []);
 
-  // Register skip handler during 'listening' phase
+  // Register skip handler during 'listening' and 'result' phases
   useEffect(() => {
-    if (phase === 'listening') {
+    if (phase === 'listening' || phase === 'result') {
       registerSkip(() => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         metronomeTimersRef.current.forEach(t => clearTimeout(t));
@@ -128,11 +128,6 @@ export function DrumChallengeSession({ session }: Props) {
           if (tickRef.current) tickRef.current.stopAsync();
           tickPoolRef.current.forEach(s => s.stopAsync().catch(() => {}));
         } catch (e) {}
-        // Record empty attempts (no valid hits) for this player
-        setRecords(prev => {
-          const next = prev.map(r => ({ ...r, attempts: [...r.attempts] }));
-          return next;
-        });
         goToNextPlayer();
       }, player?.displayName);
     } else {

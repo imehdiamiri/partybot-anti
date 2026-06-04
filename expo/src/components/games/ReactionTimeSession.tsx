@@ -53,7 +53,7 @@ export function ReactionTimeSession({ session }: Props) {
   }, [pulse]);
 
   useEffect(() => {
-    if (phase === 'waiting') {
+    if (phase === 'waiting' || phase === 'go' || phase === 'tapped' || phase === 'foul') {
       registerSkip(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
         cancelAnimation(pulse);

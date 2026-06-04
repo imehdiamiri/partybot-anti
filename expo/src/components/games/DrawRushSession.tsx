@@ -181,12 +181,11 @@ export function DrawRushSession({ session }: Props) {
     setupNewTurn();
   }, []);
 
-  // Register skip handler during 'drawing' phase
+  // Register skip handler during all turn phases
   useEffect(() => {
-    if (phase === 'drawing') {
+    if (phase === 'reveal' || phase === 'drawing' || phase === 'guessing' || phase === 'result') {
       registerSkip(() => {
         if (timerRef.current) clearInterval(timerRef.current);
-        // Skip with score 0 — no point added for this turn
         const totalTurns = players.length * 2;
         if (round >= totalTurns) {
           AudioManager.play('gameOver');
