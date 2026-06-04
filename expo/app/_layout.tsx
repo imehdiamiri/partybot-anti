@@ -42,7 +42,7 @@ export default function RootLayout() {
 
   // Load unified rounded display font; aliased to legacy 'Viral-*' names so all
   // existing screens render the same chunky rounded face on iOS and Android.
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     'Viral-Black': Fredoka_700Bold,
     'Viral-Bold': Fredoka_600SemiBold,
     'Viral-Regular': Fredoka_500Medium,
@@ -161,7 +161,7 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, [currentUser, isInitialized, segments, navigationState?.key, isMounted]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return <View style={{ flex: 1, backgroundColor: 'black' }} />;
   }
 

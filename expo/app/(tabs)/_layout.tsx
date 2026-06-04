@@ -92,10 +92,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 });
                 if (!event.defaultPrevented) {
                   if (route.name === 'index') {
-                    navigation.navigate(route.name, { defaultTab: 'Games', resetAt: Date.now() });
-                    return;
-                  }
-                  if (!isFocused) {
+                    navigation.navigate(route.name, { defaultTab: 'Games', resetAt: Date.now().toString() });
+                  } else if (route.name === 'factory') {
+                    navigation.navigate(route.name, { resetAt: Date.now().toString() });
+                  } else if (!isFocused) {
                     navigation.navigate(route.name);
                   }
                 }

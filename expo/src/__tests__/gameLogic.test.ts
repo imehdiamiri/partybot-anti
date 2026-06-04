@@ -367,3 +367,92 @@ describe('MemoryGrid — board generation', () => {
     expect(arr).toEqual(copy);
   });
 });
+
+// ══════════════════════════════════════════════
+// 6. ReverseSinging — audio reversal & base64
+// ══════════════════════════════════════════════
+
+import { base64ToBytes, bytesToBase64, reverseAdtsBytes } from '../utils/audioUtils';
+
+describe('ReverseSinging — base64 and audio helpers', () => {
+  test('base64ToBytes and bytesToBase64 are identity for random bytes', () => {
+    // Generate some random bytes
+    const original = new Uint8Array(100);
+    for (let i = 0; i < original.length; i++) {
+      original[i] = Math.floor(Math.random() * 256);
+    }
+    
+    const b64 = bytesToBase64(original);
+    const decoded = base64ToBytes(b64);
+    expect(decoded).toEqual(original);
+  });
+
+  test('base64ToBytes handles newlines, spaces, and padding removal correctly', () => {
+    const original = new Uint8Array([72, 101, 108, 108, 111]); // "Hello"
+    const b64WithFormatting = " SGVs\r\nbG8=  ";
+    const decoded = base64ToBytes(b64WithFormatting);
+    expect(decoded).toEqual(original);
+  });
+
+  test('bytesToBase64 works correctly on chunk boundaries', () => {
+    // 24000 is the chunk size in bytesToBase64. Let's test a length of exactly 24001 bytes,
+    // which crosses the boundary and tests the boundary byte logic.
+    const size = 24001;
+    const bytes = new Uint8Array(size);
+    for (let i = 0; i < size; i++) {
+      bytes[i] = i % 256;
+    }
+
+    const b64 = bytesToBase64(bytes);
+    const decoded = base64ToBytes(b64);
+    expect(decoded).toEqual(bytes);
+  });
+
+  test('reverseAdtsBytes reverses ADTS frames correctly and handles sync', () => {
+    // Construct mock ADTS frames
+    // Each frame starts with syncword 0xFFF (0xFF, 0xF0 | characteristics)
+    // We will construct 3 frames of different sizes
+    const createAdtsFrame = (id: number, size: number) => {
+      const frame = new Uint8Array(size);
+      frame[0] = 0xFF;
+      frame[1] = 0xF0; // syncword
+      // write size into byte 3, 4, 5
+      frame[3] = (size >> 11) & 0x03;
+      frame[4] = (size >> 3) & 0xFF;
+      frame[5] = (size & 0x07) << 5;
+      // write identifying data in body
+      for (let i = 7; i < size; i++) {
+        frame[i] = id;
+      }
+      return frame;
+    };
+
+    const f1 = createAdtsFrame(1, 100);
+    const f2 = createAdtsFrame(2, 150);
+    const f3 = createAdtsFrame(3, 200);
+
+    const stream = new Uint8Array(f1.length + f2.length + f3.length);
+    stream.set(f1, 0);
+    stream.set(f2, f1.length);
+    stream.set(f3, f1.length + f2.length);
+
+    const reversed = reverseAdtsBytes(stream);
+    expect(reversed).not.toBeNull();
+    if (reversed) {
+      expect(reversed.length).toBe(stream.length);
+      
+      // The first frame in reversed stream should be f3 (identifying data = 3)
+      expect(reversed[7]).toBe(3);
+      // The second frame should be f2 (identifying data = 2)
+      expect(reversed[200 + 7]).toBe(2);
+      // The third frame should be f1 (identifying data = 1)
+      expect(reversed[200 + 150 + 7]).toBe(1);
+    }
+  });
+
+  test('reverseAdtsBytes returns null for non-ADTS inputs', () => {
+    const randomData = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(reverseAdtsBytes(randomData)).toBeNull();
+  });
+});
+

@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
-import { Colors } from '@/src/theme/Colors';
+import { Colors, Typography } from '@/src/theme/Colors';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Delete, Check } from 'lucide-react-native';
 import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { AudioManager } from '@/src/services/AudioManager';
+import { PhaseTransition } from './PhaseTransition';
+import { GamePassPhoneView, GamePlayerCompleteView } from './SharedGameComponents';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 
 interface Props { session: GameSession; }
 
@@ -117,11 +120,14 @@ function generateNumber(digits: number): string {
 
 export function EyeSightSession({ session }: Props) {
   const players = session.players;
+  const registerSkip = useRegisterSkip();
   const { width: screenWidth } = useWindowDimensions();
   const [phase, setPhase] = useState<Phase>('difficulty');
   const [difficulty, setDifficulty] = useState<DifficultyDef>(DIFFICULTIES[1]!);
   const [playerIdx, setPlayerIdx] = useState<number>(0);
   const [round, setRound] = useState<number>(1);
+  const [digits, setDigits] = useState<number>(3);
+  const [ms, setMs] = useState<number>(1000);
   const [target, setTarget] = useState<string>('');
   const [input, setInput] = useState<string>('');
   const [countdown, setCountdown] = useState<number>(3);
@@ -131,7 +137,7 @@ export function EyeSightSession({ session }: Props) {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const player = players[playerIdx];
-  const config = roundConfig(difficulty, round);
+  const config = { digits, ms };
 
   const flashScale = useSharedValue<number>(0.9);
   const flashOpacity = useSharedValue<number>(0);
@@ -141,6 +147,19 @@ export function EyeSightSession({ session }: Props) {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
+
+  // Register skip handler during active playing phases
+  useEffect(() => {
+    if (phase === 'countdown' || phase === 'flash' || phase === 'input' || phase === 'correct' || phase === 'wrong') {
+      registerSkip(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        goToNextPlayer();
+      }, player?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [phase, playerIdx]);
 
   /** Auto-shrink flash font so the number stays on a single line at any digit count. */
   const flashFontSize = useMemo(() => {
@@ -171,16 +190,25 @@ export function EyeSightSession({ session }: Props) {
     });
   }, []);
 
-  const startCountdown = useCallback(() => {
+  const startRound = useCallback((r: number) => {
+    const activeConfig = roundConfig(difficulty, r);
+    const num = generateNumber(activeConfig.digits);
+    
+    // Set all state synchronously
+    setRound(r);
+    setDigits(activeConfig.digits);
+    setMs(activeConfig.ms);
+    setTarget(num);
     setInput('');
-    setPhase('countdown');
     setCountdown(3);
+    setPhase('countdown');
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
     let n = 3;
     const tick = () => {
       n -= 1;
       if (n <= 0) {
-        const num = generateNumber(config.digits);
-        setTarget(num);
         flashScale.value = 0.9;
         flashOpacity.value = 0;
         setPhase('flash');
@@ -191,7 +219,7 @@ export function EyeSightSession({ session }: Props) {
         timerRef.current = setTimeout(() => {
           flashOpacity.value = withTiming(0, { duration: 100 });
           setPhase('input');
-        }, config.ms);
+        }, activeConfig.ms);
         return;
       }
       setCountdown(n);
@@ -202,7 +230,7 @@ export function EyeSightSession({ session }: Props) {
     Haptics.selectionAsync();
     AudioManager.play('countdown');
     timerRef.current = setTimeout(tick, 700);
-  }, [config.digits, config.ms, flashOpacity, flashScale]);
+  }, [difficulty, flashOpacity, flashScale]);
 
   const submitAnswer = useCallback(() => {
     if (input.length === 0) return;
@@ -219,8 +247,7 @@ export function EyeSightSession({ session }: Props) {
   }, [input, target, playerIdx, round, config.digits, updateBest]);
 
   const continueAfterCorrect = () => {
-    setRound(round + 1);
-    startCountdown();
+    startRound(round + 1);
   };
 
   const goToNextPlayer = () => {
@@ -234,7 +261,7 @@ export function EyeSightSession({ session }: Props) {
       setRound(1);
       setInput('');
       setTarget('');
-      setPhase('ready');
+      startRound(1);
     }
   };
 
@@ -275,7 +302,7 @@ export function EyeSightSession({ session }: Props) {
   // ─── DIFFICULTY ───
   if (phase === 'difficulty') {
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <ScrollView contentContainerStyle={st.readyContent}>
           <View style={[st.iconBox, { backgroundColor: ACCENT + '26' }]}>
             <IconSymbol name="eye.fill" size={56} color={ACCENT} />
@@ -307,15 +334,34 @@ export function EyeSightSession({ session }: Props) {
             })}
           </View>
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
   // ─── READY ───
   if (phase === 'ready') {
     const isFirstPlayer = playerIdx === 0;
+
+    if (!isFirstPlayer) {
+      return (
+        <PhaseTransition phaseKey={phase} style={{ flex: 1 }}>
+          <GamePassPhoneView
+            playerName={player?.displayName || 'Player'}
+            title={`PLAYER ${playerIdx + 1} OF ${players.length}`}
+            subtitle={`Pass the phone to ${player?.displayName || 'the next player'}. Tap below to start.`}
+            accentColor={ACCENT}
+            onReady={() => startRound(round)}
+            onSkip={() => {
+              // Record score of 0 for skipped player (bestRound/bestDigits already 0)
+              goToNextPlayer();
+            }}
+          />
+        </PhaseTransition>
+      );
+    }
+
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <ScrollView contentContainerStyle={st.readyContent}>
           <View style={[st.iconBox, { backgroundColor: ACCENT + '26' }]}>
             <IconSymbol name="eye.fill" size={56} color={ACCENT} />
@@ -326,43 +372,35 @@ export function EyeSightSession({ session }: Props) {
             <Text style={[st.pillTx, { color: ACCENT }]}>Are you ready?</Text>
           </View>
 
-          {!isFirstPlayer && (
-            <View style={st.handoffCard}>
-              <IconSymbol name="hand.raised.fill" size={22} color={Colors.cyan} />
-              <Text style={st.handoffTx}>Pass the phone to {player?.displayName}. Tap below to start.</Text>
-            </View>
-          )}
-
           <View style={st.rulesCard}>
             <RuleRow num={1} color={ACCENT} text="A countdown of 3, 2, 1 prepares you for the next number." />
             <RuleRow num={2} color={ACCENT} text="A number flashes for a brief moment — watch carefully!" />
             <RuleRow num={3} color={ACCENT} text="Tap the number on the keypad and submit. One wrong answer ends your turn." />
           </View>
 
-          <Pressable style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={startCountdown}>
+          <Pressable style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={() => startRound(round)}>
             <IconSymbol name="play.fill" size={18} color="#fff" />
-            <Text style={st.startBtnTx}>I&apos;m Ready</Text>
+            <Text style={st.startBtnTx}>I'm Ready</Text>
           </Pressable>
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
-  // ─── COUNTDOWN ───
   if (phase === 'countdown') {
     return (
-      <View style={[st.container, st.fullCenter]}>
+      <PhaseTransition phaseKey={phase + countdown} type="scale" style={[st.container, st.fullCenter]}>
         <Text style={st.eyebrow}>ROUND {round} · {config.digits} DIGITS</Text>
         <Text style={st.countdownTx}>{countdown}</Text>
         <Text style={st.bigSub}>Get ready…</Text>
-      </View>
+
+      </PhaseTransition>
     );
   }
 
-  // ─── FLASH ───
   if (phase === 'flash') {
     return (
-      <View style={[st.container, st.fullCenter]}>
+      <PhaseTransition phaseKey={phase} type="fade" style={[st.container, st.fullCenter]}>
         <Text style={st.eyebrow}>ROUND {round}</Text>
         <Animated.Text
           numberOfLines={1}
@@ -375,16 +413,16 @@ export function EyeSightSession({ session }: Props) {
         >
           {target}
         </Animated.Text>
-      </View>
+
+      </PhaseTransition>
     );
   }
 
-  // ─── INPUT ───
   if (phase === 'input') {
     const slots: string[] = [];
     for (let i = 0; i < config.digits; i++) slots.push(input[i] ?? '');
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <View style={st.inputTop}>
           <Text style={st.eyebrow}>ROUND {round} · {config.digits} DIGITS</Text>
           <Text style={st.title}>What did you see?</Text>
@@ -417,14 +455,14 @@ export function EyeSightSession({ session }: Props) {
           onSubmit={submitAnswer}
           canSubmit={input.length === config.digits}
         />
-      </View>
+
+      </PhaseTransition>
     );
   }
 
-  // ─── CORRECT ───
   if (phase === 'correct') {
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <View style={st.center}>
           <View style={[st.iconBox, { backgroundColor: 'rgba(52,199,89,0.15)' }]}>
             <IconSymbol name="checkmark.circle.fill" size={56} color={Colors.green} />
@@ -441,16 +479,16 @@ export function EyeSightSession({ session }: Props) {
           <Pressable style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={continueAfterCorrect}>
             <Text style={st.startBtnTx}>Next Round</Text>
           </Pressable>
+
         </View>
-      </View>
+      </PhaseTransition>
     );
   }
 
-  // ─── WRONG ───
   if (phase === 'wrong') {
     const rec = records[playerIdx];
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <View style={st.center}>
           <View style={[st.iconBox, { backgroundColor: 'rgba(255,59,48,0.18)' }]}>
             <IconSymbol name="xmark.octagon.fill" size={56} color={Colors.red} />
@@ -480,30 +518,22 @@ export function EyeSightSession({ session }: Props) {
           <Pressable style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={() => setPhase('playerComplete')}>
             <Text style={st.startBtnTx}>Continue</Text>
           </Pressable>
+
         </View>
-      </View>
+      </PhaseTransition>
     );
   }
 
-  // ─── PLAYER COMPLETE ───
   if (phase === 'playerComplete') {
     const rec = records[playerIdx];
     const isLast = playerIdx + 1 >= players.length;
     return (
-      <View style={st.container}>
-        <View style={st.center}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(255,204,0,0.18)' }]}>
-            <IconSymbol name="trophy.fill" size={48} color={Colors.yellow} />
-          </View>
-          <Text style={st.title}>{player?.displayName}</Text>
-          <Text style={st.sub}>Best round</Text>
-          <Text style={[st.title, { color: ACCENT, fontSize: 56, marginTop: 4 }]}>{rec?.bestRound ?? 0}</Text>
-          <Text style={st.sub}>Top digit count: {rec?.bestDigits ?? 0}</Text>
-          <Pressable style={[st.startBtn, { backgroundColor: Colors.green }]} onPress={goToNextPlayer}>
-            <Text style={st.startBtnTx}>{isLast ? 'See Final Rankings' : 'Next Player'}</Text>
-          </Pressable>
-        </View>
-      </View>
+      <GamePlayerCompleteView
+        nextPlayerName={isLast ? '' : (players[playerIdx + 1]?.displayName ?? 'Next Player')}
+        prevResultLine={`Best round: ${rec?.bestRound ?? 0} · Top digits: ${rec?.bestDigits ?? 0}`}
+        onReady={goToNextPlayer}
+        accentColor={ACCENT}
+      />
     );
   }
 
@@ -525,7 +555,7 @@ export function EyeSightSession({ session }: Props) {
     }));
 
   return (
-    <View style={st.container}>
+    <PhaseTransition phaseKey={phase} style={st.container}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <ResultsScoreboard
           entries={entries}
@@ -535,7 +565,7 @@ export function EyeSightSession({ session }: Props) {
           shareGameName="Eye Sight"
         />
       </ScrollView>
-    </View>
+    </PhaseTransition>
   );
 }
 
@@ -614,19 +644,19 @@ const st = StyleSheet.create({
     width: 100, height: 100, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 28, fontWeight: 'bold', textAlign: 'center' },
+  title: { color: '#fff', fontSize: 34, fontFamily: 'Viral-Black', textAlign: 'center' },
   eyebrow: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    fontWeight: '900',
+    fontSize: 14,
+    fontFamily: 'Viral-Black',
     letterSpacing: 2.4,
     textAlign: 'center',
     marginTop: 4,
   },
   nameTitle: {
     color: '#fff',
-    fontSize: 34,
-    fontWeight: '900',
+    fontSize: 44,
+    fontFamily: 'Viral-Black',
     textAlign: 'center',
     letterSpacing: 0.3,
     paddingHorizontal: 8,
@@ -643,15 +673,15 @@ const st = StyleSheet.create({
     borderColor: 'rgba(90,200,250,0.25)',
     marginTop: 8,
   },
-  handoffTx: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 19, fontWeight: '600' },
-  sub: { color: 'rgba(255,255,255,0.6)', fontSize: 15, textAlign: 'center' },
-  bigSub: { color: 'rgba(255,255,255,0.7)', fontSize: 16, fontWeight: '600' },
+  handoffTx: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 20, lineHeight: 28, fontWeight: '700' },
+  sub: { color: 'rgba(255,255,255,0.6)', fontSize: 16, textAlign: 'center', fontWeight: '500' },
+  bigSub: { color: 'rgba(255,255,255,0.7)', fontSize: 18, fontFamily: 'Viral-Black' },
   pill: {
-    paddingHorizontal: 14, paddingVertical: 6,
+    paddingHorizontal: 16, paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
   },
-  pillTx: { fontSize: 13, fontWeight: '700' },
+  pillTx: { fontSize: 16, fontFamily: 'Viral-Black' },
 
   rulesCard: {
     width: '100%',
@@ -662,26 +692,26 @@ const st = StyleSheet.create({
   },
   ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   ruleNum: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 34, height: 34, borderRadius: 17,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1,
   },
-  ruleNumTx: { fontSize: 14, fontWeight: 'bold' },
-  ruleTx: { color: 'rgba(255,255,255,0.85)', fontSize: 14, flex: 1, lineHeight: 19 },
+  ruleNumTx: { fontSize: 16, fontFamily: 'Viral-Black' },
+  ruleTx: { color: 'rgba(255,255,255,0.85)', fontSize: 16, flex: 1, lineHeight: 24 },
 
   startBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8,
     paddingVertical: 16, paddingHorizontal: 28,
-    borderRadius: 16, width: '100%',
+    borderRadius: 18, width: '100%',
     marginTop: 18,
   },
-  startBtnTx: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  startBtnTx: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
 
   countdownTx: {
     color: '#fff',
     fontSize: 140,
-    fontWeight: '900',
+    fontFamily: 'Viral-Black',
     letterSpacing: 2,
     textShadowColor: 'rgba(90,200,250,0.5)',
     textShadowOffset: { width: 0, height: 0 },
@@ -689,7 +719,7 @@ const st = StyleSheet.create({
   },
   flashNumber: {
     color: '#fff',
-    fontWeight: '900',
+    fontFamily: 'Viral-Black',
     fontVariant: ['tabular-nums'],
     textShadowColor: 'rgba(90,200,250,0.6)',
     textShadowOffset: { width: 0, height: 0 },
@@ -710,15 +740,16 @@ const st = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  diffEmoji: { fontSize: 30 },
-  diffName: { color: '#fff', fontSize: 18, fontWeight: '800', marginBottom: 2 },
-  diffDesc: { color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' },
+  diffEmoji: { fontSize: 36 },
+  diffName: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', marginBottom: 2 },
+  diffDesc: { color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: '600' },
 
   inputTop: {
-    paddingTop: 24,
+    paddingTop: 20,
     paddingHorizontal: 20,
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    flex: 1,
   },
   slotRow: {
     flexDirection: 'row',
@@ -730,44 +761,47 @@ const st = StyleSheet.create({
   },
   slot: {
     aspectRatio: 0.85,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
+    minHeight: 48,
   },
   slotTx: {
     color: '#fff',
-    fontWeight: '900',
+    fontFamily: 'Viral-Black',
     fontVariant: ['tabular-nums'],
   },
 
   pad: {
     marginTop: 'auto',
-    padding: 12,
-    gap: 10,
+    paddingHorizontal: 10,
+    paddingBottom: 16,
+    paddingTop: 8,
+    gap: 8,
   },
   padRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   padKey: {
     flex: 1,
-    aspectRatio: 1.7,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 16,
+    aspectRatio: 1.65,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.10)',
   },
   padKeyDim: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   padKeyTx: {
     color: '#fff',
-    fontSize: 30,
-    fontWeight: '700',
+    fontSize: 28,
+    fontFamily: 'Viral-Black',
     fontVariant: ['tabular-nums'],
   },
 
@@ -782,6 +816,6 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 8, paddingVertical: 6,
   },
-  attemptIdx: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: '600' },
-  attemptVal: { color: '#fff', fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
+  attemptIdx: { color: 'rgba(255,255,255,0.5)', fontSize: 15, fontWeight: '600' },
+  attemptVal: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
 });

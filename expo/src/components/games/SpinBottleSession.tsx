@@ -8,6 +8,7 @@ import * as Haptics from '@/src/utils/safeHaptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { CurrentTurnPill, BeerBottleView } from '@/src/components/games/SharedGameComponents';
+import { LiquidGlass } from '@/src/components/LiquidGlass';
 
 interface Props { session: GameSession; }
 type Phase = 'idle' | 'spinning' | 'landed' | 'choosing' | 'prompt';
@@ -138,9 +139,13 @@ export function SpinBottleSession({ session }: Props) {
           </View>
           <Text style={st.promptPlayer}>{selectedPlayer?.displayName}</Text>
 
-          <View style={[st.promptCard, { borderColor: promptColor + '73' }]}>
-            <LinearGradient colors={[promptColor + '6B', promptColor + '2E', 'rgba(0,0,0,0.2)']}
-              start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={st.promptCardInner}>
+          <LiquidGlass
+            radius={28}
+            specular
+            tintColor={promptColor + '15'}
+            style={[st.promptCard, { borderColor: promptColor + '73' }]}
+          >
+            <View style={st.promptCardInner}>
               <Text style={st.promptTx}>{promptText}</Text>
               {rerolls > 0 && (
                 <Pressable style={st.rerollBtn} onPress={handleReroll}>
@@ -148,8 +153,8 @@ export function SpinBottleSession({ session }: Props) {
                   <Text style={st.rerollTx}>Reroll · {rerolls} left</Text>
                 </Pressable>
               )}
-            </LinearGradient>
-          </View>
+            </View>
+          </LiquidGlass>
 
           <Pressable onPress={handleDone}>
             <LinearGradient colors={['rgba(52,199,89,0.9)', 'rgba(52,199,89,0.6)']}
@@ -215,7 +220,7 @@ export function SpinBottleSession({ session }: Props) {
               transform: [{ translateX: x }, { translateY: y }],
             }]}>
               {isSelected ? (
-                <CurrentTurnPill playerName={p.displayName} accent={Colors.green} />
+                <CurrentTurnPill playerName={p.displayName} accent={Colors.green} scale={0.55} />
               ) : (
                 <Text style={st.playerNodeTx}>{p.displayName}</Text>
               )}
@@ -283,35 +288,35 @@ export function SpinBottleSession({ session }: Props) {
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8 },
-  headerTitle: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  headerTitle: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   headerSub: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 },
   vibePill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: 'rgba(255,59,48,0.14)', borderRadius: 20 },
   vibeTx: { color: Colors.red, fontSize: 12, fontWeight: 'bold' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 20, marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1.2 },
   bannerLabel: { color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
-  bannerName: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  bannerName: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  avatarTx: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  avatarTx: { color: '#fff', fontSize: 11, fontFamily: 'Viral-Black' },
   circleWrap: { alignSelf: 'center', position: 'relative', alignItems: 'center', justifyContent: 'center' },
   playerNode: { position: 'absolute', alignItems: 'center' },
-  playerNodeTx: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '600', maxWidth: 90 },
+  playerNodeTx: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Viral-Black', maxWidth: 90 },
   restartBtn: { position: 'absolute', top: 8, right: 8, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
   actionArea: { paddingHorizontal: 20, paddingBottom: 24, marginTop: 'auto' },
   spinBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16 },
-  spinBtnTx: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  spinBtnTx: { color: '#fff', fontSize: 16, fontFamily: 'Viral-Black' },
   spinningTx: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 16 },
   choiceBtn: { alignItems: 'center', gap: 6, paddingVertical: 18, borderRadius: 18 },
-  choiceBtnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  choiceBtnTx: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   // Prompt screen
   promptWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, gap: 16 },
   choicePill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  choicePillTx: { color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 2 },
-  promptPlayer: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  choicePillTx: { color: '#fff', fontSize: 12, fontFamily: 'Viral-Black', letterSpacing: 2 },
+  promptPlayer: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black' },
   promptCard: { width: '100%', borderRadius: 28, overflow: 'hidden', borderWidth: 1.5 },
   promptCardInner: { padding: 32, alignItems: 'center', gap: 20 },
-  promptTx: { color: '#fff', fontSize: 22, fontWeight: 'bold', textAlign: 'center', lineHeight: 34 },
+  promptTx: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', textAlign: 'center', lineHeight: 34 },
   rerollBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
   rerollTx: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   doneBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16, width: '100%', paddingHorizontal: 40 },
-  doneBtnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  doneBtnTx: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
 });

@@ -10,6 +10,7 @@ import { SurfaceCard } from '@/src/components/SurfaceCard';
 import { Colors } from '@/src/theme/Colors';
 import { InviteService } from '@/src/services/InviteService';
 import { AudioManager } from '@/src/services/AudioManager';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 
 export default function InviteScreen() {
   const router = useRouter();
@@ -75,14 +76,11 @@ export default function InviteScreen() {
     <View style={styles.container}>
       <AppBackgroundView />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-          <Ionicons name="close" size={28} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Invite Friends</Text>
-        <View style={{ width: 44 }} />
-      </View>
+      <ScreenHeader
+        title="Invite Friends"
+        leftIcon="chevron.left"
+        onLeftPress={() => router.back()}
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Card */}

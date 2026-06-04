@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
-import { useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, Platform, ActivityIndicator, Modal, Dimensions } from 'react-native';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, Platform, ActivityIndicator, Dimensions } from 'react-native';
 import { useSavedIdeasStore, SavedIdea } from '@/src/store/useSavedIdeasStore';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -147,6 +147,8 @@ function generateLocalIdeas(vibeId: string, playerCount: number, context: string
   });
 }
 
+type Step = 'initial' | 'vibe' | 'players' | 'context' | 'loading' | 'results';
+
 interface Props {
   /** Optional initial vibe id (defaults to 'funny'). */
   initialVibeId?: string;
@@ -155,6 +157,7 @@ interface Props {
   /** Override the hero copy. */
   heroTitle?: string;
   heroSubtitle?: string;
+  resetAt?: string;
 }
 
 export function AIGeneratorPanel({
@@ -162,16 +165,23 @@ export function AIGeneratorPanel({
   showHero = true,
   heroTitle = 'Invent your\nnext party game',
   heroSubtitle = "Pick a vibe, set your crew, and we'll cook up fresh games in seconds.",
+  resetAt,
 }: Props) {
   const initial = GAME_VIBES.find(v => v.id === initialVibeId) ?? GAME_VIBES[1];
+  const [currentStep, setCurrentStep] = useState<Step>('initial');
+  
   const [vibe, setVibe] = useState<(typeof GAME_VIBES)[number]>(initial);
   const [playerCount, setPlayerCount] = useState<number>(4);
   const [prompt, setPrompt] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [ideas, setIdeas] = useState<any[]>([]);
-  const [showModal, setShowModal] = useState(false);
   const previouslyShown = useRef<Set<string>>(new Set());
   const { saveIdea, isIdeaSaved } = useSavedIdeasStore();
+
+  useEffect(() => {
+    if (resetAt) {
+      setCurrentStep('initial');
+    }
+  }, [resetAt]);
 
   const handleSaveIdea = useCallback((idea: any) => {
     saveIdea({ id: idea.id, title: idea.title, description: idea.description, steps: idea.steps, tags: idea.tags, savedAt: Date.now() });
@@ -181,8 +191,7 @@ export function AIGeneratorPanel({
   const maxPlayers = 20;
 
   const handleGenerate = async () => {
-    if (isGenerating) return;
-    setIsGenerating(true);
+    setCurrentStep('loading');
     setIdeas([]);
 
     const excludedTitles = Array.from(previouslyShown.current);
@@ -214,13 +223,30 @@ export function AIGeneratorPanel({
       setIdeas(localIdeas.length > 0 ? localIdeas : generateLocalIdeas(vibe.id, playerCount, prompt));
     }
 
-    setIsGenerating(false);
-    setShowModal(true);
+    setCurrentStep('results');
+  };
+
+  const renderProgressBar = () => {
+    const steps = ['vibe', 'players', 'context', 'results'];
+    let stepIndex = steps.indexOf(currentStep);
+    if (stepIndex === -1) stepIndex = 3; // loading is treated as step 3
+    const progress = Math.max(0.1, (stepIndex + 1) / 4);
+
+    if (currentStep === 'initial' || currentStep === 'results' || currentStep === 'loading') return null;
+
+    return (
+      <View style={styles.progressBarContainer}>
+        <View style={styles.progressBarTrack}>
+          <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+        </View>
+        <Text style={styles.progressText}>Step {stepIndex + 1} of 3</Text>
+      </View>
+    );
   };
 
   return (
     <View style={styles.root}>
-      {showHero && (
+      {showHero && currentStep !== 'results' && currentStep !== 'loading' && (
         <View style={styles.heroCardWrapper}>
           <LinearGradient
             colors={['rgba(175, 82, 222, 0.55)', 'rgba(0, 122, 255, 0.35)', 'rgba(255, 45, 85, 0.25)']}
@@ -243,133 +269,187 @@ export function AIGeneratorPanel({
         </View>
       )}
 
-      {/* Vibe Section */}
-      <View style={styles.sectionContainer}>
-        <View style={styles.vibeHeader}>
-          <Text style={styles.sectionTitle}>Choose a vibe</Text>
-          <Text style={[styles.selectedVibeText, { color: vibe.color }]}>{vibe.title}</Text>
+      {renderProgressBar()}
+
+      {/* STEP 0: INITIAL */}
+      {currentStep === 'initial' && (
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity style={styles.nextButtonWrapper} onPress={() => setCurrentStep('vibe')}>
+            <LinearGradient
+              colors={['#AF52DE', Colors.blue]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionButton}
+            >
+              <IconSymbol name="sparkles" size={18} color="white" />
+              <Text style={styles.actionButtonText}>Generate your game</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-        <View style={styles.vibeGrid}>
-          {GAME_VIBES.map((v) => {
-            const isSelected = vibe.id === v.id;
-            return (
-              <TouchableOpacity
-                key={v.id}
-                style={[
-                  styles.vibeTile,
-                  isSelected ? { borderColor: 'rgba(255,255,255,0.25)' } : { borderColor: `${v.color}38` },
-                ]}
-                onPress={() => setVibe(v)}
-                activeOpacity={0.7}
-              >
-                {Platform.OS === 'ios' && BlurViewComponent ? (
-                  <BlurViewComponent tint="dark" intensity={isSelected ? 40 : 20} style={StyleSheet.absoluteFill} />
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: isSelected ? `${v.color}40` : 'rgba(20,20,30,0.92)' }]} />
-                )}
-                <LinearGradient
-                  colors={isSelected ? [v.color, `${v.color}B3`] : ['transparent', 'transparent']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.vibeTileGradient}
+      )}
+
+      {/* STEP 1: VIBE */}
+      {currentStep === 'vibe' && (
+        <View style={styles.sectionContainer}>
+          <View style={styles.vibeHeader}>
+            <Text style={styles.sectionTitle}>Choose a vibe</Text>
+          </View>
+          <View style={styles.vibeGrid}>
+            {GAME_VIBES.map((v) => {
+              const isSelected = vibe.id === v.id;
+              return (
+                <TouchableOpacity
+                  key={v.id}
+                  style={[
+                    styles.vibeTile,
+                    isSelected ? { borderColor: 'rgba(255,255,255,0.25)' } : { borderColor: `${v.color}38` },
+                  ]}
+                  onPress={() => setVibe(v)}
+                  activeOpacity={0.7}
                 >
-                  <IconSymbol name={v.icon as any} size={16} color={isSelected ? 'white' : v.color} />
-                  <Text style={[styles.vibeTileText, { color: isSelected ? 'white' : 'rgba(255,255,255,0.85)' }]} numberOfLines={1}>
-                    {v.title}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            );
-          })}
+                  {Platform.OS === 'ios' && BlurViewComponent ? (
+                    <BlurViewComponent tint="dark" intensity={isSelected ? 40 : 20} style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: isSelected ? `${v.color}40` : 'rgba(20,20,30,0.92)' }]} />
+                  )}
+                  <LinearGradient
+                    colors={isSelected ? [v.color, `${v.color}B3`] : ['transparent', 'transparent']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.vibeTileGradient}
+                  >
+                    <IconSymbol name={v.icon as any} size={16} color={isSelected ? 'white' : v.color} />
+                    <Text style={[styles.vibeTileText, { color: isSelected ? 'white' : 'rgba(255,255,255,0.85)' }]} numberOfLines={1}>
+                      {v.title}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          
+          <TouchableOpacity style={styles.nextButtonWrapper} onPress={() => setCurrentStep('players')}>
+            <LinearGradient
+              colors={['#AF52DE', Colors.blue]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionButton}
+            >
+              <Text style={styles.actionButtonText}>Next: Players</Text>
+              <IconSymbol name="arrow.right" size={16} color="white" />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-      </View>
+      )}
 
-      {/* Players + Context */}
-      <View style={styles.detailsContainer}>
-        <SurfaceBlur intensity={30} style={[styles.surfaceCard, { overflow: 'hidden' }]}>
-          <View style={styles.playersRow}>
-            <IconSymbol name="person.2.fill" size={18} color={Colors.green} />
-            <Text style={styles.playersLabel}>Players</Text>
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity
-              style={[styles.stepperButton, playerCount <= minPlayers && styles.stepperDisabled]}
-              onPress={() => setPlayerCount(Math.max(minPlayers, playerCount - 1))}
-              disabled={playerCount <= minPlayers}
-            >
-              <IconSymbol name="minus" size={14} color={Colors.green} />
-            </TouchableOpacity>
-            <Text style={styles.playerCount}>{playerCount}</Text>
-            <TouchableOpacity
-              style={[styles.stepperButton, playerCount >= maxPlayers && styles.stepperDisabled]}
-              onPress={() => setPlayerCount(Math.min(maxPlayers, playerCount + 1))}
-              disabled={playerCount >= maxPlayers}
-            >
-              <IconSymbol name="plus" size={14} color={Colors.green} />
-            </TouchableOpacity>
-          </View>
-        </SurfaceBlur>
-
-        <SurfaceBlur intensity={30} style={[styles.surfaceCard, { overflow: 'hidden' }]}>
-          <View style={styles.contextHeader}>
-            <IconSymbol name="text.alignleft" size={12} color="rgba(255,255,255,0.9)" />
-            <Text style={styles.contextLabel}>Context</Text>
-          </View>
-          <View style={styles.contextInputWrapper}>
-            <TextInput
-              style={styles.contextInput}
-              placeholder="e.g. road trip, birthday, couples…"
-              placeholderTextColor="rgba(255,255,255,0.4)"
-              multiline
-              numberOfLines={3}
-              value={prompt}
-              onChangeText={setPrompt}
-            />
-          </View>
-        </SurfaceBlur>
-      </View>
-
-      {/* Generate Button */}
-      <TouchableOpacity style={styles.generateButtonWrapper} onPress={handleGenerate} disabled={isGenerating}>
-        <LinearGradient
-          colors={isGenerating ? ['#6B3FA0', '#3D5A99'] : ['#AF52DE', Colors.blue]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.generateButton}
-        >
-          {isGenerating ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <IconSymbol name="sparkles" size={18} color="white" />
-          )}
-          <Text style={styles.generateButtonText}>
-            {isGenerating ? 'Creating Games…' : 'Generate Ideas'}
-          </Text>
-        </LinearGradient>
-      </TouchableOpacity>
-
-      {/* Ideas Modal */}
-      <Modal visible={showModal} transparent animationType="slide" onRequestClose={() => setShowModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <IconSymbol name="sparkles" size={18} color="#AF52DE" />
-                <Text style={styles.modalTitle}>Generated Ideas</Text>
-              </View>
-              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowModal(false)}>
-                <IconSymbol name="xmark" size={16} color="white" />
+      {/* STEP 2: PLAYERS */}
+      {currentStep === 'players' && (
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>How many players?</Text>
+          <SurfaceBlur intensity={30} style={[styles.surfaceCard, { overflow: 'hidden', marginTop: 10, paddingVertical: 24 }]}>
+            <View style={[styles.playersRow, { justifyContent: 'center', gap: 20 }]}>
+              <TouchableOpacity
+                style={[styles.stepperButtonLarge, playerCount <= minPlayers && styles.stepperDisabled]}
+                onPress={() => setPlayerCount(Math.max(minPlayers, playerCount - 1))}
+                disabled={playerCount <= minPlayers}
+              >
+                <IconSymbol name="minus" size={20} color={Colors.green} />
+              </TouchableOpacity>
+              <Text style={styles.playerCountLarge}>{playerCount}</Text>
+              <TouchableOpacity
+                style={[styles.stepperButtonLarge, playerCount >= maxPlayers && styles.stepperDisabled]}
+                onPress={() => setPlayerCount(Math.min(maxPlayers, playerCount + 1))}
+                disabled={playerCount >= maxPlayers}
+              >
+                <IconSymbol name="plus" size={20} color={Colors.green} />
               </TouchableOpacity>
             </View>
+          </SurfaceBlur>
 
-            {/* Ideas List */}
-            <View style={styles.modalIdeasList}>
+          <View style={styles.buttonRow}>
+             <TouchableOpacity style={styles.backBtn} onPress={() => setCurrentStep('vibe')}>
+               <IconSymbol name="arrow.left" size={16} color="rgba(255,255,255,0.6)" />
+             </TouchableOpacity>
+             <TouchableOpacity style={[styles.nextButtonWrapper, { flex: 1, marginTop: 0 }]} onPress={() => setCurrentStep('context')}>
+               <LinearGradient
+                 colors={['#AF52DE', Colors.blue]}
+                 start={{ x: 0, y: 0 }}
+                 end={{ x: 1, y: 0 }}
+                 style={styles.actionButton}
+               >
+                 <Text style={styles.actionButtonText}>Next: Context</Text>
+                 <IconSymbol name="arrow.right" size={16} color="white" />
+               </LinearGradient>
+             </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* STEP 3: CONTEXT */}
+      {currentStep === 'context' && (
+        <View style={styles.sectionContainer}>
+           <Text style={styles.sectionTitle}>Add context (optional)</Text>
+           <Text style={styles.sectionSubtitle}>Tell us about the occasion, the people, or any specific theme.</Text>
+           
+           <SurfaceBlur intensity={30} style={[styles.surfaceCard, { overflow: 'hidden', marginTop: 10 }]}>
+            <View style={styles.contextInputWrapper}>
+              <TextInput
+                style={styles.contextInput}
+                placeholder="e.g. road trip, birthday, couples, drunk friends..."
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                multiline
+                numberOfLines={4}
+                value={prompt}
+                onChangeText={setPrompt}
+              />
+            </View>
+          </SurfaceBlur>
+
+          <View style={styles.buttonRow}>
+             <TouchableOpacity style={styles.backBtn} onPress={() => setCurrentStep('players')}>
+               <IconSymbol name="arrow.left" size={16} color="rgba(255,255,255,0.6)" />
+             </TouchableOpacity>
+             <TouchableOpacity style={[styles.nextButtonWrapper, { flex: 1, marginTop: 0 }]} onPress={handleGenerate}>
+               <LinearGradient
+                 colors={['#AF52DE', Colors.blue]}
+                 start={{ x: 0, y: 0 }}
+                 end={{ x: 1, y: 0 }}
+                 style={styles.actionButton}
+               >
+                 <IconSymbol name="sparkles" size={18} color="white" />
+                 <Text style={styles.actionButtonText}>Generate Ideas</Text>
+               </LinearGradient>
+             </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* LOADING */}
+      {currentStep === 'loading' && (
+         <View style={styles.loadingContainer}>
+           <ActivityIndicator size="large" color="#AF52DE" />
+           <Text style={styles.loadingText}>Generating your games...</Text>
+           <Text style={styles.loadingSubtext}>AI is thinking creatively.</Text>
+         </View>
+      )}
+
+      {/* RESULTS */}
+      {currentStep === 'results' && (
+        <View style={styles.resultsContainer}>
+          <View style={styles.resultsHeader}>
+            <Text style={styles.sectionTitle}>Your Games</Text>
+            <TouchableOpacity onPress={() => setCurrentStep('vibe')}>
+              <Text style={styles.startOverText}>Start Over</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.ideasList}>
               {ideas.map((idea) => {
                 const saved = isIdeaSaved(idea.id);
                 return (
-                  <View key={idea.id} style={styles.modalIdeaCard}>
+                  <View key={idea.id} style={styles.ideaCard}>
                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25,25,40,0.97)', borderRadius: 16 }]} />
-                    <View style={{ padding: 14, gap: 10 }}>
+                    <View style={{ padding: 16, gap: 12 }}>
                       <View style={styles.ideaHeaderRow}>
                         <View style={styles.ideaIcon}>
                           <IconSymbol name="sparkle" size={18} color={Colors.yellow} />
@@ -386,14 +466,16 @@ export function AIGeneratorPanel({
                           <IconSymbol name={saved ? 'checkmark' : 'bookmark'} size={14} color={saved ? Colors.green : '#AF52DE'} />
                         </TouchableOpacity>
                       </View>
-                      {idea.steps.map((step: string, i: number) => (
-                        <View key={i} style={styles.stepRow}>
-                          <View style={styles.stepBadge}>
-                            <Text style={styles.stepBadgeText}>{i + 1}</Text>
+                      <View style={styles.ideaStepsContainer}>
+                        {idea.steps.map((step: string, i: number) => (
+                          <View key={i} style={styles.stepRow}>
+                            <View style={styles.stepBadge}>
+                              <Text style={styles.stepBadgeText}>{i + 1}</Text>
+                            </View>
+                            <Text style={styles.stepText}>{step}</Text>
                           </View>
-                          <Text style={styles.stepText}>{step}</Text>
-                        </View>
-                      ))}
+                        ))}
+                      </View>
                       {idea.tags && idea.tags.length > 0 && (
                         <View style={styles.tagsRow}>
                           {idea.tags.map((tag: string) => (
@@ -407,10 +489,22 @@ export function AIGeneratorPanel({
                   </View>
                 );
               })}
-            </View>
           </View>
+
+          <TouchableOpacity style={styles.regenerateButtonWrapper} onPress={handleGenerate}>
+              <LinearGradient
+                  colors={['#00C7BE', '#007AFF']}
+                  start={{ x: 0, y: 0 }}
+                 end={{ x: 1, y: 0 }}
+                 style={styles.regenerateButton}
+               >
+                 <IconSymbol name="arrow.triangle.2.circlepath" size={16} color="white" />
+                 <Text style={styles.regenerateButtonText}>Regenerate Ideas</Text>
+             </LinearGradient>
+          </TouchableOpacity>
         </View>
-      </Modal>
+      )}
+
     </View>
   );
 }
@@ -439,81 +533,76 @@ const styles = StyleSheet.create({
   heroTitle: { color: 'white', fontSize: 28, fontFamily: 'Viral-Black' },
   heroSubtitle: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18, marginTop: 4 },
   heroIconWrapper: { position: 'absolute', right: -20, top: 20, opacity: 0.8 },
+  
+  progressBarContainer: { marginBottom: 20, paddingHorizontal: 4 },
+  progressBarTrack: { height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' },
+  progressBarFill: { height: '100%', backgroundColor: '#AF52DE', borderRadius: 2 },
+  progressText: { color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 6, textAlign: 'right', fontWeight: '600' },
+
   sectionContainer: { marginBottom: 20 },
-  vibeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  sectionTitle: { fontFamily: 'Viral-Black', color: 'white', fontSize: 16 },
-  selectedVibeText: { fontSize: 12, fontWeight: '600' },
+  vibeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontFamily: 'Viral-Black', color: 'white', fontSize: 22 },
+  sectionSubtitle: { color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 4 },
   vibeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  vibeTile: { width: '23%', height: 64, borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
+  vibeTile: { width: '23%', height: 68, borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
   vibeTileGradient: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 4 },
   vibeTileText: { fontSize: 11, fontWeight: 'bold' },
-  detailsContainer: { gap: 14, marginBottom: 20 },
+  
   surfaceCard: {
     backgroundColor: 'transparent',
     borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
-    padding: 14,
+    padding: 16,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10 },
       android: { elevation: 6 },
     }),
   },
+  
   playersRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  playersLabel: { color: Colors.green, fontSize: 15, fontWeight: '600' },
-  stepperButton: {
-    width: 28, height: 28, borderRadius: 14,
+  stepperButtonLarge: {
+    width: 48, height: 48, borderRadius: 24,
     backgroundColor: 'rgba(52, 199, 89, 0.12)',
     justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(52, 199, 89, 0.2)'
   },
   stepperDisabled: { opacity: 0.3 },
-  playerCount: { color: Colors.green, fontSize: 20, fontWeight: 'bold', minWidth: 28, textAlign: 'center' },
-  contextHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  contextLabel: { color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: 'bold' },
+  playerCountLarge: { color: Colors.green, fontSize: 32, fontWeight: 'bold', minWidth: 40, textAlign: 'center' },
+  
   contextInputWrapper: {
     backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 14,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden',
   },
   contextInput: {
-    color: 'white', fontSize: 15,
-    paddingHorizontal: 14, paddingVertical: 12,
-    minHeight: 80, textAlignVertical: 'top',
+    color: 'white', fontSize: 16,
+    paddingHorizontal: 16, paddingVertical: 14,
+    minHeight: 120, textAlignVertical: 'top',
   },
-  generateButtonWrapper: {
-    borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', overflow: 'hidden',
-    ...Platform.select({
-      ios: { shadowColor: '#AF52DE', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12 },
-      android: { elevation: 6 },
-    }),
-    marginBottom: 20,
-  },
-  generateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 10 },
-  generateButtonText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
-  // Modal styles
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#1A1A2E',
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    maxHeight: Dimensions.get('window').height * 0.85,
-    paddingBottom: 40,
-    borderWidth: 1, borderColor: 'rgba(175,82,222,0.25)',
-  },
-  modalHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)',
-  },
-  modalTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-  modalCloseBtn: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  
+  buttonRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 24 },
+  backBtn: { 
+    width: 50, height: 50, borderRadius: 16, 
+    backgroundColor: 'rgba(255,255,255,0.08)', 
     justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)'
   },
-  modalIdeasList: { paddingHorizontal: 16, paddingTop: 14, gap: 14 },
-  modalIdeaCard: {
+  nextButtonWrapper: {
+    borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', overflow: 'hidden',
+    marginTop: 24,
+  },
+  actionButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 10 },
+  actionButtonText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
+
+  loadingContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 16 },
+  loadingText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  loadingSubtext: { color: 'rgba(255,255,255,0.5)', fontSize: 14 },
+
+  resultsContainer: { paddingBottom: 20 },
+  resultsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 },
+  startOverText: { color: '#AF52DE', fontSize: 14, fontWeight: 'bold' },
+  ideasList: { gap: 16 },
+  ideaCard: {
     borderRadius: 16, overflow: 'hidden',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
@@ -530,8 +619,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   ideaTexts: { flex: 1, gap: 3 },
-  ideaTitle: { color: 'white', fontSize: 15, fontWeight: 'bold' },
-  ideaDescription: { color: 'rgba(255,255,255,0.6)', fontSize: 12 },
+  ideaTitle: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  ideaDescription: { color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 18 },
+  ideaStepsContainer: { backgroundColor: 'rgba(0,0,0,0.2)', padding: 12, borderRadius: 12, gap: 8 },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   stepBadge: {
     width: 20, height: 20, borderRadius: 10,
@@ -539,8 +629,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   stepBadgeText: { color: Colors.blue, fontSize: 11, fontWeight: 'bold' },
-  stepText: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 },
+  stepText: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 1, lineHeight: 18 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  tagBadge: { backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
+  tagBadge: { backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   tagText: { color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '600' },
+
+  regenerateButtonWrapper: { marginTop: 24, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
+  regenerateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
+  regenerateButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' }
 });
+

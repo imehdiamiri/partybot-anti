@@ -283,6 +283,22 @@ export const Games: Record<string, GameType> = {
     heroImageURL: null,
     heroImageLocal: require('@/assets/images/heroes/drum-challenge.png'),
   },
+  perfectShave: {
+    id: 'perfect_shave',
+    name: 'Perfect Shave',
+    shortDescription: 'A razor glides left and right — tap to shave a clean strip. Cover 100% in the fewest moves.',
+    minPlayers: 1,
+    maxPlayers: 30,
+    unlockCostStars: 0,
+    isFreeForever: true,
+    hasFreeTrial: false,
+    isPremium: false,
+    symbolName: 'scissors',
+    supportedModes: [GameMode.singleDevice],
+    roundDuration: 0,
+    heroImageURL: null,
+    heroImageLocal: require('@/assets/images/heroes/perfect-shave.png'),
+  },
 };
 
 export const GameLibrary: GameType[] = [
@@ -300,6 +316,7 @@ export const GameLibrary: GameType[] = [
   Games.reactionTime,
   Games.eyeSight,
   Games.drumChallenge,
+  Games.perfectShave,
 ];
 
 export interface GameDefinition {
@@ -324,6 +341,7 @@ export const GamesDefinitions: GameDefinition[] = [
   { id: Games.colorTrap, accentName: 'red' },
   { id: Games.drawRush, accentName: 'blue' },
   { id: Games.spinBottle, accentName: 'purple' },
+  { id: Games.perfectShave, accentName: 'teal' },
 ];
 
 export const getPlayerCountText = (min: number, max: number): string => `${min}–${max} players`;

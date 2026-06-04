@@ -1,8 +1,10 @@
 import { Colors } from '@/src/theme/Colors';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Alert, AppState, AppStateStatus } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { PhaseTransition } from './PhaseTransition';
+import { LiquidGlass } from '@/src/components/LiquidGlass';
 
 // Platform-safe imports
 let Audio: any = null;
@@ -11,15 +13,26 @@ let FileSystemEncoding: any = { Base64: 'base64', UTF8: 'utf8' };
 let Sharing: any = null;
 
 if (Platform.OS !== 'web') {
-  try { Audio = require('expo-av').Audio; } catch {}
   try {
-    const fs = require('expo-file-system');
+    const av = require('expo-av');
+    Audio = av.Audio;
+  } catch {}
+  try {
+    // SDK 54+: legacy API path for readAsStringAsync/writeAsStringAsync/getInfoAsync
+    const fs = require('expo-file-system/legacy');
     FileSystem = fs;
-    // EncodingType may be on default export or as named export
     if (fs.EncodingType) {
       FileSystemEncoding = fs.EncodingType;
     }
-  } catch {}
+  } catch {
+    try {
+      const fs = require('expo-file-system');
+      FileSystem = fs;
+      if (fs.EncodingType) {
+        FileSystemEncoding = fs.EncodingType;
+      }
+    } catch {}
+  }
   try { Sharing = require('expo-sharing'); } catch {}
 }
 
@@ -30,166 +43,182 @@ interface Props {
 const MAX_RECORD_SECONDS = 60;
 const WAVEFORM_BARS = [0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.4, 0.3, 0.6, 0.5];
 
-// ─── Base64 helpers (Hermes-safe, no atob/btoa needed) ───
-const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-const B64_LOOKUP = new Uint8Array(128);
-for (let i = 0; i < B64_CHARS.length; i++) B64_LOOKUP[B64_CHARS.charCodeAt(i)] = i;
+// ─── Audio Reversal (Pure JS, no WebView) ─────────────────
 
-function base64ToBytes(b64: string): Uint8Array {
-  // Strip padding
-  let len = b64.length;
-  while (len > 0 && b64[len - 1] === '=') len--;
-
-  const byteLen = (len * 3) >> 2;
-  const bytes = new Uint8Array(byteLen);
-  let p = 0;
-
-  for (let i = 0; i < len; i += 4) {
-    const a = B64_LOOKUP[b64.charCodeAt(i)];
-    const b = i + 1 < len ? B64_LOOKUP[b64.charCodeAt(i + 1)] : 0;
-    const c = i + 2 < len ? B64_LOOKUP[b64.charCodeAt(i + 2)] : 0;
-    const d = i + 3 < len ? B64_LOOKUP[b64.charCodeAt(i + 3)] : 0;
-
-    bytes[p++] = (a << 2) | (b >> 4);
-    if (p < byteLen) bytes[p++] = ((b & 0x0F) << 4) | (c >> 2);
-    if (p < byteLen) bytes[p++] = ((c & 0x03) << 6) | d;
-  }
-  return bytes;
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  const len = bytes.length;
-  const parts: string[] = [];
-  // Process in chunks to avoid stack overflow on large arrays
-  const CHUNK = 24000; // must be multiple of 3
-
-  for (let offset = 0; offset < len; offset += CHUNK) {
-    const end = Math.min(offset + CHUNK, len);
-    let chunk = '';
-    for (let i = offset; i < end; i += 3) {
-      const a = bytes[i];
-      const b = i + 1 < end ? bytes[i + 1] : 0;
-      const c = i + 2 < end ? bytes[i + 2] : 0;
-
-      chunk += B64_CHARS[a >> 2];
-      chunk += B64_CHARS[((a & 0x03) << 4) | (b >> 4)];
-      chunk += (i + 1 < len) ? B64_CHARS[((b & 0x0F) << 2) | (c >> 6)] : '=';
-      chunk += (i + 2 < len) ? B64_CHARS[c & 0x3F] : '=';
-    }
-    parts.push(chunk);
-  }
-  return parts.join('');
-}
-
-// ─── WAV PCM Reversal ────────────────────────────────────
-// Reads a WAV file (recorded as LINEAR_PCM / WAV), reverses
-// the sample data at the byte level, writes a new file.
-
-async function reverseWavFile(inputUri: string): Promise<string | null> {
-  if (!FileSystem) {
-    Alert.alert('Reverse Error', 'File system module is not available.');
-    return null;
-  }
+/**
+ * Reverses audio data from a recorded file and outputs a WAV.
+ * Supports WAV (RIFF/WAVE), CAF (iOS), and raw PCM fallback.
+ * Uses native Hermes atob/btoa for performance.
+ */
+async function reverseAudioFile(inputUri: string): Promise<{ uri: string | null; error?: string }> {
+  if (!FileSystem) return { uri: null, error: 'FileSystem not available' };
 
   try {
-    // Read the full file as base64
-    const base64 = await FileSystem.readAsStringAsync(inputUri, {
+    // 1. Read file as base64
+    const b64 = await FileSystem.readAsStringAsync(inputUri, {
       encoding: FileSystemEncoding.Base64,
     });
+    if (!b64 || b64.length < 100) return { uri: null, error: `File too small (${b64?.length || 0} chars)` };
 
-    if (!base64 || base64.length < 100) {
-      Alert.alert('Reverse Error', 'Recording file is empty or too small.');
-      return null;
-    }
+    // 2. Decode base64 → bytes
+    const raw = atob(b64);
+    const len = raw.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = raw.charCodeAt(i);
 
-    // Decode base64 → byte array (Hermes-safe, no atob)
-    const bytes = base64ToBytes(base64);
+    // 3. Detect format and locate PCM data
+    const magic = len > 4 ? String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) : '';
+    const wavId = len > 12 ? String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]) : '';
 
-    // Parse WAV header (standard 44-byte RIFF header)
-    // Validate it's a WAV: "RIFF" at offset 0, "WAVE" at offset 8
-    const riff = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
-    const wave = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    let dataStart = 0;
+    let dataLen = 0;
+    let sampleRate = 44100;
+    let channels = 1;
+    let bitDepth = 16;
+    let format = 'raw';
 
-    if (riff !== 'RIFF' || wave !== 'WAVE') {
-      console.warn('reverseWavFile: Not a valid WAV file (got', riff, wave, ')');
-      Alert.alert('Reverse Error', 'The recorded audio is not in WAV format. Try recording again.');
-      return null;
-    }
-
-    // Find the "data" chunk — usually starts at byte 36, but search for it
-    let dataOffset = 12;
-    let dataSize = 0;
-    while (dataOffset < bytes.length - 8) {
-      const chunkId = String.fromCharCode(
-        bytes[dataOffset], bytes[dataOffset + 1],
-        bytes[dataOffset + 2], bytes[dataOffset + 3]
-      );
-      const chunkSize = bytes[dataOffset + 4] |
-        (bytes[dataOffset + 5] << 8) |
-        (bytes[dataOffset + 6] << 16) |
-        (bytes[dataOffset + 7] << 24);
-
-      if (chunkId === 'data') {
-        dataOffset += 8; // skip "data" + size field
-        dataSize = chunkSize;
-        break;
+    if (magic === 'RIFF' && wavId === 'WAVE') {
+      // ── WAV ──
+      format = 'wav';
+      let off = 12;
+      while (off < len - 8) {
+        const id = String.fromCharCode(bytes[off], bytes[off+1], bytes[off+2], bytes[off+3]);
+        const sz = (bytes[off+4] | (bytes[off+5] << 8) | (bytes[off+6] << 16) | (bytes[off+7] << 24)) >>> 0;
+        if (id === 'fmt ' && sz >= 16) {
+          channels = bytes[off+10] | (bytes[off+11] << 8);
+          sampleRate = (bytes[off+12] | (bytes[off+13] << 8) | (bytes[off+14] << 16) | (bytes[off+15] << 24)) >>> 0;
+          bitDepth = bytes[off+22] | (bytes[off+23] << 8);
+        } else if (id === 'data') {
+          dataStart = off + 8;
+          dataLen = Math.min(sz, len - dataStart);
+          break;
+        }
+        off += 8 + sz + (sz % 2);
+        if (off <= 12) break;
       }
-      dataOffset += 8 + chunkSize;
+    } else if (magic === 'caff') {
+      // ── CAF (iOS) ──
+      format = 'caf';
+      let off = 8;
+      while (off < len - 12) {
+        const id = String.fromCharCode(bytes[off], bytes[off+1], bytes[off+2], bytes[off+3]);
+        const szHi = ((bytes[off+4] << 24) | (bytes[off+5] << 16) | (bytes[off+6] << 8) | bytes[off+7]) >>> 0;
+        const szLo = ((bytes[off+8] << 24) | (bytes[off+9] << 16) | (bytes[off+10] << 8) | bytes[off+11]) >>> 0;
+        const isInf = szHi === 0xFFFFFFFF && szLo === 0xFFFFFFFF;
+        const chunkLen = isInf ? (len - off - 12) : szLo;
+
+        if (id === 'desc' && chunkLen >= 32) {
+          const d = off + 12;
+          // CAF Audio Description: sampleRate(f64) formatID(4) formatFlags(4) bytesPerPacket(4) framesPerPacket(4) channelsPerFrame(4) bitsPerChannel(4)
+          try {
+            const buf = new ArrayBuffer(8);
+            const dv = new DataView(buf);
+            for (let i = 0; i < 8; i++) dv.setUint8(i, bytes[d + i]);
+            sampleRate = Math.round(dv.getFloat64(0, false));
+          } catch {}
+          // channelsPerFrame at offset 24, bitsPerChannel at offset 28
+          channels = ((bytes[d+24] << 24) | (bytes[d+25] << 16) | (bytes[d+26] << 8) | bytes[d+27]) >>> 0;
+          bitDepth = ((bytes[d+28] << 24) | (bytes[d+29] << 16) | (bytes[d+30] << 8) | bytes[d+31]) >>> 0;
+        } else if (id === 'data') {
+          dataStart = off + 12 + 4; // +4 for editCount
+          dataLen = isInf ? (len - dataStart) : Math.max(0, chunkLen - 4);
+          dataLen = Math.min(dataLen, len - dataStart);
+          break;
+        }
+        off += 12 + chunkLen;
+        if (chunkLen <= 0 && !isInf) break;
+      }
     }
 
-    if (dataSize === 0) {
-      console.warn('reverseWavFile: Could not find data chunk');
-      Alert.alert('Reverse Error', 'Could not parse the audio data. Try recording again.');
-      return null;
+    // Raw PCM fallback: if we couldn't find data in any known format,
+    // just skip the first 44 bytes (likely a header) and treat rest as PCM
+    if (dataLen <= 0) {
+      format = 'raw-fallback';
+      dataStart = Math.min(44, len);
+      dataLen = len - dataStart;
+      sampleRate = 44100;
+      channels = 1;
+      bitDepth = 16;
     }
 
-    // Get bits per sample (byte 34-35 in standard WAV header)
-    const bitsPerSample = bytes[34] | (bytes[35] << 8);
-    const bytesPerSample = bitsPerSample / 8;
-    const numChannels = bytes[22] | (bytes[23] << 8);
-    const blockAlign = bytesPerSample * numChannels;
+    // 4. Sanity
+    if (channels <= 0) channels = 1;
+    if (bitDepth <= 0) bitDepth = 16;
+    if (sampleRate <= 0) sampleRate = 44100;
+    const blockAlign = channels * (bitDepth / 8);
+    if (blockAlign <= 0 || dataLen <= 0 || dataStart >= len) {
+      return { uri: null, error: `Bad audio: fmt=${format} magic=${magic} dataStart=${dataStart} dataLen=${dataLen} len=${len}` };
+    }
+    dataLen = Math.min(dataLen, len - dataStart);
 
-    if (blockAlign === 0 || bytesPerSample === 0) {
-      Alert.alert('Reverse Error', 'Invalid WAV format (0 bytes per sample).');
-      return null;
+    const rawSize = Math.floor(dataLen / blockAlign) * blockAlign;
+    const numSamples = Math.floor(rawSize / blockAlign);
+    if (numSamples <= 0) {
+      return { uri: null, error: `No samples: fmt=${format} rawSize=${rawSize} blockAlign=${blockAlign}` };
     }
 
-    // Reverse the audio samples in the data section
-    const reversed = new Uint8Array(bytes.length);
-    reversed.set(bytes); // copy full file including header
+    // 5. Build reversed WAV
+    const outLen = 44 + rawSize;
+    const out = new Uint8Array(outLen);
 
-    const numSamples = Math.floor(dataSize / blockAlign);
+    // WAV header
+    const s = (o: number, str: string) => { for (let i = 0; i < str.length; i++) out[o+i] = str.charCodeAt(i); };
+    const u16 = (o: number, v: number) => { out[o] = v & 0xFF; out[o+1] = (v >> 8) & 0xFF; };
+    const u32 = (o: number, v: number) => { out[o] = v & 0xFF; out[o+1] = (v >> 8) & 0xFF; out[o+2] = (v >> 16) & 0xFF; out[o+3] = (v >> 24) & 0xFF; };
+
+    s(0, 'RIFF');
+    u32(4, 36 + rawSize);
+    s(8, 'WAVE');
+    s(12, 'fmt ');
+    u32(16, 16);
+    u16(20, 1); // PCM
+    u16(22, channels);
+    u32(24, sampleRate);
+    u32(28, sampleRate * blockAlign);
+    u16(32, blockAlign);
+    u16(34, bitDepth);
+    s(36, 'data');
+    u32(40, rawSize);
+
+    // Reverse samples
     for (let i = 0; i < numSamples; i++) {
-      const srcOffset = dataOffset + i * blockAlign;
-      const dstOffset = dataOffset + (numSamples - 1 - i) * blockAlign;
+      const src = dataStart + i * blockAlign;
+      const dst = 44 + (numSamples - 1 - i) * blockAlign;
       for (let b = 0; b < blockAlign; b++) {
-        reversed[dstOffset + b] = bytes[srcOffset + b];
+        out[dst + b] = bytes[src + b];
       }
     }
 
-    // Encode back to base64 (Hermes-safe, no btoa)
-    const reversedBase64 = bytesToBase64(reversed);
+    // 6. Encode to base64 (chunked — CHUNK must be multiple of 3 to avoid padding in middle!)
+    let outB64 = '';
+    const CHUNK = 24576; // 3 × 8192 — ensures no '=' padding between chunks
+    for (let i = 0; i < outLen; i += CHUNK) {
+      let bin = '';
+      const end = Math.min(i + CHUNK, outLen);
+      for (let j = i; j < end; j++) bin += String.fromCharCode(out[j]);
+      outB64 += btoa(bin);
+    }
 
-    // Write to a new file
-    const outputUri = inputUri.replace(/\.wav$/i, '_reversed.wav');
-    await FileSystem.writeAsStringAsync(outputUri, reversedBase64, {
+    // 7. Write output
+    const outputUri = inputUri.replace(/\.[^.]+$/, '_reversed.wav');
+    await FileSystem.writeAsStringAsync(outputUri, outB64, {
       encoding: FileSystemEncoding.Base64,
     });
 
-    return outputUri;
+    // 8. Verify
+    const info = await FileSystem.getInfoAsync(outputUri);
+    if (!info.exists) return { uri: null, error: 'Output file not found after write' };
+    return { uri: outputUri };
+
   } catch (err: any) {
-    console.error('reverseWavFile error:', err);
-    Alert.alert('Reverse Error', `Failed to reverse audio: ${err?.message || 'Unknown error'}`);
-    return null;
+    return { uri: null, error: err?.message || String(err) };
   }
 }
+
 
 // ─── Component ───────────────────────────────────────────
 
 export function ReverseSingingSession({ session }: Props) {
-  const [activeStep, setActiveStep] = useState<'playerOne' | 'playerTwo'>('playerOne');
-
-  // Use actual player names from session
   const p1Name = session.players[0]?.displayName || 'Player 1';
   const p2Name = session.players[1]?.displayName || 'Player 2';
 
@@ -210,57 +239,53 @@ export function ReverseSingingSession({ session }: Props) {
   const [sound, setSound] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Refs for cleanup
   const p1RecRef = useRef<any>(null);
   const p2RecRef = useRef<any>(null);
 
-  // ── Request mic permission on mount ──
+  // ── Request mic permission ──
   useEffect(() => {
     if (!Audio) return;
     (async () => {
       const { granted } = await Audio.requestPermissionsAsync();
       if (!granted) {
-        Alert.alert(
-          'Microphone Access Needed',
-          'This game needs microphone access to record audio. Please enable it in Settings.'
-        );
+        Alert.alert('Microphone Access Needed', 'Please enable microphone access in Settings.');
       }
     })();
   }, []);
 
-  // ── Recording timer with 60s auto-stop ──
+  // ── Recording timer ──
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (p1Recording) {
       interval = setInterval(() => {
         setP1Duration(prev => {
-          if (prev + 1 >= MAX_RECORD_SECONDS) {
-            stopRecording(1);
-            return MAX_RECORD_SECONDS;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } else if (p2Recording) {
-      interval = setInterval(() => {
-        setP2Duration(prev => {
-          if (prev + 1 >= MAX_RECORD_SECONDS) {
-            stopRecording(2);
-            return MAX_RECORD_SECONDS;
-          }
+          if (prev >= MAX_RECORD_SECONDS) { stopRecording(1); return prev; }
           return prev + 1;
         });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [p1Recording, p2Recording]);
+  }, [p1Recording]);
 
-  // ── Sound cleanup on change ──
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (p2Recording) {
+      interval = setInterval(() => {
+        setP2Duration(prev => {
+          if (prev >= MAX_RECORD_SECONDS) { stopRecording(2); return prev; }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [p2Recording]);
+
+  // ── Sound cleanup ──
   useEffect(() => {
     return sound ? () => { sound.unloadAsync(); } : undefined;
   }, [sound]);
 
-  // ── Stop recording on app background ──
+  // ── Stop recording on background ──
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state !== 'active') {
@@ -274,47 +299,35 @@ export function ReverseSingingSession({ session }: Props) {
   // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
-      if (p1RecRef.current) {
-        try { p1RecRef.current.stopAndUnloadAsync(); } catch {}
-      }
-      if (p2RecRef.current) {
-        try { p2RecRef.current.stopAndUnloadAsync(); } catch {}
-      }
-      if (sound) {
-        try { sound.unloadAsync(); } catch {}
-      }
+      if (p1RecRef.current) try { p1RecRef.current.stopAndUnloadAsync(); } catch {}
+      if (p2RecRef.current) try { p2RecRef.current.stopAndUnloadAsync(); } catch {}
+      if (sound) try { sound.unloadAsync(); } catch {}
     };
   }, []);
 
   // ── Recording ──
   async function startRecording(player: 1 | 2) {
     if (!Audio) {
-      Alert.alert('Audio Error', 'Audio module is not available on this device.');
+      Alert.alert('Audio Error', 'Audio module is not available.');
       return;
     }
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
 
-      // Platform-specific recording options:
-      // iOS: Record as WAV (LINEAR PCM) — can be reversed byte-by-byte
-      // Android: Cannot record WAV via expo-av/MediaRecorder, use AAC instead
       const recordingOptions = {
         isMeteringEnabled: false,
         android: {
-          extension: '.m4a',
-          outputFormat: 2,   // MPEG_4
-          audioEncoder: 3,   // AAC
+          extension: '.wav',
+          outputFormat: 6,    // DEFAULT → let expo-av choose
+          audioEncoder: 3,    // DEFAULT
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
         },
         ios: {
           extension: '.wav',
-          outputFormat: 'lpcm' as any,
-          audioQuality: 127, // max
+          outputFormat: 'lpcm',
+          audioQuality: 127,
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 705600,
@@ -333,11 +346,9 @@ export function ReverseSingingSession({ session }: Props) {
         setP1Uri(null);
         setP1ReversedUri(null);
         setP1Duration(0);
-        // Reset Player 2 when Player 1 records again
         setP2Uri(null);
         setP2ReversedUri(null);
         setP2Duration(0);
-        setActiveStep('playerOne');
       } else {
         setP2Recording(recording);
         p2RecRef.current = recording;
@@ -345,55 +356,58 @@ export function ReverseSingingSession({ session }: Props) {
         setP2ReversedUri(null);
         setP2Duration(0);
       }
-    } catch (err) {
-      console.error('Failed to start recording', err);
+    } catch (err: any) {
       Alert.alert('Audio Error', 'Could not start recording. Please try again.');
     }
   }
 
   async function stopRecording(player: 1 | 2) {
     try {
-      if (player === 1 && p1RecRef.current) {
-        const rec = p1RecRef.current;
-        await rec.stopAndUnloadAsync();
-        const uri = rec.getURI();
+      const rec = player === 1 ? p1RecRef.current : p2RecRef.current;
+      if (!rec) return;
+
+      await rec.stopAndUnloadAsync();
+      await new Promise(resolve => setTimeout(resolve, 400));
+
+      const uri = rec.getURI();
+
+      if (player === 1) {
         setP1Uri(uri);
         setP1Recording(null);
         p1RecRef.current = null;
-
-        // Generate reversed audio in background (iOS only — Android uses AAC, not WAV)
-        if (uri && Platform.OS === 'ios') {
-          setP1Reversing(true);
-          const reversedUri = await reverseWavFile(uri);
-          setP1ReversedUri(reversedUri);
-          setP1Reversing(false);
-        } else if (uri && Platform.OS === 'android') {
-          // Android cannot record WAV, so byte-level reversal is not possible
-          setP1ReversedUri(null);
-        }
-
-        setActiveStep('playerTwo');
-      } else if (player === 2 && p2RecRef.current) {
-        const rec = p2RecRef.current;
-        await rec.stopAndUnloadAsync();
-        const uri = rec.getURI();
+      } else {
         setP2Uri(uri);
         setP2Recording(null);
         p2RecRef.current = null;
-
-        // Generate reversed audio (iOS only)
-        if (uri && Platform.OS === 'ios') {
-          setP2Reversing(true);
-          const reversedUri = await reverseWavFile(uri);
-          setP2ReversedUri(reversedUri);
-          setP2Reversing(false);
-        } else if (uri && Platform.OS === 'android') {
-          setP2ReversedUri(null);
-        }
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-    } catch (error) {
-      console.error('Failed to stop recording', error);
+
+      // Switch to playback mode BEFORE reversal
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+
+      // Reverse the audio
+      if (uri) {
+        if (player === 1) setP1Reversing(true);
+        else setP2Reversing(true);
+
+        try {
+          const result = await reverseAudioFile(uri);
+          if (player === 1) setP1ReversedUri(result.uri);
+          else setP2ReversedUri(result.uri);
+
+          if (!result.uri) {
+            Alert.alert('Reverse Failed', result.error || 'Unknown error');
+          }
+        } catch (e: any) {
+          if (player === 1) setP1ReversedUri(null);
+          else setP2ReversedUri(null);
+          Alert.alert('Reverse Error', `${e?.message || 'Unknown error'}`);
+        }
+
+        if (player === 1) setP1Reversing(false);
+        else setP2Reversing(false);
+      }
+    } catch (err: any) {
+      console.error('[ReverseSinging] stopRecording error:', err?.message);
     }
   }
 
@@ -401,38 +415,36 @@ export function ReverseSingingSession({ session }: Props) {
   async function playSound(uri: string | null, rate: number = 1.0) {
     if (!uri || !Audio) return;
     try {
-      if (sound) await sound.unloadAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-      });
+      if (sound) { try { await sound.unloadAsync(); } catch {} setSound(null); }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri },
-        { rate, shouldCorrectPitch: rate !== 1.0 }
+        { volume: 1.0 }
       );
+
+      // Set rate AFTER loading — expo-av on some devices ignores rate in initial status
+      if (rate !== 1.0) {
+        await newSound.setRateAsync(rate, true, Audio.PitchCorrectionQuality?.High ?? 1);
+      }
+
       setSound(newSound);
       setIsPlaying(true);
       newSound.setOnPlaybackStatusUpdate((status: any) => {
         if (status.didJustFinish) setIsPlaying(false);
       });
       await newSound.playAsync();
-    } catch (err) {
-      console.error('Playback error:', err);
+    } catch (err: any) {
       setIsPlaying(false);
+      Alert.alert('Playback Error', 'Could not play audio.');
     }
   }
 
   // ── Sharing ──
   async function handleShare(uri: string | null) {
-    if (!uri || !Sharing) {
-      Alert.alert('Share', 'No audio to share yet.');
-      return;
-    }
+    if (!uri || !Sharing) { Alert.alert('Share', 'No audio to share yet.'); return; }
     const available = await Sharing.isAvailableAsync();
-    if (!available) {
-      Alert.alert('Sharing not available on this device');
-      return;
-    }
+    if (!available) { Alert.alert('Sharing not available'); return; }
     await Sharing.shareAsync(uri, { mimeType: 'audio/wav', dialogTitle: 'Share Recording' });
   }
 
@@ -442,37 +454,28 @@ export function ReverseSingingSession({ session }: Props) {
     if (p2ReversedUri) options.push({ label: 'Share Result (Reversed Mimic)', uri: p2ReversedUri });
     else if (p1ReversedUri) options.push({ label: 'Share Reversed Player 1', uri: p1ReversedUri });
 
-    if (options.length === 0) {
-      Alert.alert('Nothing to share yet');
-      return;
-    }
-
-    if (options.length === 1) {
-      handleShare(options[0].uri);
-      return;
-    }
+    if (options.length === 0) { Alert.alert('Nothing to share yet'); return; }
+    if (options.length === 1) { handleShare(options[0].uri); return; }
 
     Alert.alert('Share', 'Choose what to share', [
-      ...options.map(opt => ({
-        text: opt.label,
-        onPress: () => handleShare(opt.uri),
-      })),
+      ...options.map(opt => ({ text: opt.label, onPress: () => handleShare(opt.uri) })),
       { text: 'Cancel', style: 'cancel' as const },
     ]);
   }
 
+  // ─── Render ───
   return (
     <ScrollView contentContainerStyle={styles.container}>
       
       {/* Player 1 Card */}
-      <View style={[styles.card, activeStep === 'playerOne' && styles.cardActive, activeStep !== 'playerOne' && { opacity: 0.76 }]}>
+      <LiquidGlass radius={24} style={[styles.card, styles.cardActive]}>
         <View style={styles.cardHeader}>
           <View>
             <Text style={styles.cardTitle}>{p1Name}</Text>
             <Text style={styles.cardSubtitle}>record anything you want</Text>
           </View>
-          <View style={[styles.statusPill, activeStep === 'playerOne' ? styles.statusActive : styles.statusInactive]}>
-            <Text style={styles.statusText}>{activeStep === 'playerOne' ? 'Active' : 'Done'}</Text>
+          <View style={[styles.statusPill, p1Recording ? styles.statusRecording : p1Uri ? styles.statusDone : styles.statusActive]}>
+            <Text style={styles.statusText}>{p1Recording ? 'Recording' : p1Uri ? 'Done' : 'Ready'}</Text>
           </View>
         </View>
 
@@ -525,20 +528,17 @@ export function ReverseSingingSession({ session }: Props) {
             </Pressable>
           </View>
         </View>
-      </View>
+      </LiquidGlass>
 
       {/* Player 2 Card */}
-      <View style={[styles.card, activeStep === 'playerTwo' && styles.cardActive, activeStep !== 'playerTwo' && { opacity: 0.76 }]}>
+      <LiquidGlass radius={24} style={[styles.card, styles.cardActive]}>
         <View style={styles.cardHeader}>
           <View>
             <Text style={styles.cardTitle}>{p2Name}</Text>
             <Text style={styles.cardSubtitle}>try to copy reversed</Text>
-            {activeStep === 'playerTwo' && !p2Uri && !p2Recording && (
-              <Text style={styles.helperText}>Listen and record the mimic.</Text>
-            )}
           </View>
-          <View style={[styles.statusPill, activeStep === 'playerTwo' ? styles.statusActive : styles.statusWaiting]}>
-            <Text style={styles.statusText}>{activeStep === 'playerTwo' ? 'Active' : 'Waiting'}</Text>
+          <View style={[styles.statusPill, p2Recording ? styles.statusRecording : p2Uri ? styles.statusDone : styles.statusActive]}>
+            <Text style={styles.statusText}>{p2Recording ? 'Recording' : p2Uri ? 'Done' : 'Ready'}</Text>
           </View>
         </View>
 
@@ -556,9 +556,8 @@ export function ReverseSingingSession({ session }: Props) {
         <View style={styles.grid}>
           <View style={styles.gridRow}>
             <Pressable 
-              style={[styles.squareBtn, { backgroundColor: p2Recording ? '#8E1C16' : Colors.red }, activeStep !== 'playerTwo' && styles.disabled]}
+              style={[styles.squareBtn, { backgroundColor: p2Recording ? '#8E1C16' : Colors.red }]}
               onPress={() => p2Recording ? stopRecording(2) : startRecording(2)}
-              disabled={activeStep !== 'playerTwo'}
             >
               <IconSymbol name={p2Recording ? "stop.fill" : "record.circle.fill"} size={28} color="white" />
               <Text style={styles.btnText}>{p2Recording ? `${p2Duration}s / ${MAX_RECORD_SECONDS}s` : "Record Mimic"}</Text>
@@ -576,8 +575,8 @@ export function ReverseSingingSession({ session }: Props) {
           <View style={styles.gridRow}>
             <Pressable 
               style={[styles.squareBtn, { backgroundColor: Colors.green }, (!p2ReversedUri && !p2Reversing) && styles.disabled]}
-              onPress={() => playSound(p2ReversedUri || p1ReversedUri)}
-              disabled={!p2ReversedUri && !p1ReversedUri}
+              onPress={() => playSound(p2ReversedUri)}
+              disabled={!p2ReversedUri}
             >
               <IconSymbol name="sparkles" size={28} color="white" />
               <Text style={styles.btnText}>{p2Reversing ? 'Reversing…' : 'Result'}</Text>
@@ -592,10 +591,10 @@ export function ReverseSingingSession({ session }: Props) {
             </Pressable>
           </View>
         </View>
-      </View>
+      </LiquidGlass>
 
       {/* History Card */}
-      <View style={styles.card}>
+      <LiquidGlass radius={24} style={styles.card}>
         <View style={styles.cardHeader}>
           <View>
             <Text style={styles.cardTitle}>History</Text>
@@ -615,7 +614,7 @@ export function ReverseSingingSession({ session }: Props) {
               <Pressable style={[styles.historyCircleBtn, { backgroundColor: '#FF2D55' }]} onPress={() => playSound(p2Uri)}>
                 <IconSymbol name="mic.fill" size={16} color="white" />
               </Pressable>
-              <Pressable style={[styles.historyCircleBtn, { backgroundColor: '#007AFF' }]} onPress={() => playSound(p2ReversedUri || p2Uri)}>
+              <Pressable style={[styles.historyCircleBtn, { backgroundColor: '#007AFF' }]} onPress={() => playSound(p2ReversedUri)}>
                 <IconSymbol name="sparkles" size={16} color="white" />
               </Pressable>
               <Pressable style={styles.historyCircleBtn} onPress={showShareOptions}>
@@ -626,7 +625,7 @@ export function ReverseSingingSession({ session }: Props) {
         ) : (
           <Text style={styles.emptyHistory}>No history yet.</Text>
         )}
-      </View>
+      </LiquidGlass>
 
     </ScrollView>
   );
@@ -639,15 +638,11 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 24,
     padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
   },
   cardActive: {
+    borderWidth: 1,
     borderColor: 'rgba(52, 199, 89, 0.4)',
-    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -657,19 +652,14 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: 'white',
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontFamily: 'Viral-Black',
+    letterSpacing: -0.5,
   },
   cardSubtitle: {
     color: 'rgba(255,255,255,0.5)',
     fontSize: 13,
     marginTop: 2,
-  },
-  helperText: {
-    color: '#007AFF',
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 6,
   },
   statusPill: {
     paddingHorizontal: 12,
@@ -679,16 +669,16 @@ const styles = StyleSheet.create({
   statusActive: {
     backgroundColor: 'rgba(52, 199, 89, 0.2)',
   },
-  statusInactive: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  statusRecording: {
+    backgroundColor: 'rgba(255, 59, 48, 0.25)',
   },
-  statusWaiting: {
-    backgroundColor: 'rgba(255, 149, 0, 0.2)',
+  statusDone: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   statusText: {
     color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontFamily: 'Viral-Black',
   },
   waveformContainer: {
     flexDirection: 'row',
@@ -731,8 +721,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontFamily: 'Viral-Black',
     marginTop: 12,
   },
   circleBtn: {
@@ -792,5 +782,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
 });

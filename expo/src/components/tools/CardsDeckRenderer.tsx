@@ -55,6 +55,15 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   }, [categoryCards, includeSpicy, selectedSubtype]);
 
   const position = useRef(new Animated.ValueXY()).current;
+  const prevIndexRef = useRef(currentIndex);
+
+  // When filters change, we reset index to 0. We need to make sure position is reset too.
+  useEffect(() => {
+    if (currentIndex === 0) {
+      position.setValue({ x: 0, y: 0 });
+    }
+    prevIndexRef.current = currentIndex;
+  }, [currentIndex, position]);
 
   const forceSwipeRef = useRef<(direction: 'left' | 'right') => void>(() => {});
   const resetPositionRef = useRef<() => void>(() => {});
@@ -69,7 +78,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       onPanResponderRelease: (_event, gesture) => {
         if (gesture.dx > SWIPE_THRESHOLD) {
           forceSwipeRef.current('right');
-        } else if (gesture.dx < -SWIPE_THRESHOLD) {
+        } else if (gesture.dx < -SWIPE_THRESHOLD && prevIndexRef.current > 0) {
           forceSwipeRef.current('left');
         } else {
           resetPositionRef.current();
@@ -90,11 +99,11 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     }).start(() => onSwipeComplete(direction));
   };
 
-  const onSwipeComplete = (direction: 'left' | 'right') => {
-    if (direction === 'left') {
-      setCurrentIndex(prev => Math.min(prev + 1, deckLengthRef.current));
+  const onSwipeComplete = (direction: 'left' | 'right' | 'reverse') => {
+    if (direction === 'left' || direction === 'reverse') {
+      setCurrentIndex((prev) => Math.max(prev - 1, 0));
     } else {
-      setCurrentIndex(prev => Math.max(prev - 1, 0));
+      setCurrentIndex((prev) => Math.min(prev + 1, deckLengthRef.current));
     }
     position.setValue({ x: 0, y: 0 });
   };
@@ -130,12 +139,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     outputRange: ['-12deg', '0deg', '12deg'],
   });
 
-  const prevOpacity = position.x.interpolate({
+  const nextOpacity = position.x.interpolate({
     inputRange: [0, SCREEN_WIDTH * 0.25],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
-  const nextOpacity = position.x.interpolate({
+  const prevOpacity = position.x.interpolate({
     inputRange: [-SCREEN_WIDTH * 0.25, 0],
     outputRange: [1, 0],
     extrapolate: 'clamp',
@@ -217,6 +226,15 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     }
 
     const VISIBLE_BEHIND = 3;
+
+    // Create an interpolated value representing the swipe progress from 0 to 1
+    // Swiping right or left should animate the stack forward smoothly.
+    const swipeProgress = position.x.interpolate({
+      inputRange: [-SCREEN_WIDTH * 1.5, 0, SCREEN_WIDTH * 1.5],
+      outputRange: [1, 0, 1],
+      extrapolate: 'clamp',
+    });
+
     return deck.map((card, index) => {
       const offset = index - currentIndex;
       if (offset < 0 || offset > VISIBLE_BEHIND) return null;
@@ -239,42 +257,76 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             {...panResponder.panHandlers}
           >
             <CardFace card={card} category={category} />
-            <Animated.View style={[styles.stamp, styles.stampLike, { opacity: prevOpacity }]}>
-              <Text style={styles.stampText}>PREV</Text>
-            </Animated.View>
-            <Animated.View style={[styles.stamp, styles.stampNope, { opacity: nextOpacity }]}>
+            <Animated.View style={[styles.stamp, styles.stampLike, { opacity: nextOpacity }]}>
               <Text style={styles.stampText}>NEXT</Text>
+            </Animated.View>
+            <Animated.View style={[styles.stamp, styles.stampNope, { opacity: prevOpacity }]}>
+              <Text style={styles.stampText}>PREV</Text>
             </Animated.View>
           </Animated.View>
         );
       }
 
-      // Stacked cards behind — peek from left & right so swipe affordance is obvious
-      const scale = 1 - 0.04 * offset;
-      const sideShift = 22 * offset; // horizontal peek
-      const direction = offset % 2 === 0 ? 1 : -1; // alternate sides
-      const tilt = direction * (4 + offset * 1.5);
-      const top = 6 * offset;
+      // Stacked cards behind — animate to their next position as the front card is swiped
+      const startScale = 1 - 0.04 * offset;
+      const endScale = 1 - 0.04 * (offset - 1);
+
+      const startDirection = offset % 2 === 0 ? 1 : -1;
+      const endDirection = (offset - 1) % 2 === 0 ? 1 : -1;
+
+      const startTranslateX = startDirection * (22 * offset);
+      const endTranslateX = (offset - 1) === 0 ? 0 : endDirection * (22 * (offset - 1));
+
+      const startRotate = `${startDirection * (4 + offset * 1.5)}deg`;
+      const endRotate = (offset - 1) === 0 ? '0deg' : `${endDirection * (4 + (offset - 1) * 1.5)}deg`;
+
+      const startTop = 6 * offset;
+      const endTop = 6 * (offset - 1);
+
+      const startOpacity = 1 - 0.12 * offset;
+      const endOpacity = 1 - 0.12 * (offset - 1);
+
+      const scale = swipeProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [startScale, endScale],
+      });
+      const translateX = swipeProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [startTranslateX, endTranslateX],
+      });
+      const cardRotate = swipeProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [startRotate, endRotate],
+      });
+      const top = swipeProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [startTop, endTop],
+      });
+      const opacity = swipeProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [startOpacity, endOpacity],
+      });
+
       return (
-        <View
+        <Animated.View
           key={card.id}
           style={[
             styles.cardStyle,
             {
               top,
               transform: [
-                { translateX: direction * sideShift },
+                { translateX },
                 { scale },
-                { rotate: `${tilt}deg` },
+                { rotate: cardRotate },
               ],
               zIndex: 50 - offset,
-              opacity: 1 - 0.12 * offset,
+              opacity,
             },
           ]}
           pointerEvents="none"
         >
-          <CardBack category={category} />
-        </View>
+          <CardFace card={card} category={category} />
+        </Animated.View>
       );
     }).reverse();
   };
@@ -296,8 +348,23 @@ export function CardsDeckRenderer({ categoryId }: Props) {
         </View>
 
         <View style={styles.actionBar}>
-          <Pressable style={styles.actionButton} onPress={handleSave} hitSlop={8}>
-            <IconSymbol name={isSaved ? 'bookmark.fill' : 'bookmark'} size={22} color={isSaved ? category.accentColor : 'white'} />
+          <Pressable 
+            style={[styles.actionButton, currentIndex === 0 && { opacity: 0.5 }]} 
+            onPress={() => {
+              if (currentIndex > 0) {
+                position.setValue({ x: -SCREEN_WIDTH * 1.5, y: 0 });
+                setCurrentIndex(c => c - 1);
+                Animated.spring(position, {
+                  toValue: { x: 0, y: 0 },
+                  friction: 6,
+                  useNativeDriver: false,
+                }).start();
+              }
+            }} 
+            disabled={currentIndex === 0}
+            hitSlop={8}
+          >
+            <IconSymbol name="arrow.uturn.backward" size={22} color="white" />
           </Pressable>
 
           <Pressable style={styles.nextButton} onPress={() => forceSwipe('left')}>
@@ -305,8 +372,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             <IconSymbol name="arrow.right" size={18} color="black" />
           </Pressable>
 
-          <Pressable style={styles.actionButton} onPress={handleShuffle} hitSlop={8}>
-            <IconSymbol name="shuffle" size={22} color="white" />
+          <Pressable style={styles.actionButton} onPress={handleSave} hitSlop={8}>
+            <IconSymbol name={isSaved ? 'bookmark.fill' : 'bookmark'} size={22} color={isSaved ? category.accentColor : 'white'} />
           </Pressable>
         </View>
       </View>
@@ -343,7 +410,7 @@ function CardFace({ card, category }: { card: PartyCard, category: any }) {
       </View>
       <View style={styles.cardFooter}>
         <IconSymbol name="chevron.left" size={12} color="rgba(0,0,0,0.3)" />
-        <Text style={styles.cardFooterText}>swipe left or right</Text>
+        <Text style={styles.cardFooterText}>prev · swipe · next</Text>
         <IconSymbol name="chevron.right" size={12} color="rgba(0,0,0,0.3)" />
       </View>
       <IconSymbol name={category.icon as any} size={140} color={category.accentColor + '0E'} style={styles.watermark} />

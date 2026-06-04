@@ -6,6 +6,8 @@ import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GamePassPhoneView, GameReadyScreen, GamePlayerCompleteView } from './SharedGameComponents';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 
 interface Props {
   session: GameSession;
@@ -133,6 +135,7 @@ function FlipTile({ isFlipped, isMatched, color, symbol, size, onPress, disabled
 }
 
 export function MemoryGridSession({ session }: Props) {
+  const registerSkip = useRegisterSkip();
   const [boardState, setBoardState] = useState({
     phase: 'ready' as Phase,
     currentPlayerIndex: 0,
@@ -164,6 +167,7 @@ export function MemoryGridSession({ session }: Props) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [phase]);
+
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -216,6 +220,28 @@ export function MemoryGridSession({ session }: Props) {
       }
     }
   );
+
+  useEffect(() => {
+    if (phase === 'playing') {
+      registerSkip(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setPlayerTimes(prev => [...prev, {
+          playerId: currentPlayer.id,
+          elapsedSeconds: 999,
+          moveCount: 0,
+        }]);
+        const nextIndex = currentPlayerIndex + 1;
+        if (nextIndex >= players.length) {
+          if (isHost) syncState({ ...boardState, phase: 'results' });
+        } else {
+          if (isHost) syncState({ ...boardState, currentPlayerIndex: nextIndex, phase: 'ready' });
+        }
+      }, currentPlayer?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [phase, currentPlayerIndex, currentPlayer, players.length, boardState, isHost]);
 
   const handleStart = (fromSync = false) => {
     if (!isHost && !fromSync) return; // Only host can start
@@ -331,7 +357,10 @@ export function MemoryGridSession({ session }: Props) {
 
   const handleNextPlayer = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (isHost) syncState({ ...boardState, currentPlayerIndex: currentPlayerIndex + 1, phase: 'ready' });
+    if (isHost) {
+      syncState({ ...boardState, currentPlayerIndex: currentPlayerIndex + 1 });
+      handleStart();
+    }
   };
 
   const handlePlayAgain = () => {
@@ -352,48 +381,26 @@ export function MemoryGridSession({ session }: Props) {
   // ──────────── READY VIEW ────────────
   if (phase === 'ready') {
     return (
-      <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.centerContent}>
-          <View style={styles.iconContainer}>
-            <IconSymbol name="square.grid.3x3.fill" size={52} color="#5AC8FA" />
-          </View>
-
-          {players.length > 1 ? (
-            <View style={styles.readyTextGroup}>
-              <View style={styles.turnPill}>
-                <Text style={styles.turnPillText}>Now · {players[boardState.currentPlayerIndex]?.displayName}</Text>
-              </View>
-              <Text style={styles.readySubtitle}>Your turn! Get ready to memorize.</Text>
-            </View>
-          ) : (
-            <View style={styles.readyTextGroup}>
-              <Text style={styles.readyTitle}>Memory Grid</Text>
-              <Text style={styles.readySubtitle}>Find all matching pairs!</Text>
-            </View>
-          )}
-
-          <View style={styles.statBubbleRow}>
-            <View style={styles.statBubble}>
-              <Text style={styles.statBubbleValue}>{cols}×{rows}</Text>
-              <Text style={styles.statBubbleLabel}>Grid</Text>
-            </View>
-            <View style={styles.statBubble}>
-              <Text style={styles.statBubbleValue}>{PAIR_COUNT}</Text>
-              <Text style={styles.statBubbleLabel}>Pairs</Text>
-            </View>
-            {players.length > 1 && (
-              <View style={styles.statBubble}>
-                <Text style={styles.statBubbleValue}>{currentPlayerIndex + 1}/{players.length}</Text>
-                <Text style={styles.statBubbleLabel}>Player</Text>
-              </View>
-            )}
-          </View>
-
-          <Pressable style={styles.primaryBtn} onPress={() => handleStart()}>
-            <Text style={styles.primaryBtnText}>Start</Text>
-          </Pressable>
-        </ScrollView>
-      </View>
+      <GamePassPhoneView
+        playerName={currentPlayer?.displayName || 'Player'}
+        title={players.length > 1 && currentPlayerIndex > 0 ? "Pass the phone to" : "Get ready"}
+        subtitle={`Memory Grid · ${cols}×${rows} · ${PAIR_COUNT} pairs`}
+        accentColor="#5AC8FA"
+        onReady={() => handleStart()}
+        onSkip={() => {
+          setPlayerTimes(prev => [...prev, {
+            playerId: currentPlayer.id,
+            elapsedSeconds: 999,
+            moveCount: 0,
+          }]);
+          const nextIndex = currentPlayerIndex + 1;
+          if (nextIndex >= players.length) {
+            if (isHost) syncState({ ...boardState, phase: 'results' });
+          } else {
+            if (isHost) syncState({ ...boardState, currentPlayerIndex: nextIndex, phase: 'ready' });
+          }
+        }}
+      />
     );
   }
 
@@ -458,6 +465,7 @@ export function MemoryGridSession({ session }: Props) {
             })}
           </View>
         </View>
+
       </View>
     );
   }
@@ -466,23 +474,12 @@ export function MemoryGridSession({ session }: Props) {
   if (phase === 'playerComplete') {
     const lastResult = playerTimes[playerTimes.length - 1];
     return (
-      <View style={styles.container}>
-        <View style={styles.centerContent}>
-          <IconSymbol name="checkmark.circle.fill" size={56} color={Colors.green} />
-          <Text style={[styles.readyTitle, { marginTop: 16 }]}>
-            {players[currentPlayerIndex]?.displayName} Finished!
-          </Text>
-          <Text style={styles.readySubtitle}>
-            {lastResult ? `${formatTime(lastResult.elapsedSeconds)} · ${lastResult.moveCount} moves` : ''}
-          </Text>
-
-          <Pressable style={[styles.primaryBtn, { marginTop: 40 }]} onPress={handleNextPlayer}>
-            <Text style={styles.primaryBtnText}>
-              {currentPlayerIndex + 1 < players.length ? "Next Player" : "See Results"}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <GamePlayerCompleteView
+        nextPlayerName={players[currentPlayerIndex + 1]?.displayName || 'Next Player'}
+        prevResultLine={lastResult ? `${formatTime(lastResult.elapsedSeconds)} · ${lastResult.moveCount} moves` : undefined}
+        onReady={handleNextPlayer}
+        accentColor="#5AC8FA"
+      />
     );
   }
 
@@ -531,43 +528,43 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   readyTextGroup: { alignItems: 'center', marginTop: 20, gap: 8 },
-  readyTitle: { color: 'white', fontSize: 22, fontWeight: 'bold' },
-  readySubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 15 },
+  readyTitle: { color: 'white', fontSize: 28, fontFamily: 'Viral-Black' },
+  readySubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 20, fontWeight: '600' },
 
   turnPill: {
     backgroundColor: 'rgba(52,199,89,0.15)',
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
     borderWidth: 1, borderColor: 'rgba(52,199,89,0.3)',
   },
-  turnPillText: { color: Colors.green, fontSize: 13, fontWeight: '700' },
+  turnPillText: { color: Colors.green, fontSize: 16, fontFamily: 'Viral-Black' },
 
   statBubbleRow: { flexDirection: 'row', gap: 16, marginTop: 24 },
   statBubble: {
-    alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14,
-    backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14, minWidth: 60,
+    alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, minWidth: 80,
   },
-  statBubbleValue: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-  statBubbleLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 },
+  statBubbleValue: { color: 'white', fontSize: 22, fontFamily: 'Viral-Black' },
+  statBubbleLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 18, fontWeight: '600', marginTop: 2 },
 
   primaryBtn: {
-    backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16,
+    backgroundColor: '#007AFF', paddingVertical: 18, borderRadius: 20,
     width: '100%', alignItems: 'center', marginTop: 32,
   },
-  primaryBtnText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
+  primaryBtnText: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black' },
 
   // Game header
   gameHeader: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
     paddingTop: 8, paddingBottom: 12,
   },
-  headerTitle: { color: 'white', fontSize: 17, fontWeight: 'bold' },
-  headerSubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 4 },
+  headerTitle: { color: 'white', fontSize: 24, fontFamily: 'Viral-Black' },
+  headerSubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 18, fontWeight: '600', marginTop: 4 },
   statsGroup: { flexDirection: 'row', gap: 10 },
   statPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24,
   },
-  statPillText: { fontSize: 13, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
+  statPillText: { fontSize: 16, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
 
   // Progress bar
   progressBarContainer: { paddingHorizontal: 16, paddingBottom: 12 },

@@ -5,8 +5,11 @@ import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming } 
 
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { GamePassPhoneView, GameResultsScreen, GamePlayerCompleteView } from './SharedGameComponents';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ResultsScoreboard } from './ResultsScoreboard';
 
 interface Props { session: GameSession; }
 type Phase = 'ready' | 'countdown' | 'playing' | 'playerComplete' | 'results';
@@ -17,104 +20,102 @@ interface PlayerResult { playerId: string; timeMs: number; attempts: number; fin
 const GRID_MAP: Record<string, number> = { easy: 5, medium: 6, hard: 7, expert: 8 };
 const DEFAULT_GRID = 5;
 
-// Path generator matching iOS MemoryPathGenerator (DFS with validation)
+// Path generator: randomized DFS with self-avoiding path check
 function generatePath(rows: number, cols: number, targetLength: number = 8): PathCoord[] {
   const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-  const minLen = Math.max(4, targetLength - 1);
-  const maxLen = targetLength + 1;
+  const validPaths: PathCoord[][] = [];
   
-  function tryGenerate(): PathCoord[] | null {
-    const startCol = Math.floor(Math.random() * cols);
-    const start: PathCoord = { row: 0, col: startCol };
-    const path = [start];
-    const visited = new Set<string>();
-    visited.add(`${start.row},${start.col}`);
+  function dfs(current: PathCoord, path: PathCoord[], visited: Set<string>): void {
+    if (validPaths.length >= 100) return;
     
-    function dfs(current: PathCoord): boolean {
-      if (path.length >= minLen && path.length <= maxLen) {
-        const s = path[0], e = path[path.length - 1];
-        const dist = Math.abs(s.row - e.row) + Math.abs(s.col - e.col);
-        if (dist >= Math.min(4, Math.floor(targetLength / 2)) && countTurns(path) >= 2) return true;
+    if (path.length === targetLength) {
+      const s = path[0], e = path[path.length - 1];
+      const dist = Math.abs(s.row - e.row) + Math.abs(s.col - e.col);
+      // Ensure start and end aren't too close
+      if (dist >= 3) {
+        validPaths.push([...path]);
       }
-      if (path.length >= maxLen) return false;
-      
-      let neighbors: PathCoord[] = [];
-      for (const [dr, dc] of dirs) {
-        const nr = current.row + dr, nc = current.col + dc;
-        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
-          let adjUsed = 0;
-          for (const [dr2, dc2] of dirs) {
-            const ar = nr + dr2, ac = nc + dc2;
-            if (ar >= 0 && ar < rows && ac >= 0 && ac < cols && visited.has(`${ar},${ac}`)) adjUsed++;
-          }
-          if (adjUsed < 3) {
-            if (!wouldCreateLongStraight(path, { row: nr, col: nc })) {
-              neighbors.push({ row: nr, col: nc });
-            }
+      return;
+    }
+    
+    let neighbors: PathCoord[] = [];
+    for (const [dr, dc] of dirs) {
+      const nr = current.row + dr, nc = current.col + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
+        let adjUsed = 0;
+        for (const [dr2, dc2] of dirs) {
+          const ar = nr + dr2, ac = nc + dc2;
+          if (ar >= 0 && ar < rows && ac >= 0 && ac < cols && visited.has(`${ar},${ac}`)) {
+            adjUsed++;
           }
         }
+        // Self-avoiding path: neighbor should not touch more than 1 visited tile (the current one)
+        if (adjUsed <= 1) {
+          neighbors.push({ row: nr, col: nc });
+        }
       }
-      for (let i = neighbors.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
-      }
-      for (const next of neighbors) {
-        const key = `${next.row},${next.col}`;
-        visited.add(key);
-        path.push(next);
-        if (dfs(next)) return true;
-        path.pop();
-        visited.delete(key);
-      }
-      return false;
     }
     
-    if (dfs(start)) return [...path];
-    return null;
-  }
-  
-  for (let attempt = 0; attempt < 50; attempt++) {
-    const result = tryGenerate();
-    if (result) return result;
-  }
-  // Fallback: zigzag path
-  const fallback: PathCoord[] = [];
-  let col = Math.floor(cols / 2), goRight = true;
-  for (let row = 0; row < rows && fallback.length < maxLen; row++) {
-    fallback.push({ row, col });
-    if (row < rows - 1) {
-      if (goRight && col < cols - 1) { col++; fallback.push({ row, col }); }
-      else if (!goRight && col > 0) { col--; fallback.push({ row, col }); }
-      goRight = !goRight;
+    // Randomize neighbors
+    for (let i = neighbors.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
+    }
+    
+    for (const next of neighbors) {
+      const key = `${next.row},${next.col}`;
+      visited.add(key);
+      path.push(next);
+      dfs(next, path, visited);
+      path.pop();
+      visited.delete(key);
     }
   }
-  return fallback.slice(0, maxLen);
-}
-
-function countTurns(path: PathCoord[]): number {
-  if (path.length < 3) return 0;
-  let turns = 0;
-  for (let i = 2; i < path.length; i++) {
-    const d1r = path[i-1].row - path[i-2].row, d1c = path[i-1].col - path[i-2].col;
-    const d2r = path[i].row - path[i-1].row, d2c = path[i].col - path[i-1].col;
-    if (d1r !== d2r || d1c !== d2c) turns++;
+  
+  // Try up to 400 random starting positions
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const startRow = Math.floor(Math.random() * rows);
+    const startCol = Math.floor(Math.random() * cols);
+    const start: PathCoord = { row: startRow, col: startCol };
+    const visited = new Set<string>();
+    visited.add(`${start.row},${start.col}`);
+    dfs(start, [start], visited);
+    if (validPaths.length >= 100) break;
   }
-  return turns;
-}
-
-function wouldCreateLongStraight(path: PathCoord[], next: PathCoord): boolean {
-  if (path.length < 3) return false;
-  const last = path[path.length - 1];
-  const dr = next.row - last.row, dc = next.col - last.col;
-  let straight = 1;
-  for (let i = path.length - 1; i >= 1; i--) {
-    const pdr = path[i].row - path[i-1].row, pdc = path[i].col - path[i-1].col;
-    if (pdr === dr && pdc === dc) straight++; else break;
+  
+  if (validPaths.length > 0) {
+    const randIdx = Math.floor(Math.random() * validPaths.length);
+    return validPaths[randIdx];
   }
-  return straight >= 3;
+  
+  // Fallback: simple random walk if no perfect self-avoiding path is found
+  const fallback: PathCoord[] = [];
+  let currRow = Math.floor(Math.random() * rows);
+  let currCol = Math.floor(Math.random() * cols);
+  const visited = new Set<string>();
+  
+  for (let i = 0; i < targetLength; i++) {
+    fallback.push({ row: currRow, col: currCol });
+    visited.add(`${currRow},${currCol}`);
+    
+    const neighbors: PathCoord[] = [];
+    for (const [dr, dc] of dirs) {
+      const nr = currRow + dr;
+      const nc = currCol + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
+        neighbors.push({ row: nr, col: nc });
+      }
+    }
+    if (neighbors.length === 0) break;
+    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+    currRow = next.row;
+    currCol = next.col;
+  }
+  return fallback;
 }
 
 export function MemoryPathSession({ session }: Props) {
+  const registerSkip = useRegisterSkip();
   const GRID = GRID_MAP[session.gameConfig?.gridSize] ?? DEFAULT_GRID;
   const pathLength = session.gameConfig?.pathLength ?? 8;
   const gameMode: 'timeRace' | 'turnBased' = session.gameConfig?.gameMode ?? 'timeRace';
@@ -147,6 +148,20 @@ export function MemoryPathSession({ session }: Props) {
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'playing') {
+      registerSkip(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setResults(prev => [...prev, { playerId: player.id, timeMs: 0, attempts: 0, finished: false, progress: 0 }]);
+        if (playerIndex + 1 >= players.length) setPhase('results');
+        else { setPlayerIndex(i => i + 1); setPhase('ready'); }
+      }, player?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [phase, playerIndex, player, players.length]);
 
   const initBoard = () => {
     const p = generatePath(GRID, GRID, pathLength);
@@ -302,19 +317,19 @@ export function MemoryPathSession({ session }: Props) {
 
   if (phase === 'ready') {
     return (
-      <View style={s.container}>
-        <View style={s.center}>
-          <View style={s.iconBox}><IconSymbol name="map.fill" size={52} color="#00C7BE" /></View>
-          <Text style={s.title}>Memory Path</Text>
-          <Text style={s.sub}>Find the hidden path from Start to End!</Text>
-          {players.length > 1 && <View style={s.pill}><Text style={s.pillTx}>Now · {player.displayName}</Text></View>}
-          <View style={s.bubbleRow}>
-            <View style={s.bubble}><Text style={s.bv}>{GRID}×{GRID}</Text><Text style={s.bl}>Grid</Text></View>
-            {players.length > 1 && <View style={s.bubble}><Text style={s.bv}>{playerIndex+1}/{players.length}</Text><Text style={s.bl}>Player</Text></View>}
-          </View>
-          <Pressable style={s.btn} onPress={handleStart}><Text style={s.btnTx}>Start</Text></Pressable>
-        </View>
-      </View>
+      <GamePassPhoneView
+        playerName={player.displayName}
+        title={players.length > 1 && playerIndex > 0 ? "Pass the phone to" : "Get ready"}
+        subtitle={`Memory Path: Find the hidden path from Start to End!`}
+        accentColor="#00C7BE"
+        onReady={handleStart}
+        onSkip={() => {
+          // Record a skipped/DNF result for this player
+          setResults(prev => [...prev, { playerId: player.id, timeMs: 0, attempts: 0, finished: false, progress: 0 }]);
+          if (playerIndex + 1 >= players.length) setPhase('results');
+          else { setPlayerIndex(i => i + 1); setPhase('ready'); }
+        }}
+      />
     );
   }
 
@@ -381,22 +396,19 @@ export function MemoryPathSession({ session }: Props) {
             </View>
           ))}
         </Animated.View>
+
       </View>
     );
   }
 
   if (phase === 'playerComplete') {
     return (
-      <View style={s.container}>
-        <View style={s.center}>
-          <IconSymbol name="checkmark.circle.fill" size={56} color={Colors.green} />
-          <Text style={s.title}>Path Cleared!</Text>
-          <Text style={s.sub}>{player.displayName} — {formatTime(elapsed)}</Text>
-          <Pressable style={[s.btn, { marginTop: 40 }]} onPress={() => { setPlayerIndex(i => i+1); setPhase('ready'); }}>
-            <Text style={s.btnTx}>{playerIndex+1 < players.length ? 'Next Player' : 'See Results'}</Text>
-          </Pressable>
-        </View>
-      </View>
+      <GamePlayerCompleteView
+        nextPlayerName={players[playerIndex + 1]?.displayName || 'Next Player'}
+        prevResultLine={`${player.displayName} — ${formatTime(elapsed)}`}
+        onReady={() => { setPlayerIndex(i => i+1); handleStart(); }}
+        accentColor="#00C7BE"
+      />
     );
   }
 
@@ -410,28 +422,27 @@ export function MemoryPathSession({ session }: Props) {
   return (
     <View style={s.container}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <View style={{ alignItems: 'center', gap: 8, marginVertical: 20 }}>
-          <IconSymbol name="trophy.fill" size={44} color={Colors.yellow} />
-          <Text style={s.title}>Final Rankings</Text>
-        </View>
-        {sorted.map((r, i) => {
-          const p = players.find(x => x.id === r.playerId);
-          return (
-            <View key={r.playerId} style={[s.rankRow, i === 0 && s.rankFirst]}>
-              <View style={[s.rankCircle, i === 0 && { backgroundColor: 'rgba(255,204,0,0.2)' }]}>
-                <Text style={[s.rankNum, i === 0 && { color: Colors.yellow }]}>{i+1}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.rankName}>{p?.displayName}</Text>
-                <Text style={s.rankDet}>{r.finished ? `${(r.timeMs/1000).toFixed(1)}s · ${r.attempts} tries` : `${r.progress} steps`}</Text>
-              </View>
-              {i === 0 && <IconSymbol name="crown.fill" size={16} color={Colors.yellow} />}
-            </View>
-          );
-        })}
-        <Pressable style={[s.btn, { marginTop: 24 }]} onPress={() => { setPlayerIndex(0); setResults([]); setPhase('ready'); }}>
-          <Text style={s.btnTx}>Play Again</Text>
-        </Pressable>
+        <ResultsScoreboard
+          entries={sorted.map(r => {
+            const p = players.find(x => x.id === r.playerId);
+            return {
+              id: r.playerId,
+              name: p?.displayName ?? 'Player',
+              primary: r.finished ? `${(r.timeMs / 1000).toFixed(1)}s` : 'DNF',
+              secondary: r.finished ? `${r.attempts} tries` : `${r.progress} steps completed`,
+            };
+          })}
+          title={players.length > 1 ? 'Final Rankings' : 'Complete!'}
+          subtitle={players.length > 1 ? undefined : 'Great memory!'}
+          shareGameName="Memory Path"
+          onPlayAgain={() => {
+            setPlayerIndex(0);
+            setResults([]);
+            setPhase('ready');
+          }}
+          playAgainTitle="Play Again"
+          playAgainIcon="arrow.clockwise"
+        />
       </ScrollView>
     </View>
   );
@@ -441,18 +452,18 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   iconBox: { width: 100, height: 100, borderRadius: 28, backgroundColor: 'rgba(0,199,190,0.14)', alignItems: 'center', justifyContent: 'center' },
-  title: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 16 },
+  title: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', marginTop: 16 },
   sub: { color: 'rgba(255,255,255,0.5)', fontSize: 15, marginTop: 8 },
   pill: { backgroundColor: 'rgba(52,199,89,0.15)', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, marginTop: 12, borderWidth: 1, borderColor: 'rgba(52,199,89,0.3)' },
-  pillTx: { color: Colors.green, fontSize: 13, fontWeight: '700' },
+  pillTx: { color: Colors.green, fontSize: 12, fontFamily: 'Viral-Black' },
   bubbleRow: { flexDirection: 'row', gap: 16, marginTop: 24 },
   bubble: { alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14 },
-  bv: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  bv: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   bl: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
   btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
-  btnTx: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  btnTx: { color: '#fff', fontSize: 16, fontFamily: 'Viral-Black' },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
-  hName: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  hName: { color: '#fff', fontSize: 17, fontFamily: 'Viral-Black' },
   hSub: { color: '#00C7BE', fontSize: 12, fontWeight: '600', marginTop: 2 },
   timerPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
   timerTx: { color: '#fff', fontSize: 20, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
@@ -463,11 +474,11 @@ const s = StyleSheet.create({
   gridWrap: { alignSelf: 'center', gap: 6, paddingHorizontal: 24 },
   gridRow: { flexDirection: 'row', gap: 6 },
   tile: { flex: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1.2 },
-  tileLbl: { fontSize: 11, fontWeight: '800' },
+  tileLbl: { fontSize: 10, fontFamily: 'Viral-Black' },
   rankRow: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12, backgroundColor: 'rgba(255,255,255,0.035)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)', marginBottom: 10 },
   rankFirst: { backgroundColor: 'rgba(255,204,0,0.06)', borderColor: 'rgba(255,204,0,0.2)' },
   rankCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' },
   rankNum: { color: 'rgba(255,255,255,0.5)', fontSize: 17, fontWeight: 'bold' },
-  rankName: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  rankName: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   rankDet: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 },
 });

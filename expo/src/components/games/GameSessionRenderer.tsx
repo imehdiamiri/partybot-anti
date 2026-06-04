@@ -20,6 +20,7 @@ import { DrawRushSession } from './DrawRushSession';
 import { ReactionTimeSession } from './ReactionTimeSession';
 import { EyeSightSession } from './EyeSightSession';
 import { DrumChallengeSession } from './DrumChallengeSession';
+import { PerfectShaveSession } from './PerfectShaveSession';
 
 interface Props {
   session: GameSession;
@@ -67,6 +68,8 @@ export function GameSessionRenderer({ session, game }: Props) {
       return withHint(game.id, <EyeSightSession session={session} />);
     case 'drum_challenge':
       return withHint(game.id, <DrumChallengeSession session={session} />);
+    case 'perfect_shave':
+      return withHint(game.id, <PerfectShaveSession session={session} />);
     default:
       return <GenericPlaceholder session={session} game={game} />;
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Platform, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,10 +19,14 @@ export default function GamesScreen() {
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const [selectedLibraryTab, setSelectedLibraryTab] = useState<'Games' | 'Ideas'>('Games');
   const [selectedModeFilter, setSelectedModeFilter] = useState<GameMode | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (params.defaultTab === 'Games') {
       setSelectedLibraryTab('Games');
+    }
+    if (params.resetAt) {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
   }, [params.defaultTab, params.resetAt]);
 
@@ -36,7 +40,11 @@ export default function GamesScreen() {
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: 120 }]} onLayout={(e: LayoutChangeEvent) => setContainerWidth(e.nativeEvent.layout.width - 32)}>
+      <ScrollView 
+        ref={scrollViewRef}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: 120 }]} 
+        onLayout={(e: LayoutChangeEvent) => setContainerWidth(e.nativeEvent.layout.width - 32)}
+      >
         <View style={styles.header}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image source={require('@/assets/images/partybot-logo.png')} style={styles.logoImage} resizeMode="contain" />

@@ -19,6 +19,7 @@ import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { showToast } from '@/src/components/ToastOverlay';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 
 /**
  * TeamSetupScreen — matches iOS TeamSetupView + TeamModeEntryView
@@ -147,23 +148,12 @@ export default function TeamSetupScreen() {
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <TouchableOpacity 
-            onPress={handleLeave}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 8,
-              paddingVertical: 6,
-            }}
-          >
-            <IconSymbol name="chevron.left" size={18} color="#007AFF" />
-            <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '400', marginLeft: 2 }}>Leave</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Team Setup</Text>
-          <View style={{ width: 50 }} />
-        </View>
+        <ScreenHeader
+          title="Team Setup"
+          leftLabel="Leave"
+          leftIcon="chevron.left"
+          onLeftPress={handleLeave}
+        />
 
         {/* Room Header Card */}
         <View style={styles.roomCard}>

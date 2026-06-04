@@ -11,6 +11,9 @@ import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
 import * as Haptics from '@/src/utils/safeHaptics';
+import { PhaseTransition } from './PhaseTransition';
+import { GamePassPhoneView, GamePlayerCompleteView } from './SharedGameComponents';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 
 interface Props { session: GameSession; }
 
@@ -43,7 +46,8 @@ const METRONOME_TICK_AUDIO = require('@/assets/sounds/metronome_challenge.wav');
 
 export function DrumChallengeSession({ session }: Props) {
   const players = session.players;
-  const modeKey = (session.gameConfig?.drumMode as DrumMode) || 'whitney';
+  const registerSkip = useRegisterSkip();
+  const modeKey: DrumMode = (session.gameConfig?.drumMode === 'metronome') ? 'metronome' : 'whitney';
   const modeConfig = MODES[modeKey];
   const metronomeCycles = session.gameConfig?.metronomeCycles || 4;
   const metronomeRhythm = session.gameConfig?.metronomeRhythm || '4/4';
@@ -110,6 +114,33 @@ export function DrumChallengeSession({ session }: Props) {
     };
   }, []);
 
+  // Register skip handler during 'listening' phase
+  useEffect(() => {
+    if (phase === 'listening') {
+      registerSkip(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        metronomeTimersRef.current.forEach(t => clearTimeout(t));
+        metronomeTimersRef.current = [];
+        cancelAnimation(waveAnim);
+        cancelAnimation(drumScale);
+        try {
+          if (soundRef.current) soundRef.current.stopAsync();
+          if (tickRef.current) tickRef.current.stopAsync();
+          tickPoolRef.current.forEach(s => s.stopAsync().catch(() => {}));
+        } catch (e) {}
+        // Record empty attempts (no valid hits) for this player
+        setRecords(prev => {
+          const next = prev.map(r => ({ ...r, attempts: [...r.attempts] }));
+          return next;
+        });
+        goToNextPlayer();
+      }, player?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [phase, playerIdx]);
+
   const finishAttempt = useCallback((diff: number | null) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     metronomeTimersRef.current.forEach(t => clearTimeout(t));
@@ -152,9 +183,7 @@ export function DrumChallengeSession({ session }: Props) {
     waveAnim.value = 0;
     waveAnim.value = withRepeat(withTiming(1, { duration: 2000, easing: Easing.linear }), -1, false);
 
-    drumScale.value = withRepeat(
-      withSequence(withTiming(1.04, { duration: 800 }), withTiming(1.0, { duration: 800 })), -1, false
-    );
+    drumScale.value = 1;
 
     if (modeKey === 'metronome') {
       // Clean up any previous tick pool
@@ -313,13 +342,8 @@ export function DrumChallengeSession({ session }: Props) {
 
     setTapped(true);
 
-    if (modeKey === 'metronome') {
-      const elapsed = tapTime - playStartRef.current;
-      // Compensate for hardware audio output latency (approx 50ms)
-      diff = Math.round(elapsed - (modeConfig.beatTime + 50));
-    } else {
-      if (soundRef.current) {
-        try {
+    if (soundRef.current) {
+      try {
           const status = await soundRef.current.getStatusAsync();
           const afterTime = performance.now();
           const latency = afterTime - tapTime;
@@ -339,7 +363,6 @@ export function DrumChallengeSession({ session }: Props) {
         const elapsed = tapTime - playStartRef.current;
         diff = Math.round(elapsed - modeConfig.beatTime);
       }
-    }
 
     diffRef.current = diff;
     setLastDiff(diff); // Show 'Nice hit!' UI update instantly
@@ -372,7 +395,7 @@ export function DrumChallengeSession({ session }: Props) {
 
   const goToNextPlayer = () => {
     if (playerIdx + 1 >= players.length) setPhase('results');
-    else { setPlayerIdx(playerIdx + 1); setAttemptIdx(0); setPhase('ready'); }
+    else { setPlayerIdx(playerIdx + 1); setAttemptIdx(0); startListening(); }
   };
 
   const playAgain = () => {
@@ -383,16 +406,36 @@ export function DrumChallengeSession({ session }: Props) {
   const drumAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: drumScale.value }] }));
   const glowStyle = useAnimatedStyle(() => ({ opacity: drumGlow.value }));
 
-  // ─── READY ───
   if (phase === 'ready') {
     const isFirst = playerIdx === 0;
+    // Non-first players: use the unified animated pass-phone screen
+    if (!isFirst) {
+      return (
+        <GamePassPhoneView
+          playerName={player?.displayName ?? 'Player'}
+          title="Pass the phone to"
+          subtitle={`Mode: ${modeConfig.title} · ${ATTEMPTS_PER_PLAYER} attempts`}
+          accentColor="#FF2E93"
+          buttonTitle="Start Listening"
+          onReady={startListening}
+          onSkip={() => {
+            // Record empty attempts for skipped player
+            setRecords(prev => {
+              const next = prev.map(r => ({ ...r, attempts: [...r.attempts] }));
+              return next;
+            });
+            goToNextPlayer();
+          }}
+        />
+      );
+    }
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <ScrollView contentContainerStyle={st.readyContent}>
           <View style={[st.iconBox, { backgroundColor: 'rgba(255,46,147,0.15)' }]}>
             <Text style={{ fontSize: 56 }}>🥁</Text>
           </View>
-          <Text style={st.eyebrow}>{isFirst ? 'DRUM CHALLENGE' : `PLAYER ${playerIdx + 1} OF ${players.length}`}</Text>
+          <Text style={st.eyebrow}>DRUM CHALLENGE</Text>
           <Text style={st.nameTitle} numberOfLines={2}>{player?.displayName ?? 'Player'}</Text>
           
           <Text style={[st.eyebrow, { color: '#FFD166', fontSize: 16 }]}>MODE: {modeConfig.title}</Text>
@@ -404,26 +447,19 @@ export function DrumChallengeSession({ session }: Props) {
             <RuleRow num={4} color={Colors.green} text="Your accuracy is measured in milliseconds. Closest to 0ms wins!" />
           </View>
 
-          {!isFirst && (
-            <View style={st.handoffCard}>
-              <IconSymbol name="hand.raised.fill" size={22} color="#FF2E93" />
-              <Text style={st.handoffTx}>Pass the phone to {player?.displayName}.</Text>
-            </View>
-          )}
-
           <Pressable style={[st.startBtn, { backgroundColor: '#FF2E93' }]} onPress={startListening}>
             <IconSymbol name="play.fill" size={18} color="#fff" />
             <Text style={st.startBtnTx}>Start Listening</Text>
           </Pressable>
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
   // ─── LISTENING ───
   if (phase === 'listening') {
     return (
-      <View style={st.listeningContainer}>
+      <PhaseTransition phaseKey={phase} style={st.listeningContainer}>
         <View style={st.attemptBadge}>
           <Text style={st.attemptBadgeTx}>Attempt {attemptIdx + 1} / {ATTEMPTS_PER_PLAYER}</Text>
         </View>
@@ -464,7 +500,8 @@ export function DrumChallengeSession({ session }: Props) {
             <WaveBar key={i} index={i} anim={waveAnim} />
           ))}
         </View>
-      </View>
+
+      </PhaseTransition>
     );
   }
 
@@ -475,7 +512,7 @@ export function DrumChallengeSession({ session }: Props) {
     const direction = lastDiff != null ? (lastDiff < 0 ? 'early' : lastDiff > 0 ? 'late' : 'perfect') : 'missed';
 
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <View style={st.center}>
           <View style={[st.iconBox, { backgroundColor: isHit ? 'rgba(52,199,89,0.15)' : 'rgba(255,59,48,0.18)' }]}>
             {isHit ? (
@@ -508,7 +545,7 @@ export function DrumChallengeSession({ session }: Props) {
             </Text>
           </Pressable>
         </View>
-      </View>
+      </PhaseTransition>
     );
   }
 
@@ -517,33 +554,12 @@ export function DrumChallengeSession({ session }: Props) {
     const best = bestAbsDiff(currentRecord.attempts);
     const isLast = playerIdx + 1 >= players.length;
     return (
-      <View style={st.container}>
-        <View style={st.center}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(255,204,0,0.18)' }]}>
-            <IconSymbol name="trophy.fill" size={48} color={Colors.yellow} />
-          </View>
-          <Text style={st.title}>{player?.displayName}</Text>
-          <Text style={st.sub}>Best accuracy</Text>
-          <Text style={[st.title, { color: '#FF2E93', fontSize: 44, marginTop: 4 }]}>
-            {best != null ? `${best} ms` : '—'}
-          </Text>
-
-          <View style={st.attemptList}>
-            {currentRecord.attempts.map((a, i) => (
-              <View key={i} style={st.attemptRow}>
-                <Text style={st.attemptIdx}>#{i + 1}</Text>
-                <Text style={[st.attemptVal, a.diffMs == null ? { color: Colors.red } : null]}>
-                  {a.diffMs == null ? 'Missed' : `${a.diffMs > 0 ? '+' : ''}${a.diffMs} ms`}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          <Pressable style={[st.startBtn, { backgroundColor: '#FF2E93' }]} onPress={goToNextPlayer}>
-            <Text style={st.startBtnTx}>{isLast ? 'See Final Rankings' : 'Next Player'}</Text>
-          </Pressable>
-        </View>
-      </View>
+      <GamePlayerCompleteView
+        nextPlayerName={isLast ? '' : (players[playerIdx + 1]?.displayName ?? 'Next Player')}
+        prevResultLine={best != null ? `Best: ${best}ms · ${ATTEMPTS_PER_PLAYER} attempts` : `${ATTEMPTS_PER_PLAYER} attempts done`}
+        onReady={goToNextPlayer}
+        accentColor="#FF2E93"
+      />
     );
   }
 
@@ -568,7 +584,7 @@ export function DrumChallengeSession({ session }: Props) {
     }));
 
   return (
-    <View style={st.container}>
+    <PhaseTransition phaseKey="results" style={st.container}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <ResultsScoreboard
           entries={entries}
@@ -578,7 +594,7 @@ export function DrumChallengeSession({ session }: Props) {
           shareGameName="Drum Challenge"
         />
       </ScrollView>
-    </View>
+    </PhaseTransition>
   );
 }
 
@@ -645,13 +661,13 @@ const st = StyleSheet.create({
   readyContent: { padding: 20, paddingBottom: 60, alignItems: 'center', gap: 14 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
   iconBox: { width: 100, height: 100, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-  title: { color: '#fff', fontSize: 28, fontWeight: 'bold', textAlign: 'center' },
+  title: { color: '#fff', fontSize: 36, fontFamily: 'Viral-Black', textAlign: 'center' },
   eyebrow: {
-    color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '900',
+    color: 'rgba(255,255,255,0.5)', fontSize: 14, fontFamily: 'Viral-Black',
     letterSpacing: 2.4, textAlign: 'center', marginTop: 4,
   },
-  nameTitle: { color: '#fff', fontSize: 34, fontWeight: '900', textAlign: 'center', paddingHorizontal: 8 },
-  sub: { color: 'rgba(255,255,255,0.6)', fontSize: 15, textAlign: 'center' },
+  nameTitle: { color: '#fff', fontSize: 40, fontFamily: 'Viral-Black', textAlign: 'center', paddingHorizontal: 8 },
+  sub: { color: 'rgba(255,255,255,0.6)', fontSize: 16, textAlign: 'center', fontWeight: '500' },
 
   rulesCard: {
     width: '100%', backgroundColor: 'rgba(255,255,255,0.05)',
@@ -659,31 +675,31 @@ const st = StyleSheet.create({
     gap: 12, marginTop: 8,
   },
   ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  ruleNum: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  ruleNumTx: { fontSize: 14, fontWeight: 'bold' },
-  ruleTx: { color: 'rgba(255,255,255,0.85)', fontSize: 14, flex: 1, lineHeight: 19 },
+  ruleNum: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  ruleNumTx: { fontSize: 16, fontFamily: 'Viral-Black' },
+  ruleTx: { color: 'rgba(255,255,255,0.85)', fontSize: 15, flex: 1, lineHeight: 22 },
 
   handoffCard: {
     width: '100%', flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: 'rgba(255,46,147,0.10)', borderRadius: 16, padding: 14,
     borderWidth: 1, borderColor: 'rgba(255,46,147,0.25)', marginTop: 8,
   },
-  handoffTx: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 19, fontWeight: '600' },
+  handoffTx: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 20, lineHeight: 28, fontWeight: '700' },
 
   startBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 16, paddingHorizontal: 28,
+    gap: 8, paddingVertical: 18, paddingHorizontal: 28,
     borderRadius: 16, width: '100%', marginTop: 18,
   },
-  startBtnTx: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  startBtnTx: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
 
   // Listening phase
   listeningContainer: {
     flex: 1, backgroundColor: '#0A0015', alignItems: 'center', justifyContent: 'center', gap: 20,
   },
-  listenTitle: { color: '#fff', fontSize: 32, fontWeight: '900', letterSpacing: 1 },
-  listenSub: { color: 'rgba(255,255,255,0.5)', fontSize: 15, fontWeight: '600' },
-  listenHint: { color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: '600', marginTop: 12 },
+  listenTitle: { color: '#fff', fontSize: 40, fontFamily: 'Viral-Black', letterSpacing: 0.5 },
+  listenSub: { color: 'rgba(255,255,255,0.5)', fontSize: 24, fontWeight: '700' },
+  listenHint: { color: 'rgba(255,255,255,0.4)', fontSize: 22, fontWeight: '700', marginTop: 12 },
 
   drumOuter: { width: 280, height: 280, borderRadius: 140, alignItems: 'center', justifyContent: 'center' },
   drumGlow: {
@@ -702,14 +718,14 @@ const st = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 999,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
-  attemptBadgeTx: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  attemptBadgeTx: { color: '#fff', fontSize: 16, fontWeight: '700' },
 
   waveRow: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 40, marginTop: 20 },
   waveBar: { width: 4, borderRadius: 2, backgroundColor: '#FF2E93' },
 
   // Result
-  resultBig: { color: '#fff', fontSize: 52, fontWeight: '900', fontVariant: ['tabular-nums'] },
-  resultDir: { fontSize: 17, fontWeight: '700' },
+  resultBig: { color: '#fff', fontSize: 64, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  resultDir: { fontSize: 22, fontFamily: 'Viral-Black' },
 
   dotsRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   dot: { width: 14, height: 14, borderRadius: 7 },
@@ -720,6 +736,6 @@ const st = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', marginTop: 16,
   },
   attemptRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 6 },
-  attemptIdx: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: '600' },
-  attemptVal: { color: '#fff', fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
+  attemptIdx: { color: 'rgba(255,255,255,0.5)', fontSize: 20, fontWeight: '700' },
+  attemptVal: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
 });

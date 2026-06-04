@@ -5,6 +5,9 @@ import { Colors } from '@/src/theme/Colors';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
+import { GamePassPhoneView, GamePlayerCompleteView } from './SharedGameComponents';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
+import { PhaseTransition } from './PhaseTransition';
 import * as Haptics from '@/src/utils/safeHaptics';
 
 interface Props { session: GameSession; }
@@ -24,6 +27,7 @@ interface PlayerRecord {
 }
 
 export function ReactionTimeSession({ session }: Props) {
+  const registerSkip = useRegisterSkip();
   const players = session.players;
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIdx, setPlayerIdx] = useState<number>(0);
@@ -48,18 +52,23 @@ export function ReactionTimeSession({ session }: Props) {
     };
   }, [pulse]);
 
+  useEffect(() => {
+    if (phase === 'waiting') {
+      registerSkip(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        cancelAnimation(pulse);
+        goToNextPlayer();
+      }, player?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [phase, playerIdx, player]);
+
   const beginAttempt = useCallback(() => {
     setPhase('waiting');
     setLastMs(null);
     pulse.value = 1;
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1.06, { duration: 600, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1.0, { duration: 600, easing: Easing.inOut(Easing.quad) }),
-      ),
-      -1,
-      false,
-    );
     const delay = MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS);
     timerRef.current = setTimeout(() => {
       cancelAnimation(pulse);
@@ -117,7 +126,7 @@ export function ReactionTimeSession({ session }: Props) {
     } else {
       setPlayerIdx(playerIdx + 1);
       setAttemptIdx(0);
-      setPhase('ready');
+      beginAttempt();
     }
   };
 
@@ -134,31 +143,47 @@ export function ReactionTimeSession({ session }: Props) {
   // ─── READY ───
   if (phase === 'ready') {
     const isFirstPlayer = playerIdx === 0;
+    
+    if (!isFirstPlayer) {
+      return (
+        <PhaseTransition phaseKey={phase} style={{ flex: 1 }}>
+          <GamePassPhoneView
+            playerName={player?.displayName || 'Player'}
+            title={`PLAYER ${playerIdx + 1} OF ${players.length}`}
+            subtitle="Get ready for your reaction time test!"
+            accentColor={Colors.green}
+            onReady={beginAttempt}
+            onSkip={() => {
+              // Record empty attempts for skipped player
+              setRecords(prev => {
+                const next = prev.map(r => ({ ...r, attempts: [...r.attempts] }));
+                return next;
+              });
+              goToNextPlayer();
+            }}
+          />
+        </PhaseTransition>
+      );
+    }
+
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <ScrollView contentContainerStyle={st.readyContent}>
           <View style={[st.iconBox, { backgroundColor: 'rgba(52,199,89,0.15)' }]}>
-            <IconSymbol name="bolt.fill" size={56} color={Colors.green} />
+            <IconSymbol name="bolt.fill" size={64} color={Colors.green} />
           </View>
-          <Text style={st.eyebrow}>{isFirstPlayer ? 'REACTION TIME' : `PLAYER ${playerIdx + 1} OF ${players.length}`}</Text>
+          <Text style={st.eyebrow}>REACTION TIME</Text>
           <Text style={st.nameTitle} numberOfLines={2}>{player?.displayName ?? 'Player'}</Text>
           <View style={st.pill}>
             <Text style={st.pillTx}>Are you ready?</Text>
           </View>
 
-          {!isFirstPlayer && (
-            <View style={st.handoffCard}>
-              <IconSymbol name="hand.raised.fill" size={22} color={Colors.cyan} />
-              <Text style={st.handoffTx}>Pass the phone to {player?.displayName}. Tap below when you{"'"}re ready to start your turn.</Text>
-            </View>
-          )}
-
           <Pressable style={[st.startBtn, { backgroundColor: Colors.green }]} onPress={beginAttempt}>
-            <IconSymbol name="play.fill" size={18} color="#fff" />
+            <IconSymbol name="play.fill" size={24} color="#fff" />
             <Text style={st.startBtnTx}>I{"'"}m Ready</Text>
           </Pressable>
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
@@ -172,6 +197,7 @@ export function ReactionTimeSession({ session }: Props) {
         <View style={st.attemptBadge}>
           <Text style={st.attemptBadgeTx}>Attempt {attemptIdx + 1} / {ATTEMPTS_PER_PLAYER}</Text>
         </View>
+
       </Pressable>
     );
   }
@@ -190,10 +216,10 @@ export function ReactionTimeSession({ session }: Props) {
   // ─── TAPPED ───
   if (phase === 'tapped') {
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <View style={st.center}>
           <View style={[st.iconBox, { backgroundColor: 'rgba(52,199,89,0.15)' }]}>
-            <IconSymbol name="checkmark.circle.fill" size={56} color={Colors.green} />
+            <IconSymbol name="checkmark.circle.fill" size={64} color={Colors.green} />
           </View>
           <Text style={st.title}>{lastMs} ms</Text>
           <Text style={st.sub}>{describeTime(lastMs ?? 0)}</Text>
@@ -204,17 +230,17 @@ export function ReactionTimeSession({ session }: Props) {
             </Text>
           </Pressable>
         </View>
-      </View>
+      </PhaseTransition>
     );
   }
 
   // ─── FOUL ───
   if (phase === 'foul') {
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} style={st.container}>
         <View style={st.center}>
           <View style={[st.iconBox, { backgroundColor: 'rgba(255,59,48,0.18)' }]}>
-            <IconSymbol name="xmark.octagon.fill" size={56} color={Colors.red} />
+            <IconSymbol name="xmark.octagon.fill" size={64} color={Colors.red} />
           </View>
           <Text style={st.title}>Too Early!</Text>
           <Text style={st.sub}>You tapped while still red — that attempt is a foul.</Text>
@@ -225,7 +251,7 @@ export function ReactionTimeSession({ session }: Props) {
             </Text>
           </Pressable>
         </View>
-      </View>
+      </PhaseTransition>
     );
   }
 
@@ -234,33 +260,12 @@ export function ReactionTimeSession({ session }: Props) {
     const best = bestMs(currentRecord.attempts);
     const isLast = playerIdx + 1 >= players.length;
     return (
-      <View style={st.container}>
-        <View style={st.center}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(255,204,0,0.18)' }]}>
-            <IconSymbol name="trophy.fill" size={48} color={Colors.yellow} />
-          </View>
-          <Text style={st.title}>{player?.displayName}</Text>
-          <Text style={st.sub}>Best time</Text>
-          <Text style={[st.title, { color: Colors.green, fontSize: 44, marginTop: 4 }]}>
-            {best != null ? `${best} ms` : '—'}
-          </Text>
-
-          <View style={st.attemptList}>
-            {currentRecord.attempts.map((a, i) => (
-              <View key={i} style={st.attemptRow}>
-                <Text style={st.attemptIdx}>#{i + 1}</Text>
-                <Text style={[st.attemptVal, a.ms == null ? { color: Colors.red } : null]}>
-                  {a.ms == null ? 'Foul' : `${a.ms} ms`}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          <Pressable style={[st.startBtn, { backgroundColor: Colors.green }]} onPress={goToNextPlayer}>
-            <Text style={st.startBtnTx}>{isLast ? 'See Final Rankings' : 'Next Player'}</Text>
-          </Pressable>
-        </View>
-      </View>
+      <GamePlayerCompleteView
+        nextPlayerName={isLast ? '' : (players[playerIdx + 1]?.displayName ?? 'Next Player')}
+        prevResultLine={best != null ? `Best: ${best}ms · ${ATTEMPTS_PER_PLAYER} attempts` : `${ATTEMPTS_PER_PLAYER} attempts done`}
+        onReady={goToNextPlayer}
+        accentColor={Colors.green}
+      />
     );
   }
 
@@ -289,7 +294,7 @@ export function ReactionTimeSession({ session }: Props) {
     }));
 
   return (
-    <View style={st.container}>
+    <PhaseTransition phaseKey={phase} style={st.container}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <ResultsScoreboard
           entries={entries}
@@ -299,7 +304,7 @@ export function ReactionTimeSession({ session }: Props) {
           shareGameName="Reaction Time"
         />
       </ScrollView>
-    </View>
+    </PhaseTransition>
   );
 }
 
@@ -362,19 +367,19 @@ const st = StyleSheet.create({
     width: 100, height: 100, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 28, fontWeight: 'bold', textAlign: 'center' },
+  title: { color: '#fff', fontSize: 28, fontFamily: 'Viral-Black', textAlign: 'center' },
   eyebrow: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    fontWeight: '900',
+    fontSize: 14,
+    fontFamily: 'Viral-Black',
     letterSpacing: 2.4,
     textAlign: 'center',
     marginTop: 4,
   },
   nameTitle: {
     color: '#fff',
-    fontSize: 34,
-    fontWeight: '900',
+    fontSize: 40,
+    fontFamily: 'Viral-Black',
     textAlign: 'center',
     letterSpacing: 0.3,
     paddingHorizontal: 8,
@@ -391,15 +396,15 @@ const st = StyleSheet.create({
     borderColor: 'rgba(90,200,250,0.25)',
     marginTop: 8,
   },
-  handoffTx: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 19, fontWeight: '600' },
-  sub: { color: 'rgba(255,255,255,0.6)', fontSize: 15, textAlign: 'center' },
+  handoffTx: { flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 16, lineHeight: 22, fontWeight: '600' },
+  sub: { color: 'rgba(255,255,255,0.6)', fontSize: 18, textAlign: 'center' },
   pill: {
     backgroundColor: 'rgba(52,199,89,0.15)',
-    paddingHorizontal: 14, paddingVertical: 6,
+    paddingHorizontal: 16, paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1, borderColor: 'rgba(52,199,89,0.3)',
   },
-  pillTx: { color: Colors.green, fontSize: 13, fontWeight: '700' },
+  pillTx: { color: Colors.green, fontSize: 15, fontWeight: '700' },
 
   rulesCard: {
     width: '100%',
@@ -410,30 +415,30 @@ const st = StyleSheet.create({
   },
   ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   ruleNum: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 32, height: 32, borderRadius: 16,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1,
   },
-  ruleNumTx: { fontSize: 14, fontWeight: 'bold' },
-  ruleTx: { color: 'rgba(255,255,255,0.85)', fontSize: 14, flex: 1, lineHeight: 19 },
+  ruleNumTx: { fontSize: 16, fontWeight: 'bold' },
+  ruleTx: { color: 'rgba(255,255,255,0.85)', fontSize: 16, flex: 1, lineHeight: 22 },
 
   startBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8,
-    paddingVertical: 16, paddingHorizontal: 28,
+    paddingVertical: 18, paddingHorizontal: 32,
     borderRadius: 16, width: '100%',
     marginTop: 18,
   },
-  startBtnTx: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  startBtnTx: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black' },
 
   fullPress: { flex: 1 },
   fullCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  bigText: { color: '#fff', fontSize: 56, fontWeight: '900', letterSpacing: 1 },
-  bigSub: { color: 'rgba(255,255,255,0.85)', fontSize: 16, fontWeight: '600' },
+  bigText: { color: '#fff', fontSize: 48, fontFamily: 'Viral-Black', letterSpacing: 0.5 },
+  bigSub: { color: 'rgba(255,255,255,0.85)', fontSize: 18, fontWeight: '600' },
   megaText: {
     color: '#fff',
-    fontSize: 132,
-    fontWeight: '900',
+    fontSize: 140,
+    fontFamily: 'Viral-Black',
     letterSpacing: 4,
     textShadowColor: 'rgba(0,0,0,0.35)',
     textShadowOffset: { width: 0, height: 4 },
@@ -443,8 +448,8 @@ const st = StyleSheet.create({
 
   waitText: {
     color: '#fff',
-    fontSize: 44,
-    fontWeight: '900',
+    fontSize: 48,
+    fontFamily: 'Viral-Black',
     letterSpacing: 1,
     fontStyle: 'italic',
     textShadowColor: 'rgba(0,0,0,0.3)',
@@ -453,26 +458,26 @@ const st = StyleSheet.create({
   },
   attemptBadge: {
     position: 'absolute', top: 18, alignSelf: 'center',
-    paddingHorizontal: 14, paddingVertical: 6,
+    paddingHorizontal: 16, paddingVertical: 8,
     backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 999,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
   },
-  attemptBadgeTx: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  attemptBadgeTx: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   dotsRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  dot: { width: 14, height: 14, borderRadius: 7 },
+  dot: { width: 16, height: 16, borderRadius: 8 },
 
   attemptList: {
     width: '100%',
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 16, padding: 12, gap: 8,
+    borderRadius: 16, padding: 16, gap: 8,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
     marginTop: 16,
   },
   attemptRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 8, paddingVertical: 6,
+    paddingHorizontal: 8, paddingVertical: 8,
   },
-  attemptIdx: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: '600' },
-  attemptVal: { color: '#fff', fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
+  attemptIdx: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600' },
+  attemptVal: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
 });

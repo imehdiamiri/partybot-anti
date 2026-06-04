@@ -1,10 +1,14 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, Animated } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { PhaseTransition } from './PhaseTransition';
+import { GamePassPhoneView, GameReadyScreen, GameOutcomeCard, GamePlayerCompleteView } from './SharedGameComponents';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
+import { ResultsScoreboard } from './ResultsScoreboard';
 
 interface Props { session: GameSession; }
 type Phase = 'ready' | 'preview' | 'playing' | 'outcome' | 'playerComplete' | 'results';
@@ -25,6 +29,7 @@ function previewDuration(tileCount: number): number {
 }
 
 export function TapInOrderSession({ session }: Props) {
+  const registerSkip = useRegisterSkip();
   const { gridSize: GRID_SIZE, tileCount: TILE_COUNT } = getConfig(session);
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIndex, setPlayerIndex] = useState(0);
@@ -53,9 +58,19 @@ export function TapInOrderSession({ session }: Props) {
   const totalTargets = selectedCells.length;
   const progressVal = totalTargets > 0 ? correctCount / totalTargets : 0;
 
-  // Preview countdown
+  // Animated progress bar
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     if (phase === 'preview' && previewLeft > 0) {
+      // Start smooth progress animation for the full preview duration
+      progressAnim.setValue(0);
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: previewTotal * 1000,
+        useNativeDriver: false,
+      }).start();
+
       previewRef.current = setInterval(() => {
         setPreviewLeft(prev => {
           const next = +(prev - 0.1).toFixed(1);
@@ -73,10 +88,38 @@ export function TapInOrderSession({ session }: Props) {
   // Play timer
   useEffect(() => {
     if (phase === 'playing') {
+      progressAnim.setValue(0);
       timerRef.current = setInterval(() => setElapsed(p => +(p + 0.1).toFixed(1)), 100);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'preview' || phase === 'playing') {
+      registerSkip(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (previewRef.current) clearInterval(previewRef.current);
+        setResults(prev => [...prev, {
+          playerId: player.id,
+          missTaps: 0,
+          timeMs: 0,
+          correctCount: 0,
+          totalTargets: TILE_COUNT,
+          didFinish: false,
+        }]);
+        const nextIdx = playerIndex + 1;
+        if (nextIdx >= players.length) {
+          setPhase('results');
+        } else {
+          setPlayerIndex(nextIdx);
+          setPhase('ready');
+        }
+      }, player?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [phase, playerIndex, player, players.length, TILE_COUNT]);
 
   const generateBoard = () => {
     // Pick TILE_COUNT random cells from GRID_SIZE*GRID_SIZE
@@ -104,6 +147,7 @@ export function TapInOrderSession({ session }: Props) {
     const dur = previewDuration(TILE_COUNT);
     setPreviewTotal(dur);
     setPreviewLeft(dur);
+    progressAnim.setValue(0);
   };
 
   const handleStart = () => {
@@ -129,6 +173,13 @@ export function TapInOrderSession({ session }: Props) {
 
       if (newCorrect >= totalTargets) {
         handleComplete(true);
+      } else {
+        // Smooth animate progress for playing phase
+        Animated.timing(progressAnim, {
+          toValue: newCorrect / totalTargets,
+          duration: 200,
+          useNativeDriver: false,
+        }).start();
       }
     } else {
       // Wrong
@@ -176,23 +227,29 @@ export function TapInOrderSession({ session }: Props) {
   // ──── READY ────
   if (phase === 'ready') {
     return (
-      <View style={st.container}>
-        <View style={st.center}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(255,149,0,0.14)' }]}>
-            <IconSymbol name="brain.head.profile" size={52} color={Colors.orange} />
-          </View>
-          <Text style={st.title}>Tap in Order</Text>
-          <Text style={st.sub}>Memorize the numbers, then tap 1→{TILE_COUNT}</Text>
-          {players.length > 1 && <View style={st.pill}><Text style={st.pillTx}>Now · {player.displayName}</Text></View>}
-          <View style={st.label}><IconSymbol name="checkmark.seal.fill" size={12} color={Colors.green} /><Text style={st.labelTx}>Fewest mistakes wins</Text></View>
-          <View style={st.bubbleRow}>
-            <View style={st.bubble}><Text style={st.bv}>{GRID_SIZE}×{GRID_SIZE}</Text><Text style={st.bl}>Grid</Text></View>
-            <View style={st.bubble}><Text style={st.bv}>{TILE_COUNT}</Text><Text style={st.bl}>Tiles</Text></View>
-            {players.length > 1 && <View style={st.bubble}><Text style={st.bv}>{playerIndex+1}/{players.length}</Text><Text style={st.bl}>Player</Text></View>}
-          </View>
-          <Pressable style={st.btn} onPress={handleStart}><Text style={st.btnTx}>Start</Text></Pressable>
-        </View>
-      </View>
+      <GamePassPhoneView
+        playerName={player?.displayName || 'Player'}
+        title={players.length > 1 && playerIndex > 0 ? "Pass the phone to" : "Get ready"}
+        subtitle={`Tap in Order · ${GRID_SIZE}×${GRID_SIZE} grid · ${TILE_COUNT} tiles`}
+        accentColor={Colors.orange}
+        onReady={handleStart}
+        onSkip={() => {
+          setResults(prev => [...prev, {
+            playerId: player.id,
+            missTaps: 0,
+            timeMs: 0,
+            correctCount: 0,
+            totalTargets: TILE_COUNT,
+            didFinish: false,
+          }]);
+          const nextIdx = playerIndex + 1;
+          if (nextIdx >= players.length) {
+            setPhase('results');
+          } else {
+            setPlayerIndex(nextIdx);
+          }
+        }}
+      />
     );
   }
 
@@ -202,30 +259,25 @@ export function TapInOrderSession({ session }: Props) {
     const icon = gaveUp ? 'flag.fill' : 'checkmark.seal.fill';
     const label = gaveUp ? 'Gave Up' : 'Done!';
     return (
-      <View style={[st.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <View style={[st.overlayCard, { borderColor: accent + '4D' }]}>
-          <IconSymbol name={icon as any} size={72} color={accent} />
-          <Text style={[st.title, { color: accent }]}>{label}</Text>
-          <Text style={st.sub}>{missTaps} mistakes · {formatTime(elapsed)}s</Text>
-          {players.length > 1 && <Text style={[st.sub, { marginTop: 8 }]}>Pass the phone to the next player</Text>}
-        </View>
-      </View>
+      <GameOutcomeCard
+        icon={icon}
+        label={label}
+        sublabel={`${missTaps} mistakes · ${formatTime(elapsed)}s`}
+        accentColor={accent}
+      />
     );
   }
 
   // ──── PLAYER COMPLETE (pass phone) ────
   if (phase === 'playerComplete') {
+    const lastResult = results[results.length - 1];
     return (
-      <View style={st.container}>
-        <View style={st.center}>
-          <IconSymbol name="hand.raised.fill" size={56} color={Colors.orange} />
-          <Text style={st.title}>Pass the Phone</Text>
-          <Text style={st.sub}>Give to {players[playerIndex + 1]?.displayName}</Text>
-          <Pressable style={[st.btn, { marginTop: 40 }]} onPress={() => { setPlayerIndex(i => i+1); setPhase('ready'); }}>
-            <Text style={st.btnTx}>I&apos;m Ready</Text>
-          </Pressable>
-        </View>
-      </View>
+      <GamePlayerCompleteView
+        nextPlayerName={players[playerIndex + 1]?.displayName || 'Next Player'}
+        prevResultLine={lastResult ? `${lastResult.correctCount}/${lastResult.totalTargets} correct · ${lastResult.missTaps} mistakes · ${(lastResult.timeMs / 1000).toFixed(1)}s` : undefined}
+        onReady={() => { setPlayerIndex(i => i + 1); handleStart(); }}
+        accentColor={Colors.orange}
+      />
     );
   }
 
@@ -235,7 +287,7 @@ export function TapInOrderSession({ session }: Props) {
     const previewProgress = isPreview ? 1.0 - (previewLeft / previewTotal) : progressVal;
 
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={`play-${phase}-${playerIndex}`} type="fade" style={st.container}>
         {/* Header */}
         <View style={st.topBar}>
           <View style={{ flex: 1 }}>
@@ -276,8 +328,18 @@ export function TapInOrderSession({ session }: Props) {
         {/* Progress bar */}
         <View style={st.progWrap}>
           <View style={st.progBg}>
-            <LinearGradient colors={[Colors.orange,'#FF2D55']} start={{x:0,y:0}} end={{x:1,y:0}}
-              style={[st.progFill, { width: `${Math.max(previewProgress * 100, 1)}%` as any }]} />
+            <Animated.View style={[st.progFill, {
+              width: progressAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['1%', '100%'],
+              }),
+              backgroundColor: isPreview ? undefined : Colors.green,
+            }]}>
+              {isPreview && (
+                <LinearGradient colors={[Colors.orange,'#FF2D55']} start={{x:0,y:0}} end={{x:1,y:0}}
+                  style={{ flex: 1, borderRadius: 3 }} />
+              )}
+            </Animated.View>
           </View>
         </View>
 
@@ -337,43 +399,45 @@ export function TapInOrderSession({ session }: Props) {
             <Text style={st.giveUpTx}>Give Up</Text>
           </Pressable>
         )}
-      </View>
+
+      </PhaseTransition>
     );
   }
 
   // ──── RESULTS ────
   const sorted = [...results].sort((a, b) => {
+    if (a.didFinish !== b.didFinish) return a.didFinish ? -1 : 1;
     if (a.missTaps !== b.missTaps) return a.missTaps - b.missTaps;
     return a.timeMs - b.timeMs;
   });
 
   return (
-    <View style={st.container}>
+    <PhaseTransition phaseKey="results" type="fade" style={st.container}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <View style={{ alignItems: 'center', gap: 8, marginVertical: 20 }}>
-          <IconSymbol name="trophy.fill" size={44} color={Colors.yellow} />
-          <Text style={st.title}>{players.length > 1 ? 'Final Rankings' : 'Complete!'}</Text>
-        </View>
-        {sorted.map((r, i) => {
-          const p = players.find(x => x.id === r.playerId);
-          return (
-            <View key={r.playerId} style={[st.rankRow, i === 0 && st.rankFirst]}>
-              <View style={[st.rankCircle, i === 0 && { backgroundColor: 'rgba(255,204,0,0.2)' }]}>
-                <Text style={[st.rankNum, i === 0 && { color: Colors.yellow }]}>{i+1}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={st.rankName}>{p?.displayName}</Text>
-                <Text style={st.rankDet}>{r.correctCount}/{r.totalTargets} correct · {r.missTaps} miss · {(r.timeMs/1000).toFixed(1)}s</Text>
-              </View>
-              {i === 0 && r.didFinish && <IconSymbol name="crown.fill" size={16} color={Colors.yellow} />}
-            </View>
-          );
-        })}
-        <Pressable style={[st.btn, { marginTop: 24 }]} onPress={() => { setPlayerIndex(0); setResults([]); setPhase('ready'); }}>
-          <Text style={st.btnTx}>Play Again</Text>
-        </Pressable>
+        <ResultsScoreboard
+          entries={sorted.map(r => {
+            const p = players.find(x => x.id === r.playerId);
+            const displayTime = (r.timeMs / 1000).toFixed(1);
+            return {
+              id: r.playerId,
+              name: p?.displayName ?? 'Player',
+              primary: r.didFinish ? `${displayTime}s` : 'DNF',
+              secondary: `${r.correctCount}/${r.totalTargets} correct · ${r.missTaps} mistakes`,
+            };
+          })}
+          title={players.length > 1 ? 'Final Rankings' : 'Complete!'}
+          subtitle={players.length > 1 ? undefined : 'Well done!'}
+          shareGameName="Tap In Order"
+          onPlayAgain={() => {
+            setPlayerIndex(0);
+            setResults([]);
+            setPhase('ready');
+          }}
+          playAgainTitle="Play Again"
+          playAgainIcon="arrow.clockwise"
+        />
       </ScrollView>
-    </View>
+    </PhaseTransition>
   );
 }
 
@@ -381,39 +445,39 @@ const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   iconBox: { width: 100, height: 100, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-  title: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 16 },
-  sub: { color: 'rgba(255,255,255,0.5)', fontSize: 15, marginTop: 8, textAlign: 'center' },
-  pill: { backgroundColor: 'rgba(52,199,89,0.15)', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, marginTop: 12, borderWidth: 1, borderColor: 'rgba(52,199,89,0.3)' },
-  pillTx: { color: Colors.green, fontSize: 13, fontWeight: '700' },
+  title: { color: '#fff', fontSize: 32, fontFamily: 'Viral-Black', marginTop: 16 },
+  sub: { color: 'rgba(255,255,255,0.5)', fontSize: 18, marginTop: 8, textAlign: 'center' },
+  pill: { backgroundColor: 'rgba(52,199,89,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 12, borderWidth: 1, borderColor: 'rgba(52,199,89,0.3)' },
+  pillTx: { color: Colors.green, fontSize: 16, fontFamily: 'Viral-Black' },
   label: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 },
-  labelTx: { color: Colors.green, fontSize: 12, fontWeight: '600' },
+  labelTx: { color: Colors.green, fontSize: 14, fontWeight: '600' },
   bubbleRow: { flexDirection: 'row', gap: 16, marginTop: 24 },
-  bubble: { alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14 },
-  bv: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  bl: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
+  bubble: { alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14 },
+  bv: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
+  bl: { color: 'rgba(255,255,255,0.5)', fontSize: 14 },
   btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
-  btnTx: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  btnTx: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black' },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
-  hName: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
-  hSub: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 },
+  hName: { color: '#fff', fontSize: 28, fontFamily: 'Viral-Black' },
+  hSub: { color: 'rgba(255,255,255,0.5)', fontSize: 16, marginTop: 2 },
   statsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
-  statCard: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  statCardInner: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  statVal: { fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  statLbl: { color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '600', marginTop: 2 },
+  statCard: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  statCardInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statVal: { fontSize: 14, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  statLbl: { color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '600', marginTop: 2 },
   progWrap: { paddingHorizontal: 16, paddingBottom: 12 },
   progBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' },
   progFill: { height: 6, borderRadius: 3 },
   gridWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignSelf: 'center' },
   tile: { flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
-  tileNum: { fontSize: 22, fontWeight: '800' },
+  tileNum: { fontSize: 20, fontFamily: 'Viral-Black' },
   giveUp: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, paddingVertical: 12, marginHorizontal: 16, borderRadius: 16, backgroundColor: 'rgba(255,59,48,0.15)', borderWidth: 1, borderColor: 'rgba(255,59,48,0.3)' },
-  giveUpTx: { color: Colors.red, fontSize: 15, fontWeight: '600' },
+  giveUpTx: { color: Colors.red, fontSize: 18, fontWeight: '600' },
   overlayCard: { padding: 32, borderRadius: 24, alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)', borderWidth: 2 },
   rankRow: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12, backgroundColor: 'rgba(255,255,255,0.035)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)', marginBottom: 10 },
   rankFirst: { backgroundColor: 'rgba(255,204,0,0.06)', borderColor: 'rgba(255,204,0,0.2)' },
   rankCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' },
-  rankNum: { color: 'rgba(255,255,255,0.5)', fontSize: 17, fontWeight: 'bold' },
-  rankName: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  rankDet: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 },
+  rankNum: { color: 'rgba(255,255,255,0.5)', fontSize: 20, fontWeight: 'bold' },
+  rankName: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black' },
+  rankDet: { color: 'rgba(255,255,255,0.5)', fontSize: 14, marginTop: 2 },
 });

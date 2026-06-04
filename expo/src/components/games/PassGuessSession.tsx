@@ -4,6 +4,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
+import { GamePassPhoneView } from './SharedGameComponents';
+import { PhaseTransition } from './PhaseTransition';
 
 import * as Haptics from '@/src/utils/safeHaptics';
 
@@ -252,74 +254,102 @@ export function PassGuessSession({ session }: Props) {
   if (showPrivacyScreen) {
     const color = getPlayerColor(activePlayerIndex);
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <IconSymbol name="eye.slash.fill" size={64} color={color} />
-        <Text style={styles.privacyTitle}>Pass the phone to</Text>
-        <Text style={[styles.privacyName, { color }]}>{currentPlayer.displayName}</Text>
-        <Text style={styles.privacySubtitle}>
-          {privacyAction === 'answer' ? "They will write their answer privately." : "They will guess who wrote an answer."}
-        </Text>
-        
-        <Pressable style={[styles.primaryBtn, { backgroundColor: color, marginTop: 40 }]} onPress={handlePrivacyReady}>
-          <Text style={styles.primaryBtnText}>I&apos;m Ready</Text>
-        </Pressable>
-      </View>
+      <GamePassPhoneView
+        playerName={currentPlayer.displayName}
+        subtitle={privacyAction === 'answer' ? "They will write their answer privately." : "They will guess who wrote an answer."}
+        accentColor={color}
+        onReady={handlePrivacyReady}
+        onSkip={() => {
+          if (privacyAction === 'answer') {
+            // Record a skipped answer with empty text
+            setAnswers(prev => [...prev, {
+              id: Math.random().toString(),
+              playerID: currentPlayer.id,
+              text: '(skipped)',
+            }]);
+            setCurrentAnswer('');
+            if (activePlayerIndex + 1 < session.players.length) {
+              setActivePlayerIndex(prev => prev + 1);
+              setPrivacyAction('answer');
+              setShowPrivacyScreen(true);
+            } else {
+              setPhase('guessing');
+              setActivePlayerIndex(0);
+              setPrivacyAction('guess');
+              setShowPrivacyScreen(true);
+            }
+          } else {
+            // Skip this guess
+            handleSkipGuess();
+          }
+        }}
+      />
     );
   }
 
   return (
     <View style={styles.container}>
+      <PhaseTransition phaseKey={phase} style={{ flex: 1 }}>
       {phase === 'intro' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.iconHeader}>
-            <IconSymbol name="text.bubble.fill" size={48} color={Colors.yellow} />
-          </View>
-          <Text style={styles.title}>Round {roundNumber} of {totalRounds}</Text>
-          <Text style={styles.subtitle}>Everyone writes a private answer first. No reveals until the end.</Text>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Choose a Question</Text>
-            <View style={styles.tabsRow}>
-              <Pressable style={[styles.tab, !useCustom && styles.tabActive]} onPress={() => setUseCustom(false)}>
-                <Text style={styles.tabText}>Predefined</Text>
-              </Pressable>
-              <Pressable style={[styles.tab, useCustom && styles.tabActive]} onPress={() => setUseCustom(true)}>
-                <Text style={styles.tabText}>Custom</Text>
-              </Pressable>
-            </View>
-
-            {!useCustom ? (
-              <View style={styles.questionsList}>
-                {PREDEFINED_QUESTIONS.map((q, i) => (
-                  <Pressable 
-                    key={i} 
-                    style={[styles.questionBtn, question === q && styles.questionBtnActive]}
-                    onPress={() => setQuestion(q)}
-                  >
-                    <Text style={styles.questionText}>{q}</Text>
-                  </Pressable>
-                ))}
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.iconHeader}>
+              <View style={styles.iconCircle}>
+                <IconSymbol name="text.bubble.fill" size={36} color={Colors.yellow} />
               </View>
-            ) : (
-              <TextInput
-                style={styles.input}
-                placeholder="Write your custom question..."
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                value={customQuestion}
-                onChangeText={setCustomQuestion}
-                multiline
-              />
-            )}
-          </View>
+            </View>
+            <Text style={styles.title}>Round {roundNumber} of {totalRounds}</Text>
+            <Text style={styles.subtitle}>Everyone writes a private answer first. No reveals until the end.</Text>
 
-          <Pressable 
-            style={[styles.primaryBtn, (useCustom && !customQuestion.trim()) && { opacity: 0.5 }]} 
-            onPress={handleStartRound}
-            disabled={useCustom && !customQuestion.trim()}
-          >
-            <Text style={styles.primaryBtnText}>Start Round</Text>
-          </Pressable>
-        </ScrollView>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Choose a Question</Text>
+              <View style={styles.tabsRow}>
+                <Pressable style={[styles.tab, !useCustom && styles.tabActive]} onPress={() => setUseCustom(false)}>
+                  <Text style={[styles.tabText, !useCustom && styles.tabTextActive]}>Predefined</Text>
+                </Pressable>
+                <Pressable style={[styles.tab, useCustom && styles.tabActive]} onPress={() => setUseCustom(true)}>
+                  <Text style={[styles.tabText, useCustom && styles.tabTextActive]}>Custom</Text>
+                </Pressable>
+              </View>
+
+              {!useCustom ? (
+                <View style={styles.questionsList}>
+                  {PREDEFINED_QUESTIONS.map((q, i) => (
+                    <Pressable 
+                      key={i} 
+                      style={[styles.questionBtn, question === q && styles.questionBtnActive]}
+                      onPress={() => setQuestion(q)}
+                    >
+                      {question === q && <View style={styles.questionActiveDot} />}
+                      <Text style={[styles.questionText, question === q && { color: '#5AC8FA' }]}>{q}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Write your custom question..."
+                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  value={customQuestion}
+                  onChangeText={setCustomQuestion}
+                  multiline
+                />
+              )}
+            </View>
+          </ScrollView>
+
+          {/* Sticky bottom Start button */}
+          <View style={styles.stickyBottom}>
+            <Pressable 
+              style={[styles.primaryBtn, (useCustom && !customQuestion.trim()) && { opacity: 0.5 }]} 
+              onPress={handleStartRound}
+              disabled={useCustom && !customQuestion.trim()}
+            >
+              <IconSymbol name="play.fill" size={20} color="white" />
+              <Text style={styles.primaryBtnText}>Start Round</Text>
+            </Pressable>
+          </View>
+        </View>
       )}
 
       {phase === 'answering' && (
@@ -496,6 +526,7 @@ export function PassGuessSession({ session }: Props) {
           </Pressable>
         </ScrollView>
       )}
+      </PhaseTransition>
     </View>
   );
 }
@@ -512,135 +543,159 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scrollContent: {
-    paddingBottom: 40,
-    paddingTop: 20,
+    paddingBottom: 20,
+    paddingTop: 16,
+  },
+  stickyBottom: {
+    paddingVertical: 12,
+    paddingBottom: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   iconHeader: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 214, 10, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 214, 10, 0.2)',
   },
   title: {
     color: 'white',
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontFamily: 'Viral-Black',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 16,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     paddingHorizontal: 20,
+    lineHeight: 20,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   cardTitle: {
     color: 'white',
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontSize: 15,
+    fontFamily: 'Viral-Black',
+    marginBottom: 10,
   },
   cardSubtitle: {
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.45)',
     fontSize: 13,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   tabsRow: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 16,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 14,
+    padding: 3,
+    marginBottom: 14,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 9,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 11,
   },
   tabActive: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   tabText: {
-    color: 'white',
+    color: 'rgba(255,255,255,0.5)',
     fontWeight: '600',
+    fontSize: 14,
+  },
+  tabTextActive: {
+    color: 'white',
   },
   questionsList: {
-    gap: 10,
+    gap: 8,
   },
   questionBtn: {
     padding: 14,
     backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   questionBtnActive: {
-    backgroundColor: 'rgba(0,122,255,0.15)',
-    borderColor: '#007AFF',
+    backgroundColor: 'rgba(90,200,250,0.08)',
+    borderColor: 'rgba(90,200,250,0.35)',
+  },
+  questionActiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#5AC8FA',
   },
   questionText: {
-    color: 'white',
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 15,
+    flex: 1,
+    lineHeight: 21,
   },
   input: {
     backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     color: 'white',
     fontSize: 16,
     minHeight: 100,
     textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   charCount: {
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.35)',
     fontSize: 12,
     textAlign: 'right',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 6,
+    marginBottom: 14,
   },
   primaryBtn: {
     backgroundColor: '#007AFF',
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: 18,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   primaryBtnText: {
     color: 'white',
-    fontSize: 17,
-    fontWeight: 'bold',
-  },
-  privacyTitle: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 20,
-    marginTop: 20,
-  },
-  privacyName: {
-    fontSize: 34,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  privacySubtitle: {
-    color: 'white',
-    fontSize: 17,
-    textAlign: 'center',
-    paddingHorizontal: 40,
+    fontSize: 16,
+    fontFamily: 'Viral-Black',
   },
   badgeRow: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 20,
     gap: 6,
   },
@@ -661,51 +716,53 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   progressText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.45)',
     fontSize: 13,
   },
   questionPrompt: {
     color: 'white',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginTop: 16,
+    fontSize: 20,
+    fontFamily: 'Viral-Black',
+    marginTop: 14,
+    lineHeight: 28,
   },
   voterName: {
     fontSize: 17,
-    fontWeight: 'bold',
+    fontFamily: 'Viral-Black',
     marginBottom: 4,
   },
   candidatesList: {
-    gap: 10,
-    marginTop: 20,
-    marginBottom: 20,
+    gap: 8,
+    marginTop: 16,
+    marginBottom: 16,
   },
   candidateBtn: {
     padding: 16,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   candidateBtnActive: {
     borderColor: '#007AFF',
     backgroundColor: 'rgba(0,122,255,0.1)',
   },
   candidateText: {
-    fontSize: 17,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'Viral-Black',
   },
   answerText: {
     color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'Viral-Black',
+    lineHeight: 26,
   },
   authorText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontFamily: 'Viral-Black',
   },
   correctText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.45)',
     fontSize: 13,
   },
   leaderboardRow: {
@@ -716,18 +773,19 @@ const styles = StyleSheet.create({
   rank: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Viral-Black',
     width: 30,
   },
   leaderboardName: {
-    fontSize: 17,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'Viral-Black',
     flex: 1,
   },
   scoreText: {
     color: 'white',
-    fontSize: 17,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'Viral-Black',
+    fontVariant: ['tabular-nums'],
   },
   timerRow: {
     flexDirection: 'row',
@@ -738,8 +796,8 @@ const styles = StyleSheet.create({
   },
   timerText: {
     color: '#5AC8FA',
-    fontSize: 17,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'Viral-Black',
     fontVariant: ['tabular-nums'],
   },
 });

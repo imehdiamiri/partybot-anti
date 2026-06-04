@@ -1,72 +1,219 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, TextInput, PanResponder, GestureResponderEvent } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, PanResponder, PanResponderInstance } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import * as Haptics from '@/src/utils/safeHaptics';
 import Svg, { Path } from 'react-native-svg';
 import { AudioManager } from '@/src/services/AudioManager';
+import { GamePassPhoneView, GameResultsScreen } from './SharedGameComponents';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
+import { PhaseTransition } from './PhaseTransition';
 
 interface Props { session: GameSession; }
-type Phase = 'turnIntro' | 'drawerReveal' | 'drawing' | 'passForGuesses' | 'guessing' | 'drawerJudging' | 'roundResults' | 'finalLeaderboard';
+type Phase = 'ready' | 'reveal' | 'drawing' | 'guessing' | 'result' | 'results';
 
 const DRAW_DURATION = 60;
-const CONCEPTS = ["Pizza","Elephant","Guitar","Rainbow","Rocket","Banana","Volcano","Sunflower","Penguin","Ice Cream","Dragon","Castle","Camera","Robot","Sandwich","Lighthouse","Octopus","Tornado","Cactus","Basketball","Skateboard","Helicopter","Pirate","Ninja","Mermaid","Alien","Sunglasses","Donut","Umbrella","Clock","Spider","Keyboard","Dinosaur","Astronaut","Snowman","Cupcake","Butterfly","Mountain","Windmill","Telescope","Hamburger","Jellyfish","Lightning","Giraffe","Campfire","Bicycle","Kite","Scarecrow","Anchor","Compass","Treasure Chest","Magic Wand","Crown","Trophy","Pencil","Waterfall","Dragonfly","Cowboy","Wizard","Tiger","Submarine","Eiffel Tower","Pyramid","Popcorn","Watermelon","Backpack","Mushroom","Owl","Vampire","Zombie","Ghost","UFO","Island","Lemon","Strawberry","Toaster","Trumpet","Piano","Drum"];
-const BRUSH_COLORS: {name:string;hex:string}[] = [{name:'white',hex:'#fff'},{name:'red',hex:Colors.red},{name:'orange',hex:Colors.orange},{name:'yellow',hex:Colors.yellow},{name:'green',hex:Colors.green},{name:'blue',hex:'#007AFF'},{name:'purple',hex:'#AF52DE'},{name:'pink',hex:'#FF2D55'},{name:'black',hex:'#000'}];
+
+const PRESET_CONCEPTS = [
+  // English Proverbs & Idioms
+  "Bite the bullet",
+  "Spill the beans",
+  "Don't cry over spilt milk",
+  "Piece of cake",
+  "Under the weather",
+  "Cat got your tongue?",
+  "Break a leg",
+  "Once in a blue moon",
+  "Barking up the wrong tree",
+  "Cry wolf",
+  "Kill two birds with one stone",
+  "Curiosity killed the cat",
+  "Burn the midnight oil",
+  "Add fuel to the fire",
+  "Blessing in disguise",
+  "Skeleton in the closet",
+  "A penny for your thoughts",
+  "Let the cat out of the bag",
+  "Hit the nail on the head",
+  
+  // Farsi Proverbs & Idioms
+  "Dastet dard nakone (Thank you)",
+  "Gozashteha gozashte (Let bygones be bygones)",
+  "Ba yek gol bahar nemishavad (One flower doesn't make spring)",
+  "Shotor didi nadidi (You saw nothing)",
+  "Jaye shoma khali (Your place was empty)",
+  "Del be del rah dare (Hearts have path to hearts)",
+  "Abe pak rooye dast rikhtan (Pouring clean water on hand)",
+  "Ba dobe shirdan bazi kardan (Playing with lion's tail)",
+  "Koleh poshti ruye doush",
+  "Davar-e bi tarafe bazi",
+  
+  // Situations & Common Phrases
+  "Stuck in an elevator",
+  "Singing in the shower",
+  "Chased by a swarm of bees",
+  "Eating a super sour lemon",
+  "Stepping on a Lego block",
+  "Winning a million dollar lottery",
+  "Trying to catch a flight",
+  "Proposing in a hot air balloon",
+  "Waking up from a nightmare",
+  "Walking on a tightrope",
+  "Climbing a windy mountain",
+  "Getting a bad haircut",
+  "Sleeping during a boring lecture",
+  "Fighting off a grizzly bear",
+  "Cooking in a chaotic kitchen",
+  "Dancing on a freezing iceberg",
+  "Riding a wild mechanical bull",
+  "Trapped inside a giant bubble",
+  "Painting a portrait with toes",
+  "Lost inside a spooky maze"
+];
+
+const BRUSH_COLORS: {name:string;hex:string}[] = [
+  {name:'white',hex:'#fff'},
+  {name:'red',hex:Colors.red},
+  {name:'orange',hex:Colors.orange},
+  {name:'yellow',hex:Colors.yellow},
+  {name:'green',hex:Colors.green},
+  {name:'blue',hex:'#007AFF'},
+  {name:'purple',hex:'#AF52DE'},
+  {name:'pink',hex:'#FF2D55'},
+  {name:'black',hex:'#000'}
+];
 
 interface Stroke { color: string; width: number; points: {x:number;y:number}[]; }
-interface Answer { id: string; playerId: string; playerName: string; text: string; isCorrect: boolean; isJudged: boolean; }
 
 function pickConcept(used: Set<string>): string {
-  const avail = CONCEPTS.filter(c => !used.has(c));
-  const pool = avail.length > 0 ? avail : CONCEPTS;
+  const avail = PRESET_CONCEPTS.filter(c => !used.has(c));
+  const pool = avail.length > 0 ? avail : PRESET_CONCEPTS;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 export function DrawRushSession({ session }: Props) {
   const players = session.players;
-  const [phase, setPhase] = useState<Phase>('turnIntro');
-  const [drawerIdx, setDrawerIdx] = useState(0);
+  const registerSkip = useRegisterSkip();
+  const conceptMode = session.gameConfig?.conceptMode || 'preset';
+  const isFreeMode = conceptMode !== 'preset';
+
+  const [phase, setPhase] = useState<Phase>('ready');
+  const [playerIdx, setPlayerIdx] = useState(0);
   const [concept, setConcept] = useState('');
   const [usedConcepts, setUsedConcepts] = useState<Set<string>>(new Set());
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [currentStroke, setCurrentStroke] = useState<Stroke | null>(null);
   const [brushColor, setBrushColor] = useState('#fff');
-  const [brushWidth] = useState(4);
+  const [brushWidth] = useState(6);
   const [timeLeft, setTimeLeft] = useState(DRAW_DURATION);
-  const [answers, setAnswers] = useState<Answer[]>([]);
-  const [guessIdx, setGuessIdx] = useState(0);
-  const [guessText, setGuessText] = useState('');
-  const [scores, setScores] = useState<Record<string,number>>(() => {
-    const s: Record<string,number> = {}; players.forEach(p => s[p.id] = 0); return s;
-  });
+  const [lastResult, setLastResult] = useState<'success' | 'fail' | null>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 300, height: 500 });
+  const [round, setRound] = useState(1);
+
+  // Score tracking per player
+  const [records, setRecords] = useState<{ playerId: string; score: number }[]>(() =>
+    players.map(p => ({ playerId: p.id, score: 0 }))
+  );
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const canvasRef = useRef<View>(null);
-  const canvasLayout = useRef({x:0,y:0,w:0,h:0});
 
-  const drawer = players[drawerIdx];
-  const guessers = players.filter((_,i) => i !== drawerIdx);
-  const currentGuesser = guessers[guessIdx];
+  // Brush setup
+  const brushColorRef = useRef(brushColor);
+  useEffect(() => { brushColorRef.current = brushColor; }, [brushColor]);
+  
+  const brushWidthRef = useRef(brushWidth);
+  useEffect(() => { brushWidthRef.current = brushWidth; }, [brushWidth]);
 
-  const conceptMode = session.gameConfig?.conceptMode || 'preset';
+  const currentStrokeRef = useRef<Stroke | null>(null);
 
-  useEffect(() => {
-    if (conceptMode === 'preset') {
+  const panResponder = useRef<PanResponderInstance>(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => {
+        const { locationX, locationY } = evt.nativeEvent;
+        if (locationX != null && locationY != null && !isNaN(locationX) && !isNaN(locationY)) {
+          const newStroke = { color: brushColorRef.current, width: brushWidthRef.current, points: [{ x: locationX, y: locationY }] };
+          currentStrokeRef.current = newStroke;
+          setCurrentStroke(newStroke);
+        }
+      },
+      onPanResponderMove: (evt) => {
+        const { locationX, locationY } = evt.nativeEvent;
+        if (locationX != null && locationY != null && !isNaN(locationX) && !isNaN(locationY) && currentStrokeRef.current) {
+          currentStrokeRef.current.points.push({ x: locationX, y: locationY });
+          setCurrentStroke({ ...currentStrokeRef.current });
+        }
+      },
+      onPanResponderRelease: () => {
+        if (currentStrokeRef.current) {
+          const finishedStroke = currentStrokeRef.current;
+          setStrokes(prev => [...prev, finishedStroke]);
+          currentStrokeRef.current = null;
+          setCurrentStroke(null);
+        }
+      },
+      onPanResponderTerminate: () => {
+        if (currentStrokeRef.current) {
+          currentStrokeRef.current = null;
+          setCurrentStroke(null);
+        }
+      }
+    })
+  ).current;
+
+  const setupNewTurn = () => {
+    if (!isFreeMode) {
       const c = pickConcept(usedConcepts);
       setConcept(c);
       setUsedConcepts(prev => new Set(prev).add(c));
     } else {
-      setConcept(''); // freeDraw: drawer picks their own
+      setConcept('');
     }
-  }, [drawerIdx]);
+    setStrokes([]);
+    setCurrentStroke(null);
+    setLastResult(null);
+    setPhase('ready');
+  };
+
+  useEffect(() => {
+    setupNewTurn();
+  }, []);
+
+  // Register skip handler during 'drawing' phase
+  useEffect(() => {
+    if (phase === 'drawing') {
+      registerSkip(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        // Skip with score 0 — no point added for this turn
+        const totalTurns = players.length * 2;
+        if (round >= totalTurns) {
+          AudioManager.play('gameOver');
+          setPhase('results');
+        } else {
+          setRound(r => r + 1);
+          setPlayerIdx(prev => (prev + 1) % players.length);
+          setupNewTurn();
+        }
+      }, players[playerIdx]?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [phase, playerIdx, round]);
 
   useEffect(() => {
     if (phase === 'drawing' && timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setTimeLeft(t => {
           if (t <= 4 && t > 1) { AudioManager.play('countdown'); }
-          if (t <= 1) { clearInterval(timerRef.current!); AudioManager.play('countdownFinal'); setPhase('passForGuesses'); return 0; }
+          if (t <= 1) { 
+            clearInterval(timerRef.current!); 
+            AudioManager.play('countdownFinal'); 
+            handleDoneDrawing();
+            return 0; 
+          }
           return t - 1;
         });
       }, 1000);
@@ -76,294 +223,425 @@ export function DrawRushSession({ session }: Props) {
 
   const strokeToPath = (s: Stroke): string => {
     if (s.points.length === 0) return '';
+    if (s.points.length === 1) return `M${s.points[0].x},${s.points[0].y} L${s.points[0].x+0.1},${s.points[0].y+0.1}`;
     return s.points.map((p,i) => `${i===0?'M':'L'}${p.x},${p.y}`).join(' ');
   };
 
-  const brushColorRef = useRef(brushColor);
-  brushColorRef.current = brushColor;
-  const strokesRef = useRef(strokes);
-  strokesRef.current = strokes;
-  const currentStrokeRef = useRef(currentStroke);
-  currentStrokeRef.current = currentStroke;
-
-  const panResponder = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: (e) => {
-      const {locationX, locationY} = e.nativeEvent;
-      const newStroke: Stroke = {color: brushColorRef.current, width: 4, points: [{x:locationX, y:locationY}]};
-      currentStrokeRef.current = newStroke;
-      setCurrentStroke(newStroke);
-    },
-    onPanResponderMove: (e) => {
-      const {locationX, locationY} = e.nativeEvent;
-      if (currentStrokeRef.current) {
-        const updated = {...currentStrokeRef.current, points: [...currentStrokeRef.current.points, {x:locationX, y:locationY}]};
-        currentStrokeRef.current = updated;
-        setCurrentStroke(updated);
-      }
-    },
-    onPanResponderRelease: () => {
-      if (currentStrokeRef.current) {
-        setStrokes(prev => [...prev, currentStrokeRef.current!]);
-        currentStrokeRef.current = null;
-        setCurrentStroke(null);
-      }
-    },
-  })).current;
-
-  const handleStartDrawing = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); AudioManager.play('buttonTap'); setTimeLeft(DRAW_DURATION); setStrokes([]); setPhase('drawing'); };
-  const handleFinishEarly = () => { if (timerRef.current) clearInterval(timerRef.current); AudioManager.play('buttonTap'); setPhase('passForGuesses'); };
-  const handleStartGuessing = () => { AudioManager.play('phaseChange'); setGuessIdx(0); setAnswers([]); setGuessText(''); setPhase('guessing'); };
-
-  const handleSubmitGuess = () => {
-    const t = guessText.trim();
-    if (!t || !currentGuesser) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    AudioManager.play('buttonTap');
-    setAnswers(prev => [...prev, { id: `${Date.now()}`, playerId: currentGuesser.id, playerName: currentGuesser.displayName, text: t, isCorrect: false, isJudged: false }]);
-    setGuessText('');
-    if (guessIdx + 1 >= guessers.length) { AudioManager.play('phaseChange'); setPhase('drawerJudging'); }
-    else setGuessIdx(guessIdx + 1);
+  const handleStartDrawing = () => { 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); 
+    AudioManager.play('buttonTap'); 
+    setTimeLeft(DRAW_DURATION); 
+    setStrokes([]); 
+    setPhase('drawing'); 
   };
 
-  const handleJudge = (id: string, correct: boolean) => {
-    Haptics.selectionAsync();
-    AudioManager.play('buttonTap');
-    setAnswers(prev => prev.map(a => a.id === id ? {...a, isCorrect: correct, isJudged: true} : a));
+  const handleDoneDrawing = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setPhase('guessing');
   };
 
-  const handleFinalizeJudge = () => {
+  // Opponent guessed correctly
+  const handleGuessCorrect = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     AudioManager.play('success');
-    const newScores = {...scores};
-    answers.filter(a => a.isCorrect).forEach(a => { newScores[a.playerId] = (newScores[a.playerId] || 0) + 10; });
-    setScores(newScores);
-    setPhase('roundResults');
+    
+    // Add point to the drawer
+    const drawerId = players[playerIdx].id;
+    setRecords(prev => prev.map(r => r.playerId === drawerId ? { ...r, score: r.score + 1 } : r));
+    
+    setLastResult('success');
+    setPhase('result');
   };
 
-  const handleNextTurn = () => {
-    if (drawerIdx + 1 >= players.length) { AudioManager.play('gameOver'); setPhase('finalLeaderboard'); return; }
-    AudioManager.play('phaseChange');
-    setDrawerIdx(drawerIdx + 1);
-    setPhase('turnIntro');
+  // Opponent didn't guess / wrong
+  const handleGuessWrong = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    AudioManager.play('fail');
+    setLastResult('fail');
+    setPhase('result');
   };
 
-  const sw = Dimensions.get('window').width;
-  const canvasSize = sw - 32;
-  const sorted = [...players].sort((a,b) => (scores[b.id]||0) - (scores[a.id]||0));
-  const allJudged = answers.length > 0 && answers.every(a => a.isJudged);
+  const handleNextRound = () => {
+    const totalTurns = players.length * 2;
+    if (round >= totalTurns) {
+      AudioManager.play('gameOver');
+      setPhase('results');
+    } else {
+      setRound(r => r + 1);
+      setPlayerIdx(prev => (prev + 1) % players.length);
+      setupNewTurn();
+    }
+  };
 
-  // ═══ TURN INTRO ═══
-  if (phase === 'turnIntro') {
+  const playAgain = () => {
+    AudioManager.play('buttonTap');
+    setRecords(players.map(p => ({ playerId: p.id, score: 0 })));
+    setPlayerIdx(0);
+    setRound(1);
+    setUsedConcepts(new Set());
+    setupNewTurn();
+  };
+
+  // ─── READY (PASS PHONE TO DRAWER) ───
+  if (phase === 'ready') {
+    const currentPlayerName = players[playerIdx]?.displayName ?? 'Player';
     return (
-      <View style={st.container}><View style={st.center}>
-        <View style={[st.iconBox,{backgroundColor:'rgba(0,122,255,0.14)'}]}><IconSymbol name="pencil.and.scribble" size={52} color="#007AFF" /></View>
-        <Text style={st.title}>Round {drawerIdx+1} of {players.length}</Text>
-        <Text style={[st.sub,{fontSize:22,color:'#007AFF',fontWeight:'bold',marginTop:12}]}>{drawer.displayName} draws!</Text>
-        <Text style={st.hint}>Everyone else will guess what&apos;s being drawn. 60s per turn.</Text>
-        <Pressable style={st.btn} onPress={() => setPhase('drawerReveal')}><Text style={st.btnTx}>Continue</Text></Pressable>
-      </View></View>
+      <PhaseTransition phaseKey={`ready-${playerIdx}-${round}`} style={{ flex: 1 }}>
+        <GamePassPhoneView
+          playerName={currentPlayerName}
+          title="Pass the Phone to"
+          subtitle="You will draw a concept. Keep the screen private!"
+          accentColor={Colors.orange}
+          onReady={() => setPhase('reveal')}
+          onSkip={() => {
+            // Score stays 0 for this player (no point added)
+            const totalTurns = players.length * 2;
+            if (round >= totalTurns) {
+              AudioManager.play('gameOver');
+              setPhase('results');
+            } else {
+              setRound(r => r + 1);
+              setPlayerIdx(prev => (prev + 1) % players.length);
+              setupNewTurn();
+            }
+          }}
+        />
+      </PhaseTransition>
     );
   }
 
-  // ═══ DRAWER REVEAL ═══
-  if (phase === 'drawerReveal') {
+  // ─── REVEAL (SECRET CONCEPT FOR DRAWER) ───
+  if (phase === 'reveal') {
+    const currentPlayerName = players[playerIdx]?.displayName ?? 'Player';
     return (
-      <View style={st.container}><View style={st.center}>
-        <IconSymbol name="eye.slash.fill" size={40} color={Colors.orange} />
-        <Text style={st.title}>{conceptMode === 'preset' ? 'Your Word' : 'Free Draw'}</Text>
-        <View style={st.conceptCard}>
-          <Text style={st.conceptTx}>{conceptMode === 'preset' ? concept : 'Draw anything!'}</Text>
-        </View>
-        <Text style={st.hint}>{conceptMode === 'preset' ? `Only ${drawer.displayName} should see this!` : `${drawer.displayName}, think of something and draw it!`}</Text>
-        <Pressable style={st.btn} onPress={handleStartDrawing}><Text style={st.btnTx}>Start Drawing</Text></Pressable>
-      </View></View>
-    );
-  }
+      <PhaseTransition phaseKey={`reveal-${playerIdx}`} style={{ flex: 1 }}>
+        <View style={st.center}>
+          <View style={st.freeReadyCenter}>
+            <View style={st.freeIconWrap}>
+              <IconSymbol name="pencil.and.scribble" size={56} color={Colors.orange} />
+            </View>
+            <Text style={st.freeTitle}>{currentPlayerName}'s Turn</Text>
+            
+            {isFreeMode ? (
+              <>
+                <Text style={st.freeSub}>You are in Free Draw mode!{'\n'}Draw whatever you want. Opponents will guess.</Text>
+              </>
+            ) : (
+              <>
+                <Text style={st.freeSub}>Your Secret Phrase is:</Text>
+                <View style={st.conceptRevealBox}>
+                  <Text style={st.conceptRevealText}>{concept}</Text>
+                </View>
+                <Text style={st.helperRevealTx}>Do not show anyone else!</Text>
+              </>
+            )}
 
-  // ═══ DRAWING ═══
-  if (phase === 'drawing') {
-    return (
-      <View style={st.container}>
-        <View style={st.drawHeader}>
-          <Text style={st.drawTitle}>{drawer.displayName} is drawing</Text>
-          <View style={st.timerPill}><IconSymbol name="timer" size={14} color={timeLeft<=10?Colors.red:'#5AC8FA'} />
-            <Text style={[st.timerTx,timeLeft<=10&&{color:Colors.red}]}>{timeLeft}s</Text>
+            <Pressable style={st.btn} onPress={handleStartDrawing}>
+              <Text style={st.btnTx}>Start Drawing</Text>
+            </Pressable>
           </View>
         </View>
-        <View style={[st.canvas,{width:canvasSize,height:canvasSize}]} {...panResponder.panHandlers}>
-          <Svg width={canvasSize} height={canvasSize} style={{backgroundColor:'#1C1C1E',borderRadius:16}}>
-            {strokes.map((s,i) => <Path key={i} d={strokeToPath(s)} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />)}
-            {currentStroke && <Path d={strokeToPath(currentStroke)} stroke={currentStroke.color} strokeWidth={currentStroke.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
-          </Svg>
+      </PhaseTransition>
+    );
+  }
+
+  // ─── DRAWING ───
+  if (phase === 'drawing') {
+    return (
+      <PhaseTransition phaseKey={phase} style={st.container}>
+        <View style={st.drawHeaderOverlay}>
+          <View style={st.timerPill}>
+            <IconSymbol name="timer" size={14} color={timeLeft <= 10 ? Colors.red : '#fff'} />
+            <Text style={[st.timerTx, timeLeft <= 10 && {color:Colors.red}]}>{timeLeft}s</Text>
+          </View>
+          {!isFreeMode && (
+            <View style={st.conceptPill}>
+              <Text style={st.conceptPillTx}>{concept}</Text>
+            </View>
+          )}
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop:8,maxHeight:44,paddingHorizontal:16}}>
-          <View style={{flexDirection:'row',gap:8,alignItems:'center'}}>
+
+        {/* Fullscreen Canvas */}
+        <View style={st.canvasContainer}>
+          <View 
+            style={st.canvas}
+            {...panResponder.panHandlers}
+            onLayout={(e) => {
+              const { width, height } = e.nativeEvent.layout;
+              if (width > 0 && height > 0) setCanvasSize({ width, height });
+            }}
+          >
+            <Svg width="100%" height="100%">
+              {strokes.map((s,i) => s.points.length > 0 ? <Path key={i} d={strokeToPath(s)} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null)}
+              {currentStroke && currentStroke.points.length > 0 && <Path d={strokeToPath(currentStroke)} stroke={currentStroke.color} strokeWidth={currentStroke.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
+            </Svg>
+          </View>
+        </View>
+
+        {/* Tools and Colors Overlay at Bottom */}
+        <View style={st.toolsWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.colorsScroll}>
             {BRUSH_COLORS.map(c => (
               <Pressable key={c.name} onPress={() => setBrushColor(c.hex)}
                 style={[st.colorDot,{backgroundColor:c.hex},brushColor===c.hex&&st.colorDotSel]} />
             ))}
+          </ScrollView>
+
+          <View style={st.toolsActions}>
+            <Pressable style={st.toolBtn} onPress={() => setStrokes(prev => prev.slice(0,-1))}><IconSymbol name="arrow.uturn.backward" size={18} color="#fff" /></Pressable>
+            <Pressable style={st.toolBtn} onPress={() => setStrokes([])}><IconSymbol name="trash" size={18} color={Colors.red} /></Pressable>
+            <Pressable style={[st.actionBtn,{backgroundColor:'rgba(52,199,89,0.9)'}]} onPress={handleDoneDrawing}>
+              <Text style={[st.toolTx,{color:'#fff'}]}>Done ✓</Text>
+            </Pressable>
           </View>
-        </ScrollView>
-        <View style={{flexDirection:'row',gap:12,paddingHorizontal:16,marginTop:8}}>
-          <Pressable style={st.toolBtn} onPress={() => setStrokes(prev => prev.slice(0,-1))}><IconSymbol name="arrow.uturn.backward" size={18} color="#fff" /><Text style={st.toolTx}>Undo</Text></Pressable>
-          <Pressable style={st.toolBtn} onPress={() => setStrokes([])}><IconSymbol name="trash" size={18} color={Colors.red} /><Text style={[st.toolTx,{color:Colors.red}]}>Clear</Text></Pressable>
-          <Pressable style={[st.toolBtn,{flex:1,backgroundColor:'rgba(52,199,89,0.15)'}]} onPress={handleFinishEarly}><Text style={[st.toolTx,{color:Colors.green}]}>Done Early</Text></Pressable>
         </View>
-      </View>
+
+      </PhaseTransition>
     );
   }
 
-  // ═══ PASS FOR GUESSES ═══
-  if (phase === 'passForGuesses') {
-    return (
-      <View style={st.container}><View style={st.center}>
-        <IconSymbol name="hand.raised.fill" size={52} color={Colors.orange} />
-        <Text style={st.title}>Time&apos;s Up!</Text>
-        <Text style={st.sub}>Pass the phone to the guessers.</Text>
-        <Text style={st.hint}>Each player will type their guess one at a time.</Text>
-        <Pressable style={st.btn} onPress={handleStartGuessing}><Text style={st.btnTx}>Start Guessing</Text></Pressable>
-      </View></View>
-    );
-  }
-
-  // ═══ GUESSING ═══
+  // ─── GUESSING PHASE ───
   if (phase === 'guessing') {
+    const drawerName = players[playerIdx]?.displayName ?? 'Player';
+    const guessers = players.filter((_, i) => i !== playerIdx);
+    const guesserNames = guessers.map(p => p.displayName).join(' & ');
+
     return (
-      <View style={st.container}>
-        <View style={{padding:16,flex:1}}>
-          <Text style={st.title}>{currentGuesser?.displayName}&apos;s Guess</Text>
-          <Text style={[st.sub,{marginBottom:16}]}>Look at the drawing and type your answer</Text>
-          <View style={[st.canvas,{width:canvasSize,height:canvasSize*0.6}]}>
-            <Svg width={canvasSize} height={canvasSize*0.6} style={{backgroundColor:'#1C1C1E',borderRadius:16}}>
-              {strokes.map((s,i) => <Path key={i} d={strokeToPath(s)} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />)}
+      <PhaseTransition phaseKey={`guessing-${round}`} style={st.container}>
+        <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}>
+          <Text style={st.guessTitle}>Show to {guesserNames}!</Text>
+          <Text style={st.guessSub}>
+            {drawerName} drew this. Let {guesserNames} look and guess what it is.
+          </Text>
+
+          {/* Drawing — fills available space */}
+          <View style={{ flex: 1, marginVertical: 12, borderRadius: 20, overflow: 'hidden', maxHeight: '55%' }}>
+            <Svg width="100%" height="100%" viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`} preserveAspectRatio="xMidYMid meet" style={{backgroundColor:'#1C1C1E', borderRadius: 20}}>
+              {strokes.map((s,i) => s.points.length > 0 ? <Path key={i} d={strokeToPath(s)} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null)}
             </Svg>
           </View>
-          <TextInput style={st.guessInput} placeholder="Type your guess..." placeholderTextColor="rgba(255,255,255,0.3)" value={guessText} onChangeText={setGuessText} autoFocus returnKeyType="done" onSubmitEditing={handleSubmitGuess} />
-          <Pressable style={[st.btn,{marginTop:16}]} onPress={handleSubmitGuess} disabled={!guessText.trim()}><Text style={st.btnTx}>Submit</Text></Pressable>
+
+          <Text style={st.guessQuestion}>Did {guesserNames} guess correctly?</Text>
+
+          <View style={st.guessButtons}>
+            <Pressable style={[st.guessBtn, { backgroundColor: 'rgba(52,199,89,0.15)', borderColor: 'rgba(52,199,89,0.4)' }]} onPress={handleGuessCorrect}>
+              <IconSymbol name="checkmark.circle.fill" size={28} color={Colors.green} />
+              <Text style={[st.guessBtnTx, { color: Colors.green }]}>Yes!</Text>
+            </Pressable>
+            <Pressable style={[st.guessBtn, { backgroundColor: 'rgba(255,59,48,0.15)', borderColor: 'rgba(255,59,48,0.4)' }]} onPress={handleGuessWrong}>
+              <IconSymbol name="xmark.circle.fill" size={28} color={Colors.red} />
+              <Text style={[st.guessBtnTx, { color: Colors.red }]}>No</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </PhaseTransition>
     );
   }
 
-  // ═══ DRAWER JUDGING ═══
-  if (phase === 'drawerJudging') {
+  // ─── TURN RESULT ───
+  if (phase === 'result') {
+    const isSuccess = lastResult === 'success';
+    const totalTurns = players.length * 2;
+    const isGameFinished = round >= totalTurns;
+    
     return (
-      <View style={st.container}>
-        <ScrollView contentContainerStyle={{padding:16,paddingBottom:40}}>
-          <Text style={[st.title,{textAlign:'center'}]}>{drawer.displayName}, Judge the Answers</Text>
-          <Text style={[st.sub,{textAlign:'center',marginBottom:4}]}>The word was: <Text style={{color:Colors.yellow,fontWeight:'bold'}}>{concept}</Text></Text>
-          <Text style={[st.sub,{textAlign:'center',marginBottom:20}]}>Mark each guess as correct or wrong</Text>
-          {answers.map(a => (
-            <View key={a.id} style={[st.judgeRow,a.isJudged&&(a.isCorrect?st.judgeOk:st.judgeWrong)]}>
-              <View style={{flex:1}}>
-                <Text style={st.judgeName}>{a.playerName}</Text>
-                <Text style={st.judgeAnswer}>{a.text}</Text>
-              </View>
-              {!a.isJudged ? (
-                <View style={{flexDirection:'row',gap:8}}>
-                  <Pressable style={[st.judgeBtn,{backgroundColor:'rgba(52,199,89,0.2)'}]} onPress={() => handleJudge(a.id,true)}><IconSymbol name="checkmark" size={18} color={Colors.green} /></Pressable>
-                  <Pressable style={[st.judgeBtn,{backgroundColor:'rgba(255,59,48,0.2)'}]} onPress={() => handleJudge(a.id,false)}><IconSymbol name="xmark" size={18} color={Colors.red} /></Pressable>
+      <PhaseTransition phaseKey={`result-${round}`} style={st.container}>
+        <ScrollView contentContainerStyle={{ padding: 24, alignItems: 'center' }}>
+          <IconSymbol name={isSuccess ? "star.fill" : "xmark.circle.fill"} size={52} color={isSuccess ? Colors.yellow : Colors.red} />
+          <Text style={st.title}>{isSuccess ? 'Correct Guess!' : 'Not Guessed'}</Text>
+          
+          {!isFreeMode && (
+            <Text style={st.sub}>The word was: <Text style={{color: Colors.yellow, fontWeight: 'bold'}}>{concept}</Text></Text>
+          )}
+
+          {/* Scoreboard block */}
+          <View style={st.roundScoreboard}>
+            <Text style={st.scoreboardTitle}>Current Scores</Text>
+            {players.map(p => {
+              const rec = records.find(r => r.playerId === p.id);
+              const isCurrentDrawer = p.id === players[playerIdx].id;
+              return (
+                <View key={p.id} style={[st.scoreboardRow, isCurrentDrawer && { borderColor: `${Colors.orange}55`, backgroundColor: 'rgba(255,149,0,0.05)' }]}>
+                  <Text style={[st.scoreboardName, isCurrentDrawer && { color: Colors.orange }]}>
+                    {p.displayName} {isCurrentDrawer && '(Drawer)'}
+                  </Text>
+                  <Text style={st.scoreboardVal}>{rec?.score ?? 0} pts</Text>
                 </View>
-              ) : (
-                <IconSymbol name={a.isCorrect?"checkmark.circle.fill":"xmark.circle.fill"} size={24} color={a.isCorrect?Colors.green:Colors.red} />
-              )}
-            </View>
-          ))}
-          <Pressable style={[st.btn,{marginTop:24},!allJudged&&{opacity:0.4}]} onPress={handleFinalizeJudge} disabled={!allJudged}><Text style={st.btnTx}>Continue</Text></Pressable>
-        </ScrollView>
-      </View>
-    );
-  }
+              );
+            })}
+          </View>
 
-  // ═══ ROUND RESULTS ═══
-  if (phase === 'roundResults') {
-    const correct = answers.filter(a => a.isCorrect).length;
-    return (
-      <View style={st.container}>
-        <ScrollView contentContainerStyle={{padding:16,paddingBottom:40}}>
-          <Text style={[st.title,{textAlign:'center'}]}>Round Results</Text>
-          <Text style={[st.sub,{textAlign:'center'}]}>The word was &quot;{concept}&quot; — {correct}/{answers.length} correct</Text>
-          {sorted.map((p,i) => (
-            <View key={p.id} style={[st.rankRow,i===0&&st.rankFirst]}>
-              <Text style={st.rankNum}>{i+1}</Text>
-              <Text style={st.rankName}>{p.displayName}</Text>
-              <Text style={st.rankScore}>{scores[p.id]||0}</Text>
-            </View>
-          ))}
-          <Pressable style={[st.btn,{marginTop:24}]} onPress={handleNextTurn}>
-            <Text style={st.btnTx}>{drawerIdx+1>=players.length?'Final Results':'Next Round'}</Text>
+          {/* Show drawing snapshot */}
+          <View style={[st.snapshotCanvas, { aspectRatio: canvasSize.width / canvasSize.height, maxHeight: 300 }]}>
+            <Svg width="100%" height="100%" viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`} preserveAspectRatio="xMidYMid meet" style={{backgroundColor:'#1C1C1E', borderRadius:16}}>
+              {strokes.map((s,i) => s.points.length > 0 ? <Path key={i} d={strokeToPath(s)} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null)}
+            </Svg>
+          </View>
+
+          <Pressable style={st.btn} onPress={handleNextRound}>
+            <Text style={st.btnTx}>{isGameFinished ? 'View Final Results' : 'Next Turn'}</Text>
           </Pressable>
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
-  // ═══ FINAL LEADERBOARD ═══
-  const handlePlayAgain = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setDrawerIdx(0);
-    setStrokes([]);
-    setCurrentStroke(null);
-    setAnswers([]);
-    setUsedConcepts(new Set());
-    setScores(() => { const s: Record<string,number> = {}; players.forEach(p => s[p.id] = 0); return s; });
-    setPhase('turnIntro');
-  };
+  // ─── FINAL RANKINGS ───
+  if (phase === 'results') {
+    const resultsData = records.map(r => ({
+      playerId: r.playerId,
+      score: r.score,
+      stats: [
+        { label: 'Drawings Guessed', value: r.score, color: Colors.green }
+      ]
+    }));
 
-  return (
-    <View style={st.container}>
-      <ScrollView contentContainerStyle={{padding:16,paddingBottom:40}}>
-        <View style={{alignItems:'center',gap:8,marginVertical:20}}>
-          <IconSymbol name="trophy.fill" size={44} color={Colors.yellow} />
-          <Text style={st.title}>Final Results</Text>
-        </View>
-        {sorted.map((p,i) => (
-          <View key={p.id} style={[st.rankRow,i===0&&st.rankFirst]}>
-            <Text style={st.rankNum}>{['🥇','🥈','🥉'][i]||`#${i+1}`}</Text>
-            <Text style={st.rankName}>{p.displayName}</Text>
-            <Text style={st.rankScore}>{scores[p.id]||0} pts</Text>
-          </View>
-        ))}
-        <Pressable style={[st.btn,{marginTop:24,backgroundColor:Colors.green}]} onPress={handlePlayAgain}>
-          <Text style={st.btnTx}>Play Again</Text>
-        </Pressable>
-      </ScrollView>
-    </View>
-  );
+    return (
+      <GameResultsScreen
+        players={players}
+        results={resultsData}
+        onPlayAgain={playAgain}
+        title="Draw Rush Results"
+      />
+    );
+  }
+
+  return null;
 }
 
 const st = StyleSheet.create({
   container:{flex:1,backgroundColor:'#000'},
-  center:{flex:1,justifyContent:'center',alignItems:'center',padding:24},
-  iconBox:{width:100,height:100,borderRadius:28,alignItems:'center',justifyContent:'center',marginBottom:16},
-  title:{color:'#fff',fontSize: 22,fontWeight:'bold'},
-  sub:{color:'rgba(255,255,255,0.5)',fontSize:15,marginTop:8,textAlign:'center'},
-  hint:{color:'rgba(255,255,255,0.35)',fontSize:13,marginTop:12,textAlign:'center',paddingHorizontal:20},
-  btn:{backgroundColor:'#007AFF',paddingVertical:16,borderRadius:16,width:'100%',alignItems:'center',marginTop:32},
-  btnTx:{color:'#fff',fontSize: 17,fontWeight:'bold'},
-  conceptCard:{backgroundColor:'rgba(255,204,0,0.12)',borderRadius:20,padding:28,marginTop:20,borderWidth:1,borderColor:'rgba(255,204,0,0.3)',width:'100%',alignItems:'center'},
-  conceptTx:{color:Colors.yellow,fontSize: 34,fontWeight:'800'},
-  drawHeader:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,paddingTop:8,paddingBottom:8},
-  drawTitle:{color:'#fff',fontSize:17,fontWeight:'bold'},
-  timerPill:{flexDirection:'row',alignItems:'center',gap:6,backgroundColor:'rgba(255,255,255,0.08)',paddingHorizontal:14,paddingVertical:8,borderRadius:20},
-  timerTx:{color:'#5AC8FA',fontSize:20,fontWeight:'bold',fontVariant:['tabular-nums']},
-  canvas:{alignSelf:'center',borderRadius:16,overflow:'hidden'},
-  colorDot:{width:32,height:32,borderRadius:16,borderWidth:2,borderColor:'transparent'},
-  colorDotSel:{borderColor:'#fff',transform:[{scale:1.15}]},
-  toolBtn:{flexDirection:'row',alignItems:'center',gap:6,paddingHorizontal:14,paddingVertical:10,borderRadius:12,backgroundColor:'rgba(255,255,255,0.08)'},
-  toolTx:{color:'#fff',fontSize:13,fontWeight:'600'},
-  guessInput:{backgroundColor:'rgba(255,255,255,0.08)',borderRadius:14,padding:16,color:'#fff',fontSize:17,marginTop:16,borderWidth:1,borderColor:'rgba(255,255,255,0.1)'},
-  judgeRow:{flexDirection:'row',alignItems:'center',padding:14,borderRadius:14,marginBottom:10,backgroundColor:'rgba(255,255,255,0.035)',borderWidth:1,borderColor:'rgba(255,255,255,0.04)'},
-  judgeOk:{backgroundColor:'rgba(52,199,89,0.1)',borderColor:'rgba(52,199,89,0.3)'},
-  judgeWrong:{backgroundColor:'rgba(255,59,48,0.08)',borderColor:'rgba(255,59,48,0.2)'},
-  judgeName:{color:'#fff',fontSize:15,fontWeight:'600'},
-  judgeAnswer:{color:'rgba(255,255,255,0.7)',fontSize: 13,marginTop:2},
-  judgeBtn:{width:40,height:40,borderRadius:12,alignItems:'center',justifyContent:'center'},
-  rankRow:{flexDirection:'row',alignItems:'center',padding:14,gap:12,borderRadius:14,marginBottom:10,backgroundColor:'rgba(255,255,255,0.035)',borderWidth:1,borderColor:'rgba(255,255,255,0.04)'},
-  rankFirst:{backgroundColor:'rgba(255,204,0,0.06)',borderColor:'rgba(255,204,0,0.2)'},
-  rankNum:{fontSize:20,width:40,textAlign:'center',color:'rgba(255,255,255,0.5)'},
-  rankName:{color:'#fff',fontSize:16,fontWeight:'600',flex:1},
-  rankScore:{color:Colors.orange,fontSize: 17,fontWeight:'bold'},
+  center:{flex:1,justifyContent:'center',alignItems:'center',padding:24,backgroundColor:'#000'},
+  title:{color:'#fff',fontSize: 28,fontFamily:'Viral-Black', marginTop: 16, textAlign: 'center'},
+  sub:{color:'rgba(255,255,255,0.5)',fontSize:16,marginTop:12,textAlign:'center',lineHeight:22},
+  btn:{backgroundColor:'#007AFF',paddingVertical:18,borderRadius:20,width:'100%',alignItems:'center',marginTop:32},
+  btnTx:{color:'#fff',fontSize: 18,fontFamily:'Viral-Black'},
+  
+  // Free draw ready screen
+  freeReadyCenter: { alignItems: 'center', width: '100%' },
+  freeIconWrap: {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: 'rgba(255,149,0,0.15)',
+    borderWidth: 1, borderColor: 'rgba(255,149,0,0.3)',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 20,
+  },
+  freeTitle: { color: '#fff', fontSize: 32, fontFamily: 'Viral-Black', textAlign: 'center' },
+  freeSub: { color: 'rgba(255,255,255,0.6)', fontSize: 16, textAlign: 'center', marginTop: 10, lineHeight: 24, paddingHorizontal: 12 },
+  conceptRevealBox: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    marginVertical: 24,
+    width: '90%',
+    alignItems: 'center',
+  },
+  conceptRevealText: {
+    color: Colors.orange,
+    fontSize: 24,
+    fontFamily: 'Viral-Black',
+    textAlign: 'center',
+  },
+  helperRevealTx: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+
+  canvasContainer: {flex: 1, backgroundColor: '#1C1C1E'},
+  canvas:{flex: 1},
+  
+  drawHeaderOverlay: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
+    pointerEvents: 'none'
+  },
+  timerPill:{flexDirection:'row',alignItems:'center',gap:6,backgroundColor:'rgba(0,0,0,0.6)',paddingHorizontal:16,paddingVertical:10,borderRadius:24},
+  timerTx:{color:'#fff',fontSize:28,fontFamily:'Viral-Black',fontVariant:['tabular-nums']},
+  conceptPill:{backgroundColor:'rgba(0,0,0,0.6)',paddingHorizontal:16,paddingVertical:10,borderRadius:24},
+  conceptPillTx:{color:'#fff',fontSize:18,fontFamily:'Viral-Black'},
+  
+  toolsWrapper: { 
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(28,28,30,0.85)', 
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)'
+  },
+  colorsScroll: {paddingHorizontal:16, alignItems: 'center', gap: 12, paddingBottom: 12},
+  colorDot:{width:48,height:48,borderRadius:24,borderWidth:2,borderColor:'transparent'},
+  colorDotSel:{borderColor:'#fff',transform:[{scale:1.2}]},
+  
+  toolsActions: {flexDirection:'row',gap:12,paddingHorizontal:16},
+  toolBtn:{alignItems:'center',justifyContent:'center',width:56,height:56,borderRadius:16,backgroundColor:'rgba(255,255,255,0.1)'},
+  actionBtn:{flex:1,alignItems:'center',justifyContent:'center',height:56,borderRadius:16},
+  toolTx:{fontSize:16,fontFamily:'Viral-Black'},
+  
+  snapshotCanvas: { width: '100%', marginTop: 20, borderRadius: 24, overflow: 'hidden' },
+
+  // Guessing phase
+  guessTitle: { color: '#fff', fontSize: 26, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 8 },
+  guessSub: { color: 'rgba(255,255,255,0.5)', fontSize: 15, textAlign: 'center', lineHeight: 22, paddingHorizontal: 8 },
+  guessQuestion: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black', marginTop: 20, textAlign: 'center' },
+  guessButtons: { flexDirection: 'row', gap: 14, marginTop: 16, width: '100%' },
+  guessBtn: {
+    flex: 1, paddingVertical: 18, borderRadius: 16,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, gap: 6,
+  },
+  guessBtnTx: { fontSize: 17, fontFamily: 'Viral-Black' },
+
+  // Scoreboard inside result
+  roundScoreboard: {
+    width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    padding: 16,
+    marginTop: 20,
+    gap: 8,
+  },
+  scoreboardTitle: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  scoreboardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  scoreboardName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  scoreboardVal: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Viral-Black',
+  }
 });

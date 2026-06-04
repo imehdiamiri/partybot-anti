@@ -258,7 +258,9 @@ export default function GameDetailScreen() {
                       </Text>
                     </View>
                     
-                    <IconSymbol name="chevron.right" size={16} color="rgba(255,255,255,0.3)" />
+                    <View style={styles.modePlayIcon}>
+                      <IconSymbol name="play.fill" size={14} color="#007AFF" />
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -447,6 +449,14 @@ const styles = StyleSheet.create({
   modeSubtitle: {
     color: 'rgba(255,255,255,0.5)',
     fontSize: 13,
+  },
+  modePlayIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 122, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionHeaderTitle: {
     color: 'white',

@@ -66,7 +66,7 @@ export default function GameSetupScreen() {
   const [roundCount, setRoundCount] = useState(3);
 
   // Games that have rounds (not grid/special games)
-  const needsRounds = !['reverse_singing', 'memory_grid', 'memory_path', 'tap_in_order', 'ten_tangle', 'color_trap', 'spin_bottle', 'draw_rush', 'reaction_time', 'eye_sight', 'drum_challenge'].includes(id || '');
+  const needsRounds = !['reverse_singing', 'memory_grid', 'memory_path', 'tap_in_order', 'ten_tangle', 'color_trap', 'spin_bottle', 'draw_rush', 'reaction_time', 'eye_sight', 'drum_challenge', 'perfect_shave'].includes(id || '');
 
   // ─── Memory Grid state ───
   const [mgGridSize, setMgGridSize] = useState<MemoryGridSize>('tiny3x4');
@@ -84,7 +84,7 @@ export default function GameSetupScreen() {
   const [sbDifficulty, setSbDifficulty] = useState<'mild'|'classic'|'bold'>('classic');
 
   // ─── Color Trap state ───
-  const [ctDifficulty, setCtDifficulty] = useState<'easy'|'medium'|'hard'>('medium');
+  const [ctDifficulty, setCtDifficulty] = useState<'easy'|'medium'|'hard'|'extreme'>('medium');
 
   // ─── Draw Rush state ───
   const [drConceptMode, setDrConceptMode] = useState<'preset'|'freeDraw'>('preset');
@@ -93,6 +93,9 @@ export default function GameSetupScreen() {
   const [drumMode, setDrumMode] = useState<'whitney'|'metronome'>('whitney');
   const [metronomeCycles, setMetronomeCycles] = useState(4);
   const [metronomeRhythm, setMetronomeRhythm] = useState<'4/4'|'3/4'|'fast'>('4/4');
+
+  // ─── Perfect Shave state ───
+  const [psDifficulty, setPsDifficulty] = useState<'easy'|'normal'|'hard'>('normal');
 
   // ─── Imposter state ───
   const [imposterStyle, setImposterStyle] = useState<'discussion'|'clue'>('discussion');
@@ -198,6 +201,8 @@ export default function GameSetupScreen() {
         config = { drumMode, metronomeCycles, metronomeRhythm }; break;
       case 'imposter':
         config = { gameStyle: imposterStyle }; break;
+      case 'perfect_shave':
+        config = { difficulty: psDifficulty }; break;
     }
 
     startSingleDeviceSession(game!, finalNames, needsRounds ? roundCount : 1, config);
@@ -427,20 +432,20 @@ export default function GameSetupScreen() {
                 <IconSymbol name="square.grid.3x3.fill" size={16} color={Colors.orange} />
                 <Text style={[st.cardTitle, { color: Colors.orange }]}>Grid Size</Text>
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {TIO_GRID_SIZES.map(sz => {
-                    const sel = tioGridSize === sz;
-                    return (
-                      <TouchableOpacity key={sz} onPress={() => setTioGridSize(sz)}
-                        style={[st.optionChip, sel && { borderColor: 'rgba(255,149,0,0.5)', backgroundColor: 'rgba(255,149,0,0.2)' }]}>
-                        <Text style={[st.optionChipTitle, sel && { color: '#fff' }]}>{sz}×{sz}</Text>
-                        <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]}>{sz*sz} cells</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, marginHorizontal: -4 }}>
+                {TIO_GRID_SIZES.map(sz => {
+                  const sel = tioGridSize === sz;
+                  return (
+                    <View key={sz} style={{ width: '50%', padding: 4 }}>
+                      <TouchableOpacity onPress={() => setTioGridSize(sz)}
+                        style={[st.optionChip, { width: '100%', minWidth: 0 }, sel && { borderColor: 'rgba(255,149,0,0.5)', backgroundColor: 'rgba(255,149,0,0.2)' }]}>
+                        <Text style={[st.optionChipTitle, sel && { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit>{sz}×{sz}</Text>
+                        <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>{sz*sz} cells</Text>
                       </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </ScrollView>
+                    </View>
+                  );
+                })}
+              </View>
             </View>
 
             <View style={st.card}>
@@ -448,20 +453,20 @@ export default function GameSetupScreen() {
                 <IconSymbol name="number" size={16} color={Colors.orange} />
                 <Text style={[st.cardTitle, { color: Colors.orange }]}>Numbers</Text>
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {(TIO_TILE_OPTIONS[tioGridSize] || [6]).map(cnt => {
-                    const sel = tioTileCount === cnt;
-                    return (
-                      <TouchableOpacity key={cnt} onPress={() => setTioTileCount(cnt)}
-                        style={[st.optionChip, sel && { borderColor: 'rgba(255,149,0,0.5)', backgroundColor: 'rgba(255,149,0,0.2)' }]}>
-                        <Text style={[st.optionChipTitle, sel && { color: '#fff', fontSize: 20 }]}>{cnt}</Text>
-                        <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]}>numbers</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, marginHorizontal: -4 }}>
+                {(TIO_TILE_OPTIONS[tioGridSize] || [6]).map(cnt => {
+                  const sel = tioTileCount === cnt;
+                  return (
+                    <View key={cnt} style={{ width: '50%', padding: 4 }}>
+                      <TouchableOpacity onPress={() => setTioTileCount(cnt)}
+                        style={[st.optionChip, { width: '100%', minWidth: 0 }, sel && { borderColor: 'rgba(255,149,0,0.5)', backgroundColor: 'rgba(255,149,0,0.2)' }]}>
+                        <Text style={[st.optionChipTitle, sel && { color: '#fff', fontSize: 20 }]} numberOfLines={1} adjustsFontSizeToFit>{cnt}</Text>
+                        <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>numbers</Text>
                       </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </ScrollView>
+                    </View>
+                  );
+                })}
+              </View>
             </View>
           </>
         )}
@@ -496,20 +501,41 @@ export default function GameSetupScreen() {
               <IconSymbol name="bolt.fill" size={16} color="#5AC8FA" />
               <Text style={[st.cardTitle, { color: '#5AC8FA' }]}>Difficulty</Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {([{id:'easy',title:'Easy',sub:'Slower tiles'},{id:'medium',title:'Medium',sub:'Standard'},{id:'hard',title:'Hard',sub:'Fast & furious'}] as const).map(d => {
-                  const sel = ctDifficulty === d.id;
-                  return (
-                    <TouchableOpacity key={d.id} onPress={() => setCtDifficulty(d.id)}
-                      style={[st.optionChip, sel && { borderColor: 'rgba(90,200,250,0.5)', backgroundColor: 'rgba(90,200,250,0.2)' }]}>
-                      <Text style={[st.optionChipTitle, sel && { color: '#fff' }]}>{d.title}</Text>
-                      <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]}>{d.sub}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              {([{id:'easy',title:'Easy',sub:'Slower tiles'},{id:'medium',title:'Medium',sub:'Standard'},{id:'hard',title:'Hard',sub:'Fast & furious'},{id:'extreme',title:'Extreme',sub:'Insane speed'}] as const).map(d => {
+                const sel = ctDifficulty === d.id;
+                const isExtreme = d.id === 'extreme';
+                return (
+                  <TouchableOpacity key={d.id} onPress={() => setCtDifficulty(d.id)}
+                    style={[st.optionChip, { flex: 1, minWidth: 0, paddingHorizontal: 4 }, sel && !isExtreme && { borderColor: 'rgba(90,200,250,0.5)', backgroundColor: 'rgba(90,200,250,0.2)' }, sel && isExtreme && { borderColor: 'rgba(255,59,48,0.6)', backgroundColor: 'rgba(255,59,48,0.2)' }]}>
+                    <Text style={[st.optionChipTitle, sel && { color: '#fff' }, isExtreme && !sel && { color: 'rgba(255,59,48,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>{d.title}</Text>
+                    <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>{d.sub}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* ══════════ PERFECT SHAVE: Difficulty ══════════ */}
+        {id === 'perfect_shave' && (
+          <View style={st.card}>
+            <View style={st.cardHeader}>
+              <IconSymbol name="speedometer" size={16} color="#00C9A7" />
+              <Text style={[st.cardTitle, { color: '#00C9A7' }]}>Razor Speed</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              {([{id:'easy',title:'Easy',sub:'Slow razor'},{id:'normal',title:'Normal',sub:'Medium speed'},{id:'hard',title:'Hard',sub:'Fast razor'}] as const).map(d => {
+                const sel = psDifficulty === d.id;
+                return (
+                  <TouchableOpacity key={d.id} onPress={() => setPsDifficulty(d.id)}
+                    style={[st.optionChip, { flex: 1, minWidth: 0, paddingHorizontal: 4 }, sel && { borderColor: 'rgba(0,201,167,0.5)', backgroundColor: 'rgba(0,201,167,0.2)' }]}>
+                    <Text style={[st.optionChipTitle, sel && { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit>{d.title}</Text>
+                    <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>{d.sub}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         )}
 

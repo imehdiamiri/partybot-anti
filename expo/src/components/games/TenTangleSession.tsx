@@ -5,6 +5,9 @@ import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { PhaseTransition } from './PhaseTransition';
+import { GamePassPhoneView } from './SharedGameComponents';
+import { ResultsScoreboard } from './ResultsScoreboard';
 
 interface Props { session: GameSession; }
 
@@ -148,14 +151,14 @@ export function TenTangleSession({ session }: Props) {
   // ═══ GUESSER ANNOUNCE ═══
   if (phase === 'guesserAnnounce') {
     return (
-      <View style={st.container}><View style={st.center}>
+      <PhaseTransition phaseKey={phase} type="scale" style={st.container}><View style={st.center}>
         <View style={st.iconBox}><IconSymbol name="eye.fill" size={52} color={Colors.orange} /></View>
         <Text style={st.roundLabel}>Round {round} of {totalRounds}</Text>
-        <Text style={[st.title, { color: Colors.orange }]}>{guesser.displayName}</Text>
+        <Text style={[st.title, { color: Colors.orange, fontSize: 34 }]}>{guesser.displayName}</Text>
         <Text style={st.sub}>You are the Guesser this round!</Text>
         <Text style={st.hint}>Everyone else will get a secret number. Watch them act and guess their numbers.</Text>
         <Pressable style={st.btn} onPress={handleProceedToPass}><Text style={st.btnTx}>Continue</Text></Pressable>
-      </View></View>
+      </View></PhaseTransition>
     );
   }
 
@@ -163,14 +166,22 @@ export function TenTangleSession({ session }: Props) {
   if (phase === 'passToPlayer') {
     const p = nonGuessers[passIdx];
     return (
-      <View style={st.container}><View style={st.center}>
-        <IconSymbol name="hand.raised.fill" size={52} color="#5AC8FA" />
-        <Text style={st.title}>Pass to</Text>
-        <Text style={[st.title, { color: '#5AC8FA', fontSize: 34 }]}>{p?.displayName}</Text>
-        <Text style={st.sub}>Tap below to see your secret number</Text>
-        <Text style={st.hint}>{guesser.displayName} should look away!</Text>
-        <Pressable style={st.btn} onPress={handleShowNumber}><Text style={st.btnTx}>Show My Number</Text></Pressable>
-      </View></View>
+      <GamePassPhoneView
+        playerName={p?.displayName || 'Player'}
+        title={`Pass to ${p?.displayName}`}
+        subtitle={`Tap below to see your secret number.\n${guesser.displayName} should look away!`}
+        accentColor="#5AC8FA"
+        buttonTitle="Show My Number"
+        onReady={handleShowNumber}
+        onSkip={() => {
+          // Skip this player's number reveal – they get no advantage
+          if (passIdx + 1 >= nonGuessers.length) {
+            setPhase('scenarioReveal');
+          } else {
+            setPassIdx(passIdx + 1);
+          }
+        }}
+      />
     );
   }
 
@@ -181,20 +192,20 @@ export function TenTangleSession({ session }: Props) {
     const col = numberColor(num, maxNumber);
     const lbl = numberLabel(num, maxNumber);
     return (
-      <View style={st.container}><View style={st.center}>
+      <PhaseTransition phaseKey={`${phase}-${passIdx}`} type="scale" style={st.container}><View style={st.center}>
         <Text style={[st.bigNumber, { color: col }]}>{num}</Text>
         {lbl ? <Text style={[st.numLabel, { color: col }]}>{lbl}</Text> : null}
-        <Text style={st.sub}>Remember this number, {p?.displayName}!</Text>
+        <Text style={[st.sub, { fontSize: 22 }]}>Remember this number, {p?.displayName}!</Text>
         <Text style={[st.hint, { marginTop: 20 }]}>1 = Disaster 😬 · {maxNumber} = Perfect 😍</Text>
         <Pressable style={st.btn} onPress={handleGotIt}><Text style={st.btnTx}>Got it!</Text></Pressable>
-      </View></View>
+      </View></PhaseTransition>
     );
   }
 
   // ═══ SCENARIO REVEAL ═══
   if (phase === 'scenarioReveal') {
     return (
-      <View style={st.container}><View style={st.center}>
+      <PhaseTransition phaseKey={phase} type="slideUp" style={st.container}><View style={st.center}>
         <IconSymbol name="theatermask.and.paintbrush.fill" size={52} color={Colors.yellow} />
         <Text style={st.roundLabel}>Scenario</Text>
         <View style={st.scenarioCard}>
@@ -202,29 +213,29 @@ export function TenTangleSession({ session }: Props) {
         </View>
         <Text style={st.hint}>Each player acts out this scenario at their number&apos;s intensity level.</Text>
         <Pressable style={st.btn} onPress={handleStartActing}><Text style={st.btnTx}>Start Acting!</Text></Pressable>
-      </View></View>
+      </View></PhaseTransition>
     );
   }
 
   // ═══ ACTING ═══
   if (phase === 'acting') {
     return (
-      <View style={st.container}><View style={st.center}>
+      <PhaseTransition phaseKey={phase} type="scale" style={st.container}><View style={st.center}>
         <IconSymbol name="person.3.fill" size={52} color={Colors.green} />
         <Text style={st.title}>Acting Time!</Text>
         <View style={st.scenarioCard}><Text style={st.scenarioText}>{scenario}</Text></View>
-        <Text style={st.sub}>{guesser.displayName} — watch everyone carefully!</Text>
+        <Text style={[st.sub, { fontSize: 20 }]}>{guesser.displayName} — watch everyone carefully!</Text>
         <Pressable style={st.btn} onPress={handleStartGuessing}><Text style={st.btnTx}>{guesser.displayName}, Start Guessing</Text></Pressable>
-      </View></View>
+      </View></PhaseTransition>
     );
   }
 
   // ═══ GUESSER GUESSING ═══
   if (phase === 'guesserGuessing') {
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} type="slideUp" style={st.container}>
         <ScrollView contentContainerStyle={st.scrollPad}>
-          <Text style={[st.title, { textAlign: 'center' }]}>{guesser.displayName}&apos;s Guesses</Text>
+          <Text style={[st.title, { textAlign: 'center', fontSize: 28 }]}>{guesser.displayName}&apos;s Guesses</Text>
           <Text style={[st.sub, { textAlign: 'center', marginBottom: 20 }]}>Assign each player their number</Text>
           {nonGuessers.map(p => (
             <View key={p.id} style={st.guessRow}>
@@ -248,7 +259,7 @@ export function TenTangleSession({ session }: Props) {
             <Text style={st.btnTx}>Submit Guesses</Text>
           </Pressable>
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
@@ -256,7 +267,7 @@ export function TenTangleSession({ session }: Props) {
   if (phase === 'roundReveal') {
     let correct = 0;
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} type="scale" style={st.container}>
         <ScrollView contentContainerStyle={st.scrollPad}>
           <Text style={[st.title, { textAlign: 'center' }]}>Results</Text>
           {nonGuessers.map(p => {
@@ -275,32 +286,32 @@ export function TenTangleSession({ session }: Props) {
               </View>
             );
           })}
-          <Text style={[st.sub, { textAlign: 'center', marginTop: 16 }]}>{guesser.displayName} got {correct}/{nonGuessers.length} correct!</Text>
+          <Text style={[st.sub, { textAlign: 'center', marginTop: 16, fontSize: 20 }]}>{guesser.displayName} got {correct}/{nonGuessers.length} correct!</Text>
           <Pressable style={st.btn} onPress={handleShowScoreboard}><Text style={st.btnTx}>Scoreboard</Text></Pressable>
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
   // ═══ SCOREBOARD ═══
   if (phase === 'scoreboard') {
     return (
-      <View style={st.container}>
+      <PhaseTransition phaseKey={phase} type="slideUp" style={st.container}>
         <ScrollView contentContainerStyle={st.scrollPad}>
-          <Text style={[st.title, { textAlign: 'center' }]}>Scoreboard</Text>
-          <Text style={[st.sub, { textAlign: 'center', marginBottom: 20 }]}>Round {round} of {totalRounds}</Text>
-          {sortedScores.map((p, i) => (
-            <View key={p.id} style={[st.scoreRow, i === 0 && st.scoreFirst]}>
-              <Text style={st.scoreRank}>{rankEmojis[i] || `#${i+1}`}</Text>
-              <Text style={st.scoreName}>{p.displayName}</Text>
-              <Text style={st.scoreVal}>{scores[p.id] || 0}</Text>
-            </View>
-          ))}
-          <Pressable style={st.btn} onPress={handleNextRound}>
-            <Text style={st.btnTx}>{round >= totalRounds ? 'Final Results' : 'Next Round'}</Text>
-          </Pressable>
+          <ResultsScoreboard
+            entries={sortedScores.map(p => ({
+              id: p.id,
+              name: p.displayName,
+              primary: `${scores[p.id] || 0} pts`,
+            }))}
+            title="Scoreboard"
+            subtitle={`Round ${round} of ${totalRounds}`}
+            onPlayAgain={handleNextRound}
+            playAgainTitle={round >= totalRounds ? 'Final Results' : 'Next Round'}
+            playAgainIcon={round >= totalRounds ? 'checkmark.circle' : 'arrow.right'}
+          />
         </ScrollView>
-      </View>
+      </PhaseTransition>
     );
   }
 
@@ -319,24 +330,23 @@ export function TenTangleSession({ session }: Props) {
   };
 
   return (
-    <View style={st.container}>
+    <PhaseTransition phaseKey={phase} type="scale" style={st.container}>
       <ScrollView contentContainerStyle={st.scrollPad}>
-        <View style={{ alignItems: 'center', gap: 8, marginBottom: 20 }}>
-          <IconSymbol name="trophy.fill" size={44} color={Colors.yellow} />
-          <Text style={st.title}>Final Results</Text>
-        </View>
-        {sortedScores.map((p, i) => (
-          <View key={p.id} style={[st.scoreRow, i === 0 && st.scoreFirst]}>
-            <Text style={st.scoreRank}>{rankEmojis[i] || `#${i+1}`}</Text>
-            <Text style={st.scoreName}>{p.displayName}</Text>
-            <Text style={st.scoreVal}>{scores[p.id] || 0} pts</Text>
-          </View>
-        ))}
-        <Pressable style={[st.btn, { backgroundColor: Colors.green }]} onPress={handlePlayAgain}>
-          <Text style={st.btnTx}>Play Again</Text>
-        </Pressable>
+        <ResultsScoreboard
+          entries={sortedScores.map(p => ({
+            id: p.id,
+            name: p.displayName,
+            primary: `${scores[p.id] || 0} pts`,
+          }))}
+          title="Final Results"
+          subtitle="The game has ended!"
+          shareGameName="Ten Tangle"
+          onPlayAgain={handlePlayAgain}
+          playAgainTitle="Play Again"
+          playAgainIcon="arrow.clockwise"
+        />
       </ScrollView>
-    </View>
+    </PhaseTransition>
   );
 }
 
@@ -345,29 +355,29 @@ const st = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   scrollPad: { padding: 16, paddingBottom: 40 },
   iconBox: { width: 100, height: 100, borderRadius: 28, backgroundColor: 'rgba(255,149,0,0.14)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  title: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+  title: { color: '#fff', fontSize: 22, fontFamily: 'Viral-Black' },
   sub: { color: 'rgba(255,255,255,0.5)', fontSize: 15, marginTop: 8, textAlign: 'center' },
   hint: { color: 'rgba(255,255,255,0.35)', fontSize: 13, marginTop: 12, textAlign: 'center', paddingHorizontal: 20 },
   roundLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '600', marginBottom: 8 },
   btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
-  btnTx: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
-  bigNumber: { fontSize: 96, fontWeight: '800' },
+  btnTx: { color: '#fff', fontSize: 16, fontFamily: 'Viral-Black' },
+  bigNumber: { fontSize: 72, fontFamily: 'Viral-Black' },
   numLabel: { fontSize: 22, fontWeight: 'bold', marginTop: 4 },
   scenarioCard: { backgroundColor: 'rgba(255,204,0,0.12)', borderRadius: 20, padding: 24, marginTop: 20, borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)', width: '100%' },
-  scenarioText: { color: '#fff', fontSize: 20, fontWeight: '700', textAlign: 'center', lineHeight: 28 },
+  scenarioText: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', textAlign: 'center', lineHeight: 28 },
   guessRow: { marginBottom: 16 },
-  guessName: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  guessName: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', marginBottom: 8 },
   numBtn: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' },
   numBtnTx: { color: 'rgba(255,255,255,0.7)', fontSize: 17, fontWeight: 'bold' },
   revealRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1 },
   revealOk: { backgroundColor: 'rgba(52,199,89,0.1)', borderColor: 'rgba(52,199,89,0.3)' },
   revealWrong: { backgroundColor: 'rgba(255,59,48,0.08)', borderColor: 'rgba(255,59,48,0.2)' },
-  revealName: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  revealGuess: { color: 'rgba(255,255,255,0.5)', fontSize: 13 },
-  revealActual: { fontSize: 13, fontWeight: 'bold' },
+  revealName: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
+  revealGuess: { color: 'rgba(255,255,255,0.5)', fontSize: 16 },
+  revealActual: { fontSize: 16, fontWeight: 'bold' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 14, marginBottom: 10, backgroundColor: 'rgba(255,255,255,0.035)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)' },
   scoreFirst: { backgroundColor: 'rgba(255,204,0,0.06)', borderColor: 'rgba(255,204,0,0.2)' },
-  scoreRank: { fontSize: 20, width: 40, textAlign: 'center' },
-  scoreName: { color: '#fff', fontSize: 16, fontWeight: '600', flex: 1 },
-  scoreVal: { color: Colors.orange, fontSize: 17, fontWeight: 'bold' },
+  scoreRank: { fontSize: 24, width: 40, textAlign: 'center' },
+  scoreName: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', flex: 1, marginLeft: 10 },
+  scoreVal: { color: Colors.orange, fontSize: 18, fontFamily: 'Viral-Black' },
 });

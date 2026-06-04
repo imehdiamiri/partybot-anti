@@ -4,6 +4,10 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import * as Haptics from '@/src/utils/safeHaptics';
+import { PhaseTransition } from './PhaseTransition';
+import { GamePassPhoneView } from './SharedGameComponents';
+import { ResultsScoreboard } from './ResultsScoreboard';
+import { LiquidGlass } from '@/src/components/LiquidGlass';
 
 interface Props {
   session: GameSession;
@@ -231,47 +235,54 @@ export function ImposterSession({ session }: Props) {
   return (
     <View style={styles.container}>
       {phase === 'reveal' && (
-        <ScrollView contentContainerStyle={styles.centerContent}>
-          <Text style={styles.title}>Pass the phone to</Text>
-          <Text style={[styles.playerName, { color: getPlayerColor(session.players.findIndex(p => p.id === currentPlayer?.id)) }]}>
-            {currentPlayer?.displayName}
-          </Text>
-
-          <View style={styles.card}>
-            {!isRoleRevealed ? (
-              <View style={styles.centerItems}>
-                <IconSymbol name="eye.slash.fill" size={64} color="rgba(255,255,255,0.2)" />
-                <Pressable style={[styles.primaryBtn, { marginTop: 30 }]} onPress={handleRevealMyRole}>
-                  <Text style={styles.primaryBtnText}>Reveal My Role</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <View style={styles.centerItems}>
-                {currentPlayer?.id === imposterId ? (
-                  <>
-                    <IconSymbol name="theatermasks.fill" size={64} color="#FF2D55" />
-                    <Text style={[styles.roleTitle, { color: '#FF2D55' }]}>You are the Imposter!</Text>
-                    <Text style={styles.roleSubtitle}>Blend in. Don&apos;t get caught.</Text>
-                  </>
-                ) : (
-                  <>
-                    <IconSymbol name="checkmark.shield.fill" size={64} color={Colors.green} />
-                    <Text style={styles.roleSubtitle}>The secret word is:</Text>
-                    <View style={styles.wordBadge}>
-                      <Text style={styles.wordText}>{secretWord}</Text>
-                    </View>
-                  </>
-                )}
-                <Pressable style={[styles.primaryBtn, { marginTop: 30 }]} onPress={handleGotIt}>
-                  <Text style={styles.primaryBtnText}>Got it</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        </ScrollView>
+        <PhaseTransition phaseKey={`reveal-${activePlayerIndex}-${isRoleRevealed}`} type="scale" style={{ flex: 1 }}>
+          {!isRoleRevealed ? (
+            <GamePassPhoneView
+              playerName={currentPlayer?.displayName ?? ''}
+              onReady={handleRevealMyRole}
+              accentColor={getPlayerColor(session.players.findIndex(p => p.id === currentPlayer?.id))}
+              buttonTitle={`I'm ${currentPlayer?.displayName}`}
+              onSkip={() => {
+                // Skip this player's role reveal
+                setIsRoleRevealed(false);
+                if (activePlayerIndex + 1 < roundPlayers.length) {
+                  setActivePlayerIndex(prev => prev + 1);
+                } else {
+                  setPhase('ready');
+                }
+              }}
+            />
+          ) : (
+            <ScrollView contentContainerStyle={styles.centerContent}>
+              <LiquidGlass radius={24} style={styles.card}>
+                <View style={styles.centerItems}>
+                  {currentPlayer?.id === imposterId ? (
+                    <>
+                      <IconSymbol name="theatermasks.fill" size={64} color="#FF2D55" />
+                      <Text style={[styles.roleTitle, { color: '#FF2D55' }]}>You are the Imposter!</Text>
+                      <Text style={styles.roleSubtitle}>Blend in. Don&apos;t get caught.</Text>
+                    </>
+                  ) : (
+                    <>
+                      <IconSymbol name="checkmark.shield.fill" size={64} color={Colors.green} />
+                      <Text style={styles.roleSubtitle}>The secret word is:</Text>
+                      <View style={styles.wordBadge}>
+                        <Text style={styles.wordText}>{secretWord}</Text>
+                      </View>
+                    </>
+                  )}
+                  <Pressable style={[styles.primaryBtn, { marginTop: 30 }]} onPress={handleGotIt}>
+                    <Text style={styles.primaryBtnText}>Got it, pass the phone</Text>
+                  </Pressable>
+                </View>
+              </LiquidGlass>
+            </ScrollView>
+          )}
+        </PhaseTransition>
       )}
 
       {phase === 'ready' && (
+        <PhaseTransition phaseKey="ready" type="scale" style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.centerContent}>
           <IconSymbol name="person.3.fill" size={64} color="#007AFF" />
           <Text style={styles.title}>Everyone has seen their role</Text>
@@ -283,20 +294,22 @@ export function ImposterSession({ session }: Props) {
             <Text style={styles.primaryBtnText}>{gameStyle === 'clue' ? 'Start Clues' : 'Start Discussion'}</Text>
           </Pressable>
         </ScrollView>
+        </PhaseTransition>
       )}
 
       {phase === 'discussion' && (
+        <PhaseTransition phaseKey="discussion" type="slideUp" style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
+          <LiquidGlass radius={24} style={styles.card}>
             <View style={styles.centerItems}>
               <Text style={[styles.timerText, discussionTimeLeft <= 10 && { color: '#FF2D55' }]}>
                 {Math.floor(discussionTimeLeft / 60)}:{(discussionTimeLeft % 60).toString().padStart(2, '0')}
               </Text>
               <Text style={styles.subtitle}>seconds remaining</Text>
             </View>
-          </View>
+          </LiquidGlass>
 
-          <View style={styles.card}>
+          <LiquidGlass radius={24} style={styles.card}>
             <Text style={styles.cardTitle}>Discuss!</Text>
             <Text style={styles.cardSubtitle}>Talk freely and figure out who the Imposter is.</Text>
             
@@ -310,17 +323,19 @@ export function ImposterSession({ session }: Props) {
                 </View>
               ))}
             </View>
-          </View>
+          </LiquidGlass>
 
           <Pressable style={styles.secondaryBtn} onPress={handleMoveToVoting}>
             <Text style={styles.secondaryBtnText}>Skip to Voting</Text>
           </Pressable>
         </ScrollView>
+        </PhaseTransition>
       )}
 
       {phase === 'clueGiving' && (
+        <PhaseTransition phaseKey={`clueGiving-${activePlayerIndex}`} type="scale" style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
+          <LiquidGlass radius={24} style={styles.card}>
             <View style={styles.centerItems}>
               <IconSymbol name="magnifyingglass.circle.fill" size={48} color="#AF52DE" />
               <Text style={styles.title}>{currentPlayer?.displayName}&apos;s Clue</Text>
@@ -347,10 +362,10 @@ export function ImposterSession({ session }: Props) {
             >
               <Text style={styles.primaryBtnText}>Submit Clue</Text>
             </Pressable>
-          </View>
+          </LiquidGlass>
 
           {Object.keys(clues).length > 0 && (
-            <View style={styles.card}>
+            <LiquidGlass radius={24} style={styles.card}>
               <Text style={styles.cardTitle}>Clues Given</Text>
               <View style={{ marginTop: 10, gap: 8 }}>
                 {Object.entries(clues).map(([pid, clue]) => {
@@ -359,19 +374,21 @@ export function ImposterSession({ session }: Props) {
                   return (
                     <View key={pid} style={styles.resultRow}>
                       <Text style={[styles.resultName, { color: getPlayerColor(idx) }]}>{player?.displayName}</Text>
-                      <Text style={{ color: 'white', fontSize: 15, fontWeight: '600' }}>&quot;{clue}&quot;</Text>
+                      <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>&quot;{clue}&quot;</Text>
                     </View>
                   );
                 })}
               </View>
-            </View>
+            </LiquidGlass>
           )}
         </ScrollView>
+        </PhaseTransition>
       )}
 
       {phase === 'voting' && (
+        <PhaseTransition phaseKey={`voting-${activePlayerIndex}`} type="scale" style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
+          <LiquidGlass radius={24} style={styles.card}>
             <View style={styles.centerItems}>
               <IconSymbol name="hand.raised.fill" size={48} color="#FF2D55" />
               <Text style={styles.title}>{currentPlayer?.displayName}&apos;s Vote</Text>
@@ -398,11 +415,13 @@ export function ImposterSession({ session }: Props) {
             >
               <Text style={styles.primaryBtnText}>Confirm Vote</Text>
             </Pressable>
-          </View>
+          </LiquidGlass>
         </ScrollView>
+        </PhaseTransition>
       )}
 
       {phase === 'results' && (
+        <PhaseTransition phaseKey="results" type="scale" style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {(() => {
             const voteCounts: Record<string, number> = {};
@@ -416,7 +435,7 @@ export function ImposterSession({ session }: Props) {
 
             return (
               <>
-                <View style={styles.card}>
+                <LiquidGlass radius={24} style={styles.card}>
                   <View style={styles.centerItems}>
                     <IconSymbol name={imposterCaught ? "checkmark.circle.fill" : "xmark.circle.fill"} size={64} color={imposterCaught ? Colors.green : "#FF2D55"} />
                     <Text style={[styles.title, { color: imposterCaught ? Colors.green : "#FF2D55" }]}>
@@ -431,9 +450,9 @@ export function ImposterSession({ session }: Props) {
                       <Text style={styles.wordText}>{secretWord}</Text>
                     </View>
                   </View>
-                </View>
+                </LiquidGlass>
 
-                <View style={styles.card}>
+                <LiquidGlass radius={24} style={styles.card}>
                   <Text style={styles.cardTitle}>Vote Results</Text>
                   <View style={{ marginTop: 10, gap: 10 }}>
                     {session.players.map(p => {
@@ -448,7 +467,7 @@ export function ImposterSession({ session }: Props) {
                       );
                     })}
                   </View>
-                </View>
+                </LiquidGlass>
 
                 <Pressable style={styles.primaryBtn} onPress={nextPhase}>
                   <Text style={styles.primaryBtnText}>Continue</Text>
@@ -457,52 +476,59 @@ export function ImposterSession({ session }: Props) {
             );
           })()}
         </ScrollView>
+        </PhaseTransition>
       )}
 
       {phase === 'leaderboard' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={[styles.title, { marginBottom: 20 }]}>Leaderboard</Text>
-
-          <View style={styles.card}>
-            {session.players.slice().sort((a,b) => scores[b.id] - scores[a.id]).map((p, i) => (
-              <View key={p.id} style={styles.leaderboardRow}>
-                <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
-                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
-                <Text style={styles.scoreText}>{scores[p.id]} pts</Text>
-              </View>
-            ))}
-          </View>
-
-          <Pressable style={[styles.primaryBtn, { marginTop: 20 }]} onPress={nextPhase}>
-            <Text style={styles.primaryBtnText}>{roundNumber >= totalRounds ? "Finish Game" : "Next Round"}</Text>
-          </Pressable>
-        </ScrollView>
+        <PhaseTransition phaseKey="leaderboard" type="fade" style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ResultsScoreboard
+              entries={session.players
+                .slice()
+                .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
+                .map(p => ({
+                  id: p.id,
+                  name: p.displayName,
+                  primary: `${scores[p.id] || 0} pts`,
+                  nameColor: getPlayerColor(session.players.findIndex(x => x.id === p.id)),
+                }))}
+              title={`Round ${roundNumber} Standings`}
+              subtitle={`Round ${roundNumber} of ${totalRounds}`}
+              onPlayAgain={nextPhase}
+              playAgainTitle={roundNumber >= totalRounds ? "Finish Game" : "Next Round"}
+              playAgainIcon={roundNumber >= totalRounds ? "checkmark.circle" : "arrow.right"}
+            />
+          </ScrollView>
+        </PhaseTransition>
       )}
 
       {phase === 'finished' && (
-        <ScrollView contentContainerStyle={[styles.scrollContent, { alignItems: 'center' }]}>
-          <IconSymbol name="trophy.fill" size={64} color={Colors.yellow} style={{ marginTop: 40 }} />
-          <Text style={[styles.title, { marginTop: 20 }]}>Final Results</Text>
-
-          <View style={[styles.card, { width: '100%', marginTop: 20 }]}>
-            {session.players.slice().sort((a,b) => (scores[b.id] || 0) - (scores[a.id] || 0)).map((p, i) => (
-              <View key={p.id} style={styles.leaderboardRow}>
-                <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
-                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
-                <Text style={styles.scoreText}>{scores[p.id] || 0} pts</Text>
-              </View>
-            ))}
-          </View>
-
-          <Pressable style={[styles.primaryBtn, { marginTop: 20, width: '100%', backgroundColor: Colors.green }]} onPress={() => {
-            setRoundNumber(1);
-            setScores({});
-            session.players.forEach(p => setScores(prev => ({ ...prev, [p.id]: 0 })));
-            startNewRound();
-          }}>
-            <Text style={styles.primaryBtnText}>Play Again</Text>
-          </Pressable>
-        </ScrollView>
+        <PhaseTransition phaseKey="finished" type="fade" style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ResultsScoreboard
+              entries={session.players
+                .slice()
+                .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
+                .map(p => ({
+                  id: p.id,
+                  name: p.displayName,
+                  primary: `${scores[p.id] || 0} pts`,
+                  nameColor: getPlayerColor(session.players.findIndex(x => x.id === p.id)),
+                }))}
+              title="Final Results"
+              subtitle="The game has ended!"
+              shareGameName="Who is the Imposter?"
+              onPlayAgain={() => {
+                setRoundNumber(1);
+                setScores({});
+                session.players.forEach(p => setScores(prev => ({ ...prev, [p.id]: 0 })));
+                startNewRound();
+              }}
+              playAgainTitle="Play Again"
+              playAgainIcon="arrow.clockwise"
+            />
+          </ScrollView>
+        </PhaseTransition>
       )}
     </View>
   );
@@ -514,43 +540,43 @@ const styles = StyleSheet.create({
   centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 40 },
   centerItems: { alignItems: 'center', width: '100%' },
   
-  title: { color: 'white', fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 },
-  subtitle: { color: 'rgba(255,255,255,0.6)', fontSize: 16, textAlign: 'center' },
-  playerName: { fontSize: 34, fontWeight: 'bold', marginBottom: 20 },
+  title: { color: 'white', fontSize: 24, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 8 },
+  subtitle: { color: 'rgba(255,255,255,0.6)', fontSize: 18, fontWeight: '600', textAlign: 'center' },
+  playerName: { fontSize: 36, fontFamily: 'Viral-Black', marginBottom: 20 },
   
-  card: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 20, padding: 24, width: '100%', marginBottom: 16 },
-  cardTitle: { color: 'white', fontSize: 17, fontWeight: 'bold', marginBottom: 4 },
-  cardSubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 16 },
+  card: { padding: 24, width: '100%', marginBottom: 16 },
+  cardTitle: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black', marginBottom: 4 },
+  cardSubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600', marginBottom: 16 },
   
-  primaryBtn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, alignItems: 'center', width: '100%' },
-  primaryBtnText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
-  secondaryBtn: { backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 16, borderRadius: 16, alignItems: 'center', width: '100%', marginTop: 10 },
-  secondaryBtnText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  primaryBtn: { backgroundColor: '#007AFF', paddingVertical: 18, borderRadius: 20, alignItems: 'center', width: '100%' },
+  primaryBtnText: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black' },
+  secondaryBtn: { backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 18, borderRadius: 20, alignItems: 'center', width: '100%', marginTop: 10 },
+  secondaryBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   
-  roleTitle: { fontSize: 28, fontWeight: 'bold', marginTop: 16 },
-  roleSubtitle: { fontSize: 16, color: 'rgba(255,255,255,0.7)', marginTop: 8 },
-  wordBadge: { backgroundColor: 'rgba(52, 199, 89, 0.2)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14, marginTop: 16 },
-  wordText: { color: 'white', fontSize: 22, fontWeight: 'bold' },
+  roleTitle: { fontSize: 28, fontFamily: 'Viral-Black', marginTop: 16 },
+  roleSubtitle: { fontSize: 20, fontWeight: 'bold', color: 'rgba(255,255,255,0.7)', marginTop: 8 },
+  wordBadge: { backgroundColor: 'rgba(52, 199, 89, 0.2)', paddingHorizontal: 28, paddingVertical: 16, borderRadius: 16, marginTop: 16 },
+  wordText: { color: 'white', fontSize: 22, fontFamily: 'Viral-Black' },
   
-  timerText: { fontSize: 72, fontWeight: 'bold', color: 'white', fontFamily: 'monospace' },
+  timerText: { fontSize: 64, fontFamily: 'Viral-Black', color: 'white' },
   
   playersList: { gap: 12 },
   playerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatarCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  avatarInitials: { color: 'white', fontWeight: 'bold' },
-  playerRowName: { color: 'white', fontSize: 16, fontWeight: '600' },
+  avatarCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  avatarInitials: { color: 'white', fontWeight: 'bold', fontSize: 18 },
+  playerRowName: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black' },
   
-  candidateBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 16, borderWidth: 1, borderColor: 'transparent' },
+  candidateBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20, borderWidth: 1, borderColor: 'transparent' },
   candidateBtnActive: { borderColor: '#007AFF', backgroundColor: 'rgba(0,122,255,0.1)' },
-  candidateText: { fontSize: 17, fontWeight: 'bold' },
+  candidateText: { fontSize: 18, fontFamily: 'Viral-Black' },
   
   resultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  resultName: { fontSize: 16, fontWeight: '600' },
-  resultCount: { color: 'rgba(255,255,255,0.5)', fontSize: 13 },
+  resultName: { fontSize: 18, fontWeight: 'bold' },
+  resultCount: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600' },
   
   leaderboardRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  rank: { color: 'rgba(255,255,255,0.4)', fontSize: 16, fontWeight: 'bold', width: 30 },
-  leaderboardName: { fontSize: 17, fontWeight: 'bold', flex: 1 },
-  scoreText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
-  clueInput: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, color: 'white', fontSize: 17, marginTop: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }
+  rank: { color: 'rgba(255,255,255,0.4)', fontSize: 18, fontFamily: 'Viral-Black', width: 40 },
+  leaderboardName: { fontSize: 18, fontFamily: 'Viral-Black', flex: 1 },
+  scoreText: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black' },
+  clueInput: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 16, padding: 20, color: 'white', fontSize: 20, fontWeight: 'bold', marginTop: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }
 });

@@ -1,12 +1,16 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Dimensions } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useGameSync } from '@/src/hooks/useGameSync';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
 import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
 import { AudioManager } from '@/src/services/AudioManager';
+import { PhaseTransition } from './PhaseTransition';
+import { LiquidGlass } from '@/src/components/LiquidGlass';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInUp, FadeInDown, ZoomIn, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withSpring } from 'react-native-reanimated';
 
 // Platform-safe haptics
 let Haptics: any = null;
@@ -253,15 +257,17 @@ export function GuessTheSecondsSession({ session }: Props) {
     <ScrollView contentContainerStyle={styles.container}>
 
       {/* Header Card */}
-      <View style={styles.card}>
+      <LiquidGlass radius={24} style={styles.card}>
         <View style={styles.headerRow}>
           <Text style={styles.roundText}>
             {isFinished ? 'All rounds complete' : `Round ${currentRoundNumber} / ${roundsPerPlayer}`}
           </Text>
           {currentPlayer && !isFinished && (
-            <View style={styles.nowPlayingBadge}>
-              <Text style={styles.nowPlayingText}>Now: {currentPlayer.displayName}</Text>
-            </View>
+            <PhaseTransition phaseKey={currentPlayer.id} type="scale">
+              <View style={styles.nowPlayingBadge}>
+                <Text style={styles.nowPlayingText}>{currentPlayer.displayName}'s Turn</Text>
+              </View>
+            </PhaseTransition>
           )}
           <View style={{flex: 1}}/>
           <Text style={[styles.statusLabel, {
@@ -274,13 +280,14 @@ export function GuessTheSecondsSession({ session }: Props) {
           </Text>
         </View>
         {turnHint && <Text style={styles.waitingHint}>{turnHint}</Text>}
-      </View>
+      </LiquidGlass>
 
       {/* Turn Result Banner */}
       {sync.turnPhase === 'reveal' && sync.lastResult && (
-        <View style={[styles.card, { borderColor: getAccuracyBand(sync.lastResult.difference).color + '55' }]}>
+        <PhaseTransition phaseKey="reveal" type="scale">
+        <LiquidGlass radius={24} style={[styles.card, { borderColor: getAccuracyBand(sync.lastResult.difference).color + '55' }]}>
           <View style={styles.resultHeader}>
-            <IconSymbol name="flag.checkered" size={16} color={getAccuracyBand(sync.lastResult.difference).color} />
+            <IconSymbol name="flag.checkered" size={20} color={getAccuracyBand(sync.lastResult.difference).color} />
             <Text style={styles.resultTitle}>{sync.lastResult.playerName} • Round {sync.lastResult.round}</Text>
             <View style={{flex: 1}}/>
             <View style={[styles.badge, { backgroundColor: getAccuracyBand(sync.lastResult.difference).color + '33' }]}>
@@ -289,21 +296,23 @@ export function GuessTheSecondsSession({ session }: Props) {
               </Text>
             </View>
           </View>
-          <View style={styles.resultMetrics}>
-            <View style={styles.metricBox}>
+          <LiquidGlass radius={20} variant="low" style={styles.resultMainMetricBox}>
+            <Text style={styles.metricLabel}>Stopped at</Text>
+            <Text style={[styles.mainMetricValue, { color: getAccuracyBand(sync.lastResult.difference).color }]}>
+              {sync.lastResult.actualTime.toFixed(2)}s
+            </Text>
+          </LiquidGlass>
+          <View style={styles.resultSubMetrics}>
+            <LiquidGlass radius={16} variant="low" style={styles.metricBox}>
               <Text style={styles.metricLabel}>Target</Text>
               <Text style={[styles.metricValue, { color: 'rgba(255,255,255,0.7)' }]}>{sync.lastResult.targetTime.toFixed(2)}</Text>
-            </View>
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Stopped</Text>
-              <Text style={styles.metricValue}>{sync.lastResult.actualTime.toFixed(2)}</Text>
-            </View>
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Diff</Text>
+            </LiquidGlass>
+            <LiquidGlass radius={16} variant="low" style={styles.metricBox}>
+              <Text style={styles.metricLabel}>Difference</Text>
               <Text style={[styles.metricValue, { color: getAccuracyBand(sync.lastResult.difference).color }]}>
                 {sync.lastResult.difference.toFixed(2)}
               </Text>
-            </View>
+            </LiquidGlass>
           </View>
 
           <Pressable
@@ -320,12 +329,14 @@ export function GuessTheSecondsSession({ session }: Props) {
               {sync.activeTurnIndex + 1 >= totalTurns ? 'See Results' : 'Next Turn'}
             </Text>
           </Pressable>
-        </View>
+        </LiquidGlass>
+        </PhaseTransition>
       )}
 
       {/* Control Card */}
       {!isFinished && sync.turnPhase !== 'reveal' && (
-        <View style={styles.card}>
+        <PhaseTransition phaseKey={sync.turnPhase} type="scale">
+        <LiquidGlass radius={24} style={styles.card}>
           <Text style={styles.sectionTitle}>Target Time</Text>
           <Text style={styles.sectionSubtitle}>
             {currentRoundTargetLocked ? "This round target is locked for all players." : "Choose the target for this round."}
@@ -340,7 +351,7 @@ export function GuessTheSecondsSession({ session }: Props) {
               <IconSymbol name="minus" size={24} color={canEditTargetTime ? "white" : "rgba(255,255,255,0.3)"} />
             </Pressable>
 
-            <View style={styles.timeDisplayBox}>
+            <LiquidGlass radius={20} variant="low" style={styles.timeDisplayBox}>
               {sync.turnPhase === 'running' ? (
                 <View style={styles.runningIndicator}>
                   <IconSymbol name="timer" size={32} color="rgba(255,255,255,0.3)" />
@@ -351,7 +362,7 @@ export function GuessTheSecondsSession({ session }: Props) {
                   {displayedTargetTime.toFixed(2)}
                 </Text>
               )}
-            </View>
+            </LiquidGlass>
 
             <Pressable
               style={[styles.stepperButton, !canEditTargetTime && styles.stepperDisabled]}
@@ -364,32 +375,37 @@ export function GuessTheSecondsSession({ session }: Props) {
 
           <View style={styles.controlButtons}>
             {sync.turnPhase === 'ready' && (
-              <Pressable
-                style={[styles.primaryButton, { backgroundColor: Colors.blue }, !isLocalActive && { opacity: 0.5 }]}
-                onPress={startTurn}
-                disabled={!isLocalActive}
-              >
-                <IconSymbol name="play.fill" size={20} color="white" />
-                <Text style={styles.primaryButtonText}>Start</Text>
-              </Pressable>
+              <PhaseTransition phaseKey="start-btn" type="scale">
+                <Pressable
+                  style={[styles.primaryButton, styles.giantButton, { backgroundColor: Colors.blue }, !isLocalActive && { opacity: 0.5 }]}
+                  onPress={startTurn}
+                  disabled={!isLocalActive}
+                >
+                  <IconSymbol name="play.fill" size={48} color="white" />
+                  <Text style={styles.giantButtonText}>Start</Text>
+                </Pressable>
+              </PhaseTransition>
             )}
             {sync.turnPhase === 'running' && (
-              <Pressable
-                style={[styles.primaryButton, { backgroundColor: Colors.red }, !isLocalActive && { opacity: 0.5 }]}
-                onPress={stopTurn}
-                disabled={!isLocalActive}
-              >
-                <IconSymbol name="stop.fill" size={20} color="white" />
-                <Text style={styles.primaryButtonText}>Stop</Text>
-              </Pressable>
+              <PhaseTransition phaseKey="stop-btn" type="scale">
+                <Pressable
+                  style={[styles.primaryButton, styles.giantButton, { backgroundColor: Colors.red }, !isLocalActive && { opacity: 0.5 }]}
+                  onPress={stopTurn}
+                  disabled={!isLocalActive}
+                >
+                  <IconSymbol name="stop.fill" size={48} color="white" />
+                  <Text style={styles.giantButtonText}>Stop</Text>
+                </Pressable>
+              </PhaseTransition>
             )}
           </View>
-        </View>
+        </LiquidGlass>
+        </PhaseTransition>
       )}
 
       {/* Live Score Table */}
       {sync.results.length > 0 && !isFinished && (
-        <View style={styles.card}>
+        <LiquidGlass radius={24} style={styles.card}>
           <Text style={styles.sectionTitle}>Scores</Text>
           <Text style={styles.sectionSubtitle}>Lower difference is better</Text>
 
@@ -429,12 +445,13 @@ export function GuessTheSecondsSession({ session }: Props) {
               );
             })}
           </View>
-        </View>
+        </LiquidGlass>
       )}
 
       {/* Final Ranking Card */}
       {isFinished && (
-        <View style={styles.card}>
+        <PhaseTransition phaseKey="finished" type="fade">
+        <LiquidGlass radius={24} style={styles.card}>
           <ResultsScoreboard
             title="Final Results"
             subtitle="Lowest total difference wins."
@@ -458,7 +475,8 @@ export function GuessTheSecondsSession({ session }: Props) {
             <IconSymbol name="arrow.counterclockwise" size={20} color="white" />
             <Text style={styles.primaryButtonText}>Play Again</Text>
           </Pressable>
-        </View>
+        </LiquidGlass>
+        </PhaseTransition>
       )}
 
     </ScrollView>
@@ -468,64 +486,68 @@ export function GuessTheSecondsSession({ session }: Props) {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 16, paddingBottom: 40 },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 24,
     padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  roundText: { color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '600' },
+  roundText: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: '600' },
   nowPlayingBadge: {
-    backgroundColor: 'rgba(52, 199, 89, 0.2)',
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
+    backgroundColor: 'rgba(52, 199, 89, 0.12)',
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 14,
+    borderWidth: 1, borderColor: 'rgba(52, 199, 89, 0.25)',
   },
-  nowPlayingText: { color: Colors.green, fontSize: 12, fontWeight: 'bold' },
-  statusLabel: { fontSize: 13, fontWeight: 'bold' },
+  nowPlayingText: { color: Colors.green, fontSize: 16, fontFamily: 'Viral-Black' },
+  statusLabel: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   waitingHint: {
-    color: 'rgba(255,255,255,0.45)',
-    fontSize: 12, marginTop: 8, fontStyle: 'italic',
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13, marginTop: 8, fontStyle: 'italic',
   },
-  resultHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  resultTitle: { color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '600' },
-  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  badgeText: { fontSize: 12, fontWeight: 'bold' },
-  resultMetrics: { flexDirection: 'row', gap: 10 },
+  resultHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+  resultTitle: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black' },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  badgeText: { fontSize: 13, fontWeight: '700' },
+  resultMainMetricBox: {
+    paddingVertical: 24, alignItems: 'center',
+    marginBottom: 12,
+  },
+  mainMetricValue: { color: 'white', fontSize: 40, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  resultSubMetrics: { flexDirection: 'row', gap: 10 },
   metricBox: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 14,
-    paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    flex: 1,
+    paddingVertical: 14, alignItems: 'center',
   },
-  metricLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '600', marginBottom: 4 },
-  metricValue: { color: 'white', fontSize: 20, fontWeight: '900' },
-  sectionTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
-  sectionSubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 4, marginBottom: 16 },
+  metricLabel: { color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: '600', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  metricValue: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  sectionTitle: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black' },
+  sectionSubtitle: { color: 'rgba(255,255,255,0.45)', fontSize: 14, marginTop: 2, marginBottom: 16 },
   selectorArea: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
   stepperButton: {
-    width: 60, height: 60, borderRadius: 30,
-    backgroundColor: 'rgba(10, 132, 255, 0.9)', alignItems: 'center', justifyContent: 'center',
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: 'rgba(10, 132, 255, 0.25)', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(10, 132, 255, 0.4)',
   },
-  stepperDisabled: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  stepperDisabled: { backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.06)' },
   timeDisplayBox: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 24,
-    paddingVertical: 28, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    flex: 1,
+    paddingVertical: 20, alignItems: 'center', justifyContent: 'center',
   },
-  timeDisplay: { color: 'white', fontSize: 48, fontWeight: '900' },
-  runningIndicator: { alignItems: 'center', justifyContent: 'center', gap: 8 },
-  runningLabel: { color: 'rgba(255,255,255,0.35)', fontSize: 14, fontWeight: '600' },
+  timeDisplay: { color: 'white', fontSize: 36, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  runningIndicator: { alignItems: 'center', justifyContent: 'center', gap: 6 },
+  runningLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 15, fontWeight: '600' },
   controlButtons: { gap: 14 },
   primaryButton: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 20, borderRadius: 100,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    paddingVertical: 18, borderRadius: 20, overflow: 'hidden',
   },
-  primaryButtonText: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+  primaryButtonText: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black' },
+  giantButton: { paddingVertical: 40, borderRadius: 28 },
+  giantButtonText: { color: 'white', fontSize: 22, fontFamily: 'Viral-Black' },
   scoreTable: { gap: 2 },
   scoreHeaderRow: {
     flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 4,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  scoreHeaderCell: { flex: 1, color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  scoreHeaderCell: { flex: 1, color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: '600', textAlign: 'center', textTransform: 'uppercase' },
   scoreRow: { flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 4, borderRadius: 10 },
-  scoreRowActive: { backgroundColor: 'rgba(10, 132, 255, 0.12)' },
-  scoreCell: { flex: 1, color: 'white', fontSize: 14, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  scoreRowActive: { backgroundColor: 'rgba(10, 132, 255, 0.1)' },
+  scoreCell: { flex: 1, color: 'white', fontSize: 15, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });

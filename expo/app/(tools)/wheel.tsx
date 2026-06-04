@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   container: {
-    paddingTop: 12,
+    paddingTop: 30,
     paddingBottom: 32,
     alignItems: 'center',
   },

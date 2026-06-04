@@ -9,6 +9,7 @@ import { Games } from '@/src/models/AppModels';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
 import { multiplayerService } from '@/src/services/MultiplayerService';
 import { MultiplayerStatusBanner } from '@/src/components/MultiplayerStatusBanner';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { ReportUserSheet } from '@/src/components/ReportUserSheet';
 import * as Clipboard from 'expo-clipboard';
 
@@ -149,14 +150,12 @@ export default function LobbyScreen() {
       <AppBackgroundView />
       <MultiplayerStatusBanner />
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <View style={styles.headerButton} />
-        <Text style={styles.headerTitle}>{isHost ? 'Host Lobby' : 'Game Lobby'}</Text>
-        <TouchableOpacity onPress={handleCloseRoom} style={styles.headerButtonRight}>
-          <Text style={styles.leaveText}>{isHost ? 'Close Room' : 'Leave'}</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={isHost ? 'Host Lobby' : 'Game Lobby'}
+        rightLabel={isHost ? 'Close Room' : 'Leave'}
+        onRightPress={handleCloseRoom}
+        rightColor={Colors.red}
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         
