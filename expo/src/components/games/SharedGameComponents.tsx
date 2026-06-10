@@ -118,7 +118,7 @@ export function GameHandoffView({
     opacity: 0.2 + phoneSlide.value * 0.6,
   }));
 
-  const displayButtonTitle = buttonTitle || `I'm ${playerName}`;
+  const displayButtonTitle = buttonTitle || "I'm Ready";
 
   return (
     <View style={[styles.passPhoneContainer, { paddingBottom: Math.max(20, insets.bottom + 8) }]}>
@@ -516,7 +516,7 @@ export function GamePlayerCompleteView({
       title="Pass the phone to"
       subtitle={prevResultLine}
       accentColor={accentColor}
-      buttonTitle={`I'm ${nextPlayerName}`}
+      buttonTitle="I'm Ready"
       onReady={onReady}
       rolePillText="NEXT TURN"
     />

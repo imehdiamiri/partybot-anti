@@ -203,11 +203,36 @@ export function AIGeneratorPanel({
       const { complete, stripCodeFences } = await import('@/src/services/LLMService');
 
       const contextInstruction = prompt.trim()
-        ? `\n\nCRITICAL: The user specified this theme/context: "${prompt.trim()}". Every game you generate MUST be directly related to and built around this theme. Do NOT generate generic games.`
+        ? `\n\nCRITICAL REQUIREMENT: The user has explicitly specified this custom theme/context/mechanic for the games: "${prompt.trim()}".
+You MUST customize all 3 game designs to deeply incorporate, revolve around, and be a direct playable implementation of this text.
+Do NOT generate generic or pre-existing party games. Create custom rules, tasks, and gameplay steps that directly integrate the user's description. The connection to "${prompt.trim()}" must be prominent and obvious in the game's title, description, and steps.`
         : '';
 
-      const systemPrompt = `You are a creative party game designer. Generate exactly 3 unique party game ideas as a JSON array. Each object must have: { "id": unique_string, "title": string, "description": one_sentence, "steps": string_array_3_to_5, "tags": string_array_2 }. Return ONLY valid JSON array, no markdown.${contextInstruction}${excludeClause}`;
-      const userPrompt = `Create 3 NEW party games for ${playerCount} players with a "${vibe.title}" vibe.${prompt.trim() ? ` Themed around: ${prompt.trim()}` : ''}`;
+      const systemPrompt = `You are a world-class party game designer known for creating highly original, fun, and memorable social experiences.
+Design exactly 3 unique, playable party games that are custom-tailored to the user's requirements.
+
+Format your output as a single, valid JSON array of objects. Do not include markdown formatting, code fences (such as \`\`\`json), or any introductory/explanatory text.
+
+Each game object in the array must strictly have the following keys:
+{
+  "id": "unique_string_id",
+  "title": "Creative, Catchy & Theme-Specific Game Name",
+  "description": "An exciting single-sentence summary explaining the core concept of the game.",
+  "steps": [
+    "Step 1: Setup or start action...",
+    "Step 2: Turn-by-turn action or challenge...",
+    "Step 3: Player interaction/conflict...",
+    "Step 4: End condition, voting, or winner selection..."
+  ],
+  "tags": ["Tag1", "Tag2"]
+}
+
+Guidelines:
+- Scale and adapt the steps and rules appropriately for the given player count.
+- Keep the tone fun, social, and easy to understand.
+- Tags should be short (1-2 words) and reflect the specific mechanics or settings of the game.${contextInstruction}${excludeClause}`;
+
+      const userPrompt = `Create 3 brand-new, highly creative party games for ${playerCount} players with a "${vibe.title}" vibe.${prompt.trim() ? ` The games must be fully built around this theme/idea: "${prompt.trim()}"` : ''}`;
 
       const raw = await complete(systemPrompt, userPrompt);
       const parsed = JSON.parse(stripCodeFences(raw));

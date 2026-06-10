@@ -479,7 +479,7 @@ export default function GameSetupScreen() {
               <Text style={[st.cardTitle, { color: '#FF2D55' }]}>Vibe Level</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-              {([{id:'mild',title:'Mild',sub:'Safe & friendly',icon:'heart.fill',color:Colors.green},{id:'classic',title:'Classic',sub:'Balanced fun',icon:'star.fill',color:Colors.orange},{id:'bold',title:'Bold',sub:'Spicy & risky',icon:'flame.fill',color:'#FF2D55'}] as const).map(d => {
+              {([{id:'mild',title:'Mild',sub:'Safe & friendly',icon:'heart.fill',color:Colors.green},{id:'classic',title:'Classic',sub:'Balanced fun',icon:'star.fill',color:Colors.orange},{id:'bold',title:'Bold',sub:'Bold & risky',icon:'flame.fill',color:'#FF2D55'}] as const).map(d => {
                 const sel = sbDifficulty === d.id;
                 return (
                   <TouchableOpacity key={d.id} onPress={() => setSbDifficulty(d.id)}

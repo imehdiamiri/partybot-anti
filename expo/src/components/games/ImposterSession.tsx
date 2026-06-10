@@ -241,7 +241,7 @@ export function ImposterSession({ session }: Props) {
               playerName={currentPlayer?.displayName ?? ''}
               onReady={handleRevealMyRole}
               accentColor={getPlayerColor(session.players.findIndex(p => p.id === currentPlayer?.id))}
-              buttonTitle={`I'm ${currentPlayer?.displayName}`}
+              buttonTitle="I'm Ready"
               onSkip={() => {
                 // Skip this player's role reveal
                 setIsRoleRevealed(false);

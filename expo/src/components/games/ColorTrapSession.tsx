@@ -378,7 +378,7 @@ export function ColorTrapSession({ session }: Props) {
           </View>
 
           <Pressable style={[st.readyBtn, { backgroundColor: forbiddenColor }]} onPress={startGame}>
-            <Text style={st.readyBtnText}>I'm {player.displayName}</Text>
+            <Text style={st.readyBtnText}>I'm Ready</Text>
             <IconSymbol name="arrow.right" size={18} color="white" weight="bold" />
           </Pressable>
           <Pressable

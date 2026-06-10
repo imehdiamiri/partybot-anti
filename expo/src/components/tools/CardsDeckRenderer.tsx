@@ -32,6 +32,8 @@ interface Props {
 export function CardsDeckRenderer({ categoryId }: Props) {
   const category = CardCategoryInfo[categoryId];
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const staticOne = useRef(new Animated.Value(1)).current;
   
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [newCardText, setNewCardText] = useState('');
@@ -121,8 +123,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   };
 
   const onSwipeComplete = (direction: 'left' | 'right') => {
-    setCurrentIndex((prev) => Math.min(prev + 1, deckLengthRef.current));
-    position.setValue({ x: 0, y: 0 });
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => Math.min(prev + 1, deckLengthRef.current));
+      position.setValue({ x: 0, y: 0 });
+      setIsTransitioning(false);
+    }, 16);
   };
 
   const resetPosition = () => {
@@ -249,11 +255,13 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
     // Create an interpolated value representing the swipe progress from 0 to 1
     // Swiping right or left should animate the stack forward smoothly.
-    const swipeProgress = position.x.interpolate({
-      inputRange: [-SCREEN_WIDTH * 1.5, 0, SCREEN_WIDTH * 1.5],
-      outputRange: [1, 0, 1],
-      extrapolate: 'clamp',
-    });
+    const swipeProgress = isTransitioning
+      ? staticOne
+      : position.x.interpolate({
+          inputRange: [-SCREEN_WIDTH * 1.5, 0, SCREEN_WIDTH * 1.5],
+          outputRange: [1, 0, 1],
+          extrapolate: 'clamp',
+        });
 
     return deck.map((card, index) => {
       const offset = index - currentIndex;
@@ -466,12 +474,6 @@ function CardFace({ card, category }: { card: PartyCard, category: any }) {
         <View style={[styles.cornerDot, { backgroundColor: category.accentColor }]} />
         <Text style={styles.cornerText}>{card.subtype.toUpperCase()}</Text>
       </View>
-      {card.isSpicy && (
-        <View style={styles.spicyBadge}>
-          <IconSymbol name="flame.fill" size={11} color={Colors.orange} />
-          <Text style={styles.spicyBadgeText}>SPICY</Text>
-        </View>
-      )}
       <View style={styles.cardContent}>
         <Text style={styles.cardText}>{card.text}</Text>
       </View>
@@ -541,68 +543,6 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: '#000',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    marginHorizontal: 14,
-  },
-  spicyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  spicyLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  spicyIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  spicyIconActive: {
-    backgroundColor: Colors.orange,
-  },
-  spicyLabel: {
-    fontFamily: 'Viral-Black',
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.85)',
-    letterSpacing: 0.2,
-  },
-  spicyLabelActive: {
-    color: '#FFF',
-  },
-  spicyHint: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.45)',
-    marginTop: 1,
-  },
-  toggleTrack: {
-    width: 44,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    padding: 3,
-    justifyContent: 'center',
-  },
-  toggleTrackActive: {
-    backgroundColor: Colors.orange,
-  },
-  toggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFF',
-  },
-  toggleKnobActive: {
-    transform: [{ translateX: 18 }],
   },
 
   deckContainer: {
@@ -701,25 +641,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.5,
     color: 'rgba(0,0,0,0.5)',
-  },
-  spicyBadge: {
-    position: 'absolute',
-    top: 18,
-    right: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 149, 0, 0.12)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    zIndex: 3,
-  },
-  spicyBadgeText: {
-    color: Colors.orange,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
   },
   cardContent: {
     flex: 1,
