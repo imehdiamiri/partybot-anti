@@ -10,6 +10,7 @@ import { AudioManager } from '@/src/services/AudioManager';
 import { PhaseTransition } from './PhaseTransition';
 import { LiquidGlass } from '@/src/components/LiquidGlass';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 import Animated, { FadeInUp, FadeInDown, ZoomIn, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withSpring } from 'react-native-reanimated';
 
 // Platform-safe haptics
@@ -57,6 +58,7 @@ export function GuessTheSecondsSession({ session }: Props) {
   const roundsPerPlayer = Math.max(1, session.maxRounds || 3);
   const totalTurns = players.length * roundsPerPlayer;
   const { localPlayerId } = useMultiplayerStore();
+  const registerSkip = useRegisterSkip();
 
   // Build turn order: [P1-R1, P2-R1, P1-R2, P2-R2, ...]
   const turnOrder = useMemo(() => {
@@ -116,6 +118,32 @@ export function GuessTheSecondsSession({ session }: Props) {
           lastResult: result,
         };
       }
+      case 'skip': {
+        if (prev.activeTurnIndex >= totalTurns) return prev;
+        const turn = turnOrder[prev.activeTurnIndex];
+        const player = players[turn.playerIndex];
+        if (!player) return prev;
+        const targetTime = prev.roundTargets[turn.round] ?? Math.round(prev.selectedTime * 100) / 100;
+        const result: TurnResult = {
+          playerName: player.displayName,
+          round: turn.round,
+          targetTime,
+          actualTime: 0,
+          difference: 99.9,
+        };
+        const roundTargets = { ...prev.roundTargets };
+        if (roundTargets[turn.round] === undefined) {
+          roundTargets[turn.round] = targetTime;
+        }
+        return {
+          ...prev,
+          turnPhase: 'reveal',
+          startedAt: null,
+          results: [...prev.results, result],
+          lastResult: result,
+          roundTargets,
+        };
+      }
       case 'continue': {
         const nextIdx = prev.activeTurnIndex + 1;
         return {
@@ -167,6 +195,7 @@ export function GuessTheSecondsSession({ session }: Props) {
     return () => clearInterval(id);
   }, [sync.turnPhase, sync.startedAt]);
 
+
   // ───────── Derived state ─────────
   const isFinished = sync.activeTurnIndex >= totalTurns;
   const currentTurn = !isFinished ? turnOrder[sync.activeTurnIndex] : null;
@@ -181,6 +210,17 @@ export function GuessTheSecondsSession({ session }: Props) {
   const isLocalActive = !isMultiplayer
     ? true
     : !!currentPlayer && (currentPlayer.id === localPlayerId || isHost);
+
+  useEffect(() => {
+    if (!isFinished && (sync.turnPhase === 'ready' || sync.turnPhase === 'running') && isLocalActive) {
+      registerSkip(() => {
+        sendAction('skip', {});
+      }, currentPlayer?.displayName);
+    } else {
+      registerSkip(null);
+    }
+    return () => registerSkip(null);
+  }, [isFinished, sync.turnPhase, isLocalActive, currentPlayer, registerSkip]);
 
   const canEditTargetTime =
     sync.turnPhase === 'ready' &&
