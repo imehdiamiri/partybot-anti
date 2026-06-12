@@ -416,6 +416,24 @@ export function ImposterSession({ session }: Props) {
               <Text style={styles.primaryBtnText}>Confirm Vote</Text>
             </Pressable>
           </LiquidGlass>
+
+          {Object.keys(clues).length > 0 && (
+            <LiquidGlass radius={24} style={styles.card}>
+              <Text style={styles.cardTitle}>Clues Given</Text>
+              <View style={{ marginTop: 10, gap: 8 }}>
+                {Object.entries(clues).map(([pid, clue]) => {
+                  const player = session.players.find(p => p.id === pid);
+                  const idx = session.players.findIndex(p => p.id === pid);
+                  return (
+                    <View key={pid} style={styles.resultRow}>
+                      <Text style={[styles.resultName, { color: getPlayerColor(idx) }]}>{player?.displayName}</Text>
+                      <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>&quot;{clue}&quot;</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </LiquidGlass>
+          )}
         </ScrollView>
         </PhaseTransition>
       )}
