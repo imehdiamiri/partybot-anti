@@ -177,6 +177,13 @@ export default function GameSetupScreen() {
     if (showDuplicateError) setShowDuplicateError(false);
   };
 
+  const handleRemovePlayer = (index: number) => {
+    const nextNames = [...playerNames];
+    nextNames.splice(index, 1);
+    setPlayerNames(nextNames);
+    setPlayerCount(nextNames.length);
+  };
+
   const handleStart = () => {
     // Default empty names to "Player N"
     const finalNames = playerNames.map((n, i) => n.trim() || `Player ${i + 1}`);
@@ -285,6 +292,7 @@ export default function GameSetupScreen() {
             }
           }}
           onUpdateName={updatePlayerName}
+          onRemovePlayer={handleRemovePlayer}
         />
         
         {/* Rounds section for non-phase-2 games */}

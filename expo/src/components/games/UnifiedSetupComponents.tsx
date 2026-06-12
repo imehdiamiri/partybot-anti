@@ -13,6 +13,7 @@ interface SetupPlayersSectionProps {
   maxPlayers: number;
   onUpdateCount: (count: number) => void;
   onUpdateName: (index: number, name: string) => void;
+  onRemovePlayer?: (index: number) => void;
 }
 
 export function SetupPlayersSection({
@@ -21,7 +22,8 @@ export function SetupPlayersSection({
   minPlayers,
   maxPlayers,
   onUpdateCount,
-  onUpdateName
+  onUpdateName,
+  onRemovePlayer
 }: SetupPlayersSectionProps) {
   return (
     <View style={styles.card}>
@@ -33,9 +35,9 @@ export function SetupPlayersSection({
         
         <View style={styles.stepperContainer}>
           <Pressable 
-            style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount <= 1 ? 0.3 : 1 }]}
-            onPress={() => onUpdateCount(Math.max(1, playerCount - 1))}
-            disabled={playerCount <= 1}
+            style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount <= minPlayers ? 0.3 : 1 }]}
+            onPress={() => onUpdateCount(Math.max(minPlayers, playerCount - 1))}
+            disabled={playerCount <= minPlayers}
           >
             <IconSymbol name="minus" size={14} color={Colors.green} />
           </Pressable>
@@ -51,7 +53,7 @@ export function SetupPlayersSection({
           </Pressable>
         </View>
       </View>
-
+ 
       <View style={styles.playersList}>
         {Array.from({ length: playerCount }).map((_, index) => (
           <View key={index} style={styles.playerInputRow}>
@@ -70,13 +72,17 @@ export function SetupPlayersSection({
             <TouchableOpacity
               style={styles.clearPlayerBtn}
               onPress={() => {
-                if (playerCount > 1) {
-                  // Remove this player: shift names up and decrease count
-                  const newNames = [...playerNames];
-                  newNames.splice(index, 1);
-                  newNames.forEach((n, i) => onUpdateName(i, n));
-                  onUpdateName(newNames.length, '');
-                  onUpdateCount(playerCount - 1);
+                if (playerCount > minPlayers) {
+                  if (onRemovePlayer) {
+                    onRemovePlayer(index);
+                  } else {
+                    // Remove this player: shift names up and decrease count
+                    const newNames = [...playerNames];
+                    newNames.splice(index, 1);
+                    newNames.forEach((n, i) => onUpdateName(i, n));
+                    onUpdateName(newNames.length, '');
+                    onUpdateCount(playerCount - 1);
+                  }
                 } else {
                   // At minimum — just clear the field text
                   onUpdateName(index, '');
