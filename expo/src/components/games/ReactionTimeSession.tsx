@@ -119,7 +119,12 @@ export function ReactionTimeSession({ session }: Props) {
   const continueAfterAttempt = () => {
     const done = (currentRecord?.attempts.length ?? 0);
     if (done >= ATTEMPTS_PER_PLAYER) {
-      setPhase('playerComplete');
+      const isLast = playerIdx + 1 >= players.length;
+      if (isLast) {
+        setPhase('results');
+      } else {
+        setPhase('playerComplete');
+      }
     } else {
       setAttemptIdx(done);
       beginAttempt();
