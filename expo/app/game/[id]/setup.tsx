@@ -184,6 +184,18 @@ export default function GameSetupScreen() {
     setPlayerCount(nextNames.length);
   };
 
+  const handleShufflePlayers = () => {
+    const shuffled = [...playerNames];
+    // Fisher-Yates shuffle algorithm on active player slots
+    for (let i = playerCount - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = shuffled[i];
+      shuffled[i] = shuffled[j];
+      shuffled[j] = temp;
+    }
+    setPlayerNames(shuffled);
+  };
+
   const handleStart = () => {
     // Default empty names to "Player N"
     const finalNames = playerNames.map((n, i) => n.trim() || `Player ${i + 1}`);
@@ -293,6 +305,7 @@ export default function GameSetupScreen() {
           }}
           onUpdateName={updatePlayerName}
           onRemovePlayer={handleRemovePlayer}
+          onShufflePlayers={handleShufflePlayers}
         />
         
         {/* Rounds section for non-phase-2 games */}

@@ -28,6 +28,7 @@ const MAPPING = {
   'arrow.uturn.backward': 'undo',
   'arrow.trianglehead.2.clockwise.rotate.90': 'sync',
   'arrow.triangle.2.circlepath': 'sync',
+  'shuffle': 'shuffle',
 
   // ─── Tab Bar & General ───
   'house.fill': 'home',

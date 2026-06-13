@@ -14,6 +14,7 @@ interface SetupPlayersSectionProps {
   onUpdateCount: (count: number) => void;
   onUpdateName: (index: number, name: string) => void;
   onRemovePlayer?: (index: number) => void;
+  onShufflePlayers?: () => void;
 }
 
 export function SetupPlayersSection({
@@ -23,7 +24,8 @@ export function SetupPlayersSection({
   maxPlayers,
   onUpdateCount,
   onUpdateName,
-  onRemovePlayer
+  onRemovePlayer,
+  onShufflePlayers
 }: SetupPlayersSectionProps) {
   return (
     <View style={styles.card}>
@@ -33,24 +35,36 @@ export function SetupPlayersSection({
           <Text style={[styles.title, { color: Colors.green }]}>Players</Text>
         </View>
         
-        <View style={styles.stepperContainer}>
-          <Pressable 
-            style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount <= minPlayers ? 0.3 : 1 }]}
-            onPress={() => onUpdateCount(Math.max(minPlayers, playerCount - 1))}
-            disabled={playerCount <= minPlayers}
-          >
-            <IconSymbol name="minus" size={14} color={Colors.green} />
-          </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          {onShufflePlayers && playerCount >= 2 && (
+            <TouchableOpacity 
+              style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)' }]}
+              onPress={onShufflePlayers}
+              activeOpacity={0.7}
+            >
+              <IconSymbol name="shuffle" size={14} color={Colors.green} />
+            </TouchableOpacity>
+          )}
           
-          <Text style={[styles.stepperValue, { color: Colors.green }]}>{playerCount}</Text>
-          
-          <Pressable 
-            style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount >= maxPlayers ? 0.3 : 1 }]}
-            onPress={() => onUpdateCount(Math.min(maxPlayers, playerCount + 1))}
-            disabled={playerCount >= maxPlayers}
-          >
-            <IconSymbol name="plus" size={14} color={Colors.green} />
-          </Pressable>
+          <View style={styles.stepperContainer}>
+            <Pressable 
+              style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount <= minPlayers ? 0.3 : 1 }]}
+              onPress={() => onUpdateCount(Math.max(minPlayers, playerCount - 1))}
+              disabled={playerCount <= minPlayers}
+            >
+              <IconSymbol name="minus" size={14} color={Colors.green} />
+            </Pressable>
+            
+            <Text style={[styles.stepperValue, { color: Colors.green }]}>{playerCount}</Text>
+            
+            <Pressable 
+              style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount >= maxPlayers ? 0.3 : 1 }]}
+              onPress={() => onUpdateCount(Math.min(maxPlayers, playerCount + 1))}
+              disabled={playerCount >= maxPlayers}
+            >
+              <IconSymbol name="plus" size={14} color={Colors.green} />
+            </Pressable>
+          </View>
         </View>
       </View>
  
