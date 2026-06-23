@@ -244,7 +244,7 @@ export default function GameSetupScreen() {
       case 'tap_in_order':
         return `Number Memory · ${tioGridSize}×${tioGridSize} · ${tioTileCount} tiles`;
       default:
-        return `${playerCount} players`;
+        return needsRounds ? `${roundCount} rounds · ${playerCount} players` : `${playerCount} players`;
     }
   };
 

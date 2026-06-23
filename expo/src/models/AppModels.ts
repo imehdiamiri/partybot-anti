@@ -299,6 +299,22 @@ export const Games: Record<string, GameType> = {
     heroImageURL: null,
     heroImageLocal: require('@/assets/images/heroes/perfect-shave.png'),
   },
+  colorMatch: {
+    id: 'color_match',
+    name: 'Color Match',
+    shortDescription: 'We show you a color. You recreate it from memory. Challenge friends to beat your score.',
+    minPlayers: 1,
+    maxPlayers: 30,
+    unlockCostStars: 0,
+    isFreeForever: true,
+    hasFreeTrial: false,
+    isPremium: false,
+    symbolName: 'paintpalette.fill',
+    supportedModes: [GameMode.singleDevice],
+    roundDuration: 0,
+    heroImageURL: null,
+    heroImageLocal: require('@/assets/images/heroes/color-match.png'),
+  },
 };
 
 export const GameLibrary: GameType[] = [
@@ -317,6 +333,7 @@ export const GameLibrary: GameType[] = [
   Games.eyeSight,
   Games.drumChallenge,
   Games.perfectShave,
+  Games.colorMatch,
 ];
 
 export interface GameDefinition {
@@ -333,6 +350,7 @@ export const GamesDefinitions: GameDefinition[] = [
   { id: Games.reactionTime, accentName: 'green' },
   { id: Games.eyeSight, accentName: 'cyan' },
   { id: Games.drumChallenge, accentName: 'pink' },
+  { id: Games.colorMatch, accentName: 'green' },
   // ── Premium games ──
   { id: Games.tenTangle, accentName: 'purple' },
   { id: Games.memoryPath, accentName: 'orange' },

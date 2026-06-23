@@ -58,6 +58,12 @@ export const GAME_HINTS: Record<string, { icon: string; title: string; tip: stri
     tip: 'Colored tiles fall down — tap all of them EXCEPT the forbidden color! 3 mistakes and you\'re eliminated.',
     accent: Colors.red,
   },
+  color_match: {
+    icon: 'paintpalette.fill',
+    title: 'Color Match',
+    tip: 'Memorize the target color, then recreate it from memory using Hue, Saturation, and Brightness sliders.',
+    accent: Colors.green,
+  },
   spin_bottle: {
     icon: 'arrow.trianglehead.2.counterclockwise.rotate.90',
     title: 'Truth & Dare',
