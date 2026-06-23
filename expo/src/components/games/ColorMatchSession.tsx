@@ -286,17 +286,21 @@ export function ColorMatchSession({ session }: Props) {
           <Text style={st.recreatePlayer}>{activePlayer.displayName}</Text>
         </View>
 
-        <View style={st.swatchesRow}>
-          <View style={st.swatchContainer}>
-            <Text style={st.swatchLabel}>Target</Text>
-            <View style={[st.colorSwatchSmall, st.swatchOutline]}>
-              <IconSymbol name="questionmark.circle" size={32} color="rgba(255,255,255,0.2)" />
+        <View style={st.overlappingSwatchesContainer}>
+          <View style={st.overlappingSwatchesRow}>
+            <View style={[st.colorSwatchMedium, st.swatchOutline, { zIndex: 1 }]}>
+              <IconSymbol name="questionmark.circle" size={36} color="rgba(255,255,255,0.2)" />
             </View>
+            <View style={[st.colorSwatchMedium, { backgroundColor: guessHsl, shadowColor: guessHsl, marginLeft: -40, zIndex: 2 }]} />
           </View>
           
-          <View style={st.swatchContainer}>
-            <Text style={st.swatchLabel}>Your Guess</Text>
-            <View style={[st.colorSwatchSmall, { backgroundColor: guessHsl, shadowColor: guessHsl }]} />
+          <View style={st.overlapLabelsRow}>
+            <View style={st.overlapLabelCol}>
+              <Text style={st.swatchLabel}>Target</Text>
+            </View>
+            <View style={st.overlapLabelCol}>
+              <Text style={st.swatchLabel}>Your Guess</Text>
+            </View>
           </View>
         </View>
 
@@ -388,17 +392,21 @@ export function ColorMatchSession({ session }: Props) {
             <Text style={st.scoreLabel}>{isGoodScore ? 'Excellent match!' : 'Could be closer...'}</Text>
           </View>
 
-          <View style={st.swatchesRow}>
-            <View style={st.swatchContainer}>
-              <Text style={st.swatchLabel}>Target</Text>
-              <View style={[st.colorSwatchSmall, { backgroundColor: targetHsl, shadowColor: targetHsl }]} />
-              <Text style={st.colorValCode}>{`H:${Math.round(activeTargetColor.h)}° S:${Math.round(activeTargetColor.s)}% B:${Math.round(activeTargetColor.b)}%`}</Text>
+          <View style={st.overlappingSwatchesContainer}>
+            <View style={st.overlappingSwatchesRow}>
+              <View style={[st.colorSwatchMedium, { backgroundColor: targetHsl, shadowColor: targetHsl, zIndex: 1 }]} />
+              <View style={[st.colorSwatchMedium, { backgroundColor: guessHsl, shadowColor: guessHsl, marginLeft: -40, zIndex: 2 }]} />
             </View>
             
-            <View style={st.swatchContainer}>
-              <Text style={st.swatchLabel}>Your Guess</Text>
-              <View style={[st.colorSwatchSmall, { backgroundColor: guessHsl, shadowColor: guessHsl }]} />
-              <Text style={st.colorValCode}>{`H:${Math.round(lastResult.guess.h)}° S:${Math.round(lastResult.guess.s)}% B:${Math.round(lastResult.guess.b)}%`}</Text>
+            <View style={st.overlapLabelsRow}>
+              <View style={st.overlapLabelCol}>
+                <Text style={st.swatchLabel}>Target</Text>
+                <Text style={st.colorValCode}>{`H:${Math.round(activeTargetColor.h)}° S:${Math.round(activeTargetColor.s)}% B:${Math.round(activeTargetColor.b)}%`}</Text>
+              </View>
+              <View style={st.overlapLabelCol}>
+                <Text style={st.swatchLabel}>Your Guess</Text>
+                <Text style={st.colorValCode}>{`H:${Math.round(lastResult.guess.h)}° S:${Math.round(lastResult.guess.s)}% B:${Math.round(lastResult.guess.b)}%`}</Text>
+              </View>
             </View>
           </View>
 
@@ -541,9 +549,9 @@ const st = StyleSheet.create({
     marginBottom: 24,
   },
   colorSwatch: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     marginBottom: 32,
     borderWidth: 4,
     borderColor: 'rgba(255,255,255,0.15)',
@@ -756,5 +764,39 @@ const st = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  colorSwatchMedium: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.15)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlappingSwatchesContainer: {
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 12,
+  },
+  overlappingSwatchesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlapLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 8,
+  },
+  overlapLabelCol: {
+    alignItems: 'center',
+    width: '45%',
   },
 });
