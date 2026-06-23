@@ -22,6 +22,7 @@ import { EyeSightSession } from './EyeSightSession';
 import { DrumChallengeSession } from './DrumChallengeSession';
 import { PerfectShaveSession } from './PerfectShaveSession';
 import { ColorMatchSession } from './ColorMatchSession';
+import { SoundMatchSession } from './SoundMatchSession';
 
 interface Props {
   session: GameSession;
@@ -73,6 +74,8 @@ export function GameSessionRenderer({ session, game }: Props) {
       return withHint(game.id, <PerfectShaveSession session={session} />);
     case 'color_match':
       return withHint(game.id, <ColorMatchSession session={session} />);
+    case 'sound_match':
+      return withHint(game.id, <SoundMatchSession session={session} />);
     default:
       return <GenericPlaceholder session={session} game={game} />;
   }

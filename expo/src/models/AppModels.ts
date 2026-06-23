@@ -315,6 +315,22 @@ export const Games: Record<string, GameType> = {
     heroImageURL: null,
     heroImageLocal: require('@/assets/images/heroes/color-match.png'),
   },
+  soundMatch: {
+    id: 'sound_match',
+    name: 'Sound Match',
+    shortDescription: 'Listen to a target tone, then recreate its pitch from memory using a frequency slider.',
+    minPlayers: 1,
+    maxPlayers: 30,
+    unlockCostStars: 0,
+    isFreeForever: true,
+    hasFreeTrial: false,
+    isPremium: false,
+    symbolName: 'music.note',
+    supportedModes: [GameMode.singleDevice],
+    roundDuration: 0,
+    heroImageURL: null,
+    heroImageLocal: require('@/assets/images/heroes/sound-match.png'),
+  },
 };
 
 export const GameLibrary: GameType[] = [
@@ -334,6 +350,7 @@ export const GameLibrary: GameType[] = [
   Games.drumChallenge,
   Games.perfectShave,
   Games.colorMatch,
+  Games.soundMatch,
 ];
 
 export interface GameDefinition {
@@ -351,6 +368,7 @@ export const GamesDefinitions: GameDefinition[] = [
   { id: Games.eyeSight, accentName: 'cyan' },
   { id: Games.drumChallenge, accentName: 'pink' },
   { id: Games.colorMatch, accentName: 'green' },
+  { id: Games.soundMatch, accentName: 'pink' },
   // ── Premium games ──
   { id: Games.tenTangle, accentName: 'purple' },
   { id: Games.memoryPath, accentName: 'orange' },

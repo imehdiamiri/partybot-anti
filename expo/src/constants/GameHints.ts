@@ -64,6 +64,12 @@ export const GAME_HINTS: Record<string, { icon: string; title: string; tip: stri
     tip: 'Memorize the target color, then recreate it from memory using Hue, Saturation, and Brightness sliders.',
     accent: Colors.green,
   },
+  sound_match: {
+    icon: 'music.note',
+    title: 'Sound Match',
+    tip: 'Listen to the target tone, then adjust the slider to match its pitch from memory.',
+    accent: '#FF2D55',
+  },
   spin_bottle: {
     icon: 'arrow.trianglehead.2.counterclockwise.rotate.90',
     title: 'Truth & Dare',
