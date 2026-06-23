@@ -98,11 +98,15 @@ async function generateToneWav(frequency: number, durationSeconds: number): Prom
   writeString(36, 'data');
   view.setUint32(40, dataSize, true);
 
-  // Generate sine wave
-  const amplitude = 32767 * 0.45; // Moderate volume to prevent harshness
+  // Generate sine wave with fade-in/out envelope to prevent clicks
+  const amplitude = 32767 * 0.45;
+  const fadeLen = Math.min(Math.floor(sampleRate * 0.02), numSamples / 2);
   for (let i = 0; i < numSamples; i++) {
     const t = i / sampleRate;
-    const sample = Math.sin(2 * Math.PI * frequency * t);
+    let envelope = 1.0;
+    if (i < fadeLen) envelope = i / fadeLen;
+    else if (i > numSamples - fadeLen) envelope = (numSamples - i) / fadeLen;
+    const sample = Math.sin(2 * Math.PI * frequency * t) * envelope;
     const val = Math.max(-32768, Math.min(32767, Math.floor(sample * amplitude)));
     view.setInt16(44 + i * 2, val, true);
   }
@@ -133,15 +137,31 @@ function calculateAuditoryScore(target: number, guess: number): number {
   return Math.max(0, Math.round(rawScore * 100) / 100);
 }
 
+const FREQ_MIN = 200;
+const FREQ_MAX = 1000;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SLIDER_HEIGHT = Math.min(SCREEN_HEIGHT * 0.45, 380);
+
+// Map a frequency to a vertical position (bottom = low, top = high)
+function freqToPosition(freq: number): number {
+  const pct = (freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
+  return (1 - pct) * SLIDER_HEIGHT;
+}
+
+// Map a vertical position to a frequency
+function positionToFreq(pos: number): number {
+  const pct = 1 - pos / SLIDER_HEIGHT;
+  return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN);
+}
+
 export function SoundMatchSession({ session }: Props) {
   const players = session.players;
   const registerSkip = useRegisterSkip();
   const maxRounds = session.maxRounds || 5;
 
-  // Generate target frequencies for all rounds (between 250 Hz and 900 Hz)
+  // Generate target frequencies for all rounds
   const [targetFrequencies] = useState<number[]>(() => {
     return Array.from({ length: maxRounds }, () => {
-      // Pick discrete notes/intervals to make it sound pleasant and memorable
       const scale = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00];
       return scale[Math.floor(Math.random() * scale.length)];
     });
@@ -156,8 +176,11 @@ export function SoundMatchSession({ session }: Props) {
   
   const [isPlayingTarget, setIsPlayingTarget] = useState(false);
   const [isPlayingGuess, setIsPlayingGuess] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const activeSoundRef = useRef<Audio.Sound | null>(null);
+  const livePlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPlayedFreqRef = useRef<number>(0);
   const activePlayer = players[playerIdx];
   const activeTargetFreq = targetFrequencies[roundIdx];
 
@@ -204,7 +227,6 @@ export function SoundMatchSession({ session }: Props) {
     await stopActiveSound();
     
     if (!useSettingsStore.getState().isSoundEnabled) {
-      // Play a silent pulse indicator if sound is disabled
       if (isTarget) {
         setIsPlayingTarget(true);
         setTimeout(() => setIsPlayingTarget(false), duration * 1000);
@@ -242,6 +264,20 @@ export function SoundMatchSession({ session }: Props) {
       setIsPlayingGuess(false);
     }
   };
+
+  // Live play: debounced auto-play while dragging the slider
+  const schedulePlayLive = useCallback((freq: number) => {
+    if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
+    
+    // Only replay if frequency changed enough (> 8 Hz difference)
+    const diff = Math.abs(freq - lastPlayedFreqRef.current);
+    if (diff < 8) return;
+
+    livePlayTimerRef.current = setTimeout(() => {
+      lastPlayedFreqRef.current = freq;
+      playFrequency(freq, 0.6, false);
+    }, 80); // 80ms debounce — responsive but avoids overlapping
+  }, []);
 
   // Turn skipping logic
   useEffect(() => {
@@ -288,17 +324,20 @@ export function SoundMatchSession({ session }: Props) {
   useEffect(() => {
     return () => {
       stopActiveSound();
+      if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
     };
   }, []);
 
   const handleStartMatch = async () => {
     await stopActiveSound();
     setPhase('recreate');
-    setCurrentGuessFreq(440); // Standard A4 tuning pitch as guess starting point
+    setCurrentGuessFreq(440);
+    lastPlayedFreqRef.current = 0;
   };
 
   const handleSubmitGuess = async () => {
     await stopActiveSound();
+    if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
 
     const score = calculateAuditoryScore(activeTargetFreq, currentGuessFreq);
     const newResult: PlayerRoundResult = {
@@ -360,6 +399,33 @@ export function SoundMatchSession({ session }: Props) {
     }).sort((a, b) => b.scoreValue - a.scoreValue);
   }, [guesses, players]);
 
+  // ─── Vertical Slider Touch Handler ─────────────────────────────────
+  const sliderLayoutRef = useRef({ y: 0, height: SLIDER_HEIGHT });
+
+  const handleSliderTouch = (e: GestureResponderEvent) => {
+    const { locationY } = e.nativeEvent;
+    const clampedY = Math.max(0, Math.min(sliderLayoutRef.current.height, locationY));
+    const freq = positionToFreq(clampedY);
+    const clampedFreq = Math.max(FREQ_MIN, Math.min(FREQ_MAX, Math.round(freq)));
+    setCurrentGuessFreq(clampedFreq);
+    schedulePlayLive(clampedFreq);
+    
+    // Haptic ticks at round Hz boundaries
+    if (clampedFreq % 50 === 0) {
+      Haptics.selectionAsync();
+    }
+  };
+
+  const handleSliderRelease = () => {
+    setIsDragging(false);
+    // Play the final frequency clearly when finger lifts
+    if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
+    lastPlayedFreqRef.current = currentGuessFreq;
+    playFrequency(currentGuessFreq, 1.0, false);
+  };
+
+  // ─── RENDER ────────────────────────────────────────────────────────
+
   if (phase === 'ready') {
     return (
       <GamePassPhoneView
@@ -407,6 +473,12 @@ export function SoundMatchSession({ session }: Props) {
   }
 
   if (phase === 'recreate') {
+    const thumbY = freqToPosition(currentGuessFreq);
+    const freqPct = (currentGuessFreq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
+    // Color transitions from deep red (low) through orange, yellow, green, cyan, blue, to purple (high)
+    const hue = freqPct * 270; // 0° red → 270° purple
+    const glowColor = `hsl(${Math.round(hue)}, 85%, 55%)`;
+
     return (
       <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={st.container}>
         <View style={st.recreateHeader}>
@@ -414,44 +486,94 @@ export function SoundMatchSession({ session }: Props) {
           <Text style={st.recreatePlayer}>{activePlayer.displayName}</Text>
         </View>
 
-        <View style={st.swatchesRow}>
-          <View style={st.swatchContainer}>
-            <Text style={st.swatchLabel}>Target</Text>
-            <View style={[st.audioSwatchSmall, st.swatchOutline]}>
-              <IconSymbol name="eye.slash.fill" size={24} color="rgba(255,255,255,0.25)" />
+        {/* Main area: vertical slider + frequency display */}
+        <View style={st.recreateBody}>
+          {/* Left side: vertical slider */}
+          <View style={st.vSliderArea}>
+            {/* Scale labels */}
+            <View style={st.scaleLabels}>
+              <Text style={st.scaleLabelText}>1000</Text>
+              <Text style={st.scaleLabelText}>800</Text>
+              <Text style={st.scaleLabelText}>600</Text>
+              <Text style={st.scaleLabelText}>400</Text>
+              <Text style={st.scaleLabelText}>200</Text>
             </View>
+
+            {/* The slider track */}
+            <View
+              style={st.vSliderTrackContainer}
+              onLayout={(e) => {
+                sliderLayoutRef.current = {
+                  y: e.nativeEvent.layout.y,
+                  height: e.nativeEvent.layout.height,
+                };
+              }}
+              onStartShouldSetResponder={() => true}
+              onMoveShouldSetResponder={() => true}
+              onResponderGrant={(e) => {
+                setIsDragging(true);
+                handleSliderTouch(e);
+              }}
+              onResponderMove={handleSliderTouch}
+              onResponderRelease={handleSliderRelease}
+              onResponderTerminate={handleSliderRelease}
+            >
+              {/* Gradient track background */}
+              <LinearGradient
+                colors={['#9B59B6', '#3498DB', '#2ECC71', '#F1C40F', '#E74C3C']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={st.vSliderTrack}
+              />
+
+              {/* Filled portion glow */}
+              <View style={[st.vSliderFill, { top: thumbY, backgroundColor: glowColor + '25' }]} />
+
+              {/* Thumb */}
+              <View
+                pointerEvents="none"
+                style={[
+                  st.vSliderThumb,
+                  { top: thumbY - 18, borderColor: glowColor },
+                ]}
+              >
+                <View style={[st.vSliderThumbInner, { backgroundColor: glowColor }]} />
+              </View>
+            </View>
+
+            {/* Hz unit label */}
+            <Text style={st.hzUnitLabel}>Hz</Text>
           </View>
-          
-          <View style={st.swatchContainer}>
-            <Text style={st.swatchLabel}>Your Guess</Text>
-            <Animated.View style={[st.pulseRingSmall, pulseAnimatedStyle]} />
+
+          {/* Right side: frequency display + play button */}
+          <View style={st.freqDisplayArea}>
+            <View style={[st.freqCircle, { borderColor: glowColor, shadowColor: glowColor }]}>
+              <Animated.View style={[st.freqPulseRing, pulseAnimatedStyle, { borderColor: glowColor, backgroundColor: glowColor + '20' }]} />
+              <Text style={[st.freqBigNumber, { color: glowColor }]}>
+                {Math.round(currentGuessFreq)}
+              </Text>
+              <Text style={st.freqUnit}>Hz</Text>
+              {isPlayingGuess && (
+                <View style={st.playingIndicator}>
+                  <IconSymbol name="waveform" size={20} color={glowColor} />
+                </View>
+              )}
+            </View>
+
+            <Text style={st.dragHint}>
+              {isDragging ? 'Release to hear tone' : 'Drag the slider'}
+            </Text>
+
+            {/* Replay target button */}
             <TouchableOpacity
-              onPress={() => playFrequency(currentGuessFreq, 1.5, false)}
-              style={[st.audioSwatchSmall, { backgroundColor: Colors.orange, shadowColor: Colors.orange }]}
+              onPress={() => playFrequency(activeTargetFreq, 1.5, true)}
+              style={st.replayTargetBtn}
               activeOpacity={0.8}
             >
-              <IconSymbol name={isPlayingGuess ? 'waveform' : 'play.fill'} size={24} color="white" />
+              <IconSymbol name={isPlayingTarget ? 'waveform' : 'play.fill'} size={18} color="#FF2D55" />
+              <Text style={st.replayTargetText}>Replay Target</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        <View style={st.slidersContainer}>
-          <ColorSlider
-            label="Frequency"
-            value={currentGuessFreq}
-            min={200}
-            max={1000}
-            formatValue={(v) => `${Math.round(v)} Hz`}
-            onChange={(freq) => setCurrentGuessFreq(freq)}
-            renderTrack={() => (
-              <LinearGradient
-                colors={['#FF2D55', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA', '#007AFF', '#5856D6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={st.sliderTrack}
-              />
-            )}
-          />
         </View>
 
         <TouchableOpacity style={st.submitButton} onPress={handleSubmitGuess} activeOpacity={0.8}>
@@ -471,6 +593,13 @@ export function SoundMatchSession({ session }: Props) {
     const lastResult = guesses[guesses.length - 1];
     const isGoodScore = lastResult.score >= 7.5;
 
+    const targetPct = (lastResult.targetFrequency - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
+    const guessPct = (lastResult.guessFrequency - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
+    const targetHue = targetPct * 270;
+    const guessHue = guessPct * 270;
+    const targetColor = `hsl(${Math.round(targetHue)}, 85%, 55%)`;
+    const guessColor = `hsl(${Math.round(guessHue)}, 85%, 55%)`;
+
     return (
       <Animated.View entering={FadeIn} exiting={FadeOut} style={st.container}>
         <View style={st.roundResultCard}>
@@ -484,29 +613,47 @@ export function SoundMatchSession({ session }: Props) {
             <Text style={st.scoreLabel}>{isGoodScore ? 'Spot on!' : 'A bit out of tune...'}</Text>
           </View>
 
-          <View style={st.swatchesRow}>
-            <View style={st.swatchContainer}>
-              <Text style={st.swatchLabel}>Target</Text>
+          {/* Frequency comparison bars */}
+          <View style={st.comparisonContainer}>
+            <View style={st.comparisonRow}>
+              <View style={st.comparisonLabelCol}>
+                <Text style={st.comparisonLabel}>Target</Text>
+              </View>
               <TouchableOpacity
                 onPress={() => playFrequency(activeTargetFreq, 1.5, true)}
-                style={[st.audioSwatchSmall, { backgroundColor: '#FF2D55', shadowColor: '#FF2D55' }]}
+                style={[st.comparisonBar, { backgroundColor: targetColor + '30', borderColor: targetColor }]}
                 activeOpacity={0.8}
               >
-                <IconSymbol name={isPlayingTarget ? 'waveform' : 'play.fill'} size={24} color="white" />
+                <View style={[st.comparisonBarFill, { width: `${targetPct * 100}%`, backgroundColor: targetColor }]} />
+                <View style={st.comparisonBarContent}>
+                  <IconSymbol name={isPlayingTarget ? 'waveform' : 'play.fill'} size={16} color="white" />
+                  <Text style={st.comparisonFreqText}>{Math.round(lastResult.targetFrequency)} Hz</Text>
+                </View>
               </TouchableOpacity>
-              <Text style={st.freqLabelCode}>{Math.round(activeTargetFreq)} Hz</Text>
             </View>
-            
-            <View style={st.swatchContainer}>
-              <Text style={st.swatchLabel}>Your Guess</Text>
+
+            <View style={st.comparisonRow}>
+              <View style={st.comparisonLabelCol}>
+                <Text style={st.comparisonLabel}>Yours</Text>
+              </View>
               <TouchableOpacity
                 onPress={() => playFrequency(lastResult.guessFrequency, 1.5, false)}
-                style={[st.audioSwatchSmall, { backgroundColor: Colors.orange, shadowColor: Colors.orange }]}
+                style={[st.comparisonBar, { backgroundColor: guessColor + '30', borderColor: guessColor }]}
                 activeOpacity={0.8}
               >
-                <IconSymbol name={isPlayingGuess ? 'waveform' : 'play.fill'} size={24} color="white" />
+                <View style={[st.comparisonBarFill, { width: `${guessPct * 100}%`, backgroundColor: guessColor }]} />
+                <View style={st.comparisonBarContent}>
+                  <IconSymbol name={isPlayingGuess ? 'waveform' : 'play.fill'} size={16} color="white" />
+                  <Text style={st.comparisonFreqText}>{Math.round(lastResult.guessFrequency)} Hz</Text>
+                </View>
               </TouchableOpacity>
-              <Text style={st.freqLabelCode}>{Math.round(lastResult.guessFrequency)} Hz</Text>
+            </View>
+
+            {/* Difference indicator */}
+            <View style={st.diffBadge}>
+              <Text style={st.diffText}>
+                Δ {Math.abs(Math.round(lastResult.targetFrequency - lastResult.guessFrequency))} Hz
+              </Text>
             </View>
           </View>
 
@@ -538,80 +685,13 @@ export function SoundMatchSession({ session }: Props) {
   );
 }
 
-// Custom interactive Slider using standard React Native responder system
-function ColorSlider({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-  renderTrack,
-  formatValue,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (val: number) => void;
-  renderTrack: () => React.ReactNode;
-  formatValue: (val: number) => string;
-}) {
-  const [width, setWidth] = useState(1);
-  const trackRef = useRef<View>(null);
-
-  const handleTouch = (e: GestureResponderEvent) => {
-    const { locationX } = e.nativeEvent;
-    let pct = locationX / width;
-    pct = Math.max(0, Math.min(1, pct));
-    const val = min + pct * (max - min);
-    onChange(val);
-    
-    // Selection feedback haptics during adjustments
-    if (Math.round(val) % 10 === 0) {
-      Haptics.selectionAsync();
-    }
-  };
-
-  return (
-    <View style={st.sliderContainer}>
-      <View style={st.sliderLabelRow}>
-        <Text style={st.sliderLabel}>{label}</Text>
-        <Text style={st.sliderValueText}>{formatValue(value)}</Text>
-      </View>
-      
-      <View
-        ref={trackRef}
-        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={handleTouch}
-        onResponderMove={handleTouch}
-        style={st.sliderTrackContainer}
-      >
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          {renderTrack()}
-        </View>
-        <View
-          pointerEvents="none"
-          style={[
-            st.sliderThumb,
-            {
-              left: `${((value - min) / (max - min)) * 100}%`,
-            },
-          ]}
-        />
-      </View>
-    </View>
-  );
-}
-
 const st = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    gap: 16,
     paddingBottom: 40,
   },
   scrollView: {
@@ -665,17 +745,6 @@ const st = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FF2D55',
   },
-  pulseRingSmall: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 149, 0, 0.25)',
-    borderWidth: 1.5,
-    borderColor: '#FF9500',
-    alignSelf: 'center',
-    top: 25,
-  },
   playBigButton: {
     width: 120,
     height: 120,
@@ -716,10 +785,12 @@ const st = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
+  // ─── Recreate Phase ─────────────────────
   recreateHeader: {
     alignItems: 'center',
     gap: 4,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   recreateRound: {
     fontSize: 13,
@@ -733,107 +804,159 @@ const st = StyleSheet.create({
     fontFamily: 'Viral-Black',
     color: 'white',
   },
-  swatchesRow: {
+  recreateBody: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginVertical: 16,
-  },
-  swatchContainer: {
-    alignItems: 'center',
-    gap: 8,
-    position: 'relative',
-  },
-  swatchLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
-  },
-  audioSwatchSmall: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  swatchOutline: {
-    borderStyle: 'dashed',
-    borderColor: 'rgba(255,255,255,0.25)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  freqLabelCode: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: 'bold',
-    marginTop: 4,
-  },
-  slidersContainer: {
     width: '100%',
     gap: 20,
-    marginVertical: 12,
-  },
-  sliderContainer: {
-    width: '100%',
-  },
-  sliderLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  sliderLabel: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  sliderValueText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: 'rgba(255,255,255,0.6)',
-  },
-  sliderTrackContainer: {
-    height: 32,
-    width: '100%',
+    alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
+    maxHeight: SLIDER_HEIGHT + 50,
+  },
+
+  // ─── Vertical Slider ────────────────────
+  vSliderArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: SLIDER_HEIGHT,
+    gap: 6,
+  },
+  scaleLabels: {
+    height: SLIDER_HEIGHT,
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingVertical: 2,
+  },
+  scaleLabelText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.25)',
+    fontVariant: ['tabular-nums'],
+  },
+  vSliderTrackContainer: {
+    width: 48,
+    height: SLIDER_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
     position: 'relative',
   },
-  sliderTrack: {
+  vSliderTrack: {
+    width: 14,
+    height: '100%',
+    borderRadius: 7,
+  },
+  vSliderFill: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 0,
+    borderRadius: 7,
+  },
+  vSliderThumb: {
+    position: 'absolute',
+    left: -2,
+    right: -2,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 3,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  vSliderThumbInner: {
+    width: 12,
     height: 12,
     borderRadius: 6,
-    width: '100%',
+  },
+  hzUnitLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: 'rgba(255,255,255,0.2)',
+    position: 'absolute',
+    bottom: -18,
     alignSelf: 'center',
   },
-  sliderThumb: {
-    position: 'absolute',
-    top: 2, // Centered inside track container of height 32 (thumb size is 28)
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'white',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    marginLeft: -14, // Centered on left position
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 4,
+
+  // ─── Frequency Display ──────────────────
+  freqDisplayArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
   },
+  freqCircle: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 3,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  freqPulseRing: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 2,
+  },
+  freqBigNumber: {
+    fontSize: 44,
+    fontFamily: 'Viral-Black',
+    textAlign: 'center',
+  },
+  freqUnit: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: -4,
+  },
+  playingIndicator: {
+    position: 'absolute',
+    bottom: 16,
+  },
+  dragHint: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.35)',
+    textAlign: 'center',
+  },
+  replayTargetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,45,85,0.4)',
+    backgroundColor: 'rgba(255,45,85,0.08)',
+  },
+  replayTargetText: {
+    color: '#FF2D55',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // ─── Submit Button ──────────────────────
   submitButton: {
     width: '100%',
     height: 56,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 8,
     overflow: 'hidden',
   },
   submitButtonText: {
@@ -841,6 +964,8 @@ const st = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Viral-Black',
   },
+
+  // ─── Round Result ───────────────────────
   roundResultCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 28,
@@ -887,6 +1012,71 @@ const st = StyleSheet.create({
     fontWeight: '600',
     color: 'rgba(255,255,255,0.5)',
   },
+
+  // ─── Frequency comparison bars ──────────
+  comparisonContainer: {
+    width: '100%',
+    gap: 10,
+    marginVertical: 8,
+  },
+  comparisonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  comparisonLabelCol: {
+    width: 52,
+    alignItems: 'flex-end',
+  },
+  comparisonLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.5)',
+  },
+  comparisonBar: {
+    flex: 1,
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  comparisonBarFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 12,
+    opacity: 0.35,
+  },
+  comparisonBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    zIndex: 1,
+  },
+  comparisonFreqText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  diffBadge: {
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    marginTop: 4,
+  },
+  diffText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.5)',
+    fontVariant: ['tabular-nums'],
+  },
+
+  // ─── Continue Button ────────────────────
   continueButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -896,7 +1086,7 @@ const st = StyleSheet.create({
     width: '100%',
     height: 54,
     borderRadius: 20,
-    marginTop: 16,
+    marginTop: 8,
   },
   continueButtonText: {
     color: 'white',
