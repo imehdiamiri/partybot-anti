@@ -313,6 +313,8 @@ export function ColorMatchSession({ session }: Props) {
             max={360}
             formatValue={(v) => `${Math.round(v)}°`}
             onChange={(h) => setCurrentGuess(prev => ({ ...prev, h }))}
+            iconName="paintpalette.fill"
+            thumbColor={guessHsl}
             renderTrack={() => (
               <LinearGradient
                 colors={['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#ff0000']}
@@ -331,6 +333,8 @@ export function ColorMatchSession({ session }: Props) {
             max={100}
             formatValue={(v) => `${Math.round(v)}%`}
             onChange={(s) => setCurrentGuess(prev => ({ ...prev, s }))}
+            iconName="drop.fill"
+            thumbColor={guessHsl}
             renderTrack={() => (
               <LinearGradient
                 colors={['#ffffff', hsvToHsl(currentGuess.h, 100, currentGuess.b)]}
@@ -349,6 +353,8 @@ export function ColorMatchSession({ session }: Props) {
             max={100}
             formatValue={(v) => `${Math.round(v)}%`}
             onChange={(b) => setCurrentGuess(prev => ({ ...prev, b }))}
+            iconName="sun.max.fill"
+            thumbColor={guessHsl}
             renderTrack={() => (
               <LinearGradient
                 colors={['#000000', hsvToHsl(currentGuess.h, currentGuess.s, 100)]}
@@ -411,10 +417,18 @@ export function ColorMatchSession({ session }: Props) {
           </View>
 
           <TouchableOpacity style={st.continueButton} onPress={handleContinueFromRoundResult} activeOpacity={0.8}>
-            <Text style={st.continueButtonText}>
-              {playerIdx + 1 < players.length ? 'Pass to Next Player' : roundIdx + 1 < maxRounds ? 'Next Round' : 'View Final Standings'}
-            </Text>
-            <IconSymbol name="arrow.right" size={18} color="white" />
+            <LinearGradient
+              colors={[Colors.blue, '#1D62CD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={st.continueButtonText}>
+                {playerIdx + 1 < players.length ? 'Pass to Next Player' : roundIdx + 1 < maxRounds ? 'Next Round' : 'View Final Standings'}
+              </Text>
+              <IconSymbol name="arrow.right" size={18} color="white" />
+            </View>
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -447,6 +461,8 @@ function ColorSlider({
   onChange,
   renderTrack,
   formatValue,
+  iconName,
+  thumbColor,
 }: {
   label: string;
   value: number;
@@ -455,6 +471,8 @@ function ColorSlider({
   onChange: (val: number) => void;
   renderTrack: () => React.ReactNode;
   formatValue: (val: number) => string;
+  iconName: 'paintpalette.fill' | 'drop.fill' | 'sun.max.fill';
+  thumbColor: string;
 }) {
   const [width, setWidth] = useState(1);
   const trackRef = useRef<View>(null);
@@ -475,7 +493,10 @@ function ColorSlider({
   return (
     <View style={st.sliderContainer}>
       <View style={st.sliderLabelRow}>
-        <Text style={st.sliderLabel}>{label}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <IconSymbol name={iconName} size={15} color="rgba(255,255,255,0.7)" />
+          <Text style={st.sliderLabel}>{label}</Text>
+        </View>
         <Text style={st.sliderValueText}>{formatValue(value)}</Text>
       </View>
       
@@ -499,7 +520,9 @@ function ColorSlider({
               left: `${((value - min) / (max - min)) * 100}%`,
             },
           ]}
-        />
+        >
+          <View style={[st.sliderThumbInner, { backgroundColor: thumbColor }]} />
+        </View>
       </View>
     </View>
   );
@@ -688,6 +711,13 @@ const st = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sliderThumbInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
   submitButton: {
     width: '100%',
@@ -759,11 +789,13 @@ const st = StyleSheet.create({
     height: 54,
     borderRadius: 20,
     marginTop: 16,
+    overflow: 'hidden',
   },
   continueButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    zIndex: 1,
   },
   colorSwatchMedium: {
     width: 160,

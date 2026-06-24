@@ -154,6 +154,47 @@ function positionToFreq(pos: number): number {
   return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN);
 }
 
+// Sound Wave Bar helper component for premium animated audio visualizer
+function SoundWaveBar({ active, height, delay, color = '#FF2D55' }: { active: boolean; height: number; delay: number; color?: string }) {
+  const scale = useSharedValue(0.2);
+  
+  useEffect(() => {
+    if (active) {
+      scale.value = withRepeat(
+        withSequence(
+          withTiming(1.0, { duration: 350 + (delay % 180), easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.2, { duration: 350 + (delay % 180), easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      scale.value = withTiming(0.2);
+    }
+  }, [active]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scaleY: scale.value }],
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: 5,
+          height: height,
+          backgroundColor: color,
+          borderRadius: 2.5,
+          marginHorizontal: 3,
+        },
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
 export function SoundMatchSession({ session }: Props) {
   const players = session.players;
   const registerSkip = useRegisterSkip();
@@ -455,8 +496,25 @@ export function SoundMatchSession({ session }: Props) {
               style={[st.playBigButton, isPlayingTarget && st.playBigButtonActive]}
               activeOpacity={0.85}
             >
+              <LinearGradient
+                colors={['#FF2D55', '#D32F2F', '#9C27B0']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
               <IconSymbol name={isPlayingTarget ? 'waveform' : 'play.fill'} size={40} color="white" />
             </TouchableOpacity>
+          </View>
+
+          {/* Symmetrical dynamic wave visualizer */}
+          <View style={st.visualizerWaveContainer}>
+            <SoundWaveBar active={isPlayingTarget} height={16} delay={0} />
+            <SoundWaveBar active={isPlayingTarget} height={28} delay={90} />
+            <SoundWaveBar active={isPlayingTarget} height={42} delay={180} />
+            <SoundWaveBar active={isPlayingTarget} height={52} delay={270} />
+            <SoundWaveBar active={isPlayingTarget} height={42} delay={360} />
+            <SoundWaveBar active={isPlayingTarget} height={28} delay={450} />
+            <SoundWaveBar active={isPlayingTarget} height={16} delay={540} />
           </View>
 
           <Text style={st.instructionsText}>
@@ -464,8 +522,16 @@ export function SoundMatchSession({ session }: Props) {
           </Text>
 
           <TouchableOpacity style={st.readyMatchButton} onPress={handleStartMatch} activeOpacity={0.8}>
-            <Text style={st.readyMatchButtonText}>I'm Ready to Match</Text>
-            <IconSymbol name="arrow.right" size={16} color="white" />
+            <LinearGradient
+              colors={[Colors.blue, '#1D62CD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={st.readyMatchButtonText}>I'm Ready to Match</Text>
+              <IconSymbol name="arrow.right" size={16} color="white" />
+            </View>
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -563,6 +629,15 @@ export function SoundMatchSession({ session }: Props) {
             <Text style={st.dragHint}>
               {isDragging ? 'Release to hear tone' : 'Drag the slider'}
             </Text>
+
+            {/* Symmetrical dynamic wave visualizer in recreate phase */}
+            <View style={st.visualizerWaveContainerSmall}>
+              <SoundWaveBar active={isPlayingGuess} height={12} delay={0} color={glowColor} />
+              <SoundWaveBar active={isPlayingGuess} height={22} delay={80} color={glowColor} />
+              <SoundWaveBar active={isPlayingGuess} height={32} delay={160} color={glowColor} />
+              <SoundWaveBar active={isPlayingGuess} height={22} delay={240} color={glowColor} />
+              <SoundWaveBar active={isPlayingGuess} height={12} delay={320} color={glowColor} />
+            </View>
           </View>
         </View>
 
@@ -611,10 +686,15 @@ export function SoundMatchSession({ session }: Props) {
               </View>
               <TouchableOpacity
                 onPress={() => playFrequency(activeTargetFreq, 1.5, true)}
-                style={[st.comparisonBar, { backgroundColor: targetColor + '30', borderColor: targetColor }]}
+                style={[st.comparisonBar, { backgroundColor: targetColor + '15', borderColor: targetColor }]}
                 activeOpacity={0.8}
               >
-                <View style={[st.comparisonBarFill, { width: `${targetPct * 100}%`, backgroundColor: targetColor }]} />
+                <LinearGradient
+                  colors={[targetColor + '10', targetColor]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[st.comparisonBarFill, { width: `${targetPct * 100}%` }]}
+                />
                 <View style={st.comparisonBarContent}>
                   <IconSymbol name={isPlayingTarget ? 'waveform' : 'play.fill'} size={16} color="white" />
                   <Text style={st.comparisonFreqText}>{Math.round(lastResult.targetFrequency)} Hz</Text>
@@ -628,10 +708,15 @@ export function SoundMatchSession({ session }: Props) {
               </View>
               <TouchableOpacity
                 onPress={() => playFrequency(lastResult.guessFrequency, 1.5, false)}
-                style={[st.comparisonBar, { backgroundColor: guessColor + '30', borderColor: guessColor }]}
+                style={[st.comparisonBar, { backgroundColor: guessColor + '15', borderColor: guessColor }]}
                 activeOpacity={0.8}
               >
-                <View style={[st.comparisonBarFill, { width: `${guessPct * 100}%`, backgroundColor: guessColor }]} />
+                <LinearGradient
+                  colors={[guessColor + '10', guessColor]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[st.comparisonBarFill, { width: `${guessPct * 100}%` }]}
+                />
                 <View style={st.comparisonBarContent}>
                   <IconSymbol name={isPlayingGuess ? 'waveform' : 'play.fill'} size={16} color="white" />
                   <Text style={st.comparisonFreqText}>{Math.round(lastResult.guessFrequency)} Hz</Text>
@@ -648,10 +733,18 @@ export function SoundMatchSession({ session }: Props) {
           </View>
 
           <TouchableOpacity style={st.continueButton} onPress={handleContinueFromRoundResult} activeOpacity={0.8}>
-            <Text style={st.continueButtonText}>
-              {playerIdx + 1 < players.length ? 'Pass to Next Player' : roundIdx + 1 < maxRounds ? 'Next Round' : 'View Final Standings'}
-            </Text>
-            <IconSymbol name="arrow.right" size={18} color="white" />
+            <LinearGradient
+              colors={[Colors.blue, '#1D62CD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={st.continueButtonText}>
+                {playerIdx + 1 < players.length ? 'Pass to Next Player' : roundIdx + 1 < maxRounds ? 'Next Round' : 'View Final Standings'}
+              </Text>
+              <IconSymbol name="arrow.right" size={18} color="white" />
+            </View>
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -747,10 +840,19 @@ const st = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 10,
+    overflow: 'hidden',
   },
   playBigButtonActive: {
     transform: [{ scale: 0.95 }],
     opacity: 0.9,
+  },
+  visualizerWaveContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 70,
+    marginVertical: 12,
+    width: '100%',
   },
   instructionsText: {
     fontSize: 14,
@@ -769,11 +871,13 @@ const st = StyleSheet.create({
     height: 52,
     borderRadius: 20,
     width: '100%',
+    overflow: 'hidden',
   },
   readyMatchButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    zIndex: 1,
   },
 
   // ─── Recreate Phase ─────────────────────
@@ -921,6 +1025,14 @@ const st = StyleSheet.create({
     fontWeight: '500',
     color: 'rgba(255,255,255,0.35)',
     textAlign: 'center',
+  },
+  visualizerWaveContainerSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+    marginTop: 8,
+    width: '100%',
   },
   replayTargetBtn: {
     flexDirection: 'row',
@@ -1077,10 +1189,12 @@ const st = StyleSheet.create({
     height: 54,
     borderRadius: 20,
     marginTop: 8,
+    overflow: 'hidden',
   },
   continueButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    zIndex: 1,
   },
 });
