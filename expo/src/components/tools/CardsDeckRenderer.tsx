@@ -1,6 +1,7 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, PanResponder, Dimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard, CardSubtype } from '@/src/models/CardModels';
 import { useSavedCardsStore } from '@/src/store/useSavedCardsStore';
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function CardsDeckRenderer({ categoryId }: Props) {
+  const insets = useSafeAreaInsets();
   const category = CardCategoryInfo[categoryId];
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -367,7 +369,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     const progress = (currentIndex + 1) / Math.max(total, 1);
 
     return (
-      <View style={styles.actionWrap}>
+      <View style={[styles.actionWrap, { paddingBottom: Math.max(16, insets.bottom) }]}>
         <View style={styles.progressRow}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: category.accentColor }]} />

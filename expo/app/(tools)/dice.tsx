@@ -1,6 +1,7 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, SharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
@@ -75,6 +76,7 @@ const Die2DView = ({ value, size, shake, index }: { value: number; size: number;
 };
 
 export default function DiceToolScreen() {
+  const insets = useSafeAreaInsets();
   const [count, setCount] = useState(1);
   const [values, setValues] = useState([1]);
   const [isRolling, setIsRolling] = useState(false);
@@ -172,7 +174,7 @@ export default function DiceToolScreen() {
           <Text style={[styles.totalValue, isRolling && { opacity: 0.35 }]}>{total}</Text>
         </View>
 
-        <TouchableOpacity onPress={roll} disabled={isRolling} activeOpacity={0.8} style={{ width: '100%', paddingHorizontal: 20, paddingBottom: 28 }}>
+        <TouchableOpacity onPress={roll} disabled={isRolling} activeOpacity={0.8} style={{ width: '100%', paddingHorizontal: 20, paddingBottom: Math.max(28, insets.bottom + 12) }}>
           <LinearGradient colors={[Colors.blue, Colors.cyan]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.rollButton}>
             <IconSymbol name="dice.fill" size={18} color="white" weight="heavy" />
             <Text style={styles.rollButtonText}>{isRolling ? 'Rolling...' : 'Roll'}</Text>

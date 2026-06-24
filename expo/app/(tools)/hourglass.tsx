@@ -1,6 +1,7 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -67,6 +68,7 @@ const WheelPicker = ({ title, value, range, onChange }: { title: string, value: 
 };
 
 export default function HourglassToolScreen() {
+  const insets = useSafeAreaInsets();
   const [minutes, setMinutes] = useState(1);
   const [seconds, setSeconds] = useState(0);
   const [remaining, setRemaining] = useState(60);
@@ -243,7 +245,7 @@ export default function HourglassToolScreen() {
       <View style={{ flex: 1 }} />
 
       {/* Controls */}
-      <View style={styles.controlsRow}>
+      <View style={[styles.controlsRow, { paddingBottom: Math.max(28, insets.bottom + 12) }]}>
         {isAlarming ? (
           <ControlButton title="Stop" icon="stop.fill" colors={[Colors.red, Colors.orange]} onPress={stopAlarm} />
         ) : isRunning ? (

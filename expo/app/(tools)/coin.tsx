@@ -1,6 +1,7 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -77,6 +78,7 @@ const CoinComponent = ({
 };
 
 export default function CoinFlipToolScreen() {
+  const insets = useSafeAreaInsets();
   const [coinCount, setCoinCount] = useState(1);
   const [isFlipping, setIsFlipping] = useState(false);
   const [hasResult, setHasResult] = useState(false);
@@ -274,6 +276,7 @@ export default function CoinFlipToolScreen() {
         disabled={isFlipping}
         style={({ pressed }) => [
           styles.flipButtonContainer,
+          { marginBottom: Math.max(24, insets.bottom + 8) },
           pressed && { opacity: 0.8 },
           isFlipping && { opacity: 0.6 }
         ]}

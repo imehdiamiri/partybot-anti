@@ -10,6 +10,7 @@ import {
   Alert,
   Keyboard
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -37,6 +38,7 @@ const playError = () => {
 };
 
 export default function TeamSplitterToolScreen() {
+  const insets = useSafeAreaInsets();
   const [names, setNames] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [teamCount, setTeamCount] = useState(2);
@@ -236,6 +238,7 @@ export default function TeamSplitterToolScreen() {
         disabled={names.length < teamCount || isShuffling}
         style={({ pressed }) => [
           styles.splitButtonContainer,
+          { marginBottom: Math.max(24, insets.bottom + 8) },
           pressed && { opacity: 0.8 },
           (names.length < teamCount) && { opacity: 0.5 },
           isShuffling && { opacity: 0.8 }

@@ -11,6 +11,7 @@ import {
   Keyboard,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -37,6 +38,7 @@ const safeHaptic = {
 // ─── Main Component ───
 
 export default function BottleToolScreen() {
+  const insets = useSafeAreaInsets();
   const [names, setNames] = useState<string[]>([]);
   const [draft, setDraft] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
@@ -200,7 +202,7 @@ export default function BottleToolScreen() {
       )}
 
       {/* Spin Button */}
-      <View style={styles.bottomArea}>
+      <View style={[styles.bottomArea, { paddingBottom: Math.max(28, insets.bottom + 12) }]}>
         <TouchableOpacity
           onPress={spin}
           disabled={isSpinning}

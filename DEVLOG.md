@@ -9,6 +9,19 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.1.0 - Cards Deck & Tools Safe-Area Bottom Spacing Optimization
+* **Date:** June 24, 2026
+* **Changes:**
+  * **Safe-Area Bottom Spacing:** Standardized bottom padding and margins of all action buttons and action bars inside Cards Deck Swiper and all Tools screens (`coin`, `dice`, `hourglass`, `teams`, `bottle`) by utilizing `useSafeAreaInsets` to prevent them from sticking to the physical bottom edge/home indicator on bezel-less notch devices.
+* **Modified Files:**
+  * [CardsDeckRenderer.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/tools/CardsDeckRenderer.tsx)
+  * [coin.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/(tools)/coin.tsx)
+  * [dice.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/(tools)/dice.tsx)
+  * [hourglass.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/(tools)/hourglass.tsx)
+  * [teams.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/(tools)/teams.tsx)
+  * [bottle.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/(tools)/bottle.tsx)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v2.0.0 - Button Typography Unification, Result Animations & Audio Tiers
 * **Date:** June 24, 2026
 * **Changes:**
