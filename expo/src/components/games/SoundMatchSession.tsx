@@ -563,16 +563,6 @@ export function SoundMatchSession({ session }: Props) {
             <Text style={st.dragHint}>
               {isDragging ? 'Release to hear tone' : 'Drag the slider'}
             </Text>
-
-            {/* Replay target button */}
-            <TouchableOpacity
-              onPress={() => playFrequency(activeTargetFreq, 1.5, true)}
-              style={st.replayTargetBtn}
-              activeOpacity={0.8}
-            >
-              <IconSymbol name={isPlayingTarget ? 'waveform' : 'play.fill'} size={18} color="#FF2D55" />
-              <Text style={st.replayTargetText}>Replay Target</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
