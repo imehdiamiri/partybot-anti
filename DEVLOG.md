@@ -13,9 +13,24 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 This log tracks all changes, feature additions, and fixes applied to the PlayVirals application, allowing easy rollbacks and traceability.
 
+### v1.9.0 - Color Match Swatch Adjustments & Onboarding Show-Once Fix
+* **Date:** June 24, 2026
+* **Commit:** `4420887`
+* **Changes:**
+  * **Onboarding Show-Once:** Fixed redirection logic in RootLayout (`app/_layout.tsx`) to check `hasCompletedOnboarding` from the settings store. Now the onboarding screens only show up once per user instead of on every fresh app launch.
+  * **Color Match Swatch Updates:**
+    * Removed the target swatch (question mark circle) from the recreate phase screen.
+    * Enlarged the player guess swatch to a prominent `250x250` circular display on the recreate screen.
+    * Enlarged the target and guess swatches to `190x190` on the roundResult screen, with an adjusted overlap spacing of `-60` for premium layout harmony.
+  * **White Submit Button:** Styled the "Submit Match" button background to premium solid white with `#121212` text color.
+* **Modified Files:**
+  * [_layout.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/_layout.tsx)
+  * [ColorMatchSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/ColorMatchSession.tsx)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v1.8.0 - Sound Match Precise Adjustments & Touch Bugfix
 * **Date:** June 24, 2026
-* **Commit:** (Pending commit)
+* **Commit:** `5111a6e`
 * **Changes:**
   * **Taller Slider:** Increased vertical slider height `SLIDER_HEIGHT` to `Math.min(SCREEN_HEIGHT * 0.52, 430)` to allow more precise drag adjustments.
   * **Fine-Tuning Arrows:** Added chevron up/down buttons above and below the slider to allow adjustments step-by-step by 1 Hz. Tapping these buttons plays the adjusted tone.

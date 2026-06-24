@@ -286,22 +286,9 @@ export function ColorMatchSession({ session }: Props) {
           <Text style={st.recreatePlayer}>{activePlayer.displayName}</Text>
         </View>
 
-        <View style={st.overlappingSwatchesContainer}>
-          <View style={st.overlappingSwatchesRow}>
-            <View style={[st.colorSwatchMedium, st.swatchOutline, { zIndex: 1 }]}>
-              <IconSymbol name="questionmark.circle" size={36} color="rgba(255,255,255,0.2)" />
-            </View>
-            <View style={[st.colorSwatchMedium, { backgroundColor: guessHsl, shadowColor: guessHsl, marginLeft: -40, zIndex: 2 }]} />
-          </View>
-          
-          <View style={st.overlapLabelsRow}>
-            <View style={st.overlapLabelCol}>
-              <Text style={st.swatchLabel}>Target</Text>
-            </View>
-            <View style={st.overlapLabelCol}>
-              <Text style={st.swatchLabel}>Your Guess</Text>
-            </View>
-          </View>
+        <View style={st.singleSwatchContainer}>
+          <View style={[st.colorSwatchLarge, { backgroundColor: guessHsl, shadowColor: guessHsl }]} />
+          <Text style={st.swatchLabel}>Your Guess</Text>
         </View>
 
         <View style={st.slidersContainer}>
@@ -366,13 +353,7 @@ export function ColorMatchSession({ session }: Props) {
           />
         </View>
 
-        <TouchableOpacity style={st.submitButton} onPress={handleSubmitGuess} activeOpacity={0.8}>
-          <LinearGradient
-            colors={[Colors.green, '#248A3D']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-          />
+        <TouchableOpacity style={st.submitButton} onPress={handleSubmitGuess} activeOpacity={0.85}>
           <Text style={st.submitButtonText}>Submit Match</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -401,7 +382,7 @@ export function ColorMatchSession({ session }: Props) {
           <View style={st.overlappingSwatchesContainer}>
             <View style={st.overlappingSwatchesRow}>
               <View style={[st.colorSwatchMedium, { backgroundColor: targetHsl, shadowColor: targetHsl, zIndex: 1 }]} />
-              <View style={[st.colorSwatchMedium, { backgroundColor: guessHsl, shadowColor: guessHsl, marginLeft: -40, zIndex: 2 }]} />
+              <View style={[st.colorSwatchMedium, { backgroundColor: guessHsl, shadowColor: guessHsl, marginLeft: -60, zIndex: 2 }]} />
             </View>
             
             <View style={st.overlapLabelsRow}>
@@ -727,9 +708,10 @@ const st = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
     overflow: 'hidden',
+    backgroundColor: '#ffffff',
   },
   submitButtonText: {
-    color: 'white',
+    color: '#121212',
     fontSize: 18,
     fontFamily: 'Viral-Black',
   },
@@ -798,9 +780,9 @@ const st = StyleSheet.create({
     zIndex: 1,
   },
   colorSwatchMedium: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.15)',
     shadowOffset: { width: 0, height: 6 },
@@ -809,6 +791,23 @@ const st = StyleSheet.create({
     elevation: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  colorSwatchLarge: {
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.15)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
+    marginBottom: 12,
+  },
+  singleSwatchContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
   },
   overlappingSwatchesContainer: {
     alignItems: 'center',

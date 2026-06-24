@@ -127,9 +127,7 @@ export default function RootLayout() {
     };
   }, [currentUser?.uid]);
 
-  // Track whether onboarding has been shown THIS session (app launch).
-  // This prevents the infinite redirect loop while still showing onboarding
-  // every time the app is opened fresh.
+  // Track whether onboarding has been shown THIS session (app launch) to prevent loops.
   const onboardingShownThisSession = useRef(false);
 
   useEffect(() => {
@@ -138,10 +136,8 @@ export default function RootLayout() {
     const inOnboarding = segments[0] === 'onboarding';
 
     const timer = setTimeout(() => {
-      // Show onboarding once per session on fresh app open.
-      // The onboarding screen itself handles navigation to (tabs) when the
-      // user completes it — we never redirect AWAY from onboarding here.
-      if (!inOnboarding && !onboardingShownThisSession.current) {
+      // Show onboarding once if the user has not completed it yet.
+      if (!hasCompletedOnboarding && !inOnboarding && !onboardingShownThisSession.current) {
         onboardingShownThisSession.current = true;
         router.replace('/onboarding');
         return;
@@ -159,7 +155,7 @@ export default function RootLayout() {
     }, 10);
 
     return () => clearTimeout(timer);
-  }, [currentUser, isInitialized, segments, navigationState?.key, isMounted]);
+  }, [currentUser, isInitialized, segments, navigationState?.key, isMounted, hasCompletedOnboarding]);
 
   if (!fontsLoaded && !fontError) {
     return <View style={{ flex: 1, backgroundColor: 'black' }} />;
