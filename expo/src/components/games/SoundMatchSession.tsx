@@ -140,7 +140,7 @@ function calculateAuditoryScore(target: number, guess: number): number {
 const FREQ_MIN = 200;
 const FREQ_MAX = 1000;
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SLIDER_HEIGHT = Math.min(SCREEN_HEIGHT * 0.45, 380);
+const SLIDER_HEIGHT = Math.min(SCREEN_HEIGHT * 0.52, 430);
 
 // Map a frequency to a vertical position (bottom = low, top = high)
 function freqToPosition(freq: number): number {
@@ -441,18 +441,33 @@ export function SoundMatchSession({ session }: Props) {
   }, [guesses, players]);
 
   // ─── Vertical Slider Touch Handler ─────────────────────────────────
-  const sliderLayoutRef = useRef({ y: 0, height: SLIDER_HEIGHT });
+  const trackPageYRef = useRef(0);
 
-  const handleSliderTouch = (e: GestureResponderEvent) => {
-    const { locationY } = e.nativeEvent;
-    const clampedY = Math.max(0, Math.min(sliderLayoutRef.current.height, locationY));
+  const handleSliderGrant = (e: GestureResponderEvent) => {
+    setIsDragging(true);
+    const { pageY, locationY } = e.nativeEvent;
+    trackPageYRef.current = pageY - locationY;
+
+    // Calculate initial frequency on touch down
+    const clampedY = Math.max(0, Math.min(SLIDER_HEIGHT, locationY));
     const freq = positionToFreq(clampedY);
     const clampedFreq = Math.max(FREQ_MIN, Math.min(FREQ_MAX, Math.round(freq)));
     setCurrentGuessFreq(clampedFreq);
     schedulePlayLive(clampedFreq);
+    Haptics.selectionAsync();
+  };
+
+  const handleSliderMove = (e: GestureResponderEvent) => {
+    const { pageY } = e.nativeEvent;
+    const relativeY = pageY - trackPageYRef.current;
+    const clampedY = Math.max(0, Math.min(SLIDER_HEIGHT, relativeY));
+    const freq = positionToFreq(clampedY);
+    const clampedFreq = Math.max(FREQ_MIN, Math.min(FREQ_MAX, Math.round(freq)));
     
-    // Haptic ticks at round Hz boundaries
-    if (clampedFreq % 50 === 0) {
+    setCurrentGuessFreq(clampedFreq);
+    schedulePlayLive(clampedFreq);
+    
+    if (clampedFreq !== lastPlayedFreqRef.current && clampedFreq % 50 === 0) {
       Haptics.selectionAsync();
     }
   };
@@ -463,6 +478,14 @@ export function SoundMatchSession({ session }: Props) {
     if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
     lastPlayedFreqRef.current = currentGuessFreq;
     playFrequency(currentGuessFreq, 1.0, false);
+  };
+
+  const adjustFreq = (delta: number) => {
+    const newFreq = Math.max(FREQ_MIN, Math.min(FREQ_MAX, currentGuessFreq + delta));
+    setCurrentGuessFreq(newFreq);
+    Haptics.selectionAsync();
+    // Play the tone briefly to let player hear the precise change
+    playFrequency(newFreq, 0.8, false);
   };
 
   // ─── RENDER ────────────────────────────────────────────────────────
@@ -565,46 +588,62 @@ export function SoundMatchSession({ session }: Props) {
               <Text style={st.scaleLabelText}>200</Text>
             </View>
 
-            {/* The slider track */}
-            <View
-              style={st.vSliderTrackContainer}
-              onLayout={(e) => {
-                sliderLayoutRef.current = {
-                  y: e.nativeEvent.layout.y,
-                  height: e.nativeEvent.layout.height,
-                };
-              }}
-              onStartShouldSetResponder={() => true}
-              onMoveShouldSetResponder={() => true}
-              onResponderGrant={(e) => {
-                setIsDragging(true);
-                handleSliderTouch(e);
-              }}
-              onResponderMove={handleSliderTouch}
-              onResponderRelease={handleSliderRelease}
-              onResponderTerminate={handleSliderRelease}
-            >
-              {/* Gradient track background */}
-              <LinearGradient
-                colors={['#9B59B6', '#3498DB', '#2ECC71', '#F1C40F', '#E74C3C']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={st.vSliderTrack}
-              />
-
-              {/* Filled portion glow */}
-              <View style={[st.vSliderFill, { top: thumbY, backgroundColor: glowColor + '25' }]} />
-
-              {/* Thumb */}
-              <View
-                pointerEvents="none"
-                style={[
-                  st.vSliderThumb,
-                  { top: thumbY - 18, borderColor: glowColor },
-                ]}
+            {/* Vertical slider wrapper (Up button, slider, Down button) */}
+            <View style={st.vSliderTrackWrapper}>
+              {/* Up button to increase frequency by 1 Hz */}
+              <TouchableOpacity
+                onPress={() => adjustFreq(1)}
+                style={st.fineTuneBtn}
+                activeOpacity={0.7}
               >
-                <View style={[st.vSliderThumbInner, { backgroundColor: glowColor }]} />
+                <IconSymbol name="chevron.up" size={20} color="rgba(255,255,255,0.7)" />
+              </TouchableOpacity>
+
+              {/* The slider track */}
+              <View
+                style={st.vSliderTrackContainer}
+                onStartShouldSetResponder={() => true}
+                onMoveShouldSetResponder={() => true}
+                onResponderGrant={handleSliderGrant}
+                onResponderMove={handleSliderMove}
+                onResponderRelease={handleSliderRelease}
+                onResponderTerminate={handleSliderRelease}
+              >
+                {/* Gradient track background */}
+                <LinearGradient
+                  colors={['#9B59B6', '#3498DB', '#2ECC71', '#F1C40F', '#E74C3C']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={st.vSliderTrack}
+                  pointerEvents="none"
+                />
+
+                {/* Filled portion glow */}
+                <View 
+                  pointerEvents="none"
+                  style={[st.vSliderFill, { top: thumbY, backgroundColor: glowColor + '25' }]} 
+                />
+
+                {/* Thumb */}
+                <View
+                  pointerEvents="none"
+                  style={[
+                    st.vSliderThumb,
+                    { top: thumbY - 18, borderColor: glowColor },
+                  ]}
+                >
+                  <View style={[st.vSliderThumbInner, { backgroundColor: glowColor }]} />
+                </View>
               </View>
+
+              {/* Down button to decrease frequency by 1 Hz */}
+              <TouchableOpacity
+                onPress={() => adjustFreq(-1)}
+                style={st.fineTuneBtn}
+                activeOpacity={0.7}
+              >
+                <IconSymbol name="chevron.down" size={20} color="rgba(255,255,255,0.7)" />
+              </TouchableOpacity>
             </View>
 
             {/* Hz unit label */}
@@ -613,7 +652,11 @@ export function SoundMatchSession({ session }: Props) {
 
           {/* Right side: frequency display + play button */}
           <View style={st.freqDisplayArea}>
-            <View style={[st.freqCircle, { borderColor: glowColor, shadowColor: glowColor }]}>
+            <TouchableOpacity
+              onPress={() => playFrequency(currentGuessFreq, 1.2, false)}
+              activeOpacity={0.8}
+              style={[st.freqCircle, { borderColor: glowColor, shadowColor: glowColor }]}
+            >
               <Animated.View style={[st.freqPulseRing, pulseAnimatedStyle, { borderColor: glowColor, backgroundColor: glowColor + '20' }]} />
               <Text style={[st.freqBigNumber, { color: glowColor }]}>
                 {Math.round(currentGuessFreq)}
@@ -624,10 +667,10 @@ export function SoundMatchSession({ session }: Props) {
                   <IconSymbol name="waveform" size={20} color={glowColor} />
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
 
             <Text style={st.dragHint}>
-              {isDragging ? 'Release to hear tone' : 'Drag the slider'}
+              {isDragging ? 'Release to hear tone' : 'Drag or tap circle to hear'}
             </Text>
 
             {/* Symmetrical dynamic wave visualizer in recreate phase */}
@@ -905,21 +948,37 @@ const st = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    maxHeight: SLIDER_HEIGHT + 50,
+    maxHeight: SLIDER_HEIGHT + 100,
   },
 
   // ─── Vertical Slider ────────────────────
   vSliderArea: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: SLIDER_HEIGHT,
+    height: SLIDER_HEIGHT + 80,
     gap: 6,
+  },
+  vSliderTrackWrapper: {
+    height: SLIDER_HEIGHT + 80,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  fineTuneBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scaleLabels: {
     height: SLIDER_HEIGHT,
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingVertical: 2,
+    marginVertical: 40,
   },
   scaleLabelText: {
     fontSize: 10,
