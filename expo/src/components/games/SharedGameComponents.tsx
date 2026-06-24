@@ -233,7 +233,7 @@ export function GameHandoffView({
           <Text style={{
             color: 'white',
             fontSize: 17,
-            fontFamily: 'Viral-Black',
+            fontWeight: 'bold',
             letterSpacing: 0.2,
           }}>{displayButtonTitle}</Text>
           <IconSymbol name="arrow.right" size={18} color="rgba(255,255,255,0.8)" />
@@ -451,7 +451,7 @@ export function GameResultsScreen({ players, results, onPlayAgain, title }: Game
             }, pressed && { opacity: 0.8 }]} 
             onPress={onPlayAgain}>
             <LinearGradient colors={[Colors.green, '#28A745']} style={[StyleSheet.absoluteFillObject, { borderRadius: 20 }]} />
-            <Text style={{ color: '#fff', fontSize: 18, fontFamily: 'Viral-Black', letterSpacing: 0.3 }}>Play Again</Text>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.3 }}>Play Again</Text>
           </Pressable>
         </Animated.View>
       </Animated.ScrollView>
@@ -583,7 +583,7 @@ export function GameReadyScreen({
           }]}
           onPress={onStart}
         >
-          <Text style={{ color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' }}>{buttonTitle}</Text>
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>{buttonTitle}</Text>
         </Pressable>
 
         {onSkip && (

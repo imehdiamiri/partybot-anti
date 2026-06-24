@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, TouchableOpacity, GestureResponderEvent, ScrollView } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft, useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft, useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from 'react-native-reanimated';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import * as Haptics from '@/src/utils/safeHaptics';
@@ -42,6 +42,9 @@ function hsvToHsl(h: number, s: number, v: number): string {
 
 // Compute proximity score (0 to 10) in HSV cylindrical coordinates
 function calculateScore(target: { h: number; s: number; b: number }, guess: { h: number; s: number; b: number }): number {
+  if (target.h === guess.h && target.s === guess.s && target.b === guess.b) {
+    return 10.00;
+  }
   const h1 = target.h * (Math.PI / 180);
   const s1 = target.s / 100;
   const v1 = target.b / 100;
@@ -98,6 +101,62 @@ export function ColorMatchSession({ session }: Props) {
 
   const memorizeProgress = useSharedValue(1);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Score feedback animations & state
+  const badgeScale = useSharedValue(0);
+  const badgeShake = useSharedValue(0);
+
+  const lastResult = guesses[guesses.length - 1];
+
+  const feedbackConfig = useMemo(() => {
+    if (!lastResult) return null;
+    const s = lastResult.score;
+    if (s === 10) return { text: '✨ PERFECT 10! ✨', color: '#FFD700', icon: 'crown.fill' };
+    if (s >= 9.0) return { text: '🔥 EXCELLENT 🔥', color: '#2ECC71', icon: 'sparkles' };
+    if (s >= 7.0) return { text: '👍 GOOD JOB 👍', color: '#3498DB', icon: 'checkmark.circle.fill' };
+    if (s < 5.0) return { text: '😢 TRY AGAIN 😢', color: '#E74C3C', icon: 'exclamationmark.triangle.fill' };
+    return { text: 'OKAY', color: '#F1C40F', icon: 'circle' };
+  }, [lastResult]);
+
+  useEffect(() => {
+    if (phase === 'roundResult' && lastResult) {
+      const s = lastResult.score;
+      badgeScale.value = 0;
+      badgeShake.value = 0;
+
+      if (s < 5.0) {
+        badgeScale.value = withTiming(1, { duration: 250 });
+        badgeShake.value = withSequence(
+          withTiming(-12, { duration: 60 }),
+          withTiming(12, { duration: 60 }),
+          withTiming(-8, { duration: 60 }),
+          withTiming(8, { duration: 60 }),
+          withTiming(-4, { duration: 60 }),
+          withTiming(4, { duration: 60 }),
+          withTiming(0, { duration: 60 })
+        );
+      } else if (s === 10) {
+        badgeScale.value = withSequence(
+          withTiming(1.4, { duration: 250, easing: Easing.out(Easing.back(1.5)) }),
+          withTiming(1.0, { duration: 150 })
+        );
+      } else {
+        badgeScale.value = withSequence(
+          withTiming(1.2, { duration: 200 }),
+          withTiming(1.0, { duration: 100 })
+        );
+      }
+    }
+  }, [phase, lastResult]);
+
+  const animatedBadgeStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: badgeScale.value },
+        { translateX: badgeShake.value }
+      ]
+    };
+  });
 
   const activePlayer = players[playerIdx];
   const activeTargetColor = targetColors[roundIdx];
@@ -200,15 +259,21 @@ export function ColorMatchSession({ session }: Props) {
 
     setGuesses(prev => [...prev, newResult]);
 
-    if (score >= 9.0) {
+    if (score === 10) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      AudioManager.play('wheelWin');
+    } else if (score >= 9.0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       AudioManager.play('success');
-    } else if (score >= 6.0) {
+    } else if (score >= 7.0) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      AudioManager.play('success');
-    } else {
+      AudioManager.play('match');
+    } else if (score < 5.0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      AudioManager.play('fail');
+      AudioManager.play('wrong');
+    } else {
+      Haptics.selectionAsync();
+      AudioManager.play('tileFlip');
     }
 
     setPhase('roundResult');
@@ -376,7 +441,14 @@ export function ColorMatchSession({ session }: Props) {
               <Text style={st.scoreValue}>{lastResult.score.toFixed(2)}</Text>
               <Text style={st.scoreMax}>/ 10</Text>
             </View>
-            <Text style={st.scoreLabel}>{isGoodScore ? 'Excellent match!' : 'Could be closer...'}</Text>
+            
+            {/* Animated Feedback Badge */}
+            {feedbackConfig && (
+              <Animated.View style={[st.feedbackBadge, animatedBadgeStyle, { backgroundColor: feedbackConfig.color + '15', borderColor: feedbackConfig.color }]}>
+                <IconSymbol name={feedbackConfig.icon as any} size={15} color={feedbackConfig.color} />
+                <Text style={[st.feedbackBadgeText, { color: feedbackConfig.color }]}>{feedbackConfig.text}</Text>
+              </Animated.View>
+            )}
           </View>
 
           <View style={st.overlappingSwatchesContainer}>
@@ -713,7 +785,22 @@ const st = StyleSheet.create({
   submitButtonText: {
     color: '#121212',
     fontSize: 18,
-    fontFamily: 'Viral-Black',
+    fontWeight: 'bold',
+  },
+  feedbackBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginTop: 10,
+  },
+  feedbackBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   roundResultCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',

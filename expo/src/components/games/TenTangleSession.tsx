@@ -360,7 +360,7 @@ const st = StyleSheet.create({
   hint: { color: 'rgba(255,255,255,0.35)', fontSize: 13, marginTop: 12, textAlign: 'center', paddingHorizontal: 20 },
   roundLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '600', marginBottom: 8 },
   btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
-  btnTx: { color: '#fff', fontSize: 16, fontFamily: 'Viral-Black' },
+  btnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   bigNumber: { fontSize: 72, fontFamily: 'Viral-Black' },
   numLabel: { fontSize: 22, fontWeight: 'bold', marginTop: 4 },
   scenarioCard: { backgroundColor: 'rgba(255,204,0,0.12)', borderRadius: 20, padding: 24, marginTop: 20, borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)', width: '100%' },

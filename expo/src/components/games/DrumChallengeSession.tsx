@@ -704,7 +704,7 @@ const st = StyleSheet.create({
     gap: 8, paddingVertical: 18, paddingHorizontal: 28,
     borderRadius: 16, width: '100%', marginTop: 18,
   },
-  startBtnTx: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
+  startBtnTx: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 
   // Listening phase
   listeningContainer: {

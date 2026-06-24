@@ -514,7 +514,7 @@ const st = StyleSheet.create({
   title:{color:'#fff',fontSize: 28,fontFamily:'Viral-Black', marginTop: 16, textAlign: 'center'},
   sub:{color:'rgba(255,255,255,0.5)',fontSize:16,marginTop:12,textAlign:'center',lineHeight:22},
   btn:{backgroundColor:'#007AFF',paddingVertical:18,borderRadius:20,width:'100%',alignItems:'center',marginTop:32},
-  btnTx:{color:'#fff',fontSize: 18,fontFamily:'Viral-Black'},
+  btnTx:{color:'#fff',fontSize: 18,fontWeight:'bold'},
   
   // Free draw ready screen
   freeReadyCenter: { alignItems: 'center', width: '100%' },
@@ -602,7 +602,7 @@ const st = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, gap: 6,
   },
-  guessBtnTx: { fontSize: 17, fontFamily: 'Viral-Black' },
+  guessBtnTx: { fontSize: 17, fontWeight: 'bold' },
 
   // Scoreboard inside result
   roundScoreboard: {

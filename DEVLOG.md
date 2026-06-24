@@ -9,9 +9,35 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
-## 📜 Version History & Changelog
-
-This log tracks all changes, feature additions, and fixes applied to the PlayVirals application, allowing easy rollbacks and traceability.
+### v2.0.0 - Button Typography Unification, Result Animations & Audio Tiers
+* **Date:** June 24, 2026
+* **Changes:**
+  * **Typography Unification:** Replaced `fontFamily: 'Viral-Black'` with a clean, default system bold font on all gameplay and result screens' buttons to unify the look.
+  * **Perfect score bug fixes:** Ensured exact matches (rounded to integer frequencies in Sound Match, and identical H/S/B colors in Color Match) return a perfect `10.00/10` score.
+  * **Result Animations & Tiered Sound Effects:** Added score feedback animated badges (using Reanimated scale-up spring pop and horizontal shake animations) on Sound Match and Color Match result screens, triggered alongside score-appropriate audio:
+    * `10/10`: `wheelWin` sound + Success haptic + spring pop
+    * `9+`: `success` sound + Success haptic + scale pop
+    * `7+`: `match` sound + Medium haptic + scale pop
+    * `<5`: `wrong` sound + Warning haptic + shake
+    * default: `tileFlip` sound + Selection haptic + scale pop
+* **Modified Files:**
+  * [ResultsScoreboard.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/ResultsScoreboard.tsx)
+  * [SharedGameComponents.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/SharedGameComponents.tsx)
+  * [SoundMatchSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/SoundMatchSession.tsx)
+  * [ColorMatchSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/ColorMatchSession.tsx)
+  * [ColorTrapSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/ColorTrapSession.tsx)
+  * [DrawRushSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/DrawRushSession.tsx)
+  * [DrumChallengeSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/DrumChallengeSession.tsx)
+  * [EyeSightSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/EyeSightSession.tsx)
+  * [ImposterSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/ImposterSession.tsx)
+  * [MemoryGridSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/MemoryGridSession.tsx)
+  * [MemoryPathSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/MemoryPathSession.tsx)
+  * [ReactionTimeSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/ReactionTimeSession.tsx)
+  * [SpinBottleSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/SpinBottleSession.tsx)
+  * [TapInOrderSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/TapInOrderSession.tsx)
+  * [TenTangleSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/TenTangleSession.tsx)
+  * [PassGuessSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/PassGuessSession.tsx)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
 
 ### v1.9.0 - Color Match Swatch Adjustments & Onboarding Show-Once Fix
 * **Date:** June 24, 2026

@@ -461,7 +461,7 @@ const s = StyleSheet.create({
   bv: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   bl: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
   btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
-  btnTx: { color: '#fff', fontSize: 16, fontFamily: 'Viral-Black' },
+  btnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
   hName: { color: '#fff', fontSize: 17, fontFamily: 'Viral-Black' },
   hSub: { color: '#00C7BE', fontSize: 12, fontWeight: '600', marginTop: 2 },

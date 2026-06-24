@@ -456,7 +456,7 @@ const st = StyleSheet.create({
   bv: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
   bl: { color: 'rgba(255,255,255,0.5)', fontSize: 14 },
   btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
-  btnTx: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black' },
+  btnTx: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   hName: { color: '#fff', fontSize: 28, fontFamily: 'Viral-Black' },
   hSub: { color: 'rgba(255,255,255,0.5)', fontSize: 16, marginTop: 2 },

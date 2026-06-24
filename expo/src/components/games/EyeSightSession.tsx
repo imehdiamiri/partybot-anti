@@ -725,7 +725,7 @@ const st = StyleSheet.create({
     borderRadius: 18, width: '100%',
     marginTop: 18,
   },
-  startBtnTx: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
+  startBtnTx: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 
   countdownTx: {
     color: '#fff',

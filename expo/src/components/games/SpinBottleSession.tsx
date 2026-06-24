@@ -303,10 +303,10 @@ const st = StyleSheet.create({
   restartBtn: { position: 'absolute', top: 8, right: 8, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
   actionArea: { paddingHorizontal: 20, paddingBottom: 24, marginTop: 'auto' },
   spinBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16 },
-  spinBtnTx: { color: '#fff', fontSize: 16, fontFamily: 'Viral-Black' },
+  spinBtnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   spinningTx: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 16 },
   choiceBtn: { alignItems: 'center', gap: 6, paddingVertical: 18, borderRadius: 18 },
-  choiceBtnTx: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
+  choiceBtnTx: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   // Prompt screen
   promptWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, gap: 16 },
   choicePill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
@@ -318,5 +318,5 @@ const st = StyleSheet.create({
   rerollBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
   rerollTx: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   doneBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16, width: '100%', paddingHorizontal: 40 },
-  doneBtnTx: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
+  doneBtnTx: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
 });

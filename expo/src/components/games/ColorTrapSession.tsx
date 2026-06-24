@@ -557,7 +557,7 @@ const st = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
   },
-  readyBtnText: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
+  readyBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 
   // ─── Playing Header ───
   header: {

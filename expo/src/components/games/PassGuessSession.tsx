@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Viral-Black',
+    fontWeight: 'bold',
   },
   badgeRow: {
     flexDirection: 'row',

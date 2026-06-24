@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
   cardSubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600', marginBottom: 16 },
   
   primaryBtn: { backgroundColor: '#007AFF', paddingVertical: 18, borderRadius: 20, alignItems: 'center', width: '100%' },
-  primaryBtnText: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black' },
+  primaryBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   secondaryBtn: { backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 18, borderRadius: 20, alignItems: 'center', width: '100%', marginTop: 10 },
   secondaryBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   

@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF', paddingVertical: 18, borderRadius: 20,
     width: '100%', alignItems: 'center', marginTop: 32,
   },
-  primaryBtnText: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black' },
+  primaryBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
 
   // Game header
   gameHeader: {

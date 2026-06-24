@@ -125,8 +125,14 @@ async function generateToneWav(frequency: number, durationSeconds: number): Prom
 
 // Compute frequency matching score based on octave distance (logarithmic scale)
 function calculateAuditoryScore(target: number, guess: number): number {
+  const targetRounded = Math.round(target);
+  const guessRounded = Math.round(guess);
+  if (targetRounded === guessRounded) {
+    return 10.00;
+  }
+
   // Compute difference in octaves: diff = abs(log2(target / guess))
-  const diff = Math.abs(Math.log2(target / guess));
+  const diff = Math.abs(Math.log2(targetRounded / guessRounded));
   
   // Define maximum tolerable difference as 1.2 octaves (about a 10th interval)
   const maxDiff = 1.2;
@@ -226,6 +232,62 @@ export function SoundMatchSession({ session }: Props) {
   const activeTargetFreq = targetFrequencies[roundIdx];
 
   const pulseScale = useSharedValue(1);
+
+  // Score feedback animations & state
+  const badgeScale = useSharedValue(0);
+  const badgeShake = useSharedValue(0);
+
+  const lastResult = guesses[guesses.length - 1];
+
+  const feedbackConfig = useMemo(() => {
+    if (!lastResult) return null;
+    const s = lastResult.score;
+    if (s === 10) return { text: '✨ PERFECT 10! ✨', color: '#FFD700', icon: 'crown.fill' };
+    if (s >= 9.0) return { text: '🔥 EXCELLENT 🔥', color: '#2ECC71', icon: 'sparkles' };
+    if (s >= 7.0) return { text: '👍 GOOD JOB 👍', color: '#3498DB', icon: 'checkmark.circle.fill' };
+    if (s < 5.0) return { text: '😢 TRY AGAIN 😢', color: '#E74C3C', icon: 'exclamationmark.triangle.fill' };
+    return { text: 'OKAY', color: '#F1C40F', icon: 'circle' };
+  }, [lastResult]);
+
+  useEffect(() => {
+    if (phase === 'roundResult' && lastResult) {
+      const s = lastResult.score;
+      badgeScale.value = 0;
+      badgeShake.value = 0;
+
+      if (s < 5.0) {
+        badgeScale.value = withTiming(1, { duration: 250 });
+        badgeShake.value = withSequence(
+          withTiming(-12, { duration: 60 }),
+          withTiming(12, { duration: 60 }),
+          withTiming(-8, { duration: 60 }),
+          withTiming(8, { duration: 60 }),
+          withTiming(-4, { duration: 60 }),
+          withTiming(4, { duration: 60 }),
+          withTiming(0, { duration: 60 })
+        );
+      } else if (s === 10) {
+        badgeScale.value = withSequence(
+          withTiming(1.4, { duration: 250, easing: Easing.out(Easing.back(1.5)) }),
+          withTiming(1.0, { duration: 150 })
+        );
+      } else {
+        badgeScale.value = withSequence(
+          withTiming(1.2, { duration: 200 }),
+          withTiming(1.0, { duration: 100 })
+        );
+      }
+    }
+  }, [phase, lastResult]);
+
+  const animatedBadgeStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: badgeScale.value },
+        { translateX: badgeShake.value }
+      ]
+    };
+  });
 
   // Pulse animation for playing sound
   const pulseAnimatedStyle = useAnimatedStyle(() => {
@@ -391,15 +453,21 @@ export function SoundMatchSession({ session }: Props) {
 
     setGuesses(prev => [...prev, newResult]);
 
-    if (score >= 9.0) {
+    if (score === 10) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      AudioManager.play('wheelWin');
+    } else if (score >= 9.0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       AudioManager.play('success');
-    } else if (score >= 6.0) {
+    } else if (score >= 7.0) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      AudioManager.play('success');
-    } else {
+      AudioManager.play('match');
+    } else if (score < 5.0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      AudioManager.play('fail');
+      AudioManager.play('wrong');
+    } else {
+      Haptics.selectionAsync();
+      AudioManager.play('tileFlip');
     }
 
     setPhase('roundResult');
@@ -718,7 +786,14 @@ export function SoundMatchSession({ session }: Props) {
               <Text style={st.scoreValue}>{lastResult.score.toFixed(2)}</Text>
               <Text style={st.scoreMax}>/ 10</Text>
             </View>
-            <Text style={st.scoreLabel}>{isGoodScore ? 'Spot on!' : 'A bit out of tune...'}</Text>
+            
+            {/* Animated Feedback Badge */}
+            {feedbackConfig && (
+              <Animated.View style={[st.feedbackBadge, animatedBadgeStyle, { backgroundColor: feedbackConfig.color + '15', borderColor: feedbackConfig.color }]}>
+                <IconSymbol name={feedbackConfig.icon as any} size={15} color={feedbackConfig.color} />
+                <Text style={[st.feedbackBadgeText, { color: feedbackConfig.color }]}>{feedbackConfig.text}</Text>
+              </Animated.View>
+            )}
           </View>
 
           {/* Frequency comparison bars */}
@@ -1123,7 +1198,22 @@ const st = StyleSheet.create({
   submitButtonText: {
     color: 'white',
     fontSize: 18,
-    fontFamily: 'Viral-Black',
+    fontWeight: 'bold',
+  },
+  feedbackBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginTop: 10,
+  },
+  feedbackBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 
   // ─── Round Result ───────────────────────

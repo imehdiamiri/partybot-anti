@@ -443,7 +443,7 @@ const st = StyleSheet.create({
     borderRadius: 16, width: '100%',
     marginTop: 18,
   },
-  startBtnTx: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black' },
+  startBtnTx: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
 
   fullPress: { flex: 1 },
   fullCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },

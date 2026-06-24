@@ -265,13 +265,13 @@ const styles = StyleSheet.create({
     paddingVertical: 22, borderRadius: 24, overflow: 'hidden',
     shadowColor: Colors.blue, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6,
   },
-  playAgainText: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black', letterSpacing: 0.3 },
+  playAgainText: { color: 'white', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.3 },
   shareBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
     paddingVertical: 22, borderRadius: 24, overflow: 'hidden',
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)',
   },
-  shareText: { color: 'white', fontSize: 17, fontFamily: 'Viral-Black' },
+  shareText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
 });
 
 // Re-export Platform so callers can detect ios-only behaviours if needed.
