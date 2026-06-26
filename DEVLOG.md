@@ -9,6 +9,20 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.2.0 - Perfect Shave Game Removal
+* **Date:** June 26, 2026
+* **Changes:**
+  * **Game Removal:** Completely removed the "Perfect Shave" game (`perfect_shave`) from the application. Deleted all associated gameplay components and asset images. Cleaned up setup configurations, game renderer switch-case logic, and library definitions to ensure full type safety and compilation.
+* **Deleted Files:**
+  * [PerfectShaveSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/PerfectShaveSession.tsx)
+  * [perfect-shave.png](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/assets/images/heroes/perfect-shave.png)
+  * [perfect-shave-head.png](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/assets/images/perfect-shave-head.png)
+* **Modified Files:**
+  * [setup.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/game/[id]/setup.tsx)
+  * [GameSessionRenderer.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/GameSessionRenderer.tsx)
+  * [AppModels.ts](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/models/AppModels.ts)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v2.1.0 - Cards Deck & Tools Safe-Area Bottom Spacing Optimization
 * **Date:** June 24, 2026
 * **Changes:**

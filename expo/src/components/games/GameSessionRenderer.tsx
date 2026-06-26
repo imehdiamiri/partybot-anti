@@ -20,7 +20,6 @@ import { DrawRushSession } from './DrawRushSession';
 import { ReactionTimeSession } from './ReactionTimeSession';
 import { EyeSightSession } from './EyeSightSession';
 import { DrumChallengeSession } from './DrumChallengeSession';
-import { PerfectShaveSession } from './PerfectShaveSession';
 import { ColorMatchSession } from './ColorMatchSession';
 import { SoundMatchSession } from './SoundMatchSession';
 
@@ -70,8 +69,6 @@ export function GameSessionRenderer({ session, game }: Props) {
       return withHint(game.id, <EyeSightSession session={session} />);
     case 'drum_challenge':
       return withHint(game.id, <DrumChallengeSession session={session} />);
-    case 'perfect_shave':
-      return withHint(game.id, <PerfectShaveSession session={session} />);
     case 'color_match':
       return withHint(game.id, <ColorMatchSession session={session} />);
     case 'sound_match':

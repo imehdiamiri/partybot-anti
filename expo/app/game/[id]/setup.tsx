@@ -66,7 +66,7 @@ export default function GameSetupScreen() {
   const [roundCount, setRoundCount] = useState(3);
 
   // Games that have rounds (not grid/special games)
-  const needsRounds = !['reverse_singing', 'memory_grid', 'memory_path', 'tap_in_order', 'ten_tangle', 'color_trap', 'spin_bottle', 'draw_rush', 'reaction_time', 'eye_sight', 'drum_challenge', 'perfect_shave'].includes(id || '');
+  const needsRounds = !['reverse_singing', 'memory_grid', 'memory_path', 'tap_in_order', 'ten_tangle', 'color_trap', 'spin_bottle', 'draw_rush', 'reaction_time', 'eye_sight', 'drum_challenge'].includes(id || '');
 
   // ─── Memory Grid state ───
   const [mgGridSize, setMgGridSize] = useState<MemoryGridSize>('tiny3x4');
@@ -93,9 +93,6 @@ export default function GameSetupScreen() {
   const [drumMode, setDrumMode] = useState<'whitney'|'metronome'>('whitney');
   const [metronomeCycles, setMetronomeCycles] = useState(4);
   const [metronomeRhythm, setMetronomeRhythm] = useState<'4/4'|'3/4'|'fast'>('4/4');
-
-  // ─── Perfect Shave state ───
-  const [psDifficulty, setPsDifficulty] = useState<'easy'|'normal'|'hard'>('normal');
 
   // ─── Imposter state ───
   const [imposterStyle, setImposterStyle] = useState<'discussion'|'clue'>('discussion');
@@ -220,8 +217,7 @@ export default function GameSetupScreen() {
         config = { drumMode, metronomeCycles, metronomeRhythm }; break;
       case 'imposter':
         config = { gameStyle: imposterStyle }; break;
-      case 'perfect_shave':
-        config = { difficulty: psDifficulty }; break;
+
     }
 
     startSingleDeviceSession(game!, finalNames, needsRounds ? roundCount : 1, config);
@@ -530,28 +526,6 @@ export default function GameSetupScreen() {
                   <TouchableOpacity key={d.id} onPress={() => setCtDifficulty(d.id)}
                     style={[st.optionChip, { flex: 1, minWidth: 0, paddingHorizontal: 4 }, sel && !isExtreme && { borderColor: 'rgba(90,200,250,0.5)', backgroundColor: 'rgba(90,200,250,0.2)' }, sel && isExtreme && { borderColor: 'rgba(255,59,48,0.6)', backgroundColor: 'rgba(255,59,48,0.2)' }]}>
                     <Text style={[st.optionChipTitle, sel && { color: '#fff' }, isExtreme && !sel && { color: 'rgba(255,59,48,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>{d.title}</Text>
-                    <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>{d.sub}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* ══════════ PERFECT SHAVE: Difficulty ══════════ */}
-        {id === 'perfect_shave' && (
-          <View style={st.card}>
-            <View style={st.cardHeader}>
-              <IconSymbol name="speedometer" size={16} color="#00C9A7" />
-              <Text style={[st.cardTitle, { color: '#00C9A7' }]}>Razor Speed</Text>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-              {([{id:'easy',title:'Easy',sub:'Slow razor'},{id:'normal',title:'Normal',sub:'Medium speed'},{id:'hard',title:'Hard',sub:'Fast razor'}] as const).map(d => {
-                const sel = psDifficulty === d.id;
-                return (
-                  <TouchableOpacity key={d.id} onPress={() => setPsDifficulty(d.id)}
-                    style={[st.optionChip, { flex: 1, minWidth: 0, paddingHorizontal: 4 }, sel && { borderColor: 'rgba(0,201,167,0.5)', backgroundColor: 'rgba(0,201,167,0.2)' }]}>
-                    <Text style={[st.optionChipTitle, sel && { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit>{d.title}</Text>
                     <Text style={[st.optionChipSub, sel && { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>{d.sub}</Text>
                   </TouchableOpacity>
                 );
