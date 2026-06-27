@@ -9,6 +9,16 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.3.0 - Pass & Guess: Guessing Overhaul & "Who Said It?" Mode
+* **Date:** June 27, 2026
+* **Changes:**
+  * **Guessing Phase Overhaul:** Completely removed the voter-by-voter phone passing phase during guessing. Replaced it with a host-controlled guessing view where a single person holds the phone, views all answers at once, and assigns each answer to the player they think wrote it.
+  * **New "Who Said It?" Mode:** Added a play mode toggle on the intro screen to choose between "Classic Q&A" and "Who Said It?". In "Who Said It?" mode, players can write any statement about themselves freely instead of answering a predefined question.
+  * **Scoring Rules:** Adjusted scoring to reward players +100 points when the host incorrectly guesses their statement/answer (i.e. they fooled the group!).
+* **Modified Files:**
+  * [PassGuessSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/PassGuessSession.tsx)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v2.2.0 - Perfect Shave Game Removal
 * **Date:** June 26, 2026
 * **Changes:**
