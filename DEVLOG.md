@@ -9,6 +9,18 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.4.0 - Cross-Game Player Count Sync & Default Rounds = 1
+* **Date:** June 27, 2026
+* **Changes:**
+  * **Cross-Game Player Sync:** Added `lastGlobalPlayerCount` and `lastGlobalPlayerNames` fields to `useSettingsStore`. Now every time a game session starts, the player count and names are saved globally. When a user opens any game's setup screen, the last player count/names used across all games are pre-filled as the default.
+  * **Priority logic:** If the specific game was played before, its own saved names are used. Otherwise, falls back to the global last session names from any other game.
+  * **Bounds clamping:** Restored player count is always clamped within each game's `minPlayers` / `maxPlayers` range.
+  * **Default Round Count:** Changed the default round count from 3 to 1 across all games.
+* **Modified Files:**
+  * [useSettingsStore.ts](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/store/useSettingsStore.ts)
+  * [setup.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/game/[id]/setup.tsx)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v2.3.0 - Pass & Guess: Guessing Overhaul & "Who Said It?" Mode
 * **Date:** June 27, 2026
 * **Changes:**
