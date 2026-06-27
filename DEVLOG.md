@@ -9,6 +9,17 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.6.0 - Pass & Guess: UI Redesign & Hiding Self-Answers
+* **Date:** June 27, 2026
+* **Changes:**
+  * **Hide Self-Answers:** Filtered out the active guesser's own answer during their private guessing turn so they only guess on others' answers.
+  * **Redesigned Mode Selection:** Replaced simple horizontal tab selections on the intro screen with high-fidelity side-by-side card items featuring beautiful background highlights, customized icons, and clean descriptions.
+  * **Compact Choice Chips:** Overhauled the player list inside the guessing screen into a compact wrapping row of small chips to drastically reduce layout clutter.
+  * **Unified Leaderboard & Details Screen:** Removed the separate reveal phase. Transitioned directly from guessing to a combined Results & Leaderboard screen listing players, correct/wrong guess counts, scores, and answer key details on a single dashboard.
+* **Modified Files:**
+  * [PassGuessSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/PassGuessSession.tsx)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v2.4.0 - Cross-Game Player Count Sync & Default Rounds = 1
 * **Date:** June 27, 2026
 * **Changes:**
