@@ -13,7 +13,7 @@ interface Props {
   session: GameSession;
 }
 
-type Phase = 'intro' | 'answering' | 'hostGuessing' | 'reveal' | 'leaderboard' | 'finished';
+type Phase = 'intro' | 'answering' | 'hostGuessing' | 'leaderboard' | 'finished';
 type PlayMode = 'classic' | 'whoSaidIt';
 
 interface PassGuessAnswer {
@@ -79,23 +79,22 @@ export function PassGuessSession({ session }: Props) {
   const [useCustom, setUseCustom] = useState(false);
 
   const [answers, setAnswers] = useState<PassGuessAnswer[]>([]);
-  /**
-   * allPlayerGuesses[voterPlayerId][answerId] = guessedPlayerId
-   * Each player gets their own turn to guess all answers.
-   */
+  /** allPlayerGuesses[voterPlayerId][answerId] = guessedPlayerId */
   const [allPlayerGuesses, setAllPlayerGuesses] = useState<Record<string, Record<string, string>>>({});
-  /** Guesses the current guesser has made so far (answerId → guessedPlayerId) */
+  /** Guesses the current active guesser has made */
   const [currentGuesses, setCurrentGuesses] = useState<Record<string, string>>({});
   const [scores, setScores] = useState<Record<string, number>>({});
 
   const [showPrivacyScreen, setShowPrivacyScreen] = useState(false);
-  /** In answering phase: index of the player writing. In guessing phase: index of the player guessing. */
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState('');
 
   const currentPlayer = session.players[activePlayerIndex];
   const activeQuestion = useCustom ? customQuestion : question;
-  const allCurrentAnswersAssigned = answers.length > 0 && answers.every(a => currentGuesses[a.id]);
+
+  // Filter out the active guesser's own answer so they only see and guess on others
+  const visibleAnswers = answers.filter(ans => ans.playerID !== currentPlayer?.id);
+  const allCurrentAnswersAssigned = visibleAnswers.length > 0 && visibleAnswers.every(a => currentGuesses[a.id]);
 
   useEffect(() => {
     if (Object.keys(scores).length === 0) {
@@ -140,7 +139,7 @@ export function PassGuessSession({ session }: Props) {
       setActivePlayerIndex(nextPlayerIdx);
       setShowPrivacyScreen(true);
     } else {
-      // All answered — start guessing phase, first guesser
+      // Start guessing phase
       setActivePlayerIndex(0);
       setCurrentGuesses({});
       setAllPlayerGuesses({});
@@ -164,7 +163,6 @@ export function PassGuessSession({ session }: Props) {
     setCurrentGuesses(prev => ({ ...prev, [answerId]: playerId }));
   };
 
-  /** Called when the current guesser submits all their guesses. */
   const handleSubmitCurrentGuesses = () => {
     if (!allCurrentAnswersAssigned) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -175,34 +173,30 @@ export function PassGuessSession({ session }: Props) {
 
     const nextGuesserIndex = activePlayerIndex + 1;
     if (nextGuesserIndex < session.players.length) {
-      // Next player's guessing turn
       setActivePlayerIndex(nextGuesserIndex);
       setCurrentGuesses({});
       setShowPrivacyScreen(true);
     } else {
-      // All players have guessed — calculate scores
+      // End of round: update scores (100 points per correct guess)
       const newScores = { ...scores };
-      // 100 pts to each player who correctly guessed an answer's author
-      session.players.forEach(guesserPlayer => {
-        const guesses = updatedAllGuesses[guesserPlayer.id] || {};
+      session.players.forEach(p => {
+        const guesses = updatedAllGuesses[p.id] || {};
         answers.forEach(answer => {
-          if (answer.playerID !== guesserPlayer.id) { // can't score on your own answer
+          if (answer.playerID !== p.id) {
             if (guesses[answer.id] === answer.playerID) {
-              newScores[guesserPlayer.id] = (newScores[guesserPlayer.id] || 0) + 100;
+              newScores[p.id] = (newScores[p.id] || 0) + 100;
             }
           }
         });
       });
       setScores(newScores);
-      setPhase('reveal');
+      setPhase('leaderboard');
     }
   };
 
   const nextPhase = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (phase === 'reveal') {
-      setPhase('leaderboard');
-    } else if (phase === 'leaderboard') {
+    if (phase === 'leaderboard') {
       if (roundNumber >= totalRounds) {
         setPhase('finished');
       } else {
@@ -212,7 +206,23 @@ export function PassGuessSession({ session }: Props) {
     }
   };
 
-  // In guessing phase, the privacy screen serves as the pass-to-next-guesser screen
+  // Helper helper to get stats for leaderboard
+  const getPlayerStats = (playerId: string) => {
+    const guesses = allPlayerGuesses[playerId] || {};
+    let correct = 0;
+    let wrong = 0;
+    answers.forEach(answer => {
+      if (answer.playerID !== playerId) {
+        const choice = guesses[answer.id];
+        if (choice) {
+          if (choice === answer.playerID) correct++;
+          else wrong++;
+        }
+      }
+    });
+    return { correct, wrong };
+  };
+
   if (showPrivacyScreen) {
     const color = getPlayerColor(activePlayerIndex);
     const isGuessingPhase = phase === 'hostGuessing';
@@ -251,6 +261,7 @@ export function PassGuessSession({ session }: Props) {
     <View style={styles.container}>
       <PhaseTransition phaseKey={phase} style={{ flex: 1 }}>
 
+        {/* ══════════════════════════ INTRO ══════════════════════════ */}
         {phase === 'intro' && (
           <View style={{ flex: 1 }}>
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -260,25 +271,32 @@ export function PassGuessSession({ session }: Props) {
                 </View>
               </View>
               <Text style={styles.title}>Round {roundNumber} of {totalRounds}</Text>
-              <Text style={styles.subtitle}>Everyone writes privately. One host reads and the group guesses together.</Text>
+              <Text style={styles.subtitle}>Everyone writes privately. Then each player gets the phone to guess everyone's answers!</Text>
 
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Game Mode</Text>
-                <View style={styles.tabsRow}>
-                  <Pressable style={[styles.tab, playMode === 'classic' && styles.tabActive]} onPress={() => { setPlayMode('classic'); setUseCustom(false); }}>
-                    <IconSymbol name="questionmark.bubble.fill" size={13} color={playMode === 'classic' ? Colors.yellow : 'rgba(255,255,255,0.35)'} />
-                    <Text style={[styles.tabText, playMode === 'classic' && styles.tabTextActive]}>Classic Q&A</Text>
-                  </Pressable>
-                  <Pressable style={[styles.tab, playMode === 'whoSaidIt' && styles.tabActive]} onPress={() => setPlayMode('whoSaidIt')}>
-                    <IconSymbol name="person.fill.questionmark" size={13} color={playMode === 'whoSaidIt' ? '#AF52DE' : 'rgba(255,255,255,0.35)'} />
-                    <Text style={[styles.tabText, playMode === 'whoSaidIt' && styles.tabTextActive]}>Who Said It?</Text>
-                  </Pressable>
-                </View>
-                {playMode === 'whoSaidIt' && (
-                  <View style={styles.modeDescBox}>
-                    <Text style={styles.modeDescText}>Each player writes anything true about themselves — a confession, memory, random fact, or a secret. Then the host reads them aloud and the group tries to guess who wrote what!</Text>
+              {/* Redesigned Premium Mode Cards */}
+              <Text style={styles.sectionLabel}>Select Game Mode</Text>
+              <View style={styles.modeCardsContainer}>
+                <Pressable
+                  style={[styles.modeCard, playMode === 'classic' && styles.modeCardActiveClassic]}
+                  onPress={() => { setPlayMode('classic'); setUseCustom(false); }}
+                >
+                  <View style={[styles.modeIconCircle, { backgroundColor: 'rgba(255, 214, 10, 0.15)' }]}>
+                    <IconSymbol name="questionmark.bubble.fill" size={20} color={Colors.yellow} />
                   </View>
-                )}
+                  <Text style={styles.modeCardTitle}>Classic Q&A</Text>
+                  <Text style={styles.modeCardDesc}>Answer funny questions privately and guess who said what.</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.modeCard, playMode === 'whoSaidIt' && styles.modeCardActiveWhoSaidIt]}
+                  onPress={() => setPlayMode('whoSaidIt')}
+                >
+                  <View style={[styles.modeIconCircle, { backgroundColor: 'rgba(175, 82, 222, 0.15)' }]}>
+                    <IconSymbol name="person.fill.questionmark" size={20} color="#AF52DE" />
+                  </View>
+                  <Text style={styles.modeCardTitle}>Who Said It?</Text>
+                  <Text style={styles.modeCardDesc}>Write any free-form fact, secret or story about yourself.</Text>
+                </Pressable>
               </View>
 
               {playMode === 'classic' && (
@@ -317,6 +335,7 @@ export function PassGuessSession({ session }: Props) {
           </View>
         )}
 
+        {/* ══════════════════════════ ANSWERING ══════════════════════════ */}
         {phase === 'answering' && (
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.badgeRow}>
@@ -358,6 +377,7 @@ export function PassGuessSession({ session }: Props) {
           </ScrollView>
         )}
 
+        {/* ══════════════════════════ GUESSING ══════════════════════════ */}
         {phase === 'hostGuessing' && (
           <View style={{ flex: 1 }}>
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -372,52 +392,57 @@ export function PassGuessSession({ session }: Props) {
                     Guesser {activePlayerIndex + 1} of {session.players.length}
                   </Text>
                 </HStack>
-                <Text style={[styles.questionPrompt, { fontSize: 15, marginTop: 10 }]}>
+                <Text style={[styles.questionPrompt, { fontSize: 14, marginTop: 10 }]}>
                   {playMode === 'whoSaidIt'
-                    ? 'Assign each statement to the player you think wrote it.'
-                    : 'Assign each answer to the player you think wrote it.'}
+                    ? 'Guess who wrote each statement (yours is hidden).'
+                    : 'Guess who wrote each answer (yours is hidden).'}
                 </Text>
               </View>
 
               {/* Progress bar */}
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { flex: Object.keys(currentGuesses).length }]} />
-                {answers.length - Object.keys(currentGuesses).length > 0 && (
-                  <View style={{ flex: answers.length - Object.keys(currentGuesses).length }} />
+                {visibleAnswers.length - Object.keys(currentGuesses).length > 0 && (
+                  <View style={{ flex: visibleAnswers.length - Object.keys(currentGuesses).length }} />
                 )}
               </View>
               <Text style={[styles.progressText, { textAlign: 'center', marginBottom: 20 }]}>
-                {Object.keys(currentGuesses).length} of {answers.length} assigned
+                {Object.keys(currentGuesses).length} of {visibleAnswers.length} assigned
               </Text>
 
-              {answers.map((ans, idx) => {
+              {visibleAnswers.map((ans, idx) => {
                 const assigned = currentGuesses[ans.id];
                 return (
-                  <View key={ans.id} style={[styles.card, assigned ? styles.cardAssigned : null]}>
+                  <View key={ans.id} style={[styles.card, assigned ? styles.cardAssigned : null, { padding: 14 }]}>
                     <View style={styles.answerHeaderRow}>
                       <View style={[styles.answerNumBadge, assigned ? styles.answerNumBadgeDone : null]}>
-                        {assigned ? <IconSymbol name="checkmark" size={11} color={Colors.green} /> : <Text style={styles.answerNumText}>#{idx + 1}</Text>}
+                        {assigned ? <IconSymbol name="checkmark" size={10} color={Colors.green} /> : <Text style={styles.answerNumText}>#{idx + 1}</Text>}
                       </View>
-                      <Text style={[styles.cardSubtitle, { flex: 1, marginBottom: 0, marginLeft: 8 }]}>
+                      <Text style={[styles.cardSubtitle, { flex: 1, marginBottom: 0, marginLeft: 8, fontSize: 12 }]}>
                         {playMode === 'whoSaidIt' ? 'Statement' : 'Answer'}
                       </Text>
                     </View>
-                    <Text style={[styles.answerText, { marginTop: 10, marginBottom: 16 }]}>{ans.text}</Text>
-                    <Text style={[styles.cardSubtitle, { marginBottom: 8 }]}>Who wrote this?</Text>
-                    <View style={styles.candidatesList}>
+                    <Text style={[styles.answerText, { marginTop: 8, marginBottom: 12, fontSize: 15 }]}>{ans.text}</Text>
+                    
+                    {/* Compact Choice list / Horizontal Wrap */}
+                    <View style={styles.compactChipsContainer}>
                       {session.players.map((p, i) => {
-                        // Can't guess your own answer
-                        const isOwn = p.id === ans.playerID;
                         const isSelected = assigned === p.id;
                         const pColor = getPlayerColor(i);
                         return (
                           <Pressable
                             key={p.id}
-                            style={[styles.candidateBtn, isSelected && { borderColor: pColor, backgroundColor: `${pColor}22` }]}
+                            style={[
+                              styles.compactChip,
+                              isSelected && {
+                                borderColor: pColor,
+                                backgroundColor: `${pColor}1A`,
+                              },
+                            ]}
                             onPress={() => handleGuessAssign(ans.id, p.id)}
                           >
-                            {isSelected && <IconSymbol name="checkmark.circle.fill" size={15} color={pColor} />}
-                            <Text style={[styles.candidateText, { color: isSelected ? pColor : 'rgba(255,255,255,0.75)' }]}>
+                            <View style={[styles.dotIndicator, { backgroundColor: pColor }]} />
+                            <Text style={[styles.compactChipText, { color: isSelected ? 'white' : 'rgba(255,255,255,0.7)' }]}>
                               {p.displayName}
                             </Text>
                           </Pressable>
@@ -437,88 +462,73 @@ export function PassGuessSession({ session }: Props) {
               >
                 <IconSymbol name="arrow.right.circle.fill" size={18} color="white" />
                 <Text style={styles.primaryBtnText}>
-                  {activePlayerIndex + 1 < session.players.length ? 'Done — Next Player' : 'Reveal Answers!'}
+                  {activePlayerIndex + 1 < session.players.length ? 'Done — Next Player' : 'See Leaderboard!'}
                 </Text>
               </Pressable>
             </View>
           </View>
         )}
 
-        {phase === 'reveal' && (
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.title}>Reveal Time!</Text>
-            <Text style={styles.subtitle}>{playMode === 'classic' ? activeQuestion : 'Who said what?'}</Text>
-
-            {answers.map((ans) => {
-              const author = session.players.find(p => p.id === ans.playerID);
-              const authorColor = author ? getPlayerColor(session.players.indexOf(author)) : 'white';
-              // Count how many players guessed correctly for this answer
-              const correctGuessers = session.players.filter(p =>
-                p.id !== ans.playerID && allPlayerGuesses[p.id]?.[ans.id] === ans.playerID
-              );
-              const totalGuessers = session.players.filter(p => p.id !== ans.playerID).length;
-              const allCorrect = correctGuessers.length === totalGuessers;
-              const noneCorrect = correctGuessers.length === 0;
-
-              return (
-                <View key={ans.id} style={[styles.card, allCorrect ? styles.cardCorrect : noneCorrect ? styles.cardWrong : null]}>
-                  <Text style={styles.answerText}>{ans.text}</Text>
-                  <View style={styles.revealRow}>
-                    <View style={styles.revealChip}>
-                      <IconSymbol name="pencil" size={11} color="rgba(255,255,255,0.45)" />
-                      <Text style={[styles.revealChipText, { color: authorColor }]}>{author?.displayName}</Text>
-                    </View>
-                    <View style={[styles.revealResultBadge, {
-                      backgroundColor: noneCorrect ? 'rgba(255,59,48,0.12)' : 'rgba(48,209,88,0.14)',
-                      borderColor: noneCorrect ? 'rgba(255,59,48,0.3)' : 'rgba(48,209,88,0.35)',
-                    }]}>
-                      <IconSymbol
-                        name={noneCorrect ? 'xmark.circle.fill' : 'checkmark.circle.fill'}
-                        size={13}
-                        color={noneCorrect ? Colors.red : Colors.green}
-                      />
-                      <Text style={[styles.revealResultText, { color: noneCorrect ? Colors.red : Colors.green }]}>
-                        {correctGuessers.length}/{totalGuessers} guessed right
-                      </Text>
-                    </View>
-                  </View>
-                  {/* Show who got it right */}
-                  {correctGuessers.length > 0 && (
-                    <Text style={styles.guessedAsText}>
-                      Correct: <Text style={{ color: Colors.green }}>{correctGuessers.map(p => p.displayName).join(', ')}</Text>
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
-
-            <Pressable style={[styles.primaryBtn, { marginTop: 20 }]} onPress={nextPhase}>
-              <Text style={styles.primaryBtnText}>See Leaderboard</Text>
-            </Pressable>
-          </ScrollView>
-        )}
-
+        {/* ══════════════════════════ LEADERBOARD + STATISTICS ══════════════════════════ */}
         {phase === 'leaderboard' && (
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.title}>Leaderboard</Text>
-            <Text style={styles.subtitle}>After round {roundNumber} · +100 pts per correct guess!</Text>
+          <View style={{ flex: 1 }}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+              <Text style={styles.title}>Leaderboard</Text>
+              <Text style={styles.subtitle}>Round results & details · +100 pts per correct guess!</Text>
 
-            <View style={styles.card}>
-              {session.players.slice().sort((a, b) => scores[b.id] - scores[a.id]).map((p, i) => (
-                <HStack key={p.id} style={styles.leaderboardRow}>
-                  <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
-                  <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
-                  <Text style={styles.scoreText}>{scores[p.id]} pts</Text>
-                </HStack>
-              ))}
+              {/* Ranks list with correct/wrong stats */}
+              <View style={styles.card}>
+                {session.players.slice().sort((a, b) => scores[b.id] - scores[a.id]).map((p, i) => {
+                  const pColor = getPlayerColor(session.players.findIndex(x => x.id === p.id));
+                  const stats = getPlayerStats(p.id);
+                  return (
+                    <View key={p.id} style={styles.statsLeaderboardRow}>
+                      <HStack>
+                        <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
+                        <Text style={[styles.leaderboardName, { color: pColor }]}>{p.displayName}</Text>
+                        <Text style={styles.scoreText}>{scores[p.id]} pts</Text>
+                      </HStack>
+                      <View style={styles.statsSubRow}>
+                        <Text style={styles.statsSubText}>
+                          Guesses: <Text style={{ color: Colors.green, fontWeight: 'bold' }}>{stats.correct} ✓</Text>  |  <Text style={{ color: Colors.red }}>{stats.wrong} ✗</Text>
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Answer details on the same page */}
+              <Text style={styles.sectionLabel}>Answers & Authors</Text>
+              {answers.map((ans) => {
+                const author = session.players.find(p => p.id === ans.playerID);
+                const authorColor = author ? getPlayerColor(session.players.indexOf(author)) : 'white';
+                return (
+                  <View key={ans.id} style={[styles.card, { padding: 14, marginBottom: 8 }]}>
+                    <Text style={[styles.answerText, { fontSize: 14 }]}>{ans.text}</Text>
+                    <HStack style={{ marginTop: 8 }}>
+                      <View style={styles.revealChip}>
+                        <IconSymbol name="pencil" size={10} color="rgba(255,255,255,0.4)" />
+                        <Text style={[styles.revealChipText, { color: authorColor, fontSize: 12 }]}>{author?.displayName}</Text>
+                      </View>
+                      <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                        {session.players.filter(p => p.id !== ans.playerID && allPlayerGuesses[p.id]?.[ans.id] === ans.playerID).length} players guessed right
+                      </Text>
+                    </HStack>
+                  </View>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.stickyBottom}>
+              <Pressable style={styles.primaryBtn} onPress={nextPhase}>
+                <Text style={styles.primaryBtnText}>{roundNumber >= totalRounds ? "Finish Game" : "Next Round"}</Text>
+              </Pressable>
             </View>
-
-            <Pressable style={[styles.primaryBtn, { marginTop: 20 }]} onPress={nextPhase}>
-              <Text style={styles.primaryBtnText}>{roundNumber >= totalRounds ? "Finish Game" : "Next Round"}</Text>
-            </Pressable>
-          </ScrollView>
+          </View>
         )}
 
+        {/* ══════════════════════════ FINISHED ══════════════════════════ */}
         {phase === 'finished' && (
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <ResultsScoreboard
@@ -555,6 +565,17 @@ const styles = StyleSheet.create({
   iconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255, 214, 10, 0.12)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255, 214, 10, 0.2)' },
   title: { color: 'white', fontSize: 24, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 6 },
   subtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 20, paddingHorizontal: 20, lineHeight: 20 },
+  sectionLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8, marginLeft: 4, letterSpacing: 1 },
+  
+  // Premium Mode Cards
+  modeCardsContainer: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  modeCard: { flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', justifyContent: 'space-between' },
+  modeCardActiveClassic: { borderColor: Colors.yellow, backgroundColor: 'rgba(255, 214, 10, 0.05)' },
+  modeCardActiveWhoSaidIt: { borderColor: '#AF52DE', backgroundColor: 'rgba(175, 82, 222, 0.05)' },
+  modeIconCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  modeCardTitle: { color: 'white', fontSize: 15, fontFamily: 'Viral-Black', marginBottom: 4 },
+  modeCardDesc: { color: 'rgba(255,255,255,0.45)', fontSize: 11, lineHeight: 15 },
+
   card: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
   cardAssigned: { borderColor: 'rgba(48,209,88,0.25)', backgroundColor: 'rgba(48,209,88,0.04)' },
   cardCorrect: { borderColor: 'rgba(48,209,88,0.3)', backgroundColor: 'rgba(48,209,88,0.06)' },
@@ -566,8 +587,6 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: 'rgba(255,255,255,0.12)' },
   tabText: { color: 'rgba(255,255,255,0.5)', fontWeight: '600', fontSize: 13 },
   tabTextActive: { color: 'white' },
-  modeDescBox: { backgroundColor: 'rgba(175,82,222,0.1)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(175,82,222,0.2)' },
-  modeDescText: { color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 19 },
   questionsList: { gap: 8 },
   questionBtn: { padding: 14, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', flexDirection: 'row', alignItems: 'center', gap: 10 },
   questionBtnActive: { backgroundColor: 'rgba(90,200,250,0.08)', borderColor: 'rgba(90,200,250,0.35)' },
@@ -580,26 +599,35 @@ const styles = StyleSheet.create({
   badgeRow: { flexDirection: 'row', marginBottom: 14 },
   badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, gap: 6 },
   badgeText: { color: 'white', fontWeight: '600', fontSize: 13 },
-  turnPill: { backgroundColor: Colors.green, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  turnPill: { backgroundColor: Colors.green, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4 },
   turnPillText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
   progressText: { color: 'rgba(255,255,255,0.45)', fontSize: 13 },
   progressBar: { flexDirection: 'row', height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 4, marginBottom: 8, overflow: 'hidden' },
   progressFill: { backgroundColor: Colors.green, borderRadius: 2 },
   questionPrompt: { color: 'white', fontSize: 20, fontFamily: 'Viral-Black', marginTop: 14, lineHeight: 28 },
   answerHeaderRow: { flexDirection: 'row', alignItems: 'center' },
-  answerNumBadge: { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
+  answerNumBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
   answerNumBadgeDone: { backgroundColor: 'rgba(48,209,88,0.15)', borderColor: 'rgba(48,209,88,0.35)' },
-  answerNumText: { color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: '700' },
-  candidatesList: { gap: 8 },
-  candidateBtn: { padding: 14, backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', flexDirection: 'row', alignItems: 'center', gap: 8 },
-  candidateText: { fontSize: 15, fontFamily: 'Viral-Black' },
-  answerText: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black', lineHeight: 26 },
+  answerNumText: { color: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: '700' },
+  answerText: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black', lineHeight: 24 },
+  
+  // Compact Choice Chips Grid Style
+  compactChipsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  compactChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  compactChipText: { fontSize: 12, fontFamily: 'Viral-Black' },
+  dotIndicator: { width: 6, height: 6, borderRadius: 3 },
+
   revealRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' },
   revealChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
   revealChipText: { fontSize: 13, fontFamily: 'Viral-Black' },
   revealResultBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
   revealResultText: { fontSize: 12, fontWeight: '700' },
   guessedAsText: { color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 8 },
+  
+  // Leaderboard statistics row styles
+  statsLeaderboardRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  statsSubRow: { paddingLeft: 30, marginTop: 2 },
+  statsSubText: { color: 'rgba(255,255,255,0.4)', fontSize: 12 },
   leaderboardRow: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
   rank: { color: 'rgba(255,255,255,0.4)', fontSize: 16, fontFamily: 'Viral-Black', width: 30 },
   leaderboardName: { fontSize: 16, fontFamily: 'Viral-Black', flex: 1 },
