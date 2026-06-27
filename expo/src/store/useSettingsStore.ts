@@ -9,6 +9,10 @@ interface SettingsState {
   playerName: string;
   lastGameConfigs: Record<string, Record<string, any>>;
   lastPlayerNames: Record<string, string[]>;
+  /** Last player count used across ALL games — shared default for the setup screen. */
+  lastGlobalPlayerCount: number;
+  /** Last player name list used across ALL games — shared default for the setup screen. */
+  lastGlobalPlayerNames: string[];
   setSoundEnabled: (enabled: boolean) => void;
   setVibrationEnabled: (enabled: boolean) => void;
   setHasCompletedOnboarding: (completed: boolean) => void;
@@ -25,6 +29,8 @@ export const useSettingsStore = create<SettingsState>()(
       playerName: '',
       lastGameConfigs: {},
       lastPlayerNames: {},
+      lastGlobalPlayerCount: 2,
+      lastGlobalPlayerNames: [],
       setSoundEnabled: (enabled) => set({ isSoundEnabled: enabled }),
       setVibrationEnabled: (enabled) => set({ isVibrationEnabled: enabled }),
       setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }),
@@ -32,6 +38,8 @@ export const useSettingsStore = create<SettingsState>()(
       saveGameConfig: (gameId, config, playerNames) => set((state) => ({
         lastGameConfigs: { ...state.lastGameConfigs, [gameId]: config },
         lastPlayerNames: { ...state.lastPlayerNames, [gameId]: playerNames },
+        lastGlobalPlayerCount: playerNames.length,
+        lastGlobalPlayerNames: playerNames,
       })),
     }),
     {

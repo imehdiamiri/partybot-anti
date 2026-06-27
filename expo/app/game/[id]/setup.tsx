@@ -47,23 +47,33 @@ export default function GameSetupScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { startSingleDeviceSession } = useGameStore();
-  const { lastGameConfigs, lastPlayerNames, saveGameConfig, playerName } = useSettingsStore();
+  const { lastGameConfigs, lastPlayerNames, saveGameConfig, playerName, lastGlobalPlayerCount, lastGlobalPlayerNames } = useSettingsStore();
   
   
   const gameKey = Object.keys(Games).find(key => Games[key].id === id);
   const game = gameKey ? Games[gameKey] : null;
 
-  // Default player names: Player 1 = the user's onboarding name; everyone else is blank.
+  // Default player names: Player 1 = the user's onboarding name; everyone else from global last session.
   const getDefaultPlayerNames = (count: number): string[] => {
-    return Array.from({ length: count }, (_, i) => (i === 0 ? (playerName || '') : ''));
+    return Array.from({ length: count }, (_, i) => {
+      if (i === 0) return playerName || '';
+      // Restore from global last names if available
+      if (lastGlobalPlayerNames[i]) return lastGlobalPlayerNames[i];
+      return '';
+    });
   };
 
-  const [playerCount, setPlayerCount] = useState(game ? Math.max(game.minPlayers, Math.min(2, game.maxPlayers)) : 2);
+  // Clamp global player count to this game's min/max bounds
+  const clampedGlobalCount = game
+    ? Math.max(game.minPlayers, Math.min(lastGlobalPlayerCount, game.maxPlayers))
+    : 2;
+
+  const [playerCount, setPlayerCount] = useState(clampedGlobalCount);
   const [playerNames, setPlayerNames] = useState<string[]>(
-    () => getDefaultPlayerNames(game ? Math.max(game.minPlayers, Math.min(2, game.maxPlayers)) : 2)
+    () => getDefaultPlayerNames(clampedGlobalCount)
   );
   const [showDuplicateError, setShowDuplicateError] = useState(false);
-  const [roundCount, setRoundCount] = useState(3);
+  const [roundCount, setRoundCount] = useState(1);
 
   // Games that have rounds (not grid/special games)
   const needsRounds = !['reverse_singing', 'memory_grid', 'memory_path', 'tap_in_order', 'ten_tangle', 'color_trap', 'spin_bottle', 'draw_rush', 'reaction_time', 'eye_sight', 'drum_challenge'].includes(id || '');
@@ -99,13 +109,16 @@ export default function GameSetupScreen() {
 
   // ─── Restore last-used configs from persistent storage ───
   useEffect(() => {
-    if (!id) return;
+    if (!id || !game) return;
     const saved = lastGameConfigs[id];
-    const savedNames = lastPlayerNames[id];
+    // Prefer game-specific saved names; fall back to global last session names
+    const savedNames = lastPlayerNames[id] || (lastGlobalPlayerNames.length ? lastGlobalPlayerNames : null);
     if (savedNames?.length) {
-      setPlayerCount(savedNames.length);
-      const namesToRestore = savedNames.map((name, index) => {
+      const clampedCount = Math.max(game.minPlayers, Math.min(savedNames.length, game.maxPlayers));
+      setPlayerCount(clampedCount);
+      const namesToRestore = Array.from({ length: clampedCount }, (_, index) => {
         if (index === 0 && playerName) return playerName;
+        const name = savedNames[index] ?? '';
         if (name.trim() === `Player ${index + 1}`) return '';
         return name;
       });
