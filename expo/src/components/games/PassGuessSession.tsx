@@ -426,28 +426,31 @@ export function PassGuessSession({ session }: Props) {
                     
                     {/* Compact Choice list / Horizontal Wrap */}
                     <View style={styles.compactChipsContainer}>
-                      {session.players.map((p, i) => {
-                        const isSelected = assigned === p.id;
-                        const pColor = getPlayerColor(i);
-                        return (
-                          <Pressable
-                            key={p.id}
-                            style={[
-                              styles.compactChip,
-                              isSelected && {
-                                borderColor: pColor,
-                                backgroundColor: `${pColor}1A`,
-                              },
-                            ]}
-                            onPress={() => handleGuessAssign(ans.id, p.id)}
-                          >
-                            <View style={[styles.dotIndicator, { backgroundColor: pColor }]} />
-                            <Text style={[styles.compactChipText, { color: isSelected ? 'white' : 'rgba(255,255,255,0.7)' }]}>
-                              {p.displayName}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
+                      {session.players
+                        .filter(p => p.id !== currentPlayer.id)
+                        .map((p) => {
+                          const isSelected = assigned === p.id;
+                          const originalIndex = session.players.indexOf(p);
+                          const pColor = getPlayerColor(originalIndex);
+                          return (
+                            <Pressable
+                              key={p.id}
+                              style={[
+                                styles.compactChip,
+                                isSelected && {
+                                  borderColor: pColor,
+                                  backgroundColor: `${pColor}1A`,
+                                },
+                              ]}
+                              onPress={() => handleGuessAssign(ans.id, p.id)}
+                            >
+                              <View style={[styles.dotIndicator, { backgroundColor: pColor }]} />
+                              <Text style={[styles.compactChipText, { color: isSelected ? 'white' : 'rgba(255,255,255,0.7)' }]}>
+                                {p.displayName}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
                     </View>
                   </View>
                 );

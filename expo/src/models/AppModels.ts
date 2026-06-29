@@ -189,7 +189,7 @@ export const Games: Record<string, GameType> = {
     id: 'pass_guess',
     name: 'Pass & Guess',
     shortDescription: 'Pass one phone, write private answers, then guess who wrote each one before the final reveal.',
-    minPlayers: 2,
+    minPlayers: 3,
     maxPlayers: 30,
     unlockCostStars: 0,
     isFreeForever: false,

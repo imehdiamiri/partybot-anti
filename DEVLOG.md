@@ -9,6 +9,16 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.7.0 - Pass & Guess: Exclude Guesser from Candidate Chips & Min Players = 3
+* **Date:** June 29, 2026
+* **Changes:**
+  * **Exclude Guesser:** Filtered out the currently active guessing player from the candidate player selection chips under each answer (so players can no longer guess that they wrote their own or others' statements).
+  * **Increase Minimum Players:** Updated the minimum players requirement (`minPlayers`) from 2 to 3 in `AppModels.ts` to ensure the game has enough participants for meaningful guessing turns.
+* **Modified Files:**
+  * [PassGuessSession.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/components/games/PassGuessSession.tsx)
+  * [AppModels.ts](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/src/models/AppModels.ts)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v2.6.0 - Pass & Guess: UI Redesign & Hiding Self-Answers
 * **Date:** June 27, 2026
 * **Changes:**
