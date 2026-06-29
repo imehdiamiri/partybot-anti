@@ -9,6 +9,16 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.8.0 - Sound Match & Color Match: Redesigned Hero Images
+* **Date:** June 29, 2026
+* **Changes:**
+  * **Hero Image Redesign:** Redesigned `sound-match.png` and `color-match.png` to feature simple, high-quality 3D Pixar-style cartoon character illustrations matching the design language of other game hero assets.
+  * **Standardize Resolution:** Extended the new images to the standard `1536x1024` aspect ratio (from 1024x1024 square) using horizontal edge clamping and seamless gradient blending to match the exact size of all other hero card assets.
+* **Modified Files:**
+  * [color-match.png](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/assets/images/heroes/color-match.png)
+  * [sound-match.png](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/assets/images/heroes/sound-match.png)
+  * [DEVLOG.md](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/DEVLOG.md)
+
 ### v2.7.0 - Pass & Guess: Exclude Guesser from Candidate Chips & Min Players = 3
 * **Date:** June 29, 2026
 * **Changes:**
