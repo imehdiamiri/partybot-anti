@@ -9,6 +9,20 @@ The following items are temporary developer bypasses that **MUST BE REMOVED** be
 
 ---
 
+### v2.9.0 - Android iOS Parity & Build Fixes
+* **Date:** July 11, 2026
+* **Changes:**
+  * **Android Subscription Link:** Added a direct Google Play subscription management redirect in `profile.tsx` specifically for Android users.
+  * **Android Solid Header Backgrounds:** Replaced iOS-only `headerBlurEffect` transparency with solid dark background (`#0D0D14`) headers on Android in `setup.tsx`, `join.tsx`, and `profile.tsx`.
+  * **Expo Autolinking Exclusions:** Added `expo-location` to the autolinking exclusions array in `package.json` to bypass compilation of the nested, incompatible package under `@teovilla/react-native-web-maps`.
+  * **Gradle/Java SDK alignment:** Configured correct forward-slash formatting in `local.properties` for the Android SDK path, and aligned the build task with the bundled JDK 21 inside Android Studio.
+* **Modified Files:**
+  * [profile.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/profile.tsx)
+  * [setup.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/game/[id]/setup.tsx)
+  * [join.tsx](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/app/lobby/join.tsx)
+  * [package.json](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/package.json)
+  * [local.properties](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/expo/android/local.properties)
+
 ### v2.8.0 - Sound Match & Color Match: Redesigned Hero Images
 * **Date:** June 29, 2026
 * **Changes:**

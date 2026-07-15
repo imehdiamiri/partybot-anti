@@ -195,6 +195,26 @@ export function GuessTheSecondsSession({ session }: Props) {
     return () => clearInterval(id);
   }, [sync.turnPhase, sync.startedAt]);
 
+  const breathing = useSharedValue(0.4);
+  useEffect(() => {
+    if (sync.turnPhase === 'running') {
+      breathing.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 800 }),
+          withTiming(0.4, { duration: 800 })
+        ),
+        -1,
+        true
+      );
+    } else {
+      breathing.value = 0.4;
+    }
+  }, [sync.turnPhase]);
+
+  const breathingStyle = useAnimatedStyle(() => ({
+    opacity: breathing.value,
+  }));
+
 
   // ───────── Derived state ─────────
   const isFinished = sync.activeTurnIndex >= totalTurns;
@@ -336,12 +356,14 @@ export function GuessTheSecondsSession({ session }: Props) {
               </Text>
             </View>
           </View>
-          <LiquidGlass radius={20} variant="low" style={styles.resultMainMetricBox}>
-            <Text style={styles.metricLabel}>Stopped at</Text>
-            <Text style={[styles.mainMetricValue, { color: getAccuracyBand(sync.lastResult.difference).color }]}>
-              {sync.lastResult.actualTime.toFixed(2)}s
-            </Text>
-          </LiquidGlass>
+          <Animated.View entering={ZoomIn.springify().bounciness(12).duration(600)} style={{ width: '100%', marginBottom: 12 }}>
+            <LiquidGlass radius={20} variant="low" style={styles.resultMainMetricBox}>
+              <Text style={styles.metricLabel}>Stopped at</Text>
+              <Text style={[styles.mainMetricValue, { color: getAccuracyBand(sync.lastResult.difference).color }]}>
+                {sync.lastResult.actualTime.toFixed(2)}s
+              </Text>
+            </LiquidGlass>
+          </Animated.View>
           <View style={styles.resultSubMetrics}>
             <LiquidGlass radius={16} variant="low" style={styles.metricBox}>
               <Text style={styles.metricLabel}>Target</Text>
@@ -393,10 +415,10 @@ export function GuessTheSecondsSession({ session }: Props) {
 
             <LiquidGlass radius={20} variant="low" style={styles.timeDisplayBox}>
               {sync.turnPhase === 'running' ? (
-                <View style={styles.runningIndicator}>
+                <Animated.View style={[styles.runningIndicator, breathingStyle]}>
                   <IconSymbol name="timer" size={32} color="rgba(255,255,255,0.3)" />
                   <Text style={styles.runningLabel}>Counting…</Text>
-                </View>
+                </Animated.View>
               ) : (
                 <Text style={styles.timeDisplay}>
                   {displayedTargetTime.toFixed(2)}
@@ -549,7 +571,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24, alignItems: 'center',
     marginBottom: 12,
   },
-  mainMetricValue: { color: 'white', fontSize: 40, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  mainMetricValue: { color: 'white', fontSize: 72, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
   resultSubMetrics: { flexDirection: 'row', gap: 10 },
   metricBox: {
     flex: 1,
@@ -570,7 +592,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 20, alignItems: 'center', justifyContent: 'center',
   },
-  timeDisplay: { color: 'white', fontSize: 36, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  timeDisplay: { color: 'white', fontSize: 54, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
   runningIndicator: { alignItems: 'center', justifyContent: 'center', gap: 6 },
   runningLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 15, fontWeight: '600' },
   controlButtons: { gap: 14 },

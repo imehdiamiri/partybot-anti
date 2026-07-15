@@ -269,8 +269,9 @@ export default function GameSetupScreen() {
         options={{
           title: `${game.name} — Setup`,
           headerShown: true,
-          headerTransparent: true,
+          headerTransparent: Platform.OS === 'ios',
           headerBlurEffect: 'dark',
+          headerStyle: Platform.OS === 'android' ? { backgroundColor: '#0D0D14' } : undefined,
           headerTintColor: 'white',
           headerTitleStyle: { fontFamily: 'Viral-Black', fontSize: 20 },
           headerBackVisible: false,
@@ -293,7 +294,7 @@ export default function GameSetupScreen() {
       />
 
       <ScrollView 
-        contentContainerStyle={[st.scrollContent, { paddingTop: Platform.OS === 'android' ? insets.top + 60 : 0 }]} 
+        contentContainerStyle={[st.scrollContent, { paddingTop: Platform.OS === 'android' ? 16 : 0 }]} 
         keyboardShouldPersistTaps="handled"
         contentInsetAdjustmentBehavior="automatic"
       >

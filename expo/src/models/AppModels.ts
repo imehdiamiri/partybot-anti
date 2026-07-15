@@ -310,7 +310,7 @@ export const Games: Record<string, GameType> = {
     isFreeForever: true,
     hasFreeTrial: false,
     isPremium: false,
-    symbolName: 'music.note',
+    symbolName: 'waveform',
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,

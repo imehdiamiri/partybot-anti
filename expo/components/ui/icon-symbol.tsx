@@ -155,6 +155,7 @@ const MAPPING = {
   'person.fill.questionmark': 'help-outline',
   'waveform': 'graphic-eq',
   'waveform.path': 'graphic-eq',
+  'music.note': 'music-note',
   'slider.horizontal.3': 'tune',
   'gearshape.fill': 'settings',
   'gearshape': 'settings',

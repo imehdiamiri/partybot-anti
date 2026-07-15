@@ -396,6 +396,15 @@ export default function ProfileScreen() {
           <Ionicons name="arrow-forward" size={14} color={Colors.secondary} />
         </TouchableOpacity>
       )}
+      {Platform.OS === 'android' && (
+        <TouchableOpacity style={styles.prefRow} onPress={() => Linking.openURL('https://play.google.com/store/account/subscriptions')}>
+          <View style={styles.prefLeft}>
+            <Ionicons name="card" size={20} color={Colors.white} />
+            <Text style={styles.prefText}>Manage Subscription</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={14} color={Colors.secondary} />
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity style={styles.prefRow} onPress={() => restorePurchases()}>
         <View style={styles.prefLeft}>
@@ -431,8 +440,9 @@ export default function ProfileScreen() {
         options={{
           headerShown: true,
           title: "Profile",
-          headerTransparent: true,
+          headerTransparent: Platform.OS === 'ios',
           headerBlurEffect: 'systemThinMaterialDark',
+          headerStyle: Platform.OS === 'android' ? { backgroundColor: '#0D0D14' } : undefined,
           headerTitleStyle: { fontFamily: 'Viral-Black', fontSize: 20, color: Colors.white },
           headerRight: () => (
             <TouchableOpacity 
@@ -454,7 +464,7 @@ export default function ProfileScreen() {
 
       <ScrollView 
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40, paddingTop: Platform.OS === 'ios' ? 0 : 80 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40, paddingTop: Platform.OS === 'ios' ? 0 : 16 }]}
       >
         {renderIdentityCard()}
         {isGuest && renderLoginPrompt()}

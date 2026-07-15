@@ -41,8 +41,9 @@ export default function JoinLobbyScreen() {
         options={{
           title: 'Join Room',
           headerShown: true,
-          headerTransparent: true,
+          headerTransparent: Platform.OS === 'ios',
           headerBlurEffect: 'dark',
+          headerStyle: Platform.OS === 'android' ? { backgroundColor: '#0D0D14' } : undefined,
           headerTintColor: 'white',
           headerLargeTitle: false,
           headerBackTitle: 'Back',
@@ -54,7 +55,7 @@ export default function JoinLobbyScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView 
-          contentContainerStyle={[styles.scrollContent, { paddingTop: Platform.OS === 'android' ? insets.top + 60 : 0 }]} 
+          contentContainerStyle={[styles.scrollContent, { paddingTop: Platform.OS === 'android' ? 16 : 0 }]} 
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
         >
