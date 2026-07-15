@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Sound Match — PartyBot</title>
+<meta name="description" content="Match target sound frequency with a range slider using browser Web Audio. Play free.">
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f5f5f7;min-height:100dvh;overflow-x:hidden;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+a{color:inherit;text-decoration:none}
+.nav{position:sticky;top:0;z-index:100;padding:10px 16px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.nav-logo{height:20px;filter:drop-shadow(0 2px 6px rgba(168,85,247,.3))}
+.nav-back{font-size:13px;color:rgba(255,255,255,.5);padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.06)}
+.game-wrap{flex:1;display:flex;flex-direction:column;max-width:500px;width:100%;margin:0 auto;padding:16px}
+.screen{flex:1;display:none;flex-direction:column}.screen.active{display:flex}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+.icon-box{width:88px;height:88px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+.title{font-size:22px;font-weight:800}.sub{color:rgba(255,255,255,.5);font-size:14px;margin-top:6px}
+.btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;margin-top:24px;transition:transform 0.15s}
+.btn:active{transform:scale(0.97)}
+.btn-blue{background:#007AFF}.btn-pink{background:#FF2D55}
+/* Setup Styles */
+.setup-card{background:rgba(28,28,30,.85);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:20px;width:100%;margin-top:20px;text-align:left}
+.input-row{display:flex;gap:8px;margin-top:12px}
+.text-input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#fff;padding:12px;border-radius:10px;font-size:14px;outline:none}
+.text-input:focus{border-color:#FF2D55}
+.add-btn{background:#30B0C7;color:#fff;border:none;padding:0 16px;border-radius:10px;font-weight:700;cursor:pointer}
+.player-list{max-height:160px;overflow-y:auto;margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.player-item{display:flex;justify-content:between;align-items:center;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);padding:8px 12px;border-radius:8px;font-size:13px}
+.remove-btn{background:none;border:none;color:#ff3b30;font-weight:bold;cursor:pointer}
+.label-lbl{font-size:11px;font-weight:700;text-transform:uppercase;color:rgba(255,255,255,.4);letter-spacing:1px;margin-top:16px;display:block}
+.rounds-row{display:flex;gap:8px;margin-top:8px}
+.round-opt{flex:1;padding:10px;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700}
+.round-opt.active{background:rgba(255,45,85,.15);border-color:#FF2D55;color:#FF2D55}
+
+/* Equalizer Visualizer */
+.eq-container{height:100px;display:flex;align-items:end;justify-content:center;gap:6px;width:100%;max-width:260px;margin:24px auto}
+.eq-bar{width:6px;height:10%;background:#FF2D55;border-radius:3px;transition:height 0.1s ease-in-out}
+.eq-container.active .eq-bar{animation:dance 0.7s ease-in-out infinite alternate}
+@keyframes dance{
+  0%{height:20%}
+  100%{height:90%}
+}
+
+/* Draggable Vertical Slider Container */
+.slider-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;width:100%;margin-top:20px;align-items:center}
+.slider-left{grid-column:span 4;display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:center}
+.freq-label{font-family:monospace;font-size:24px;font-weight:900;color:#FF2D55}
+.freq-sub{font-size:10px;color:rgba(255,255,255,.4);font-weight:700;text-transform:uppercase}
+.visualizer-mini{height:60px;display:flex;align-items:end;gap:4px}
+.mini-bar{width:4px;height:10%;background:#FF2D55;border-radius:2px}
+.slider-right{grid-column:span 8;position:relative;height:240px;display:flex;align-items:center;justify-content:center}
+.vertical-track{position:absolute;left:50%;top:10px;bottom:10px;width:8px;background:rgba(255,255,255,.06);border-radius:4px;transform:translateX(-50%);border:1px solid rgba(255,255,255,.04)}
+.range-slider{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:20;writing-mode:bt-lr;-webkit-appearance:slider-vertical}
+.slider-knob{position:absolute;left:50%;transform:translateX(-50%);width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FF2D55,#FF6B8B);border:2px solid rgba(255,255,255,.2);box-shadow:0 6px 20px rgba(255,45,85,.4);display:flex;align-items:center;justify-content:center;pointer-events:none;transition:bottom 0.05s ease-out}
+
+/* Result Styles */
+.score-circle{width:130px;height:130px;border-radius:50%;border:4px solid rgba(255,45,85,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;position:relative}
+.score-circle::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px dashed rgba(255,45,85,.4);animation:rotate 20s linear infinite}
+.score-val{font-size:36px;font-weight:900;color:#fff}.score-max{font-size:11px;color:rgba(255,255,255,.4);font-weight:700;text-transform:uppercase}
+.feedback-badge{display:inline-block;padding:6px 16px;border-radius:99px;font-size:12px;font-weight:800;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.1);color:#FF2D55;text-transform:uppercase;margin-bottom:24px}
+.comparison-card{background:rgba(28,28,30,.85);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:20px;width:100%;margin-bottom:20px}
+.sound-btn-row{display:flex;justify-content:center;gap:32px}
+.sound-btn-box{display:flex;flex-direction:column;align-items:center;gap:8px}
+.play-btn{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.1s}
+.play-btn.active{background:#FF2D55;border-color:transparent;box-shadow:0 4px 12px rgba(255,45,85,.3)}
+.play-btn:active{transform:scale(0.92)}
+.pts-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase}
+
+/* Leaderboard */
+.leaderboard{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:20px}
+.board-row{display:flex;align-items:center;justify-content:space-between;background:rgba(28,28,30,.85);border:1px solid rgba(255,255,255,.06);padding:14px 18px;border-radius:16px}
+.board-row.winner{background:linear-gradient(90deg,rgba(255,45,85,.08),transparent);border-color:rgba(255,45,85,.2)}
+.board-name{font-weight:700;color:#fff}.board-rank{font-size:12px;color:rgba(255,255,255,.4);margin-right:8px}
+.board-pts{font-weight:800;color:#FF2D55}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/"><img src="/partybot-logo.png" alt="PartyBot" class="nav-logo"></a>
+  <a href="/play/" class="nav-back">← All Games</a>
+</nav>
+
+<div class="game-wrap">
+
+  <!-- SCREEN 1: SETUP -->
+  <div id="setup" class="screen active">
+    <div class="center">
+      <div class="icon-box" style="background:rgba(255,45,85,.14)">🔊</div>
+      <div class="title">Sound Match</div>
+      <div class="sub">Listen to a target tone, then match its pitch with a slider!</div>
+      
+      <div class="setup-card">
+        <label class="label-lbl">Players</label>
+        <div class="input-row">
+          <input type="text" id="playerNameInput" placeholder="Player name..." class="text-input">
+          <button class="add-btn" style="background:#FF2D55" onclick="addPlayer()">Add</button>
+        </div>
+        <div class="player-list" id="playerList"></div>
+
+        <label class="label-lbl">Rounds</label>
+        <div class="rounds-row">
+          <div class="round-opt active" onclick="setRounds(3)">3 Rounds</div>
+          <div class="round-opt" onclick="setRounds(5)">5 Rounds</div>
+          <div class="round-opt" onclick="setRounds(8)">8 Rounds</div>
+        </div>
+      </div>
+
+      <button class="btn btn-pink" onclick="startGame()">Start Game</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: READY -->
+  <div id="ready" class="screen">
+    <div class="center">
+      <span class="label-lbl" style="margin-top:0;margin-bottom:12px" id="readyRoundLabel">Round 1</span>
+      <div class="title">Pass to <span id="readyPlayerName" style="color:#FF2D55">Player 1</span></div>
+      <div class="sub" style="max-width:320px;margin-inline:auto;margin-top:12px">Pass the device. Click start turn and listen carefully to the pitch of the tone.</div>
+      <button class="btn btn-pink" onclick="startMemorize()">Start Turn</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: MEMORIZE -->
+  <div id="memorize" class="screen">
+    <div class="center">
+      <div class="title">Listen to Target Tone</div>
+      <div class="sub" id="isPlayingTargetLabel">Playing...</div>
+      
+      <!-- Audio Equalizer visualizer -->
+      <div class="eq-container active" id="memorizeEq">
+        <div class="eq-bar" style="animation-delay: -0.1s"></div>
+        <div class="eq-bar" style="animation-delay: -0.4s"></div>
+        <div class="eq-bar" style="animation-delay: -0.2s"></div>
+        <div class="eq-bar" style="animation-delay: -0.6s"></div>
+        <div class="eq-bar" style="animation-delay: -0.3s"></div>
+        <div class="eq-bar" style="animation-delay: -0.5s"></div>
+        <div class="eq-bar" style="animation-delay: -0.15s"></div>
+      </div>
+      
+      <div style="display:flex;gap:12px;width:100%;margin-top:24px">
+        <button class="btn btn-pink" style="margin-top:0;flex:1" onclick="playTargetTone()">Play Again</button>
+        <button class="btn btn-blue" style="margin-top:0;flex:1" onclick="showRecreate()">Go to Match</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: RECREATE -->
+  <div id="recreate" class="screen">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px">
+      <div>
+        <span class="mini-lbl" style="font-size:9px">Match Pitch</span>
+        <div class="title" style="font-size:16px" id="recreatePlayerName">Player 1</div>
+      </div>
+      <span class="mini-lbl" style="background:rgba(255,255,255,.05);padding:4px 10px;border-radius:8px" id="recreateRoundLabel">Round 1/3</span>
+    </div>
+
+    <div class="slider-grid">
+      
+      <!-- Left side detail -->
+      <div class="slider-left">
+        <span class="freq-sub">Guess</span>
+        <div class="freq-label"><span id="valFreq">440</span><span style="font-size:11px;color:rgba(255,255,255,.4)">Hz</span></div>
+        
+        <!-- Live drag visualizer -->
+        <div class="visualizer-mini" id="miniVis">
+          <div class="mini-bar" style="height:10%"></div>
+          <div class="mini-bar" style="height:10%"></div>
+          <div class="mini-bar" style="height:10%"></div>
+        </div>
+      </div>
+
+      <!-- Right side vertical slider -->
+      <div class="slider-right">
+        <div class="vertical-track"></div>
+        
+        <!-- Absolute vertical range slider -->
+        <input type="range" min="220" max="880" value="440" step="1" class="range-slider" id="pitchSlider"
+          oninput="handleSliderChange()" 
+          onmousedown="handleSliderStart()" 
+          onmouseup="handleSliderEnd()"
+          ontouchstart="handleSliderStart()"
+          ontouchend="handleSliderEnd()">
+        
+        <!-- Draggable visual knob -->
+        <div class="slider-knob" id="sliderKnob" style="bottom: 50%">🔊</div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;gap:12px;width:100%">
+      <button class="btn btn-blue" style="margin-top:0;flex:1" onclick="playGuessTone()">Listen</button>
+      <button class="btn btn-pink" style="margin-top:0;flex:1" onclick="submitGuess()">Submit Match</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: ROUND RESULT -->
+  <div id="roundResult" class="screen">
+    <div class="center" style="padding-inline:0">
+      <div class="title" style="font-size:18px" id="resultPlayerName">Player 1's Result</div>
+      <div class="sub" style="font-size:12px;margin-bottom:20px" id="resultRoundLabel">Round 1</div>
+
+      <div class="score-circle">
+        <span class="score-val" id="resultScore">9.50</span>
+        <span class="score-max">points</span>
+      </div>
+
+      <div class="feedback-badge" id="resultBadge">Excellent</div>
+
+      <div class="comparison-card">
+        <div class="sound-btn-row">
+          <div class="sound-btn-box">
+            <button class="play-btn" id="btnPlayTarget" onclick="playFinalTarget()">🔊</button>
+            <span class="pts-lbl">Target</span>
+            <span class="comparison-code" id="lblTargetHz">440 Hz</span>
+          </div>
+          <div class="sound-btn-box" style="border-left:1px solid rgba(255,255,255,.05);padding-left:32px">
+            <button class="play-btn" id="btnPlayGuess" onclick="playFinalGuess()">🔊</button>
+            <span class="pts-lbl">Guess</span>
+            <span class="comparison-code" id="lblGuessHz">440 Hz</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-pink" onclick="continueGame()" id="continueBtn">Next</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 6: FINAL RESULTS -->
+  <div id="results" class="screen">
+    <div class="center" style="padding-inline:0">
+      <div class="icon-box" style="background:rgba(255,215,0,.15);font-size:42px">🏆</div>
+      <div class="title">Final Standings</div>
+      <div class="sub">Leaderboard scores across all rounds</div>
+
+      <div class="leaderboard" id="leaderboardList"></div>
+
+      <div style="display:flex;gap:12px;width:100%;margin-top:24px">
+        <button class="btn btn-blue" style="margin-top:0;flex:1" onclick="showSetup()">New Game</button>
+        <button class="btn btn-pink" style="margin-top:0;flex:1" onclick="restartGame()">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let players = [{ id: "1", name: "Player 1" }];
+let maxRounds = 3;
+let roundIdx = 0;
+let playerIdx = 0;
+let targetFrequencies = [];
+let guesses = [];
+let currentGuessFreq = 440;
+let isDragging = false;
+
+// Audio Context Web API variables
+let audioCtx = null;
+let osc = null;
+let gainNode = null;
+let targetTimeout = null;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function addPlayer() {
+  const input = document.getElementById('playerNameInput');
+  const name = input.value.trim();
+  if(!name) return;
+  players.push({ id: Date.now().toString(), name });
+  input.value = "";
+  renderPlayers();
+}
+
+function removePlayer(id) {
+  if (players.length <= 1) return;
+  players = players.filter(p => p.id !== id);
+  renderPlayers();
+}
+
+function renderPlayers() {
+  const container = document.getElementById('playerList');
+  container.innerHTML = players.map(p => `
+    <div class="player-item">
+      <span>${p.name}</span>
+      <button class="remove-btn" onclick="removePlayer('${p.id}')" ${players.length <= 1 ? 'style="opacity:0.2;pointer-events:none"' : ''}>✕</button>
+    </div>
+  `).join('');
+}
+
+function setRounds(r) {
+  maxRounds = r;
+  document.querySelectorAll('.round-opt').forEach(opt => {
+    opt.classList.remove('active');
+    if (opt.innerText.includes(r)) opt.classList.add('active');
+  });
+}
+
+function showSetup() {
+  showScreen("setup");
+  renderPlayers();
+}
+
+function startGame() {
+  const scale = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00];
+  targetFrequencies = Array.from({ length: maxRounds }, () => scale[Math.floor(Math.random() * scale.length)]);
+  
+  guesses = [];
+  roundIdx = 0;
+  playerIdx = 0;
+  setupTurn();
+}
+
+function setupTurn() {
+  document.getElementById('readyRoundLabel').innerText = `Round ${roundIdx + 1} of ${maxRounds}`;
+  document.getElementById('readyPlayerName').innerText = players[playerIdx].name;
+  showScreen("ready");
+}
+
+// Audio initialization
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function stopTone() {
+  try {
+    if (osc) {
+      osc.stop();
+      osc.disconnect();
+      osc = null;
+    }
+    if (gainNode) {
+      gainNode.disconnect();
+      gainNode = null;
+    }
+  } catch(e) {}
+}
+
+function playTone(freq, duration, onComplete) {
+  initAudio();
+  stopTone();
+
+  const ctx = audioCtx;
+  osc = ctx.createOscillator();
+  gainNode = ctx.createGain();
+  
+  osc.connect(gainNode);
+  gainNode.connect(ctx.destination);
+  
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(freq, ctx.currentTime);
+  
+  // Smooth volume envelope
+  gainNode.gain.setValueAtTime(0, ctx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.05);
+  gainNode.gain.setValueAtTime(0.35, ctx.currentTime + duration - 0.1);
+  gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+  
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + duration);
+
+  if (targetTimeout) clearTimeout(targetTimeout);
+  targetTimeout = setTimeout(() => {
+    stopTone();
+    if (onComplete) onComplete();
+  }, duration * 1000);
+}
+
+function startLiveTone(freq) {
+  initAudio();
+  stopTone();
+
+  const ctx = audioCtx;
+  osc = ctx.createOscillator();
+  gainNode = ctx.createGain();
+  
+  osc.connect(gainNode);
+  gainNode.connect(ctx.destination);
+  
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(freq, ctx.currentTime);
+  
+  gainNode.gain.setValueAtTime(0, ctx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
+  
+  osc.start(ctx.currentTime);
+}
+
+function updateLiveTone(freq) {
+  if (osc && audioCtx) {
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  }
+}
+
+function startMemorize() {
+  showScreen("memorize");
+  playTargetTone();
+}
+
+function playTargetTone() {
+  const eq = document.getElementById('memorizeEq');
+  const label = document.getElementById('isPlayingTargetLabel');
+  
+  eq.classList.add('active');
+  label.innerText = "Playing...";
+  
+  playTone(targetFrequencies[roundIdx], 3.0, () => {
+    eq.classList.remove('active');
+    label.innerText = "Playback complete";
+  });
+}
+
+function showRecreate() {
+  stopTone();
+  showScreen("recreate");
+  document.getElementById('recreatePlayerName').innerText = players[playerIdx].name;
+  document.getElementById('recreateRoundLabel').innerText = `Round ${roundIdx + 1}/${maxRounds}`;
+  
+  currentGuessFreq = 440;
+  document.getElementById('pitchSlider').value = 440;
+  
+  updateSliderVisuals();
+}
+
+function updateSliderVisuals() {
+  document.getElementById('valFreq').innerText = Math.round(currentGuessFreq);
+  
+  // Update Knob vertical position
+  const pct = (currentGuessFreq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
+  document.getElementById('sliderKnob').style.bottom = `${pct * 90 + 5}%`;
+}
+
+function handleSliderChange() {
+  const val = parseFloat(document.getElementById('pitchSlider').value);
+  currentGuessFreq = val;
+  updateSliderVisuals();
+  if (isDragging) {
+    updateLiveTone(val);
+    animateMiniVisualizer();
+  }
+}
+
+function handleSliderStart() {
+  isDragging = true;
+  document.getElementById('miniVis').style.opacity = '1';
+  startLiveTone(currentGuessFreq);
+}
+
+function handleSliderEnd() {
+  isDragging = false;
+  document.getElementById('miniVis').style.opacity = '0.3';
+  stopTone();
+}
+
+function animateMiniVisualizer() {
+  document.querySelectorAll('.mini-bar').forEach(bar => {
+    bar.style.height = `${10 + Math.random() * 80}%`;
+  });
+}
+
+function playGuessTone() {
+  playTone(currentGuessFreq, 1.5);
+}
+
+function submitGuess() {
+  stopTone();
+  const target = targetFrequencies[roundIdx];
+  const score = calculateAuditoryScore(target, currentGuessFreq);
+  
+  const result = {
+    playerId: players[playerIdx].id,
+    roundIndex: roundIdx,
+    guessFrequency: currentGuessFreq,
+    targetFrequency: target,
+    score
+  };
+  guesses.push(result);
+  
+  showRoundResult(result);
+}
+
+function showRoundResult(result) {
+  showScreen("roundResult");
+  document.getElementById('resultPlayerName').innerText = `${players[playerIdx].name}'s Result`;
+  document.getElementById('resultRoundLabel').innerText = `Round ${roundIdx + 1}`;
+  document.getElementById('resultScore').innerText = result.score.toFixed(2);
+  
+  const badge = document.getElementById('resultBadge');
+  badge.innerText = getFeedbackText(result.score);
+  
+  document.getElementById('lblTargetHz').innerText = `${Math.round(result.targetFrequency)} Hz`;
+  document.getElementById('lblGuessHz').innerText = `${Math.round(result.guessFrequency)} Hz`;
+  
+  // Clear active state of buttons
+  document.getElementById('btnPlayTarget').classList.remove('active');
+  document.getElementById('btnPlayGuess').classList.remove('active');
+
+  const contBtn = document.getElementById('continueBtn');
+  if (playerIdx + 1 < players.length) {
+    contBtn.innerText = "Pass to Next Player";
+  } else if (roundIdx + 1 < maxRounds) {
+    contBtn.innerText = "Next Round";
+  } else {
+    contBtn.innerText = "View Rankings";
+  }
+}
+
+function playFinalTarget() {
+  const btn = document.getElementById('btnPlayTarget');
+  btn.classList.add('active');
+  playTone(guesses[guesses.length - 1].targetFrequency, 2.0, () => {
+    btn.classList.remove('active');
+  });
+}
+
+function playFinalGuess() {
+  const btn = document.getElementById('btnPlayGuess');
+  btn.classList.add('active');
+  playTone(guesses[guesses.length - 1].guessFrequency, 2.0, () => {
+    btn.classList.remove('active');
+  });
+}
+
+function getFeedbackText(s) {
+  if (s === 10) return "Perfect 10!";
+  if (s >= 9.0) return "Excellent";
+  if (s >= 7.0) return "Good Job";
+  if (s < 5.0) return "Try Again";
+  return "Okay";
+}
+
+function continueGame() {
+  stopTone();
+  const isLastPlayer = playerIdx + 1 >= players.length;
+  if (isLastPlayer) {
+    const isLastRound = roundIdx + 1 >= maxRounds;
+    if (isLastRound) {
+      showFinalResults();
+    } else {
+      playerIdx = 0;
+      roundIdx += 1;
+      setupTurn();
+    }
+  } else {
+    playerIdx += 1;
+    setupTurn();
+  }
+}
+
+function showFinalResults() {
+  showScreen("results");
+  
+  const scoreboard = players.map(p => {
+    const pGuesses = guesses.filter(g => g.playerId === p.id);
+    const totalScore = pGuesses.reduce((sum, g) => sum + g.score, 0);
+    return {
+      name: p.name,
+      total: totalScore,
+      avg: totalScore / Math.max(1, pGuesses.length)
+    };
+  }).sort((a, b) => b.total - a.total);
+  
+  const container = document.getElementById('leaderboardList');
+  container.innerHTML = scoreboard.map((entry, idx) => `
+    <div class="board-row ${idx === 0 ? 'winner' : ''}">
+      <div style="display:flex;align-items:center">
+        <span class="board-rank">${idx + 1}.</span>
+        <div>
+          <span class="board-name">${entry.name}</span>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">Avg: ${entry.avg.toFixed(2)}</div>
+        </div>
+      </div>
+      <span class="board-pts">${entry.total.toFixed(2)} pts</span>
+    </div>
+  `).join('');
+}
+
+function restartGame() {
+  guesses = [];
+  roundIdx = 0;
+  playerIdx = 0;
+  setupTurn();
+}
+
+function calculateAuditoryScore(target, guess) {
+  const targetRounded = Math.round(target);
+  const guessRounded = Math.round(guess);
+  if (targetRounded === guessRounded) {
+    return 10.00;
+  }
+
+  // diff = abs(log2(target / guess))
+  const diff = Math.abs(Math.log2(targetRounded / guessRounded));
+  const maxDiff = 1.2;
+  const normDiff = Math.min(1.0, diff / maxDiff);
+  const rawScore = 10 * Math.pow(1 - normDiff, 1.2);
+  return Math.max(0, Math.round(rawScore * 100) / 100);
+}
+
+// Initial render
+renderPlayers();
+</script>
+</body>
+</html>
