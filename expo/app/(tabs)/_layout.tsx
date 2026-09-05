@@ -37,10 +37,10 @@ function TabIndicator({ focused }: { focused: boolean }) {
   }));
 
   return (
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { borderRadius: 999 }, aStyle]}>
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: 999 }, aStyle]}>
       <View
         style={[
-          StyleSheet.absoluteFillObject,
+          StyleSheet.absoluteFill,
           {
             borderRadius: 999,
             backgroundColor: 'rgba(255,255,255,0.10)',

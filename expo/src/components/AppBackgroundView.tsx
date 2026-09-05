@@ -13,16 +13,16 @@ export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProp
   const height = windowHeight;
   if (variant === 'simple') {
     return (
-      <View style={[StyleSheet.absoluteFillObject, { zIndex: -1 }]} pointerEvents="none">
+      <View style={[StyleSheet.absoluteFill, { zIndex: -1 }]} pointerEvents="none">
         {/* Deep base */}
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#08080F' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#08080F' }]} />
 
         {/* Subtle top-to-bottom gradient */}
         <LinearGradient
           colors={['rgba(30, 30, 50, 0.6)', 'rgba(8, 8, 15, 1)']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 0.6 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
 
         {/* Very faint diagonal sheen */}
@@ -30,7 +30,7 @@ export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProp
           colors={['rgba(255,255,255,0.025)', 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.6, y: 0.5 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
       </View>
     );
@@ -64,9 +64,9 @@ export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProp
   ];
 
   return (
-    <View style={[StyleSheet.absoluteFillObject, { zIndex: -1 }]} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { zIndex: -1 }]} pointerEvents="none">
       {/* Deep base */}
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#05050A' }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#05050A' }]} />
 
       {/* Color blobs (rendered as soft circles).
           On iOS these will be sampled by overlying BlurView surfaces. */}
@@ -91,7 +91,7 @@ export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProp
         colors={['rgba(255,255,255,0.05)', 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.6, y: 0.5 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* Vignette */}
@@ -99,13 +99,13 @@ export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProp
         colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
         start={{ x: 0.5, y: 0.3 }}
         end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* Grain-like fine overlay (extremely subtle) */}
       <View
         style={[
-          StyleSheet.absoluteFillObject,
+          StyleSheet.absoluteFill,
           { backgroundColor: 'rgba(255,255,255,0.012)' },
         ]}
       />

@@ -292,7 +292,7 @@ export function CurrentTurnPill({
 }) {
   return (
     <View style={[styles.turnPill, { borderColor: accent, transform: [{ scale }] }]}>
-      <LinearGradient colors={[`${accent}33`, 'transparent']} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={[`${accent}33`, 'transparent']} style={StyleSheet.absoluteFill} />
       <View style={[styles.turnPillDot, { backgroundColor: accent }]} />
       {prefix && <Text style={styles.turnPillPrefix}>{prefix}</Text>}
       <Text style={styles.turnPillName}>{playerName}</Text>
@@ -401,7 +401,7 @@ export function GameResultsScreen({ players, results, onPlayAgain, title, badgeL
                   borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', overflow: 'hidden' 
                 }, isFirst && { backgroundColor: 'rgba(255,204,0,0.08)', borderColor: 'rgba(255,204,0,0.3)' }]}>
                 
-                {isFirst && <LinearGradient colors={['rgba(255,204,0,0.15)', 'transparent']} style={StyleSheet.absoluteFillObject} start={{x:0, y:0}} end={{x:1, y:1}} />}
+                {isFirst && <LinearGradient colors={['rgba(255,204,0,0.15)', 'transparent']} style={StyleSheet.absoluteFill} start={{x:0, y:0}} end={{x:1, y:1}} />}
                 
                 <View style={[{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' }, isFirst && { backgroundColor: 'rgba(255,204,0,0.2)' }]}>
                   <Text style={[{ color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: 'Viral-Black' }, isFirst && { color: '#FFD700' }]}>{i+1}</Text>
@@ -475,7 +475,7 @@ export function GameResultsScreen({ players, results, onPlayAgain, title, badgeL
               overflow: 'hidden'
             }, pressed && { opacity: 0.85 }]} 
             onPress={onPlayAgain}>
-            <LinearGradient colors={['#3B82F6', '#2563EB', '#1D4ED8']} style={[StyleSheet.absoluteFillObject, { borderRadius: 18 }]} />
+            <LinearGradient colors={['#3B82F6', '#2563EB', '#1D4ED8']} style={[StyleSheet.absoluteFill, { borderRadius: 18 }]} />
             <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.3 }}>Play Again</Text>
           </Pressable>
         </Animated.View>

@@ -7,7 +7,7 @@ import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
 const DirectMaterialIcons = createIconSet(MaterialIcons.glyphMap, 'MaterialIcons', 'MaterialIcons.ttf');
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
+type IconMapping = Record<Extract<SymbolViewProps['name'], string>, ComponentProps<typeof MaterialIcons>['name']>;
 type IconSymbolName = keyof typeof MAPPING;
 
 /**

@@ -5,7 +5,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring,
   withSequence, withRepeat, Easing, cancelAnimation,
 } from 'react-native-reanimated';
-import { Audio } from 'expo-av';
+import { Audio } from '@/src/services/GameAudio';
 import { Colors } from '@/src/theme/Colors';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';

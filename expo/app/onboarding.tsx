@@ -130,7 +130,7 @@ function ArtStage({ active, art, accent, glow }: { active: boolean; art: any; ac
       <View style={[styles.glowOrb, { shadowColor: accent }]}>
         <LinearGradient
           colors={glow}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           start={{ x: 0.5, y: 0.5 }}
           end={{ x: 1, y: 1 }}
         />
@@ -178,7 +178,7 @@ function HeroStage({ active }: { active: boolean }) {
       <View style={[styles.glowOrb, { shadowColor: Colors.orange }]}>
         <LinearGradient
           colors={['rgba(255, 159, 10, 0.55)', 'rgba(255, 55, 95, 0.3)', 'rgba(0, 0, 0, 0)']}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           start={{ x: 0.5, y: 0.5 }}
           end={{ x: 1, y: 1 }}
         />
@@ -344,7 +344,7 @@ export default function OnboardingScreen() {
                 colors={[activeAccent, THEMES[Math.min(3, currentPage + 1)].accent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
               <View style={styles.ctaInner}>
                 <Text style={styles.ctaText}>
@@ -419,7 +419,7 @@ function NameSticker({ active, name, setName, inputRef, accent }: { active: bool
       <View style={[styles.glowOrb, { shadowColor: accent }]}>
         <LinearGradient
           colors={[accent + '88', accent + '33', 'rgba(0,0,0,0)']}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           start={{ x: 0.5, y: 0.5 }}
           end={{ x: 1, y: 1 }}
         />

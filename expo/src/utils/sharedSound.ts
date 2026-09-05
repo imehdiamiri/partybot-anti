@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { Audio } from 'expo-av';
+import { Audio } from '@/src/services/GameAudio';
 
 export async function playSharedSound(type: 'success' | 'fail' | 'game_over'): Promise<void> {
   if (Platform.OS === 'web') return;

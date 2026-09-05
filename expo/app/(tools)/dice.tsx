@@ -53,7 +53,7 @@ const Die2DView = ({ value, size, shake, index }: { value: number; size: number;
         colors={['rgba(255,255,255,0.7)', 'transparent']}
         style={[StyleSheet.absoluteFill, { borderRadius: size * 0.18 }]}
       />
-      <View style={{ ...StyleSheet.absoluteFillObject }}>
+      <View style={{ ...StyleSheet.absoluteFill }}>
         {pips.map((p, i) => (
           <View
             key={i}

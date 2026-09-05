@@ -2,7 +2,7 @@
   "expo": {
     "name": "PartyBot",
     "slug": "expo-app",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": [
@@ -10,7 +10,6 @@
       "invite"
     ],
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.partybot",
@@ -41,7 +40,6 @@
         "backgroundColor": "#A855F7",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "intentFilters": [
         {
@@ -87,7 +85,16 @@
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
       "expo-apple-authentication",
-      "expo-font"
+      "expo-font",
+      "expo-image",
+      "expo-asset",
+      "expo-sharing",
+      "expo-status-bar",
+      ["expo-audio", {
+        "microphonePermission": "PartyBot uses the microphone to record voice clips for Reverse Singing. Recordings stay on your device.",
+        "enableBackgroundPlayback": false,
+        "enableBackgroundRecording": false
+      }]
     ],
     "experiments": {
       "typedRoutes": true

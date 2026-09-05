@@ -1,4 +1,5 @@
 // Mock native / expo packages before importing useAuthStore
+jest.mock('expo-constants', () => ({ __esModule: true, default: { executionEnvironment: 'bare' } }));
 jest.mock('expo-apple-authentication', () => ({
   signInAsync: jest.fn(),
   AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
@@ -19,7 +20,7 @@ jest.mock('../components/ToastOverlay', () => ({
   },
 }));
 jest.mock('expo-auth-session', () => ({}));
-jest.mock('expo-av', () => ({
+jest.mock('../services/GameAudio', () => ({
   Audio: {
     setAudioModeAsync: jest.fn().mockImplementation(() => {
       throw new Error('NATIVE_ESCAPE_HATCH: Audio.setAudioModeAsync must not be called on web');
@@ -158,7 +159,7 @@ import { usePaywallStore } from '../store/usePaywallStore';
 import { playSharedSound } from '../utils/sharedSound';
 
 describe('Web Local-First Audio, Economy, and Paywall Isolation', () => {
-  test('AudioManager and playSharedSound methods are completely no-op / safe on web without invoking expo-av', async () => {
+  test('AudioManager and playSharedSound methods are completely no-op / safe on web without invoking native audio', async () => {
     await expect(AudioManager.init()).resolves.toBeUndefined();
     await expect(AudioManager.preload('tileFlip', 1 as any)).resolves.toBeUndefined();
     await expect(AudioManager.play('tileFlip')).resolves.toBeUndefined();
@@ -193,4 +194,3 @@ describe('Web Local-First Audio, Economy, and Paywall Isolation', () => {
     expect(state.packages).toEqual([]);
   });
 });
-

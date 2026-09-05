@@ -105,7 +105,7 @@ export function ResultsScoreboard({
               <LinearGradient
                 colors={['rgba(255, 215, 0, 0.18)', 'rgba(255, 140, 0, 0.08)', 'rgba(0, 0, 0, 0.4)']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
               <LinearGradient
                 colors={['#FFD700', '#FFA500', 'transparent']}
@@ -226,7 +226,7 @@ export function ResultsScoreboard({
               <LinearGradient 
                 colors={['#3B82F6', '#2563EB', '#1D4ED8']} 
                 start={{x: 0, y: 0}} end={{x: 1, y: 1}}
-                style={StyleSheet.absoluteFillObject} 
+                style={StyleSheet.absoluteFill}
               />
               <IconSymbol name={playAgainIcon as any} size={20} color="white" />
               <Text style={styles.playAgainText}>{playAgainTitle}</Text>
@@ -234,7 +234,7 @@ export function ResultsScoreboard({
           )}
           {shareGameName && (
             <TouchableOpacity style={styles.shareBtn} onPress={handleShare} accessibilityRole="button" activeOpacity={0.85}>
-              <SurfaceBlur style={StyleSheet.absoluteFillObject} intensity={60} />
+              <SurfaceBlur style={StyleSheet.absoluteFill} intensity={60} />
               <IconSymbol name="square.and.arrow.up" size={18} color="white" />
               <Text style={styles.shareText}>Share</Text>
             </TouchableOpacity>

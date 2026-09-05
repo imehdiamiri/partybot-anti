@@ -1,5 +1,36 @@
 # Release log
 
+## 2026-09-05 — SDK 57 / Expo Go compatibility (1.1.0)
+
+- Recovery tag: `checkpoint/before-sdk57` (f79c466); existing 1.0.1 bundles preserved.
+- Upgraded Expo to 57.0.20, React Native to 0.86.3, React to 19.2.3 and aligned SDK
+  packages with Expo's bundled dependency map. Reviewed SDK 55/56/57 breaking changes.
+- Replaced removed expo-av with expo-audio behind a tested game-audio boundary.
+  Preserves playback completion, millisecond scoring, rate/pitch and cleanup.
+  Reverse Singing captures actual PCM16 and writes WAV using the device sample rate;
+  no compressed recording is mislabeled as WAV. Capture is bounded to 61 seconds.
+- Prevented RevenueCat native loading in Expo Go. Existing Google Sign-In guard
+  remains: use email/password there; real native purchases and Google login still
+  require a custom build. Web behavior remains local-first.
+- Migrated removed absoluteFillObject usages, widened symbol-name types, normalized
+  unspecified themes, used Expo Router's own theme context, and updated Jest types.
+- App/runtime version for future native binaries is 1.1.0; old 1.0.1 binaries must
+  not receive these native-incompatible changes.
+- app.config.js uses SDK-scoped runtime ONLY when APP_VARIANT=expo-go. Publish that
+  preview to separate branch `expo-go-sdk57`, never the installed-app preview branch.
+- Verification: TypeScript PASS; Expo Doctor 21/21 PASS; 52 tests across five focused
+  game/audio/Expo Go/offline suites PASS. One-off iOS/Android/web export succeeded
+  (91 web routes). Publishing re-exports after final npm deduplication.
+- No persistent local server. Firebase live site has NOT been replaced for this
+  mobile SDK upgrade. No SDK 57 custom native build or store submission requested.
+- Device playback, microphone capture and opening the published update in Expo Go
+  need physical-device verification; successful bundling is not that verification.
+- npm reported 26 dependency advisories after dependency alignment; no broad
+  `npm audit fix --force` was applied. These need a separate scoped security review.
+- The older Android 1.0.1 build completed successfully:
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/248b4e41-f2a2-4301-a368-7e6bee8203d9
+  It is NOT the SDK 57 / Expo Go preview.
+
 ## 2026-09-05 — Codex takeover / 1.0.1
 
 ### Recovery checkpoint

@@ -32,7 +32,7 @@ if (Platform.OS !== 'web') {
     } catch {}
   }
 }
-import { Audio } from 'expo-av';
+import { Audio } from '@/src/services/GameAudio';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 
 interface Props { session: GameSession; }
@@ -648,7 +648,7 @@ export function SoundMatchSession({ session }: Props) {
                 colors={['#FF2D55', '#D32F2F', '#9C27B0']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
               <IconSymbol name={isPlayingTarget ? 'waveform' : 'play.fill'} size={40} color="white" />
             </TouchableOpacity>
@@ -680,7 +680,7 @@ export function SoundMatchSession({ session }: Props) {
               colors={[Colors.blue, '#1D62CD']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={st.readyMatchButtonText}>I'm Ready to Match</Text>
@@ -834,7 +834,7 @@ export function SoundMatchSession({ session }: Props) {
               colors={[Colors.green, '#248A3D']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <Text style={st.submitButtonText}>Submit Match</Text>
           </TouchableOpacity>
@@ -933,7 +933,7 @@ export function SoundMatchSession({ session }: Props) {
               colors={[Colors.blue, '#1D62CD']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={st.continueButtonText}>

@@ -74,7 +74,7 @@ export function LiquidGlass({
         style as ViewStyle,
       ]}
     >
-      <View style={[StyleSheet.absoluteFillObject, radiusStyle, { overflow: 'hidden' }]} pointerEvents="none">
+      <View style={[StyleSheet.absoluteFill, radiusStyle, { overflow: 'hidden' }]} pointerEvents="none">
         {Platform.OS === 'ios' && BlurView ? (
           <>
             <BlurView intensity={intensity} tint={tint} style={StyleSheet.absoluteFill} />
@@ -112,7 +112,7 @@ export function LiquidGlass({
       <View
         pointerEvents="none"
         style={[
-          StyleSheet.absoluteFillObject,
+          StyleSheet.absoluteFill,
           radiusStyle,
           {
             borderWidth: StyleSheet.hairlineWidth * 2,

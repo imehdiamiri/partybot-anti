@@ -16,7 +16,7 @@ let Sharing: any = null;
 
 if (Platform.OS !== 'web') {
   try {
-    const av = require('expo-av');
+    const av = require('@/src/services/GameAudio');
     Audio = av.Audio;
   } catch {}
   try {
@@ -396,8 +396,7 @@ export function ReverseSingingSession({ session }: Props) {
         isMeteringEnabled: false,
         android: {
           extension: '.wav',
-          outputFormat: 6,    // DEFAULT → let expo-av choose
-          audioEncoder: 3,    // DEFAULT
+          // GameAudio records real PCM WAV on both platforms; no compressed encoder.
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,

@@ -3,11 +3,14 @@ import type { PurchasesPackage, CustomerInfo } from 'react-native-purchases';
 import { Platform } from 'react-native';
 import { useEconomyStore } from './useEconomyStore';
 import { isWeb } from '../utils/platform';
+import Constants from 'expo-constants';
+
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
 export type { PurchasesPackage, CustomerInfo };
 
 let Purchases: any = null;
-if (!isWeb) {
+if (!isWeb && !isExpoGo) {
   try {
     const rc = require('react-native-purchases');
     Purchases = rc.default || rc;
@@ -65,7 +68,7 @@ function enqueueIdentityOp<T>(op: () => Promise<T>): Promise<T> {
 }
 
 function hasApiKey(): boolean {
-  if (isWeb) return false;
+  if (isWeb || isExpoGo || !Purchases) return false;
   if (Platform.OS === 'ios') return !!API_KEY_IOS;
   if (Platform.OS === 'android') return !!API_KEY_ANDROID;
   return false;

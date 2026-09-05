@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   cardsSectionBorder: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',

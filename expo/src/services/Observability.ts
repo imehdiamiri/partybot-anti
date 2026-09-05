@@ -49,7 +49,7 @@ export const Observability = {
     // Global JS error handler — RN exposes ErrorUtils on the global object.
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ErrorUtils: any = (global as any).ErrorUtils;
+      const ErrorUtils: any = (globalThis as any).ErrorUtils;
       if (ErrorUtils?.setGlobalHandler) {
         const previous = ErrorUtils.getGlobalHandler?.();
         ErrorUtils.setGlobalHandler((err: Error, isFatal?: boolean) => {
@@ -68,7 +68,7 @@ export const Observability = {
 
     // Unhandled promise rejections.
     try {
-      const g: any = global as any;
+      const g: any = globalThis as any;
       if (typeof g.addEventListener === 'function') {
         g.addEventListener('unhandledrejection', (event: any) => {
           const reason = event?.reason ?? event;

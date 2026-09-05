@@ -429,7 +429,7 @@ export function ColorMatchSession({ session }: Props) {
               colors={[Colors.blue, '#1D62CD']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={st.continueButtonText}>

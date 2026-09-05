@@ -1,10 +1,10 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useRef } from 'react';
 import { AppState, AppStateStatus, View } from 'react-native';
 import 'react-native-reanimated';
-import { Audio } from 'expo-av';
+import { Audio } from '@/src/services/GameAudio';
 import {
   useFonts,
   Fredoka_400Regular,

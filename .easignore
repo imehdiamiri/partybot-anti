@@ -25,6 +25,7 @@ Thumbs.db
 /functions/
 /expo/dist/
 /expo/dist-native/
+/expo/dist-sdk57/
 /expo/ios/
 /expo/android/
 /expo/website/

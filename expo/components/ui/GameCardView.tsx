@@ -95,7 +95,7 @@ const IOSGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
 
   return (
     <View style={[iosStyles.container, { shadowColor: accentColor }]}>
-      <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
 
       <View style={iosStyles.content}>
         <View style={iosStyles.spacerTop} />
@@ -161,7 +161,7 @@ const AndroidGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.35)']}
           start={{ x: 0.5, y: 0.4 }}
           end={{ x: 0.5, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
 

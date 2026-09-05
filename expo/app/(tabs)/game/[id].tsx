@@ -180,7 +180,7 @@ export default function GameDetailScreen() {
                       colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
                       start={{ x: 0.5, y: 0.5 }}
                       end={{ x: 0.5, y: 1 }}
-                      style={StyleSheet.absoluteFillObject}
+                      style={StyleSheet.absoluteFill}
                       pointerEvents="none"
                     />
                     <View style={styles.heroBadge}>
@@ -234,7 +234,7 @@ export default function GameDetailScreen() {
                 colors={[Colors.orange, '#FF2D55']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
               <View style={styles.premiumButtonContent}>
                 <IconSymbol name="crown.fill" size={16} color="white" />
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(28, 28, 30, 0.85)',
   },
   heroLoadingContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(28, 28, 30, 0.85)',
   },
   modeCardBg: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modeIconContainer: {
     width: 48,

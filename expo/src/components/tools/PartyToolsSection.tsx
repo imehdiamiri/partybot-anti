@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     // We would use shadow here but RN shadows are finicky with overflow: hidden
   },
   iconRing: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 1,
     borderRadius: 27,
   },

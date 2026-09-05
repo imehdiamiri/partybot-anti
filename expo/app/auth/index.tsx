@@ -196,7 +196,7 @@ export default function AuthScreen() {
                   colors={['#0A84FF', '#0066CC']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <Text style={styles.primaryBtnText}>
                   {isLogin ? 'Sign In' : 'Create Account'}
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(10, 132, 255, 0.15)',
   },
   appIconGradient: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   appTitle: {
     fontFamily: Typography.viralTitle.fontFamily,
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
 
   // ─── Busy ───
   busyOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 100,
     justifyContent: 'center',
     alignItems: 'center',

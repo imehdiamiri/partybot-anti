@@ -87,7 +87,7 @@ const st = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   dismissArea: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   card: {
     backgroundColor: 'rgba(40,40,45,0.95)',

@@ -3,6 +3,7 @@ node_modules/
 .expo/
 dist/
 dist-native/
+dist-sdk57/
 web-build/
 expo-env.d.ts
 .kotlin/

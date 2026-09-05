@@ -1,4 +1,4 @@
-import { Audio, AVPlaybackSource } from 'expo-av';
+import { Audio, AVPlaybackSource } from './GameAudio';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { isWeb } from '@/src/utils/platform';
 
