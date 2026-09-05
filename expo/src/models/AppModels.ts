@@ -3,7 +3,6 @@ import { Platform } from 'react-native';
 export enum GameMode {
   singleDevice = 'singleDevice',
   multiDevice = 'multiDevice',
-  teamMode = 'teamMode',
 }
 
 export const GameModeDetails: Record<
@@ -23,13 +22,6 @@ export const GameModeDetails: Record<
     icon: 'iphone.radiowaves.left.and.right', // SF
     accentColor: Colors.green, // green
     shortLabel: 'Multi-D',
-  },
-  [GameMode.teamMode]: {
-    title: 'Team Mode',
-    subtitle: 'Split into 2 teams and compete',
-    icon: 'person.2.wave.2.fill', // SF
-    accentColor: '#AF52DE', // purple
-    shortLabel: 'Team',
   },
 };
 
@@ -128,8 +120,7 @@ export const Games: Record<string, GameType> = {
     hasFreeTrial: false,
     isPremium: false,
     symbolName: 'square.grid.3x3.fill', // SF: square.grid.3x3.fill
-    // Real multiplayer only — team mode is not actually wired and was removed
-    // to stop advertising fake flows.
+    // Individual multiplayer only.
     supportedModes: [GameMode.singleDevice, GameMode.multiDevice],
     roundDuration: 0,
     heroImageURL: null,

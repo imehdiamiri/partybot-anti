@@ -37,7 +37,7 @@ export function TapInOrderSession({ session }: Props) {
   const registerSkip = useRegisterSkip();
   const { gridSize: GRID_SIZE, tileCount: TILE_COUNT } = getConfig(session);
   const players = session.players;
-  const isMultiplayer = session.mode === GameMode.multiDevice || session.mode === GameMode.teamMode;
+  const isMultiplayer = session.mode === GameMode.multiDevice;
 
   // ─── MULTIPLAYER SYNC HOOK ───
   const compRound = useCompetitiveRound({

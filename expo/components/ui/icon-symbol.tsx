@@ -1,11 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-// @ts-ignore
-import createIconSet from '@expo/vector-icons/build/vendor/react-native-vector-icons/lib/create-icon-set';
 import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
-
-const DirectMaterialIcons = createIconSet(MaterialIcons.glyphMap, 'MaterialIcons', 'MaterialIcons.ttf');
 
 type IconMapping = Record<Extract<SymbolViewProps['name'], string>, ComponentProps<typeof MaterialIcons>['name']>;
 type IconSymbolName = keyof typeof MAPPING;
@@ -183,5 +179,6 @@ export function IconSymbol({
   weight?: SymbolWeight;
 }) {
   const mappedName = MAPPING[name] || 'help-outline';
-  return <DirectMaterialIcons color={color} size={size} name={mappedName} style={style} />;
+  // Match the public font family registered by the root useFonts hook.
+  return <MaterialIcons color={color} size={size} name={mappedName} style={style} />;
 }

@@ -34,7 +34,7 @@ interface PlayerRecord {
 export function ReactionTimeSession({ session }: Props) {
   const registerSkip = useRegisterSkip();
   const players = session.players;
-  const isMultiplayer = session.mode === GameMode.multiDevice || session.mode === GameMode.teamMode;
+  const isMultiplayer = session.mode === GameMode.multiDevice;
 
   // ─── MULTIPLAYER SYNC HOOK ───
   const compRound = useCompetitiveRound({

@@ -6,12 +6,11 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, Glass, platformShadow } from '@/src/theme/Colors';
+import { Colors, platformShadow } from '@/src/theme/Colors';
 import { LiquidGlass } from '@/src/components/LiquidGlass';
 
 const TAB_ITEMS = [
@@ -20,36 +19,25 @@ const TAB_ITEMS = [
   { name: 'friends', label: 'Friends', icon: 'person.2.fill', accent: Colors.pink },
 ] as const;
 
-const ACTIVE_BLUE = '#0A84FF';
-
-function TabIndicator({ focused }: { focused: boolean }) {
+function TabIndicator({ focused, color }: { focused: boolean; color: string }) {
   const scale = useSharedValue(focused ? 1 : 0.6);
   const opacity = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
     opacity.value = withTiming(focused ? 1 : 0, { duration: 220 });
-    scale.value = withSpring(focused ? 1 : 0.6, { damping: 16, stiffness: 220 });
+    scale.value = withTiming(focused ? 1 : 0.6, { duration: 180 });
   }, [focused, opacity, scale]);
 
   const aStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    transform: [{ scaleX: scale.value }],
   }));
 
   return (
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: 999 }, aStyle]}>
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius: 999,
-            backgroundColor: 'rgba(255,255,255,0.10)',
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: 'rgba(255,255,255,0.22)',
-          },
-        ]}
-      />
-    </Animated.View>
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.activeIndicator, { backgroundColor: color }, aStyle]}
+    />
   );
 }
 
@@ -119,7 +107,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                   }
                 };
 
-                const tint = isFocused ? ACTIVE_BLUE : 'rgba(255,255,255,0.6)';
+                const tint = isFocused ? item.accent : 'rgba(255,255,255,0.65)';
 
                 return (
                   <Pressable
@@ -128,23 +116,22 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                     onPress={onPress}
                     android_ripple={{
                       color: 'rgba(10,132,255,0.20)',
-                      borderless: true,
-                      radius: 40,
+                      borderless: false,
                     }}
                     accessibilityRole="button"
-                    accessibilityState={isFocused ? { selected: true } : {}}
-                    accessibilityLabel={options.tabBarAccessibilityLabel}
-                    style={styles.tabItem}
+                    accessibilityState={{ selected: isFocused }}
+                    accessibilityLabel={options.tabBarAccessibilityLabel ?? item.label}
+                    style={({ pressed }) => [styles.tabItem, pressed && styles.tabItemPressed]}
                   >
-                    <View style={styles.pill}>
-                      <TabIndicator focused={isFocused} />
-                      <IconSymbol size={30} name={item.icon as any} color={tint} />
+                    <View style={styles.tabContent}>
+                      <IconSymbol size={25} name={item.icon as any} color={tint} />
                       <Text
-                        style={[styles.label, isFocused && styles.labelActive]}
+                        style={[styles.label, { color: tint }]}
                         numberOfLines={1}
                       >
                         {item.label}
                       </Text>
+                      <TabIndicator focused={isFocused} color={item.accent} />
                     </View>
                   </Pressable>
                 );
@@ -197,17 +184,30 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     flex: 1,
+    minHeight: 48,
+    borderRadius: 14,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pill: {
+  tabItemPressed: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  tabContent: {
     minWidth: 64,
     height: 56,
     paddingHorizontal: 14,
-    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 0,
+    gap: 2,
+    paddingBottom: 5,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    width: 22,
+    height: 3,
+    borderRadius: 2,
   },
   label: {
     fontWeight: '700',
@@ -216,10 +216,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     includeFontPadding: false,
   },
-  labelActive: {
-    color: ACTIVE_BLUE,
-  },
 });
-
-// Reference unused import suppression
-void Glass;

@@ -1,5 +1,25 @@
 # Release log
 
+## 2026-09-05 — Remove Team Mode, restore web icons, refresh bottom navigation
+
+- Recovery: `checkpoint/before-team-nav-icons` at `1108107`.
+- Removed Team Mode enum, labels, assignment/start screen and multiplayer branches.
+  Old `/team-setup` bookmarks only redirect home. The independent Team Splitter
+  randomization tool is retained; individual multi-phone gameplay is unchanged.
+- Live diagnosis: glyphs requested font family `MaterialIcons`, while root font
+  loading registered `material`. Replaced the private createIconSet workaround
+  with the public MaterialIcons component; native iOS SF Symbols remain unchanged.
+  Reference: https://docs.expo.dev/guides/icons/ (font preloading).
+- Selected bottom tabs use a short accent line and matching icon/label color,
+  without the circular selection background. Preserved touch targets, safe-area
+  spacing, keyboard hiding and navigation behavior; added explicit spoken labels.
+- TypeScript passed. Existing 107 tests passed; four additional mode/icon regression
+  tests passed, including checking every mapped Material glyph exists.
+- Web export succeeded: 91 routes, `entry-18b1f252a05920c6463078f616058eae.js`.
+  Synced generated Hosting output, preserving legal pages and rewriting asset paths.
+  This web release also incorporates the already-committed SDK 57 migration.
+- Publishing and live verification pending; no persistent local server used.
+
 ## 2026-09-05 — SDK 57 / Expo Go compatibility (1.1.0)
 
 - Recovery tag: `checkpoint/before-sdk57` (f79c466); existing 1.0.1 bundles preserved.

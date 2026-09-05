@@ -26,7 +26,7 @@ export function useGameSync<T>(
   setLocalState: React.Dispatch<React.SetStateAction<T>>,
   onActionReceived?: (type: string, data: any, playerId: string) => void
 ) {
-  const isMultiplayer = mode === GameMode.multiDevice || mode === GameMode.teamMode;
+  const isMultiplayer = mode === GameMode.multiDevice;
   const {
     gameState,
     broadcastState,

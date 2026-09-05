@@ -112,7 +112,7 @@ export default function GameDetailScreen() {
   const accentColor = getAccentColor(gameDef.accentName);
 
   const handleModeSelect = (mode: GameMode) => {
-    if (mode === GameMode.multiDevice || mode === GameMode.teamMode) {
+    if (mode === GameMode.multiDevice) {
       if (isWeb) {
         showToast.info('Multiplayer modes are supported in the mobile apps. Play 1-Phone mode on web!');
         return;

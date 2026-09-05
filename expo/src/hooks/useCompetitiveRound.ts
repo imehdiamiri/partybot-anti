@@ -44,7 +44,7 @@ export function useCompetitiveRound({
   tileCount = 8,
   roundConfig,
 }: UseCompetitiveRoundOptions) {
-  const isMultiplayer = mode === GameMode.multiDevice || mode === GameMode.teamMode;
+  const isMultiplayer = mode === GameMode.multiDevice;
   const storeLocalPlayerId = useMultiplayerStore(s => s.localPlayerId);
   const storeGameState = useMultiplayerStore(s => s.gameState);
   const resolvedLocalPlayerId = propLocalPlayerId || storeLocalPlayerId || players.find(p => p.isLocal)?.id || players[0]?.id;
