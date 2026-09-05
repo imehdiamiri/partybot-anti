@@ -34,7 +34,7 @@
 ### Verification
 
 - Typecheck PASS; environment guard PASS; 45 game/auth tests PASS.
-- Expo doctor PASS (18/18 after dependency cleanup).
+- Expo doctor PASS (18/18 after cleanup and again after the final dependency changes).
 - Native introspection PASS: Google iOS scheme present, no aps-environment entitlement,
   both external-storage permissions marked tools:node=remove for manifest merging.
 - Initial removal changed no retained package versions; one necessary direct dependency
@@ -66,6 +66,24 @@
   distribution credentials. Needs owner-assisted Apple Developer authentication,
   signing/provisioning and device registration before retrying. No App Store or
   Play Store submission was performed.
+
+### Final legal-link correction
+
+- Live HTTPS checks exposed a certificate-name mismatch on www.partybot.games.
+  Centralized legal/marketing URLs now use the working apex domain. DNS and
+  certificates were not modified; www TLS needs separate investigation.
+- Source commit: `69f4878ac648edf8e9eb4dd5bcf0ca4e6cdafed6`.
+- Re-exported 91 web routes and successfully redeployed Firebase Hosting.
+  Final live bundle: `entry-7a2512ae5fe9987e07daebb79b9e2103.js`.
+- Verified live /profile references that exact bundle; both corrected legal URLs
+  appear in it and return HTTPS 200 with the actual Privacy Policy / Terms titles.
+  The earlier full browser smoke preceded this URL-only change.
+- Superseding EAS preview update (Android/iOS, same compatible runtime 1.0.1):
+  `4304af4d-5702-49f6-a23e-4c432325f40e`, published successfully.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/4304af4d-5702-49f6-a23e-4c432325f40e
+- The Android binary was submitted from 9cf33e3; the URL correction is delivered
+  through this same-runtime OTA. Real-device installation/OTA receipt is not yet
+  verified. Publishing an update does not prove a device has downloaded it.
 
 ### Mobile compatibility
 
