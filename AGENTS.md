@@ -34,5 +34,11 @@ User-facing updates are Persian; code and technical release records are English.
   send an incompatible OTA to existing binaries. Expo Go is not a replacement for
   an installed development/release binary and cannot use arbitrary native modules.
 - No persistent Expo/Metro/LAN/localhost server. The user checks deployed releases.
+- Expo Go preview is now supported separately on SDK 57: set APP_VARIANT=expo-go
+  when running EAS Update, use branch/channel expo-go-sdk57 and environment preview.
+  The dynamic config derives exposdk:57.0.0 only for this variant. Native custom
+  binaries continue using appVersion (1.1.0 after migration); never cross-publish.
+  Google native login and real purchases are unavailable in Expo Go; email login
+  and games can be previewed there. Keep the native-module guards intact.
 - Stop only for genuine missing account/signing/device input or blocked permissions;
   finish independent work and document the exact blocker.

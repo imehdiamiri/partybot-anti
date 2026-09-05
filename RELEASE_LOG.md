@@ -31,6 +31,24 @@
   https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/248b4e41-f2a2-4301-a368-7e6bee8203d9
   It is NOT the SDK 57 / Expo Go preview.
 
+### SDK 57 publication confirmation
+
+- Source commit: `ebf1cc1fd93795106e8e5522b4422ff107d2125d`.
+- EAS Update succeeded for both platforms; group `92298e91-9671-4659-8cb8-eae7ce1af720`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/92298e91-9671-4659-8cb8-eae7ce1af720
+- Dedicated channel `expo-go-sdk57` points to branch `expo-go-sdk57`.
+  Existing `preview` / `production` channels were not changed.
+- Verified remote multipart manifest responses for BOTH platforms: HTTP 200,
+  runtime `exposdk:57.0.0`, SDK `57.0.0`, non-empty launch assets and matching IDs:
+  iOS `01a0721a-846c-7d00-af04-1eb633756579`,
+  Android `01a0721a-846c-72f5-8c88-d4d26effaf80`.
+- Expo Go link: `exp://u.expo.dev/b7949f49-aef7-4963-9d95-5eb35280136e?channel-name=expo-go-sdk57`.
+  Use this new preview, not the old SDK 54 entry in Recent. Sign into the Expo
+  project owner's account if Expo Go requests project access.
+- Final export after dependency deduplication also succeeded for both native
+  platforms and all 91 web routes. No physical Android device was connected;
+  the temporary ADB daemon used to check was stopped afterward.
+
 ## 2026-09-05 — Codex takeover / 1.0.1
 
 ### Recovery checkpoint
