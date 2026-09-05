@@ -2,8 +2,8 @@ export const AppConstants = {
   // Firebase config is read directly from EXPO_PUBLIC_FIREBASE_* in src/lib/firebase.ts.
   // Do not duplicate or fall back here — see firebase.ts for the source of truth.
   URLs: {
-    privacyPolicy: 'https://www.partybot.games/privacy.html',
-    termsOfService: 'https://www.partybot.games/terms.html',
+    privacyPolicy: 'https://www.partybot.games/privacy',
+    termsOfService: 'https://www.partybot.games/terms',
     marketingSite: 'https://www.partybot.games',
   },
   Invite: {

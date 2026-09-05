@@ -1,5 +1,10 @@
 # PlayBot — Codex ↔ Antigravity File Bridge
 
+> ARCHIVED WORKFLOW — 2026-09-05: The owner has transferred implementation,
+> verification, Git checkpoints, Firebase publishing, and Expo releases to Codex.
+> This document is historical evidence only. Do not dispatch its OPEN tasks to
+> Antigravity. See AGENTS.md and RELEASE_LOG.md for the active workflow.
+
 This file is the shared control plane between Codex and Antigravity.
 
 ## Trigger
@@ -48,8 +53,8 @@ Do not use chat-only reports. This file is the source of truth for handoff.
 ## NEXT TASK FOR ANTIGRAVITY
 
 Task ID: 2026-09-02-55
-Status: OPEN
-Owner: Antigravity
+Status: TRANSFERRED_TO_CODEX
+Owner: Codex
 Priority: P1
 
 ### Objective

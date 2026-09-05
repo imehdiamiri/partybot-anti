@@ -2,7 +2,7 @@
   "expo": {
     "name": "PartyBot",
     "slug": "expo-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": [
@@ -14,6 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.partybot",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "buildNumber": "1",
       "usesAppleSignIn": true,
       "associatedDomains": [
@@ -30,6 +31,10 @@
       "versionCode": 1,
       "permissions": [
         "android.permission.RECORD_AUDIO"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
