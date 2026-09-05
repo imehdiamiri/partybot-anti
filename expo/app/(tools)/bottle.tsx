@@ -19,11 +19,15 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
+  runOnJS,
+  useAnimatedReaction,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { CurrentTurnPill, BeerBottleView } from '@/src/components/games/SharedGameComponents';
-import { AudioManager } from '@/src/services/AudioManager';
+import { useToolAudio } from '@/src/hooks/useToolAudio';
+import { useFocusEffect } from 'expo-router';
 import { FriendSuggestions } from '@/src/components/FriendSuggestions';
 
 // Safe haptics wrapper — web doesn't support haptics
@@ -36,6 +40,7 @@ const safeHaptic = {
 // ─── Main Component ───
 
 export default function BottleToolScreen() {
+  const toolAudio = useToolAudio('bottle');
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const [names, setNames] = useState<string[]>([]);
@@ -44,6 +49,11 @@ export default function BottleToolScreen() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const bottleAngle = useSharedValue(0);
+  const onRotationTick = () => toolAudio.tick();
+  useAnimatedReaction(() => Math.floor(bottleAngle.value / 90), (value, previous) => {
+    if (previous !== null && value !== previous) runOnJS(onRotationTick)();
+  }, []);
+  useFocusEffect(useCallback(() => () => { cancelAnimation(bottleAngle); setIsSpinning(false); }, [bottleAngle]));
 
   const addName = useCallback(() => {
     const trimmed = draft.trim();
@@ -63,15 +73,15 @@ export default function BottleToolScreen() {
     if (hasNames) setSelectedIndex(target);
     setIsSpinning(false);
     safeHaptic.success();
-    AudioManager.play('success');
-  }, []);
+    toolAudio.finish();
+  }, [toolAudio]);
 
   const spin = useCallback(() => {
     if (isSpinning) return;
     setIsSpinning(true);
     setSelectedIndex(null);
     safeHaptic.impact();
-    AudioManager.play('bottleSpin');
+    toolAudio.begin(8000);
 
     const hasNames = names.length > 0;
     const target = hasNames ? Math.floor(Math.random() * names.length) : 0;
@@ -88,9 +98,7 @@ export default function BottleToolScreen() {
     bottleAngle.value = withTiming(nextAngle, {
       duration: 8000,
       easing: Easing.bezier(0.15, 0.45, 0.2, 1.0),
-    });
-
-    setTimeout(() => onSpinDone(target, hasNames), 8050);
+    }, finished => { if (finished) runOnJS(onSpinDone)(target, hasNames); });
   }, [isSpinning, names.length, bottleAngle, onSpinDone]);
 
   const bottleSize = Math.min((screenWidth > 0 ? screenWidth : 390) * 0.85, 360);

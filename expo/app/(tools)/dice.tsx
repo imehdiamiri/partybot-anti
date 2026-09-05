@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, SharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AudioManager } from '@/src/services/AudioManager';
+import { useToolAudio } from '@/src/hooks/useToolAudio';
 
 const getPipPositions = (value: number) => {
   const tl = { x: 0.22, y: 0.22 };
@@ -74,6 +74,7 @@ const Die2DView = ({ value, size, shake, index }: { value: number; size: number;
 };
 
 export default function DiceToolScreen() {
+  const toolAudio = useToolAudio('dice');
   const insets = useSafeAreaInsets();
   const [count, setCount] = useState(1);
   const [values, setValues] = useState([1]);
@@ -102,24 +103,27 @@ export default function DiceToolScreen() {
     if (isRolling) return;
     setIsRolling(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    AudioManager.play('tileFlip');
+    toolAudio.begin(1400);
     scaleAnim.value = withSpring(0.95, { damping: 10, stiffness: 100 });
 
     let ticks = 0;
-    const interval = setInterval(() => {
+    const tumble = () => {
+      toolAudio.tick();
       ticks++;
       shakeAnim.value = Math.random() * 36 - 18;
       setValues(prev => prev.map(() => Math.floor(Math.random() * 6) + 1));
       
       if (ticks >= 10) {
-        clearInterval(interval);
         shakeAnim.value = withSpring(0);
         scaleAnim.value = withSpring(1);
         setIsRolling(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        AudioManager.play('success');
+        toolAudio.finish();
+      } else {
+        toolAudio.later(tumble, 70 + ticks * 14);
       }
-    }, 70);
+    };
+    toolAudio.later(tumble, 70);
   };
 
   const total = values.reduce((a, b) => a + b, 0);
@@ -145,7 +149,7 @@ export default function DiceToolScreen() {
             accessibilityRole="button"
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              AudioManager.play('buttonTap');
+              toolAudio.cue();
               syncValues(n);
             }}
             disabled={isRolling}

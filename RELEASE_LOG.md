@@ -1,5 +1,33 @@
 # Release log
 
+## 2026-09-05 — Tool effects / Wheel redesign / Reverse Singing handoff
+
+- Recovery: `checkpoint/before-how-it-works` at `34516d9`.
+- Fixed invalid `rgba(...)22` instruction badge colors. All game detail steps now
+  have valid translucent backgrounds, white numerals and non-shrinking badges.
+- Wheel: violet/teal segments, readable rounded labels, compact pointer and hub,
+  decorative detents, new title/result treatment and bounded responsive layout.
+  Pointer-based winner selection is unchanged. Motion now eases out over 6.2s.
+- Added 12 original generated tool effects (six attack/tick + six completion sounds).
+  Wheel, bottle and coin ticks follow actual animation angle changes; dice tumbles
+  and ticks slow together, team shuffle has paper-like ticks, hourglass has gentle
+  final countdown ticks and a bounded three-note alarm. No repeating global loop.
+- Web Audio unlocks from the initiating gesture and uses locally synthesized PCM;
+  native Expo audio uses equivalent bundled WAVs and a small player pool. No new
+  native dependency. Sound toggle, blur/unmount and background stop active voices;
+  pending native seeks cannot resurrect sound after mute/disposal. Deferred tool
+  callbacks are screen-owned and cleaned up on leaving. No persistent local server.
+- Reverse Singing: source recording locks until Retry; player two must wait for
+  a successfully reversed source. Record buttons name the responsible player.
+  Retry stops playback, revokes web URLs and clears both original/reversed takes
+  and durations. Handler guards block overlapping capture and processing.
+- Compact player headings put name/instruction on one line; 54px controls replace
+  100px controls. Removed the nonfunctional history placeholder, retaining current
+  take playback/share. Scroll fallback remains for accessibility and small heights.
+- Checks: TypeScript passed; 128 tests in 12 suites passed; 91 web routes exported.
+  Live visual/audio graph checks and publication details follow after deployment.
+  Reference: https://docs.expo.dev/versions/latest/sdk/audio/.
+
 ## 2026-09-05 — Remove Team Mode, restore web icons, refresh bottom navigation
 
 - Recovery: `checkpoint/before-team-nav-icons` at `1108107`.

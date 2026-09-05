@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AudioManager } from '@/src/services/AudioManager';
+import { useToolAudio } from '@/src/hooks/useToolAudio';
 
 // Using the same single static hourglass image as the iOS version
 const HOURGLASS_IMG = require('@/assets/images/tools/hourglass.webp');
@@ -27,12 +27,6 @@ const PRESETS = [
   { label: "5min", seconds: 300 },
   { label: "10min", seconds: 600 }
 ];
-
-const playClick = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); AudioManager.play('buttonTap'); };
-const playTimerStart = () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('success'); };
-const playTimerStop = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); AudioManager.play('phaseChange'); };
-const playCountdownTick = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); AudioManager.play('countdown'); };
-const playGameEnd = () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); AudioManager.play('gameOver'); };
 
 // --- Custom Wheel Picker ---
 const ITEM_HEIGHT = 44;
@@ -68,6 +62,14 @@ const WheelPicker = ({ title, value, range, onChange }: { title: string, value: 
 };
 
 export default function HourglassToolScreen() {
+  const toolAudio = useToolAudio('hourglass');
+const playClick = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toolAudio.cue(); };
+const playTimerStart = () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); toolAudio.begin(remainingRef.current * 1000); };
+const playTimerStop = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toolAudio.cancel(); };
+const playCountdownTick = () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toolAudio.tick(); };
+const playGameEnd = () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); toolAudio.finish(); };
+
+
   const insets = useSafeAreaInsets();
   const [minutes, setMinutes] = useState(1);
   const [seconds, setSeconds] = useState(0);
@@ -92,11 +94,11 @@ export default function HourglassToolScreen() {
   }, [isAlarming]);
 
   useEffect(() => {
-    if (!isRunning && !isPaused) {
+    if (!isRunning && !isPaused && !isAlarming) {
       setRemaining(totalSet);
       progressSV.value = 1;
     }
-  }, [minutes, seconds, totalSet, isRunning, isPaused]);
+  }, [minutes, seconds, totalSet, isRunning, isPaused, isAlarming]);
 
   useEffect(() => {
     if (isRunning && !isPaused) {
@@ -115,16 +117,7 @@ export default function HourglassToolScreen() {
     setIsAlarming(true);
     playGameEnd();
     
-    // Simulate iOS alarm sound pulses
-    let pulses = 0;
-    const pulseInterval = setInterval(() => {
-      pulses++;
-      if (pulses > 8 || !isAlarming) {
-        clearInterval(pulseInterval);
-      } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      }
-    }, 600);
+    // The bounded three-note alarm stops on Stop, mute, navigation or background.
   };
 
   useEffect(() => {
@@ -134,7 +127,7 @@ export default function HourglassToolScreen() {
         if (remainingRef.current > 0) {
           const newRemaining = remainingRef.current - 1;
           setRemaining(newRemaining);
-          if (newRemaining <= 3 && newRemaining > 0) {
+          if (newRemaining <= 5 && newRemaining > 0) {
             playCountdownTick();
           }
           if (newRemaining === 0) {
@@ -156,13 +149,14 @@ export default function HourglassToolScreen() {
   const pause = () => {
     setIsRunning(false);
     setIsPaused(true);
+    toolAudio.cancel();
     playClick();
   };
 
   const resume = () => {
     setIsRunning(true);
     setIsPaused(false);
-    playClick();
+    playTimerStart();
   };
 
   const cancel = () => {
@@ -173,6 +167,7 @@ export default function HourglassToolScreen() {
   };
 
   const stopAlarm = () => {
+    toolAudio.cancel();
     setIsAlarming(false);
     setRemaining(totalSet);
     playClick();

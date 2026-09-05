@@ -96,15 +96,16 @@ export default function GameDetailScreen() {
   };
 
   const getAccentColor = (accentName: string): string => {
+    // Keep six-digit hex: the instruction badge appends an alpha byte below.
     switch (accentName) {
-      case 'pink': return 'rgba(255, 105, 180, 1)';
-      case 'cyan': return 'rgba(50, 173, 230, 1)';
-      case 'teal': return 'rgba(48, 176, 199, 1)';
-      case 'orange': return 'rgba(255, 149, 0, 1)';
-      case 'red': return 'rgba(255, 59, 48, 1)';
-      case 'yellow': return 'rgba(255, 204, 0, 1)';
-      case 'purple': return 'rgba(175, 82, 222, 1)';
-      default: return 'rgba(0, 122, 255, 1)';
+      case 'pink': return '#FF69B4';
+      case 'cyan': return '#32ADE6';
+      case 'teal': return '#30B0C7';
+      case 'orange': return '#FF9500';
+      case 'red': return '#FF3B30';
+      case 'yellow': return '#FFCC00';
+      case 'purple': return '#AF52DE';
+      default: return '#007AFF';
     }
   };
 
@@ -294,8 +295,8 @@ export default function GameDetailScreen() {
           <View style={styles.instructionsContainer}>
             {getGameInstructions(id!).map((step, i) => (
               <View key={i} style={styles.instructionRow}>
-                <View style={[styles.stepBadge, { backgroundColor: accentColor + '22' }]}>
-                  <Text style={[styles.stepBadgeText, { color: accentColor }]}>{i + 1}</Text>
+                <View testID={`instruction-step-${i + 1}`} style={[styles.stepBadge, { backgroundColor: accentColor + '22' }]}>
+                  <Text style={styles.stepBadgeText}>{i + 1}</Text>
                 </View>
                 <Text style={styles.instructionText}>{step}</Text>
               </View>
@@ -502,18 +503,24 @@ const styles = StyleSheet.create({
   stepBadge: {
     width: 26,
     height: 26,
+    flexShrink: 0,
     borderRadius: 13,
     backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   stepBadgeText: {
+    color: '#FFFFFF',
     fontSize: 13,
+    lineHeight: 18,
     fontWeight: '800',
+    textAlign: 'center',
+    includeFontPadding: false,
     fontVariant: ['tabular-nums'],
   },
   instructionText: {
     flex: 1,
+    minWidth: 0,
     color: 'rgba(255,255,255,0.6)',
     fontSize: 14,
     lineHeight: 20,

@@ -14,30 +14,32 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AudioManager } from '@/src/services/AudioManager';
+import { useToolAudio } from '@/src/hooks/useToolAudio';
 import { FriendSuggestions } from '@/src/components/FriendSuggestions';
 
 const TEAM_COLORS = [Colors.orange, Colors.cyan, '#FF2D55', Colors.green, '#AF52DE', Colors.yellow];
 const TEAM_ICONS = ['flame.fill', 'bolt.fill', 'heart.fill', 'leaf.fill', 'star.fill', 'sparkles'];
 
+export default function TeamSplitterToolScreen() {
+  const toolAudio = useToolAudio('teams');
 const playDiceRoll = () => {
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  AudioManager.play('phaseChange');
+  toolAudio.begin(500);
 };
 const playButtonTap = () => {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  AudioManager.play('buttonTap');
+  toolAudio.cue();
 };
 const playSuccess = () => {
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  AudioManager.play('success');
+  toolAudio.finish();
 };
 const playError = () => {
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  AudioManager.play('wrong');
+  toolAudio.cue();
 };
 
-export default function TeamSplitterToolScreen() {
+
   const insets = useSafeAreaInsets();
   const [names, setNames] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
@@ -71,10 +73,11 @@ export default function TeamSplitterToolScreen() {
   };
 
   const split = () => {
-    if (names.length < teamCount) return;
+    if (isShuffling || names.length < teamCount) return;
     
     setIsShuffling(true);
     playDiceRoll();
+    [60, 140, 240, 370].forEach(delay => toolAudio.later(() => toolAudio.tick(), delay));
     Keyboard.dismiss();
 
     // Shuffle array
@@ -86,10 +89,10 @@ export default function TeamSplitterToolScreen() {
     });
 
     // Simulate animation delay
-    setTimeout(() => {
+    toolAudio.later(() => {
       setTeams(buckets);
       
-      setTimeout(() => {
+      toolAudio.later(() => {
         setIsShuffling(false);
         playSuccess();
       }, 50);

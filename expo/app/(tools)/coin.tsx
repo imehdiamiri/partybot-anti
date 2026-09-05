@@ -14,12 +14,15 @@ import Animated, {
   runOnJS,
   interpolate,
   Extrapolation,
+  useAnimatedReaction,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
-import { AudioManager } from '@/src/services/AudioManager';
+import { useToolAudio } from '@/src/hooks/useToolAudio';
+import { useFocusEffect } from 'expo-router';
 
 const HEADS_IMG = require('@/assets/images/tools/coin-heads.webp');
 const TAILS_IMG = require('@/assets/images/tools/coin-tails.webp');
@@ -78,6 +81,7 @@ const CoinComponent = ({
 };
 
 export default function CoinFlipToolScreen() {
+  const toolAudio = useToolAudio('coin');
   const insets = useSafeAreaInsets();
   const [coinCount, setCoinCount] = useState(1);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -88,6 +92,11 @@ export default function CoinFlipToolScreen() {
   // We allocate 2 shared values since max coins is 2
   const r1 = useSharedValue(0);
   const r2 = useSharedValue(0);
+  const onFlipTick = () => toolAudio.tick();
+  useAnimatedReaction(() => Math.floor(r1.value / 180), (value, previous) => {
+    if (previous !== null && value !== previous) runOnJS(onFlipTick)();
+  }, []);
+  useFocusEffect(useCallback(() => () => { cancelAnimation(r1); cancelAnimation(r2); setIsFlipping(false); }, [r1, r2]));
 
   const [resultsAreHeads, setResultsAreHeads] = useState<boolean[]>([true, true]);
 
@@ -98,7 +107,7 @@ export default function CoinFlipToolScreen() {
 
   const resetStats = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    AudioManager.play('buttonTap');
+    toolAudio.cue();
     setHeadsCount(0);
     setTailsCount(0);
   };
@@ -119,7 +128,7 @@ export default function CoinFlipToolScreen() {
     setIsFlipping(true);
     setHasResult(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    AudioManager.play('tileFlip'); // No coin spin sound, fallback to tileFlip
+    toolAudio.begin(3100);
 
     const outcomes = Array.from({ length: coinCount }, () => Math.random() > 0.5);
     
@@ -140,7 +149,7 @@ export default function CoinFlipToolScreen() {
       });
     }
 
-    setTimeout(() => {
+    toolAudio.later(() => {
       // Settle phase
       for (let i = 0; i < coinCount; i++) {
         const current = coinStates[i].rotation.value;
@@ -157,12 +166,12 @@ export default function CoinFlipToolScreen() {
         // The local state value is updated via setResultsAreHeads later
       }
 
-      setTimeout(() => {
+      toolAudio.later(() => {
         setResultsAreHeads(outcomes);
         setHasResult(true);
         setIsFlipping(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        AudioManager.play('success');
+        toolAudio.finish();
         let newHeads = headsCount;
         let newTails = tailsCount;
         outcomes.forEach(outcome => {
@@ -179,7 +188,7 @@ export default function CoinFlipToolScreen() {
 
   const handleCoinCountChange = (count: number) => {
     if (isFlipping) return;
-    AudioManager.play('buttonTap');
+    toolAudio.cue();
     setCoinCount(count);
     setHasResult(false);
   };

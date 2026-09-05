@@ -1,5 +1,5 @@
 import { Colors } from '@/src/theme/Colors';
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -23,14 +23,15 @@ import Animated, {
   runOnJS,
   cancelAnimation,
   useAnimatedReaction,
-  interpolateColor,
 } from 'react-native-reanimated';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AudioManager } from '@/src/services/AudioManager';
+import { useToolAudio } from '@/src/hooks/useToolAudio';
+import { useFocusEffect } from 'expo-router';
+import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 
 const SLICE_COLORS = [
-  Colors.orange,
-  Colors.cyan,
+  '#8064E8',
+  '#249A9D',
   '#FF2D55',
   Colors.green,
   '#AF52DE',
@@ -66,6 +67,7 @@ const fitLabel = (label: string, sliceCount: number) => {
 };
 
 export default function WheelToolScreen() {
+  const toolAudio = useToolAudio('wheel');
   const { width: screenW } = useWindowDimensions();
   const wheelSize = Math.min((screenW > 0 ? screenW : 390) - 40, 360);
   const radius = wheelSize / 2;
@@ -79,7 +81,14 @@ export default function WheelToolScreen() {
   const rotation = useSharedValue<number>(0);
   const pointerColorIndex = useSharedValue<number>(-1);
   const inputRef = useRef<TextInput>(null);
-  const tensionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const spinGeneration = useRef(0);
+  const spinningRef = useRef(false);
+  useFocusEffect(useCallback(() => () => {
+    spinGeneration.current++;
+    spinningRef.current = false;
+    cancelAnimation(rotation);
+    setIsSpinning(false);
+  }, [rotation]));
 
   const sliceAngle = options.length > 0 ? 360 / options.length : 360;
 
@@ -129,6 +138,7 @@ export default function WheelToolScreen() {
   };
 
   const onSpinComplete = (finalRotation: number) => {
+    spinningRef.current = false;
     setIsSpinning(false);
     const normalized = ((finalRotation % 360) + 360) % 360;
     // Pointer is at the top (12 o'clock = -90 deg from rotation 0).
@@ -139,50 +149,45 @@ export default function WheelToolScreen() {
     const result = options[winnerIndex] ?? options[0];
     setWinner(result);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    AudioManager.play('wheelWin');
+    toolAudio.finish();
     if (removeAfterSpin && options.length > MIN_OPTIONS) {
-      setTimeout(() => {
+      const completedGeneration = spinGeneration.current;
+      toolAudio.later(() => {
+        if (completedGeneration !== spinGeneration.current) return;
         setOptions((prev) => prev.filter((_, i) => i !== winnerIndex));
       }, 1200);
     }
   };
 
   const onPointerTick = () => {
-    Haptics.selectionAsync();
+    if (!spinningRef.current) return;
+    toolAudio.tick();
   };
 
   const spin = () => {
-    if (isSpinning || options.length < MIN_OPTIONS) return;
+    if (spinningRef.current || options.length < MIN_OPTIONS) return;
+    spinningRef.current = true;
+    spinGeneration.current++;
     Keyboard.dismiss();
     setWinner(null);
     setIsSpinning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    AudioManager.play('wheelSpin');
+    toolAudio.begin(6200);
 
     cancelAnimation(rotation);
-    if (tensionTimerRef.current) {
-      clearTimeout(tensionTimerRef.current);
-      tensionTimerRef.current = null;
-    }
 
-    // Single 10s spin: starts fast and gently eases into a near-still stop.
-    // bezier(0.05, 0.7, 0.1, 1) front-loads the velocity then trails off slowly
-    // for maximum suspense at the end.
-    const totalDuration = 10000;
+    // One easing curve drives both rotation and the actual pointer-detent ticks.
+    const totalDuration = 6200;
     const totalTurns = 8 + Math.random() * 3; // 8..11 full rotations across the spin
     const extraAngle = Math.random() * 360; // random landing offset
     const finalTarget = rotation.value + totalTurns * 360 + extraAngle;
 
-    // Tension cue ~2s before stop, when slices visibly crawl.
-    tensionTimerRef.current = setTimeout(() => {
-      AudioManager.play('phaseChange');
-    }, totalDuration - 2000);
 
     rotation.value = withTiming(
       finalTarget,
       {
         duration: totalDuration,
-        easing: Easing.bezier(0.05, 0.7, 0.1, 1),
+        easing: Easing.out(Easing.cubic),
       },
       (finished) => {
         if (finished) {
@@ -206,42 +211,25 @@ export default function WheelToolScreen() {
     (idx, prev) => {
       if (idx !== prev) {
         pointerColorIndex.value = idx;
-        runOnJS(onPointerTick)();
+
       }
     },
     [sliceAngle, options.length],
   );
 
-  const pointerTipAnimatedStyle = useAnimatedStyle(() => {
-    const i = pointerColorIndex.value;
-    if (i < 0 || i >= slices.length) {
-      return { borderTopColor: 'white' as const };
-    }
-    const color = interpolateColor(
-      i,
-      [i - 0.0001, i],
-      [slices[i].color, slices[i].color],
-    );
-    return { borderTopColor: color };
-  });
-
-  const pointerBodyAnimatedStyle = useAnimatedStyle(() => {
-    const i = pointerColorIndex.value;
-    if (i < 0 || i >= slices.length) {
-      return { backgroundColor: 'white' as const };
-    }
-    const color = interpolateColor(
-      i,
-      [i - 0.0001, i],
-      [slices[i].color, slices[i].color],
-    );
-    return { backgroundColor: color };
-  });
+  // 24 fixed rim detents give a natural ratchet even with only two options.
+  useAnimatedReaction(
+    () => Math.floor(rotation.value / 15),
+    (detent, previous) => { if (previous !== null && detent !== previous) runOnJS(onPointerTick)(); },
+    [],
+  );
 
   const fontSize = options.length > 16 ? 9 : options.length > 10 ? 11 : options.length > 6 ? 12 : 14;
   const labelRadius = radius * 0.62;
 
   return (
+    <View style={{ flex: 1 }}>
+    <AppBackgroundView />
     <ScrollView
       style={styles.scrollContainer}
       contentContainerStyle={styles.container}
@@ -249,6 +237,11 @@ export default function WheelToolScreen() {
       keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
     >
+      <View style={styles.intro}>
+        <Text style={styles.eyebrow}>THE DECISION WHEEL</Text>
+        <Text style={styles.introTitle}>Leave it to chance.</Text>
+        <Text style={styles.introHint}>Add your options. Give it a spin.</Text>
+      </View>
       {/* Wheel */}
       <View style={styles.wheelArea}>
         <View testID="wheel-stage" style={[styles.wheelWrap, { width: wheelSize, height: wheelSize }]}>
@@ -289,10 +282,11 @@ export default function WheelToolScreen() {
                       y={pos.y}
                       fill="white"
                       fontSize={fontSize}
-                      fontWeight="900"
+                      fontWeight="600"
+                      fontFamily="Viral-Bold"
                       textAnchor="middle"
                       alignmentBaseline="middle"
-                      transform={`rotate(${s.midA} ${pos.x} ${pos.y})`}
+                      transform={`rotate(${s.midA > 180 ? s.midA - 270 : s.midA - 90} ${pos.x} ${pos.y})`}
                     >
                       {fitLabel(s.label, options.length)}
                     </SvgText>
@@ -308,15 +302,15 @@ export default function WheelToolScreen() {
                   fill="none"
                 />
                 {/* pegs around the rim — one per slice boundary, gives the wheel its real-world look */}
-                {slices.map((s) => {
-                  const peg = polarToCartesian(radius, radius, radius - 7, s.startA);
+                {Array.from({ length: 24 }, (_, index) => {
+                  const peg = polarToCartesian(radius, radius, radius - 7, index * 15);
                   return (
                     <Circle
-                      key={`peg-${s.index}`}
+                      key={`peg-${index}`}
                       cx={peg.x}
                       cy={peg.y}
-                      r={2.5}
-                      fill="#FFD66E"
+                      r={1.5}
+                      fill="rgba(255,255,255,0.65)"
                       stroke="rgba(0,0,0,0.45)"
                       strokeWidth={0.6}
                     />
@@ -343,31 +337,28 @@ export default function WheelToolScreen() {
             />
             <View style={styles.hubInner}>
               <LinearGradient
-                colors={['#F4F5F7', '#A8ACB7']}
+                colors={['#393052', '#181422']}
                 start={{ x: 0.2, y: 0 }}
                 end={{ x: 0.8, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
-              <IconSymbol name="sparkles" size={20} color={Colors.blue} weight="black" />
+              <IconSymbol name="arrow.triangle.2.circlepath" size={23} color="#DCD1FF" weight="black" />
             </View>
           </View>
 
           {/* Pointer — marker pin: rounded body up top, sharp triangle tip pointing down into the wheel */}
-          <View style={[styles.pointerWrap, { left: radius - 24 }]} pointerEvents="none">
-            <Animated.View style={[styles.pointerBody, pointerBodyAnimatedStyle]}>
-              <View style={styles.pointerHole} />
-            </Animated.View>
-            <Animated.View style={[styles.pointerTip, pointerTipAnimatedStyle]} />
+          <View style={[styles.pointerWrap, { left: radius - 12 }]} pointerEvents="none">
+            <View style={styles.pointerTip} />
           </View>
         </View>
 
         {/* Result */}
         <View style={styles.resultArea}>
-          <Text style={styles.resultLabel}>{isSpinning ? 'SPINNING…' : winner ? 'WINNER' : 'TAP SPIN'}</Text>
+          <Text style={styles.resultLabel}>{isSpinning ? 'SPINNING…' : winner ? 'THE WHEEL CHOSE' : 'READY WHEN YOU ARE'}</Text>
           <Text testID="wheel-result-value" style={[styles.resultValue, isSpinning && { opacity: 0.4 }]} numberOfLines={1}>
-            {winner ?? '—'}
+            {winner ?? (isSpinning ? 'Finding your pick…' : `${options.length} possibilities`)}
           </Text>
-          <Text style={styles.hintText}>The highlighted segment at the pointer shows the winner.</Text>
+          <Text style={styles.hintText}>The pointer makes the final call.</Text>
         </View>
       </View>
 
@@ -384,13 +375,13 @@ export default function WheelToolScreen() {
         ]}
       >
         <LinearGradient
-          colors={[Colors.blue, Colors.cyan]}
+          colors={['#8064E8', '#5258C8']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.spinBtn}
         >
           <IconSymbol name="arrow.triangle.2.circlepath" size={18} color="white" weight="heavy" />
-          <Text style={styles.spinBtnText}>{isSpinning ? 'Spinning…' : 'Spin'}</Text>
+          <Text style={styles.spinBtnText}>{isSpinning ? 'Spinning…' : 'Spin the wheel'}</Text>
         </LinearGradient>
       </Pressable>
 
@@ -487,22 +478,27 @@ export default function WheelToolScreen() {
         })}
       </View>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: 'transparent',
   },
   container: {
-    paddingTop: 30,
+    paddingTop: 20,
     paddingBottom: 32,
     alignItems: 'center',
-    maxWidth: 600,
+    maxWidth: 520,
     width: '100%',
     alignSelf: 'center',
   },
+  intro: { width: '100%', paddingHorizontal: 24, marginBottom: 24 },
+  eyebrow: { color: '#B6A4EF', fontSize: 10, fontWeight: '800', letterSpacing: 2 },
+  introTitle: { color: '#FFFFFF', fontFamily: 'Viral-Bold', fontSize: 26, marginTop: 6 },
+  introHint: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 6 },
   wheelArea: {
     alignItems: 'center',
     width: '100%',
@@ -554,8 +550,8 @@ const styles = StyleSheet.create({
   },
   pointerWrap: {
     position: 'absolute',
-    top: -18,
-    width: 48,
+    top: -5,
+    width: 24,
     alignItems: 'center',
     ...Platform.select({
       ios: {
@@ -568,30 +564,13 @@ const styles = StyleSheet.create({
       default: {},
     }),
   },
-  pointerBody: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.85)',
-  },
-  pointerHole: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
-  },
   pointerTip: {
     marginTop: -2,
     width: 0,
     height: 0,
-    borderLeftWidth: 16,
-    borderRightWidth: 16,
-    borderTopWidth: 26,
+    borderLeftWidth: 12,
+    borderRightWidth: 12,
+    borderTopWidth: 23,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: 'white',
@@ -655,9 +634,10 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   resultValue: {
-    fontSize: 30,
-    fontWeight: '900',
-    color: Colors.cyan,
+    fontSize: 24,
+    fontFamily: 'Viral-Bold',
+    fontWeight: '600',
+    color: '#E5DDFF',
     textShadowColor: 'rgba(90, 200, 250, 0.5)',
     textShadowOffset: { width: 0, height: 3 },
     textShadowRadius: 16,

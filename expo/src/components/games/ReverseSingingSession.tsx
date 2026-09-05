@@ -7,6 +7,7 @@ import { PhaseTransition } from './PhaseTransition';
 import { LiquidGlass } from '@/src/components/LiquidGlass';
 import { isWeb } from '@/src/utils/platform';
 import { WebAudioRecorder, isWebMediaRecorderSupported, revokeWebAudioUrl } from '@/src/utils/browserMediaAdapter';
+import { canStartReverseTake } from '@/src/utils/reverseSingingFlow';
 
 // Platform-safe imports
 let Audio: any = null;
@@ -237,6 +238,10 @@ export function ReverseSingingSession({ session }: Props) {
   const [p2ReversedUri, setP2ReversedUri] = useState<string | null>(null);
   const [p2Duration, setP2Duration] = useState(0);
   const [p2Reversing, setP2Reversing] = useState(false);
+  const [captureBusy, setCaptureBusy] = useState(false);
+  const captureOperation = useRef(false);
+  const mounted = useRef(true);
+  const playbackGeneration = useRef(0);
   const [micError, setMicError] = useState<string | null>(null);
 
   const [sound, setSound] = useState<any>(null);
@@ -267,6 +272,37 @@ export function ReverseSingingSession({ session }: Props) {
     }
     trackedUrlsRef.current.clear();
   };
+
+  const p1Locked = !!p1Uri;
+  const p2Ready = !!p1ReversedUri && !p1Recording && !p1Reversing;
+  const recordingNow = !!p1Recording || !!p2Recording;
+  const controlsBusy = captureBusy || recordingNow || p1Reversing || p2Reversing;
+
+  async function stopPlayback() {
+    playbackGeneration.current++;
+    if (webAudioElemRef.current) {
+      webAudioElemRef.current.pause();
+      webAudioElemRef.current.onended = null;
+      webAudioElemRef.current = null;
+    }
+    if (sound) { try { await sound.unloadAsync(); } catch {} setSound(null); }
+    setIsPlaying(false);
+  }
+
+  async function retryRound() {
+    if (captureOperation.current || recordingNow || p1Reversing || p2Reversing) return;
+    captureOperation.current = true;
+    setCaptureBusy(true);
+    try {
+      await stopPlayback();
+      revokeAllTrackedUrls();
+      webRecorderRef.current?.revokeAllCreatedUrls();
+      setP1Uri(null); setP1ReversedUri(null); setP1Duration(0);
+      setP2Uri(null); setP2ReversedUri(null); setP2Duration(0);
+      setP1Recording(null); setP2Recording(null);
+      setMicError(null);
+    } finally { captureOperation.current = false; setCaptureBusy(false); }
+  }
 
   // ── Request mic permission ──
   useEffect(() => {
@@ -325,7 +361,10 @@ export function ReverseSingingSession({ session }: Props) {
 
   // ── Cleanup on unmount ──
   useEffect(() => {
+    mounted.current = true;
     return () => {
+      mounted.current = false;
+      playbackGeneration.current++;
       if (p1RecRef.current) try { p1RecRef.current.stopAndUnloadAsync(); } catch {}
       if (p2RecRef.current) try { p2RecRef.current.stopAndUnloadAsync(); } catch {}
       if (sound) try { sound.unloadAsync(); } catch {}
@@ -346,6 +385,11 @@ export function ReverseSingingSession({ session }: Props) {
 
   // ── Recording ──
   async function startRecording(player: 1 | 2) {
+    if (!canStartReverseTake(player, p1Locked, p2Ready, captureOperation.current || recordingNow || p1Reversing || p2Reversing)) return;
+    captureOperation.current = true;
+    setCaptureBusy(true);
+    try {
+    await stopPlayback();
     if (isWeb) {
       if (!isWebMediaRecorderSupported()) {
         setMicError('Microphone recording is not supported in this browser. Please use Chrome, Safari, Firefox, or Edge.');
@@ -357,6 +401,7 @@ export function ReverseSingingSession({ session }: Props) {
           webRecorderRef.current = new WebAudioRecorder();
         }
         await webRecorderRef.current.start();
+        if (!mounted.current) { webRecorderRef.current?.cleanup(); return; }
         if (player === 1) {
           if (p1Uri) revokeTrackedUrl(p1Uri);
           if (p1ReversedUri) revokeTrackedUrl(p1ReversedUri);
@@ -416,6 +461,7 @@ export function ReverseSingingSession({ session }: Props) {
       };
 
       const { recording } = await Audio.Recording.createAsync(recordingOptions);
+      if (!mounted.current) { await recording.stopAndUnloadAsync(); return; }
 
       if (player === 1) {
         setP1Recording(recording);
@@ -436,9 +482,17 @@ export function ReverseSingingSession({ session }: Props) {
     } catch (err: any) {
       Alert.alert('Audio Error', 'Could not start recording. Please try again.');
     }
+    } finally {
+      captureOperation.current = false;
+      if (mounted.current) setCaptureBusy(false);
+    }
   }
 
   async function stopRecording(player: 1 | 2) {
+    if (captureOperation.current) return;
+    captureOperation.current = true;
+    setCaptureBusy(true);
+    try {
     if (isWeb) {
       if (!webRecorderRef.current) return;
       if (player === 1) setP1Reversing(true);
@@ -446,6 +500,7 @@ export function ReverseSingingSession({ session }: Props) {
 
       try {
         const res = await webRecorderRef.current.stop();
+        if (!mounted.current) { revokeWebAudioUrl(res.originalWavUri); revokeWebAudioUrl(res.reversedWavUri); return; }
         registerTrackedUrl(res.originalWavUri);
         registerTrackedUrl(res.reversedWavUri);
 
@@ -478,6 +533,7 @@ export function ReverseSingingSession({ session }: Props) {
       await new Promise(resolve => setTimeout(resolve, 400));
 
       const uri = rec.getURI();
+      if (!mounted.current) return;
 
       if (player === 1) {
         setP1Uri(uri);
@@ -499,6 +555,7 @@ export function ReverseSingingSession({ session }: Props) {
 
         try {
           const result = await reverseAudioFile(uri);
+          if (!mounted.current) return;
           if (player === 1) setP1ReversedUri(result.uri);
           else setP2ReversedUri(result.uri);
 
@@ -517,11 +574,20 @@ export function ReverseSingingSession({ session }: Props) {
     } catch (err: any) {
       console.error('[ReverseSinging] stopRecording error:', err?.message);
     }
+    } finally {
+      captureOperation.current = false;
+      if (mounted.current) {
+        setCaptureBusy(false);
+        if (player === 1) { setP1Recording(null); setP1Reversing(false); p1RecRef.current = null; }
+        else { setP2Recording(null); setP2Reversing(false); p2RecRef.current = null; }
+      }
+    }
   }
 
   // ── Playback ──
   async function playSound(uri: string | null, rate: number = 1.0) {
-    if (!uri) return;
+    if (!uri || controlsBusy || captureOperation.current) return;
+    const generation = ++playbackGeneration.current;
 
     if (isWeb) {
       try {
@@ -558,11 +624,12 @@ export function ReverseSingingSession({ session }: Props) {
         { volume: 1.0 }
       );
 
-      // Set rate AFTER loading — expo-av on some devices ignores rate in initial status
+      if (generation !== playbackGeneration.current || !mounted.current) { await newSound.unloadAsync(); return; }
+      // Set rate after loading; discard playback overtaken by Retry or recording.
       if (rate !== 1.0) {
         await newSound.setRateAsync(rate, true, Audio.PitchCorrectionQuality?.High ?? 1);
       }
-
+      if (generation !== playbackGeneration.current || !mounted.current) { await newSound.unloadAsync(); return; }
       setSound(newSound);
       setIsPlaying(true);
       newSound.setOnPlaybackStatusUpdate((status: any) => {
@@ -600,7 +667,7 @@ export function ReverseSingingSession({ session }: Props) {
 
   // ─── Render ───
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView testID="reverse-singing-content" contentContainerStyle={styles.container}>
       {micError && (
         <View testID="reverse-singing-mic-error" style={styles.errorBanner}>
           <IconSymbol name="exclamationmark.triangle.fill" size={20} color={Colors.yellow} />
@@ -612,14 +679,14 @@ export function ReverseSingingSession({ session }: Props) {
       )}
 
       {/* Player 1 Card */}
-      <LiquidGlass radius={24} style={[styles.card, styles.cardActive]}>
+      <LiquidGlass radius={20} style={[styles.card, !p1Locked ? styles.cardActive : styles.cardLocked]}>
         <View style={styles.cardHeader}>
-          <View>
-            <Text style={styles.cardTitle}>{p1Name}</Text>
-            <Text style={styles.cardSubtitle}>record anything you want</Text>
+          <View style={styles.playerHeading}>
+            <Text style={styles.cardTitle} numberOfLines={1}>{p1Name}</Text>
+            <Text style={styles.cardSubtitle} numberOfLines={1}>Record anything you want</Text>
           </View>
           <View style={[styles.statusPill, p1Recording ? styles.statusRecording : p1Uri ? styles.statusDone : styles.statusActive]}>
-            <Text style={styles.statusText}>{p1Recording ? 'Recording' : p1Uri ? 'Done' : 'Ready'}</Text>
+            <Text style={styles.statusText}>{p1Recording ? 'Recording' : p1Uri ? 'Locked' : 'Ready'}</Text>
           </View>
         </View>
 
@@ -627,7 +694,7 @@ export function ReverseSingingSession({ session }: Props) {
           <View style={styles.waveformContainer}>
             <View style={styles.waveformBars}>
               {WAVEFORM_BARS.map((val, i) => (
-                <View key={i} style={[styles.waveformBar, { height: Math.max(5, val * 24) }]} />
+                <View key={i} style={[styles.waveformBar, { height: Math.max(3, val * 12) }]} />
               ))}
             </View>
             <Text style={styles.durationText}>{p1Duration}.0s</Text>
@@ -639,11 +706,12 @@ export function ReverseSingingSession({ session }: Props) {
             <Pressable 
               testID="reverse-singing-p1-record"
               accessibilityRole="button"
-              style={[styles.squareBtn, { backgroundColor: p1Recording ? '#8E1C16' : Colors.red }]}
+              disabled={captureBusy || p1Locked || !!p2Recording || p1Reversing || p2Reversing}
+              style={[styles.squareBtn, { backgroundColor: p1Recording ? '#8E1C16' : Colors.red }, (p1Locked || captureBusy) && styles.disabled]}
               onPress={() => p1Recording ? stopRecording(1) : startRecording(1)}
             >
-              <IconSymbol name={p1Recording ? "stop.fill" : "record.circle.fill"} size={28} color="white" />
-              <Text style={styles.btnText}>{p1Recording ? `${p1Duration}s / ${MAX_RECORD_SECONDS}s` : "Record"}</Text>
+              <IconSymbol name={p1Recording ? "stop.fill" : p1Locked ? "lock.fill" : "record.circle.fill"} size={22} color="white" />
+              <Text style={styles.btnText}>{p1Recording ? `Stop (${p1Name}) · ${p1Duration}s` : p1Locked ? `Recorded (${p1Name})` : `Record (${p1Name})`}</Text>
             </Pressable>
 
             <Pressable 
@@ -651,7 +719,7 @@ export function ReverseSingingSession({ session }: Props) {
               accessibilityRole="button"
               style={[styles.circleBtn, !p1Uri && styles.disabled]}
               onPress={() => playSound(p1Uri)}
-              disabled={!p1Uri}
+              disabled={!p1Uri || controlsBusy}
             >
               <IconSymbol name="play.fill" size={24} color="white" />
             </Pressable>
@@ -663,7 +731,7 @@ export function ReverseSingingSession({ session }: Props) {
               accessibilityRole="button"
               style={[styles.squareBtn, { backgroundColor: '#007AFF' }, (!p1ReversedUri && !p1Reversing) && styles.disabled]}
               onPress={() => playSound(p1ReversedUri)}
-              disabled={!p1ReversedUri}
+              disabled={!p1ReversedUri || controlsBusy}
             >
               <IconSymbol name="backward.fill" size={28} color="white" />
               <Text style={styles.btnText}>{p1Reversing ? 'Reversing…' : 'Play Reverse'}</Text>
@@ -674,7 +742,7 @@ export function ReverseSingingSession({ session }: Props) {
               accessibilityRole="button"
               style={[styles.circleBtn, !p1ReversedUri && styles.disabled]}
               onPress={() => playSound(p1ReversedUri, 0.5)}
-              disabled={!p1ReversedUri}
+              disabled={!p1ReversedUri || controlsBusy}
             >
               <IconSymbol name="tortoise.fill" size={24} color="white" />
             </Pressable>
@@ -682,15 +750,25 @@ export function ReverseSingingSession({ session }: Props) {
         </View>
       </LiquidGlass>
 
+      {p1Locked && (
+        <Pressable testID="reverse-singing-retry" accessibilityRole="button"
+          accessibilityLabel="Retry round: clear both recordings"
+          disabled={controlsBusy} onPress={retryRound}
+          style={[styles.retryButton, controlsBusy && styles.disabled]}>
+          <IconSymbol name="arrow.counterclockwise" size={16} color="#FFFFFF" />
+          <Text style={styles.retryText}>Retry · Start over with {p1Name}</Text>
+        </Pressable>
+      )}
+
       {/* Player 2 Card */}
       <LiquidGlass radius={24} style={[styles.card, styles.cardActive]}>
         <View style={styles.cardHeader}>
-          <View>
-            <Text style={styles.cardTitle}>{p2Name}</Text>
-            <Text style={styles.cardSubtitle}>try to copy reversed</Text>
+          <View style={styles.playerHeading}>
+            <Text style={styles.cardTitle} numberOfLines={1}>{p2Name}</Text>
+            <Text style={styles.cardSubtitle} numberOfLines={1}>Copy the reversed sound</Text>
           </View>
           <View style={[styles.statusPill, p2Recording ? styles.statusRecording : p2Uri ? styles.statusDone : styles.statusActive]}>
-            <Text style={styles.statusText}>{p2Recording ? 'Recording' : p2Uri ? 'Done' : 'Ready'}</Text>
+            <Text style={styles.statusText}>{p2Recording ? 'Recording' : p2Uri ? 'Done' : p2Ready ? 'Your turn' : 'Waiting'}</Text>
           </View>
         </View>
 
@@ -710,11 +788,12 @@ export function ReverseSingingSession({ session }: Props) {
             <Pressable 
               testID="reverse-singing-p2-record"
               accessibilityRole="button"
-              style={[styles.squareBtn, { backgroundColor: p2Recording ? '#8E1C16' : Colors.red }]}
+              disabled={!p2Ready || captureBusy || !!p1Recording || p2Reversing}
+              style={[styles.squareBtn, { backgroundColor: p2Recording ? '#8E1C16' : Colors.red }, (!p2Ready || captureBusy) && styles.disabled]}
               onPress={() => p2Recording ? stopRecording(2) : startRecording(2)}
             >
               <IconSymbol name={p2Recording ? "stop.fill" : "record.circle.fill"} size={28} color="white" />
-              <Text style={styles.btnText}>{p2Recording ? `${p2Duration}s / ${MAX_RECORD_SECONDS}s` : "Record Mimic"}</Text>
+              <Text style={styles.btnText}>{p2Recording ? `Stop (${p2Name}) · ${p2Duration}s` : `Record Mimic (${p2Name})`}</Text>
             </Pressable>
 
             <Pressable 
@@ -722,7 +801,7 @@ export function ReverseSingingSession({ session }: Props) {
               accessibilityRole="button"
               style={[styles.circleBtn, !p2Uri && styles.disabled]}
               onPress={() => playSound(p2Uri)}
-              disabled={!p2Uri}
+              disabled={!p2Uri || controlsBusy}
             >
               <IconSymbol name="play.fill" size={24} color="white" />
             </Pressable>
@@ -734,7 +813,7 @@ export function ReverseSingingSession({ session }: Props) {
               accessibilityRole="button"
               style={[styles.squareBtn, { backgroundColor: Colors.green }, (!p2ReversedUri && !p2Reversing) && styles.disabled]}
               onPress={() => playSound(p2ReversedUri)}
-              disabled={!p2ReversedUri}
+              disabled={!p2ReversedUri || controlsBusy}
             >
               <IconSymbol name="sparkles" size={28} color="white" />
               <Text style={styles.btnText}>{p2Reversing ? 'Reversing…' : 'Result'}</Text>
@@ -745,7 +824,7 @@ export function ReverseSingingSession({ session }: Props) {
               accessibilityRole="button"
               style={[styles.circleBtn, (!p2Uri && !p2ReversedUri) && styles.disabled]}
               onPress={showShareOptions}
-              disabled={!p2Uri && !p2ReversedUri}
+              disabled={(!p2Uri && !p2ReversedUri) || controlsBusy}
             >
               <IconSymbol name="square.and.arrow.up" size={24} color="white" />
             </Pressable>
@@ -753,39 +832,7 @@ export function ReverseSingingSession({ session }: Props) {
         </View>
       </LiquidGlass>
 
-      {/* History Card */}
-      <LiquidGlass radius={24} style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View>
-            <Text style={styles.cardTitle}>History</Text>
-            <Text style={styles.cardSubtitle}>Last 20 only</Text>
-          </View>
-          <Pressable style={styles.openBtn}>
-            <Text style={styles.openBtnText}>Open</Text>
-          </Pressable>
-        </View>
-
-        {p2Uri ? (
-          <View style={styles.historyRow}>
-            <View style={styles.historyDate}>
-              <Text style={styles.historyDateText}>Just now</Text>
-            </View>
-            <View style={styles.historyActions}>
-              <Pressable style={[styles.historyCircleBtn, { backgroundColor: '#FF2D55' }]} onPress={() => playSound(p2Uri)}>
-                <IconSymbol name="mic.fill" size={16} color="white" />
-              </Pressable>
-              <Pressable style={[styles.historyCircleBtn, { backgroundColor: '#007AFF' }]} onPress={() => playSound(p2ReversedUri)}>
-                <IconSymbol name="sparkles" size={16} color="white" />
-              </Pressable>
-              <Pressable style={styles.historyCircleBtn} onPress={showShareOptions}>
-                <IconSymbol name="ellipsis" size={16} color="white" />
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <Text style={styles.emptyHistory}>No history yet.</Text>
-        )}
-      </LiquidGlass>
+      {p2Uri && <Text style={styles.roundHint}>Both takes are ready. Play Result to compare, or Retry for a new round.</Text>}
 
     </ScrollView>
   );
@@ -793,9 +840,9 @@ export function ReverseSingingSession({ session }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    gap: 16,
-    paddingBottom: 40,
+    padding: 12,
+    gap: 10,
+    paddingBottom: 12,
     maxWidth: 600,
     width: '100%',
     alignSelf: 'center',
@@ -819,8 +866,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   card: {
-    padding: 20,
+    padding: 12,
   },
+  cardLocked: { borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  playerHeading: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  retryButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)' },
+  retryText: { color: '#fff', fontSize: 12, flexShrink: 1 },
+  roundHint: { color: 'rgba(255,255,255,0.6)', fontSize: 11, textAlign: 'center' },
   cardActive: {
     borderWidth: 1,
     borderColor: 'rgba(52, 199, 89, 0.4)',
@@ -828,23 +880,26 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
   },
   cardTitle: {
     color: 'white',
-    fontSize: 32,
+    fontSize: 16,
+    maxWidth: 100,
+    flexShrink: 1,
     fontFamily: 'Viral-Black',
     letterSpacing: -0.5,
   },
   cardSubtitle: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 10,
+    flexShrink: 1,
   },
   statusPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
     borderRadius: 12,
   },
   statusActive: {
@@ -865,9 +920,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.2)',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 20,
+    padding: 5,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   waveformBars: {
     flex: 1,
@@ -886,30 +941,32 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   grid: {
-    gap: 12,
+    gap: 8,
   },
   gridRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   squareBtn: {
     flex: 1,
-    borderRadius: 20,
-    padding: 16,
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    minHeight: 100,
+    borderRadius: 14,
+    padding: 10,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    minHeight: 54,
   },
   btnText: {
     color: 'white',
-    fontSize: 15,
-    fontFamily: 'Viral-Black',
-    marginTop: 12,
+    fontSize: 12,
+    lineHeight: 16,
+    flexShrink: 1,
+    fontFamily: 'Viral-Bold',
   },
   circleBtn: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 54,
+    height: 54,
+    borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
