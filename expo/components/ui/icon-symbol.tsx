@@ -1,7 +1,11 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
-import { ComponentProps } from 'react';
-import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
+import { ComponentProps, useSyncExternalStore } from 'react';
+import { OpaqueColorValue, Text, type StyleProp, type TextStyle } from 'react-native';
+
+const subscribeToHydration = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
 
 type IconMapping = Record<Extract<SymbolViewProps['name'], string>, ComponentProps<typeof MaterialIcons>['name']>;
 type IconSymbolName = keyof typeof MAPPING;
@@ -178,6 +182,11 @@ export function IconSymbol({
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
+  // Static export contains empty font placeholders. A parent may preload fonts
+  // before a nested Suspense boundary hydrates, so Font.isLoaded alone is unsafe.
+  // Keep that first hydration render identical; native/client-only mounts are ready.
+  const hydrated = useSyncExternalStore(subscribeToHydration, clientSnapshot, serverSnapshot);
+  if (!hydrated) return <Text />;
   const mappedName = MAPPING[name] || 'help-outline';
   // Match the public font family registered by the root useFonts hook.
   return <MaterialIcons color={color} size={size} name={mappedName} style={style} />;

@@ -18,7 +18,36 @@
 - Web export succeeded: 91 routes, `entry-18b1f252a05920c6463078f616058eae.js`.
   Synced generated Hosting output, preserving legal pages and rewriting asset paths.
   This web release also incorporates the already-committed SDK 57 migration.
-- Publishing and live verification pending; no persistent local server used.
+- Source release: `86778987827a3d2ceece41c4b744b93ecb065fad`.
+- Firebase Hosting deployment succeeded (316 files); no backend targets deployed.
+- First live pass confirmed icons and tab selection, but exposed a React hydration
+  error: parent font loading could complete before nested boundaries hydrated their
+  empty static icon placeholders. Added a stable server/first-hydration snapshot
+  with useSyncExternalStore (native/client-only mounts render immediately).
+  Reference: https://react.dev/reference/react/useSyncExternalStore#adding-support-for-server-rendering
+- Re-exported and redeployed that focused correction. Final web bundle:
+  `entry-551e550c0a8adb4aa68584bb90b7927a.js` at https://partybot.games.
+  Live DOM confirmed this exact bundle and `material` font family. The corrected
+  home load no longer reported the earlier React error. Mobile viewport 390x844
+  had document width 390 (no horizontal overflow); desktop icons and Games/Tools/
+  Friends selection were visually checked. Memory Grid setup and round start worked.
+- Expo Go update succeeded from 8677898 for Android and iOS, branch/channel
+  `expo-go-sdk57`, runtime `exposdk:57.0.0`, group
+  `0e24a31a-7c57-4116-90ae-d770a063740d`:
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/0e24a31a-7c57-4116-90ae-d770a063740d
+  Verified HTTP 200 manifests with IDs iOS `01a0723b-1a34-7082-ae62-9bfda6149304`
+  and Android `01a0723b-1a34-7dc1-91ed-c0906c4a1ebc`.
+  The subsequent web-only hydration correction is in Hosting; the published native
+  preview already has all requested UI/mode changes and does not hydrate HTML.
+- No persistent local server. Physical-device receipt/rendering remains unverified.
+  Git remote push remains blocked pending explicit destination confirmation.
+- Final checks: TypeScript passed; all 112 tests in nine suites passed. Direct
+  `/team-setup` navigation was verified to return home; final browser error log
+  was empty. A browser-control timeout prevented certifying the Memory Grid Exit
+  interaction; navigation recovered afterward. Do not count this as a full game
+  completion test. Temporary mobile viewport override was reset.
+- Final recovery tag: `checkpoint/team-nav-icons-published`. Full Git history
+  backup: `playbot-team-nav-icons-2026-09-05.bundle` in the Codex audit workspace.
 
 ## 2026-09-05 — SDK 57 / Expo Go compatibility (1.1.0)
 

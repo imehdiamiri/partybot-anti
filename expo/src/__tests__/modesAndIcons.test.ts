@@ -34,3 +34,11 @@ test('all declared symbol mappings resolve to actual Material glyphs', () => {
   expect(entries.length).toBeGreaterThan(50);
   for (const [, glyph] of entries) expect(glyphs).toHaveProperty(glyph);
 });
+
+test('font placeholders remain stable during nested web hydration', () => {
+  const icon = source('components/ui/icon-symbol.tsx');
+  expect(icon).toContain('const serverSnapshot = () => false');
+  expect(icon).toContain('const clientSnapshot = () => true');
+  expect(icon).toContain('useSyncExternalStore(subscribeToHydration, clientSnapshot, serverSnapshot)');
+  expect(icon.indexOf('if (!hydrated) return <Text />')).toBeLessThan(icon.indexOf('return <MaterialIcons'));
+});
