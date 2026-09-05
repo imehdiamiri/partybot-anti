@@ -1,34 +1,20 @@
 import { Colors } from '@/src/theme/Colors';
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { PhaseTransition } from './PhaseTransition';
 import { GamePassPhoneView } from './SharedGameComponents';
 import { ResultsScoreboard } from './ResultsScoreboard';
+import { imposterWordPicker } from '@/src/services/ImposterWords';
 import { LiquidGlass } from '@/src/components/LiquidGlass';
 
 interface Props {
   session: GameSession;
 }
 
-type Phase = 'reveal' | 'ready' | 'discussion' | 'clueGiving' | 'voting' | 'results' | 'leaderboard' | 'finished';
-
-const WORD_BANKS: Record<string, string[]> = {
-  animals: ['Dog', 'Cat', 'Elephant', 'Lion', 'Tiger', 'Penguin', 'Giraffe', 'Dolphin', 'Eagle', 'Shark', 'Rabbit', 'Horse', 'Bear', 'Wolf', 'Fox'],
-  food: ['Pizza', 'Sushi', 'Burger', 'Pasta', 'Taco', 'Chocolate', 'Ice Cream', 'Pancake', 'Steak', 'Salad', 'Soup', 'Sandwich', 'Cake', 'Cookie', 'Bread'],
-  places: ['Hospital', 'Library', 'School', 'Restaurant', 'Bank', 'Airport', 'Museum', 'Beach', 'Stadium', 'Cinema', 'Park', 'Church', 'Mall', 'Gym', 'Zoo'],
-  jobs: ['Doctor', 'Teacher', 'Chef', 'Pilot', 'Firefighter', 'Astronaut', 'Detective', 'Farmer', 'Architect', 'Nurse', 'Dentist', 'Lawyer', 'Artist', 'Singer', 'Actor'],
-  movies: ['Titanic', 'Jaws', 'Avatar', 'Frozen', 'Batman', 'Shrek', 'Inception', 'Gladiator', 'Rocky', 'Aladdin', 'Jumanji', 'Moana', 'Coco', 'Bolt', 'Cars'],
-  random: ['Umbrella', 'Telescope', 'Volcano', 'Diamond', 'Castle', 'Pirate', 'Rainbow', 'Robot', 'Dragon', 'Treasure', 'Compass', 'Candle', 'Bridge', 'Clock', 'Mirror'],
-};
-
-function pickWord(category?: string): string {
-  const cat = category && WORD_BANKS[category] ? category : 'random';
-  const bank = WORD_BANKS[cat];
-  return bank[Math.floor(Math.random() * bank.length)];
-}
+type Phase = 'loading' | 'reveal' | 'ready' | 'discussion' | 'clueGiving' | 'voting' | 'results' | 'leaderboard' | 'finished';
 
 const COLORS = [
   '#FF2D55', '#007AFF', Colors.green, Colors.orange, '#AF52DE', Colors.yellow, '#5AC8FA', '#5856D6'
@@ -39,7 +25,9 @@ function getPlayerColor(index: number) {
 }
 
 export function ImposterSession({ session }: Props) {
-  const [phase, setPhase] = useState<Phase>('reveal');
+  const [phase, setPhase] = useState<Phase>('loading');
+  const mounted = useRef(false);
+  const loadingRound = useRef(false);
   const [roundNumber, setRoundNumber] = useState(1);
   const totalRounds = session.maxRounds ?? session.gameConfig?.rounds ?? 3;
   const gameStyle: 'discussion' | 'clue' = session.gameConfig?.gameStyle ?? 'discussion';
@@ -65,12 +53,14 @@ export function ImposterSession({ session }: Props) {
   const [currentClue, setCurrentClue] = useState('');
 
   useEffect(() => {
+    mounted.current = true;
     if (Object.keys(scores).length === 0) {
       const initialScores: Record<string, number> = {};
       session.players.forEach(p => initialScores[p.id] = 0);
       setScores(initialScores);
     }
-    startNewRound();
+    void startNewRound();
+    return () => { mounted.current = false; };
   }, []);
 
   useEffect(() => {
@@ -86,9 +76,17 @@ export function ImposterSession({ session }: Props) {
     return () => clearInterval(interval);
   }, [isTimerRunning, discussionTimeLeft]);
 
-  const startNewRound = () => {
+  const startNewRound = async () => {
+    if (loadingRound.current || !session.players.length) return;
+    loadingRound.current = true;
+    setPhase('loading');
+    setIsRoleRevealed(false);
+    setSecretWord('');
+    setIsTimerRunning(false);
     const randomImposter = session.players[Math.floor(Math.random() * session.players.length)];
-    const randomWord = pickWord(category);
+    const randomWord = await imposterWordPicker.draw(category);
+    loadingRound.current = false;
+    if (!mounted.current) return;
     
     const shuffled = [...session.players];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -112,6 +110,7 @@ export function ImposterSession({ session }: Props) {
   };
 
   const handleRevealMyRole = () => {
+    if (loadingRound.current || !secretWord) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsRoleRevealed(true);
   };
@@ -231,6 +230,13 @@ export function ImposterSession({ session }: Props) {
   };
 
   const currentPlayer = roundPlayers[activePlayerIndex];
+
+  if (phase === 'loading') {
+    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+      <ActivityIndicator color={Colors.orange} />
+      <Text style={{ color: '#fff' }}>Preparing a fresh word…</Text>
+    </View>;
+  }
 
   return (
     <View style={styles.container}>

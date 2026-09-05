@@ -1,5 +1,34 @@
 # Release log
 
+## 2026-09-05 — Ready-to-use content expansion / Imposter replay variety
+
+- Recovery: `checkpoint/before-content-expansion` at `7034910`.
+- Added 1,200 individually authored offline cards; 2,216 visible cards total.
+  Act 109 → 229; Talk 437 → 937; Challenges 92 → 212; Penalty 79 → 169;
+  Couple 91 → 211; Most Likely To 208 → 458. Favorites is a saved collection,
+  not a generated category. Existing IDs, favorites and custom cards are preserved.
+- New content spans creative acting, small adventures, practical creativity,
+  friendly discussions, harmless fictional penalties and thoughtful couple play.
+  All additions are non-spicy. No remote generation, backend or new dependency.
+  Pack IDs and published line order are append-only to keep saved IDs stable.
+- Card decks now use Fisher–Yates rather than biased random-sort shuffling.
+- Imposter previously defaulted to just 15 words. The default now spans all
+  1,350 unique string entries across 11 topics. Added an optional topic picker.
+  Topic counts and labels derive from the same source as the session word pool.
+- Uniform random selection among least-used words prevents repeats within a
+  topic cycle. Global per-word history also respects themed rounds when switching
+  to All topics. Counts survive normal app restarts via local AsyncStorage.
+  Immediate repetition at a cycle boundary is avoided. Pending draws serialize;
+  role reveal waits for initialization. No secret word is shown in setup.
+- Corrupt/unavailable storage falls back to session-memory history. History is
+  local, not synchronized between devices or independently running browser tabs.
+  Clearing app/site data resets it. No changes to multiplayer/backends.
+- Checks: TypeScript passed; 136 tests / 13 suites passed; 91 routes exported.
+  Tests cover counts, IDs, new-text duplicates, filters, old favorites, whole-bank
+  coverage, restarts, concurrent draws, topic changes and blocked/corrupt storage.
+  Web bundle: `entry-942f76d7368d7e9aa7369cafee14065e.js`.
+- Publication and live verification details follow below.
+
 ## 2026-09-05 — Tool effects / Wheel redesign / Reverse Singing handoff
 
 - Recovery: `checkpoint/before-how-it-works` at `34516d9`.
@@ -25,7 +54,14 @@
   100px controls. Removed the nonfunctional history placeholder, retaining current
   take playback/share. Scroll fallback remains for accessibility and small heights.
 - Checks: TypeScript passed; 128 tests in 12 suites passed; 91 web routes exported.
-  Live visual/audio graph checks and publication details follow after deployment.
+  Firebase Hosting deployment completed successfully for partyplay-8.
+  Expo Go SDK57 group: `10602fbb-086c-4b13-967f-3968c2f0c0f3` (both platforms).
+  Android: `01a072bd-543e-76b7-b7bb-cb72f245480e`;
+  iOS: `01a072bd-543e-7b1f-b51f-3e4d8f270b88`.
+  Live 390×844 check: step numerals 1–4 white and visible; Reverse Singing
+  original/mimic controls fit without vertical scrolling; player two disabled
+  until a source exists. No microphone recording was made during browser QA.
+  Real-device microphone/audio-output quality remains a manual verification.
   Reference: https://docs.expo.dev/versions/latest/sdk/audio/.
 
 ## 2026-09-05 — Remove Team Mode, restore web icons, refresh bottom navigation

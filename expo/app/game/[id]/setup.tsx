@@ -9,6 +9,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Games, GameMode } from '@/src/models/AppModels';
 import { useGameStore } from '@/src/store/useGameStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { IMPOSTER_CATEGORY_LABELS, imposterWords } from '@/src/content/imposterWords';
 
 import { SetupPlayersSection, SetupRoundsSection, SetupStartButton } from '@/src/components/games/UnifiedSetupComponents';
 
@@ -110,6 +111,7 @@ export default function GameSetupScreen() {
 
   // ─── Imposter state ───
   const [imposterStyle, setImposterStyle] = useState<'discussion'|'clue'>('discussion');
+  const [imposterCategory, setImposterCategory] = useState('random');
 
   // ─── Restore last-used configs from persistent storage ───
   useEffect(() => {
@@ -148,6 +150,7 @@ export default function GameSetupScreen() {
       if (saved.metronomeRhythm) setMetronomeRhythm(saved.metronomeRhythm);
     }
     if (id === 'imposter' && saved.gameStyle) setImposterStyle(saved.gameStyle);
+    if (id === 'imposter' && Object.hasOwn(IMPOSTER_CATEGORY_LABELS, saved.category)) setImposterCategory(saved.category);
   }, [id]);
 
   // Clamp TIO tile count when grid changes
@@ -235,7 +238,7 @@ export default function GameSetupScreen() {
       case 'drum_challenge':
         config = { drumMode, metronomeCycles, metronomeRhythm }; break;
       case 'imposter':
-        config = { gameStyle: imposterStyle }; break;
+        config = { gameStyle: imposterStyle, category: imposterCategory }; break;
 
     }
 
@@ -390,6 +393,26 @@ export default function GameSetupScreen() {
                 </TouchableOpacity>
               );
             })}
+          </View>
+        )}
+
+        {id === 'imposter' && (
+          <View style={st.card}>
+            <Text style={[st.cardTitle, { color: '#AF52DE' }]}>Word topics</Text>
+            <Text style={{ color: '#aaa', fontSize: 12, marginTop: 6 }}>
+              {imposterWords(imposterCategory).length} words · Random picks, no repeats until this topic is used up.
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+              {Object.entries(IMPOSTER_CATEGORY_LABELS).map(([key, label]) => (
+                <TouchableOpacity key={key} accessibilityRole="button"
+                  accessibilityState={{ selected: imposterCategory === key }}
+                  testID={`imposter-topic-${key}`} onPress={() => setImposterCategory(key)}
+                  style={[st.optionChip, { minHeight: 44, justifyContent: 'center' },
+                    imposterCategory === key && st.optionChipSelected]}>
+                  <Text style={[st.optionChipTitle, imposterCategory === key && { color: '#fff' }]}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         )}
 

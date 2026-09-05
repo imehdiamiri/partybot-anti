@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard, CardSubtype } from '@/src/models/CardModels';
 import { useSavedCardsStore } from '@/src/store/useSavedCardsStore';
 import { useCustomCardsStore } from '@/src/store/useCustomCardsStore';
+import { shuffled } from '@/src/utils/shuffle';
 
 // One-time index by category so we don't scan all 800+ cards on every filter change.
 const CARDS_BY_CATEGORY: Record<string, PartyCard[]> = (() => {
@@ -71,7 +72,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   useEffect(() => {
     let cards = categoryCards;
     if (selectedSubtype) cards = cards.filter(c => c.subtype === selectedSubtype);
-    const next = [...cards].sort(() => Math.random() - 0.5);
+    const next = shuffled(cards);
     setDeck(next);
     deckLengthRef.current = next.length;
     setCurrentIndex(0);

@@ -1,4 +1,6 @@
 
+import { EXPANSION_CARDS } from '../content/cardExpansion';
+
 export enum CardCategory {
   Act = 'act',
   Talk = 'talk',
@@ -100,7 +102,7 @@ export interface PartyCard {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional: the array has 1200+ literals; TS can't represent the union. We validate the shape at the element level via PartyCard.
-export const ALL_CARDS: PartyCard[] = ([
+export const ORIGINAL_CARDS: PartyCard[] = ([
   { id: 'act-0', category: CardCategory.Act, subtype: CardSubtype.Pantomime, text: "Angry boss", isSpicy: false },
   { id: 'act-1', category: CardCategory.Act, subtype: CardSubtype.Pantomime, text: "Elephant", isSpicy: false },
   { id: 'act-2', category: CardCategory.Act, subtype: CardSubtype.Pantomime, text: "Driving a car in rush hour", isSpicy: false },
@@ -1569,3 +1571,5 @@ export const ALL_CARDS: PartyCard[] = ([
   { id: 'added-mlt-9', category: CardCategory.MostLikelyTo, subtype: CardSubtype.MLTSpicy, text: "make the first move on a stranger they just met at a bar", isSpicy: true },
   { id: 'added-mlt-10', category: CardCategory.MostLikelyTo, subtype: CardSubtype.MLTFutureSuccess, text: "become the CEO of a multi-billion dollar startup", isSpicy: false },
 ] as any as PartyCard[]).filter(c => !c.isSpicy && c.subtype !== CardSubtype.MLTSpicy);
+
+export const ALL_CARDS: PartyCard[] = [...ORIGINAL_CARDS, ...EXPANSION_CARDS];
