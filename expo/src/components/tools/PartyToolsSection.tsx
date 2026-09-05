@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
@@ -37,8 +37,11 @@ interface PartyToolsSectionProps {
 
 export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps) {
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
   const [containerWidth, setContainerWidth] = useState<number>(0);
-  const columnWidth = containerWidth > 0 ? Math.floor((containerWidth - 20) / 3) : 0; // 2 gaps of 10 = 20
+  
+  const effectiveWidth = containerWidth > 0 ? containerWidth : (windowWidth > 0 ? Math.min(windowWidth - 32, 720) : 358);
+  const columnWidth = Math.max(90, Math.floor((effectiveWidth - 20) / 3)); // 2 gaps of 10 = 20
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
@@ -69,9 +72,11 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
       )}
 
       <View style={styles.grid}>
-        {columnWidth > 0 && PARTY_TOOLS.map((tool) => (
+        {PARTY_TOOLS.map((tool) => (
           <Pressable 
             key={tool.id} 
+            testID={`tool-card-${tool.id}`}
+            accessibilityRole="button"
             style={[{ width: columnWidth }, styles.cardContainer]} 
             onPress={() => handlePress(tool.id)}
           >

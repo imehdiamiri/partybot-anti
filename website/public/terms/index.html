@@ -1,0 +1,242 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - PartyBot</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/favicon.png">
+    <style>
+@font-face{font-family:'Instrument Serif';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Regular.ttf) format('truetype')}
+@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/InstrumentSerif-Italic.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/Inter-400.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/Inter-500.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/Inter-600.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/Inter-700.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/Inter-800.ttf) format('truetype')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url(/fonts/Inter-900.ttf) format('truetype')}
+        :root {
+            --bg: #000000;
+            --surface: #111111;
+            --border: #222222;
+            --text: #ffffff;
+            --text-secondary: #888888;
+            --accent: #FF6B35;
+            --accent-2: #FF3366;
+            --gradient: linear-gradient(135deg, #FF6B35, #FF3366);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            padding: 16px 24px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo {
+            font-size: 20px; font-weight: 800;
+            color: var(--text); text-decoration: none;
+            display: inline-flex; align-items: center; gap: 10px;
+        }
+        .logo img { height:24px; width:auto; filter:drop-shadow(0 2px 8px rgba(168,85,247,.3)); display: block; }
+        .logo span {
+            background: var(--gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .nav-links { display: flex; gap: 24px; }
+        .nav-links a {
+            color: var(--text-secondary); text-decoration: none;
+            font-size: 14px; font-weight: 500; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .content {
+            max-width: 720px; margin: 0 auto;
+            padding: 120px 24px 80px;
+        }
+        .page-label {
+            font-size: 13px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--accent); margin-bottom: 12px;
+        }
+        h1 {
+            font-size: 40px; font-weight: 800; letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        .updated {
+            font-size: 14px; color: var(--text-secondary); margin-bottom: 48px;
+        }
+        h2 {
+            font-size: 22px; font-weight: 700; margin-top: 48px; margin-bottom: 16px;
+            letter-spacing: -0.01em;
+        }
+        p, li {
+            font-size: 15px; color: #cccccc; margin-bottom: 16px;
+        }
+        ul { padding-left: 20px; margin-bottom: 16px; }
+        li { margin-bottom: 8px; }
+        a.inline { color: var(--accent); text-decoration: none; }
+        a.inline:hover { text-decoration: underline; }
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 48px 24px;
+            max-width: 1200px; margin: 0 auto;
+        }
+        .footer-inner {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 24px;
+        }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a {
+            color: var(--text-secondary); text-decoration: none; font-size: 14px;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--text); }
+        .footer-copy { font-size: 13px; color: var(--text-secondary); }
+        @media (max-width: 640px) {
+            .footer-inner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-inner">
+        <a href="/" class="logo"><img src="/partybot-logo.png" alt="PartyBot"></a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/privacy.html">Privacy</a>
+            <a href="/terms.html">Terms</a>
+        </div>
+    </div>
+</nav>
+
+<div class="content">
+    <div class="page-label">Legal</div>
+    <h1>Terms of Service</h1>
+    <p class="updated">Last updated: April 23, 2026</p>
+
+    <p>Welcome to PartyBot. These Terms of Service — which serve as the End User License Agreement ("EULA") between you and PartyBot — govern your use of the PartyBot mobile application (the "App"), including the Coin Flip tool, the Bottle Spinner tool, the AI Game Studio, and party games such as Truth or Dare, Imposter, Memory Grid, and more. By downloading, installing, or using the App, you agree to be bound by these Terms.</p>
+    <p>These Terms comply with Apple's Standard EULA requirements referenced in Schedule 1 of the Apple Developer Program License Agreement. Where these Terms are silent, Apple's Standard EULA applies: <a class="inline" href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank">apple.com/legal/internet-services/itunes/dev/stdeula</a>.</p>
+
+    <h2>1. Eligibility &amp; Age Rating</h2>
+    <p>The App is rated 17+ on the App Store. You must be at least 17 years old to download and use the App. By using the App, you represent that you meet this age requirement. The App is not directed to children under 13 and is not part of the Kids Category.</p>
+    <p>Certain optional prompt decks and game modes include mature humor, references to alcohol, or adult-oriented party prompts. Such content is clearly labeled and opt-in. The App does not offer real-money gambling; the Coin Flip and Beer Bottle tools are for entertainment purposes only and have no real-world monetary value.</p>
+
+    <h2>2. Account Registration</h2>
+    <p>You may create an account using Apple Sign In, Google Sign In, or as a guest. You are responsible for maintaining the security of your account credentials. You agree to provide accurate information and to update it as necessary.</p>
+
+    <h2>3. Acceptable Use</h2>
+    <p>You agree NOT to:</p>
+    <ul>
+        <li>Cheat, exploit bugs, or use unauthorized tools to gain unfair advantages</li>
+        <li>Manipulate game scores, rankings, or tournament results</li>
+        <li>Harass, bully, or behave abusively toward other players</li>
+        <li>Impersonate other users or entities</li>
+        <li>Attempt to gain unauthorized access to other accounts or our systems</li>
+        <li>Use the App for any illegal or unauthorized purpose</li>
+        <li>Interfere with or disrupt the App's functionality</li>
+        <li>Create multiple accounts to circumvent restrictions or bans</li>
+        <li>Share or sell your account to others</li>
+    </ul>
+    <p>We reserve the right to suspend or terminate accounts that violate these terms without prior notice.</p>
+
+    <h2>4. Virtual Currency (Stars)</h2>
+    <p>The App features a virtual currency called "Stars."</p>
+    <ul>
+        <li>Stars are virtual items with NO real-world monetary value</li>
+        <li>Stars CANNOT be exchanged, transferred, or redeemed for real currency</li>
+        <li>Stars CANNOT be traded between users outside of App-designated features</li>
+        <li>We reserve the right to modify Stars pricing, earning rates, and availability</li>
+        <li>Stars balances are non-transferable and non-refundable</li>
+        <li>Upon account termination, all Stars balances are forfeited</li>
+    </ul>
+    <p>Stars are a limited license granted to you for use within the App only.</p>
+
+    <h2>5. In-App Purchases, Subscriptions &amp; Auto-Renewal</h2>
+    <p>The App offers optional consumable Star packs and auto-renewable subscriptions (the "PartyBot Premium" plan) through the Apple App Store. The following disclosures are provided in accordance with Apple App Store Review Guideline 3.1.2:</p>
+    <ul>
+        <li><strong>Title of publication / service:</strong> PartyBot Premium.</li>
+        <li><strong>Length of subscription:</strong> Each subscription period is one week, one month, or one year, depending on the plan you select. The exact duration is shown on the in-app paywall before purchase.</li>
+        <li><strong>Price of subscription:</strong> The price per period is clearly displayed on the in-app paywall before you confirm the purchase, in your local currency as provided by the App Store.</li>
+        <li><strong>Payment:</strong> Payment is charged to your Apple ID account at confirmation of purchase.</li>
+        <li><strong>Auto-renewal:</strong> Your subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period at the same price as the original subscription, unless a price change is communicated in advance.</li>
+        <li><strong>Managing or cancelling:</strong> You can manage your subscriptions and turn off auto-renewal at any time by going to your <em>iPhone Settings &gt; [your name] &gt; Subscriptions</em> after purchase. Any unused portion of a free trial period, if offered, is forfeited when you purchase a subscription.</li>
+        <li><strong>Refunds:</strong> Refunds are handled exclusively by Apple in accordance with Apple's refund policies: <a class="inline" href="https://support.apple.com/HT204084" target="_blank">support.apple.com/HT204084</a>. We cannot issue refunds directly.</li>
+        <li><strong>Privacy &amp; Terms:</strong> The functional links to the Privacy Policy (<a class="inline" href="/privacy.html">privacy.html</a>) and to these Terms / EULA (<a class="inline" href="/terms.html">terms.html</a>) are displayed on the paywall before purchase and in App Settings.</li>
+    </ul>
+    <p>Star packs are non-subscription consumables, are consumed upon redemption inside the App, and are non-refundable once used except where required by law.</p>
+
+    <h2>6. User Content</h2>
+    <p>Any content you create within the App (usernames, game interactions) must comply with these Terms. We reserve the right to remove content that violates our policies.</p>
+
+    <h2>7. Intellectual Property</h2>
+    <p>The App, including all content, features, functionality, designs, and code, is owned by PartyBot and is protected by intellectual property laws. You may not copy, modify, distribute, or create derivative works from any part of the App.</p>
+
+    <h2>8. Microphone Access</h2>
+    <p>Voice-based game modes (such as "Reverse Singing") require microphone access, which is requested via the standard iOS permission prompt. Audio is processed locally on your device for gameplay only, is not stored after the round ends, and is not transmitted to our servers. You can revoke microphone access at any time in iOS Settings.</p>
+
+    <h2>8.1 Mature Content &amp; Entertainment Disclaimer</h2>
+    <p>Some prompt decks and game modes include optional mature content (17+) such as references to alcohol or adult party themes. This content is opt-in and can be disabled at any time in App settings. The Coin Flip (Head / Tail "8" coin) and Beer Bottle spinner tools are provided strictly for entertainment purposes, produce random outcomes, and do not involve any real-world money, wagers, or prizes. The App does not facilitate gambling.</p>
+
+    <h2>9. Disclaimer of Warranties</h2>
+    <p>THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. WE DO NOT GUARANTEE THAT THE APP WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF HARMFUL COMPONENTS.</p>
+
+    <h2>10. Limitation of Liability</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, PARTYBOT SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE APP, INCLUDING BUT NOT LIMITED TO LOSS OF DATA, LOSS OF VIRTUAL CURRENCY, OR INTERRUPTION OF SERVICE.</p>
+
+    <h2>11. Termination</h2>
+    <p>We may suspend or terminate your access to the App at any time, with or without cause, with or without notice. Upon termination:</p>
+    <ul>
+        <li>Your license to use the App is revoked</li>
+        <li>Your Stars balance is forfeited</li>
+        <li>Your account data may be deleted</li>
+    </ul>
+    <p>You may delete your account at any time through the App's Settings.</p>
+
+    <h2>12. Apple-Specific Terms</h2>
+    <p>You acknowledge that these Terms are concluded between you and PartyBot only, and not with Apple Inc. ("Apple"). PartyBot, not Apple, is solely responsible for the App and its content. Apple has no obligation to furnish any maintenance or support services with respect to the App.</p>
+    <ul>
+        <li><strong>Scope of License:</strong> Your license to use the App is limited to a non-transferable license to use the App on any Apple-branded device that you own or control, as permitted by the App Store Terms of Service.</li>
+        <li><strong>Warranty:</strong> In the event of any failure of the App to conform to any applicable warranty, you may notify Apple, and Apple will refund the purchase price (if any) for the App to you. To the maximum extent permitted by applicable law, Apple will have no other warranty obligation whatsoever with respect to the App.</li>
+        <li><strong>Product Claims:</strong> PartyBot, not Apple, is responsible for addressing any claims relating to the App or your possession and/or use of the App, including product-liability, legal-compliance, or consumer-protection claims.</li>
+        <li><strong>Intellectual Property:</strong> In the event of any third-party claim that the App or your use of the App infringes that third party's intellectual property rights, PartyBot — not Apple — will be solely responsible for the investigation, defense, settlement, and discharge of any such claim.</li>
+        <li><strong>Third-Party Beneficiary:</strong> You acknowledge and agree that Apple and Apple's subsidiaries are third-party beneficiaries of these Terms, and that upon your acceptance, Apple will have the right (and will be deemed to have accepted the right) to enforce these Terms against you as a third-party beneficiary.</li>
+        <li><strong>Legal Compliance:</strong> You represent and warrant that (i) you are not located in a country subject to a U.S. Government embargo or designated as a "terrorist supporting" country, and (ii) you are not listed on any U.S. Government list of prohibited or restricted parties.</li>
+    </ul>
+
+    <h2>13. Governing Law</h2>
+    <p>These Terms shall be governed by and construed in accordance with applicable laws, without regard to conflict of law provisions. Nothing in these Terms limits your statutory consumer rights.</p>
+
+    <h2>14. Changes to Terms</h2>
+    <p>We reserve the right to modify these Terms at any time. Material changes will be announced in the App. Continued use of the App after changes constitutes acceptance of the updated Terms.</p>
+
+    <h2>15. Contact</h2>
+    <p>For questions about these Terms, contact us at:<br>
+    Email: <a class="inline" href="mailto:support@partybot.app">support@partybot.app</a></p>
+</div>
+
+<footer>
+    <div class="footer-inner">
+        <span class="footer-copy">&copy; 2026 PartyBot. All rights reserved.</span>
+        <div class="footer-links">
+            <a href="/privacy.html">Privacy Policy</a>
+            <a href="/terms.html">Terms of Service</a>
+            <a href="mailto:support@partybot.app">Contact</a>
+            <a href="https://instagram.com/partybot.app" target="_blank">Instagram</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

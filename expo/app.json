@@ -15,6 +15,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.partybot",
       "buildNumber": "1",
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:partybot.games",
+        "applinks:www.partybot.games"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSMicrophoneUsageDescription": "PartyBot uses the microphone so you can record short voice clips for the Reverse Singing game. Recordings stay on your device and are never uploaded."
@@ -32,7 +37,29 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.partybot.games",
+              "pathPrefix": "/invite"
+            },
+            {
+              "scheme": "https",
+              "host": "partybot.games",
+              "pathPrefix": "/invite"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "output": "static",
@@ -54,6 +81,7 @@
       ],
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       "expo-font"
     ],
     "experiments": {

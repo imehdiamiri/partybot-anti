@@ -14,15 +14,9 @@ export const AppConstants = {
     apiKeyIOS: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS || '',
     apiKeyAndroid: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || '',
   },
-  // NOTE: The Gemini API key is intentionally NOT bundled into the client.
-  // All AI requests proxy through the `generateCard` Cloud Function which
-  // owns the secret. Do not add EXPO_PUBLIC_GEMINI_API_KEY back here.
   Economy: {
     dailyReward: 5,
     inviteReward: 10,
-    aiCardCostFree: 5,
-    aiCardCostPremium: 1,
-    freeAIGenerationsPerDay: 5,
   },
   Game: {
     minPlayersForMultiplayer: 2,

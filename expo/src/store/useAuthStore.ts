@@ -15,10 +15,20 @@ import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { auth, syncUserProfile, setUserOnline } from '../lib/firebase';
+import { isWeb } from '../utils/platform';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export type AuthProvider = 'username' | 'google' | 'apple' | 'guest';
+
+export interface LocalAuthUser {
+  uid: string;
+  isAnonymous: boolean;
+  displayName?: string | null;
+  email?: string | null;
+}
+
+export type AuthUser = User | LocalAuthUser;
 
 export interface AuthAccount {
   id: string;
@@ -28,7 +38,7 @@ export interface AuthAccount {
 }
 
 interface AuthState {
-  currentUser: User | null;
+  currentUser: AuthUser | null;
   authAccount: AuthAccount | null;
   isBusy: boolean;
   isInitialized: boolean;
@@ -61,6 +71,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   errorMessage: null,
 
   initialize: () => {
+    if (isWeb) {
+      set({
+        currentUser: { uid: 'guest_local', isAnonymous: true, displayName: 'Guest' },
+        authAccount: {
+          id: 'guest_local',
+          username: 'Guest',
+          provider: 'guest',
+        },
+        isInitialized: true,
+      });
+      return () => {};
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         const displayName = user.displayName ?? user.email?.split('@')[0] ?? 'Player';
@@ -105,6 +128,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signUp: async (username: string, password: string) => {
+    if (isWeb) {
+      try {
+        const normalized = normalizeUsername(username);
+        set({
+          currentUser: { uid: 'guest_local', isAnonymous: true, displayName: normalized },
+          authAccount: {
+            id: 'guest_local',
+            username: normalized,
+            provider: 'guest',
+          },
+          isBusy: false,
+        });
+      } catch (err: any) {
+        set({ errorMessage: err?.message || 'Invalid username', isBusy: false });
+      }
+      return;
+    }
+
     set({ isBusy: true, errorMessage: null });
     try {
       const normalized = normalizeUsername(username);
@@ -134,6 +175,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (username: string, password: string) => {
+    if (isWeb) {
+      try {
+        const normalized = normalizeUsername(username);
+        set({
+          currentUser: { uid: 'guest_local', isAnonymous: true, displayName: normalized },
+          authAccount: {
+            id: 'guest_local',
+            username: normalized,
+            provider: 'guest',
+          },
+          isBusy: false,
+        });
+      } catch (err: any) {
+        set({ errorMessage: err?.message || 'Invalid username', isBusy: false });
+      }
+      return;
+    }
+
     set({ isBusy: true, errorMessage: null });
     try {
       const normalized = normalizeUsername(username);
@@ -163,6 +222,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInAnonymously: async () => {
+    if (isWeb) {
+      set({
+        currentUser: { uid: 'guest_local', isAnonymous: true, displayName: 'Guest' },
+        authAccount: {
+          id: 'guest_local',
+          username: 'Guest',
+          provider: 'guest',
+        },
+        isBusy: false,
+      });
+      return;
+    }
+
     set({ isBusy: true, errorMessage: null });
     try {
       const userCredential = await firebaseSignInAnonymously(auth);
@@ -183,6 +255,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithGoogle: async () => {
+    if (isWeb) {
+      set({
+        errorMessage: 'Google Sign-In is available on the mobile app. Web local games are ready to play without sign-in!',
+        isBusy: false,
+      });
+      return;
+    }
+
     set({ isBusy: true, errorMessage: null });
     try {
       // Detect Expo Go — native Google Sign-In module is NOT available in Expo Go
@@ -271,6 +351,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithApple: async () => {
+    if (isWeb) {
+      set({
+        errorMessage: 'Apple Sign-In is available on the iOS app. Web local games are ready to play without sign-in!',
+        isBusy: false,
+      });
+      return;
+    }
+
     set({ isBusy: true, errorMessage: null });
     try {
       const nonce = Math.random().toString(36).substring(2, 15) +
@@ -325,6 +413,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
+    if (isWeb) {
+      set({
+        currentUser: { uid: 'guest_local', isAnonymous: true, displayName: 'Guest' },
+        authAccount: { id: 'guest_local', username: 'Guest', provider: 'guest' },
+        isBusy: false,
+      });
+      return;
+    }
+
     set({ isBusy: true });
     try {
       await firebaseSignOut(auth);

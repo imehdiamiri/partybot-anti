@@ -12,6 +12,7 @@ import { useFriendsStore } from '@/src/store/useFriendsStore';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { showToast } from '@/src/components/ToastOverlay';
 import { ReportUserSheet } from '@/src/components/ReportUserSheet';
+import { isWeb } from '@/src/utils/platform';
 
 // Platform-safe BlurView
 let BlurViewComponent: any = null;
@@ -115,7 +116,9 @@ export default function FriendsScreen() {
     </View>
   );
 
-  const tabs: { key: TabKey; label: string; icon: any; count?: number }[] = [
+  const tabs: { key: TabKey; label: string; icon: any; count?: number }[] = isWeb ? [
+    { key: 'offline', label: 'Local Players', icon: 'person.crop.circle', count: offlineFriends.length },
+  ] : [
     { key: 'offline', label: 'Local', icon: 'person.crop.circle', count: offlineFriends.length },
     { key: 'online', label: 'Online', icon: 'globe', count: onlineFriends.length },
     { key: 'rooms', label: 'Rooms', icon: 'person.3.fill' },
@@ -133,7 +136,7 @@ export default function FriendsScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Friends</Text>
           <View style={{ flex: 1 }} />
-          {requests.length > 0 && (
+          {requests.length > 0 && !isWeb && (
             <TouchableOpacity 
               style={styles.notificationBadge}
               onPress={() => setActiveTab('online')}
@@ -150,21 +153,23 @@ export default function FriendsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Quick Join — compact hero */}
-        <TouchableOpacity activeOpacity={0.9} onPress={() => router.push('/lobby/join')}>
-          <SurfaceBlur intensity={30} style={styles.heroCard}>
-            <View style={styles.heroIcon}>
-              <IconSymbol name="number.square.fill" size={20} color={Colors.blue} />
-            </View>
-            <View style={styles.heroTextContainer}>
-              <Text style={styles.heroTitle}>Join with Code</Text>
-              <Text style={styles.heroSubtitle}>Enter a room code</Text>
-            </View>
-            <View style={styles.heroButton}>
-              <IconSymbol name="arrow.right" size={14} color="white" />
-            </View>
-          </SurfaceBlur>
-        </TouchableOpacity>
+        {/* Quick Join — compact hero (mobile only) */}
+        {!isWeb && (
+          <TouchableOpacity activeOpacity={0.9} onPress={() => router.push('/lobby/join')}>
+            <SurfaceBlur intensity={30} style={styles.heroCard}>
+              <View style={styles.heroIcon}>
+                <IconSymbol name="number.square.fill" size={20} color={Colors.blue} />
+              </View>
+              <View style={styles.heroTextContainer}>
+                <Text style={styles.heroTitle}>Join with Code</Text>
+                <Text style={styles.heroSubtitle}>Enter a room code</Text>
+              </View>
+              <View style={styles.heroButton}>
+                <IconSymbol name="arrow.right" size={14} color="white" />
+              </View>
+            </SurfaceBlur>
+          </TouchableOpacity>
+        )}
 
         {/* Segmented tab bar — pill style matching Games screen */}
         <View style={styles.libraryTabsContainer}>
@@ -277,7 +282,27 @@ export default function FriendsScreen() {
         )}
 
         {/* ── ONLINE TAB ── */}
-        {activeTab === 'online' && (
+        {activeTab === 'online' && isWeb && (
+          <View style={styles.tabContent}>
+            <SurfaceBlur style={[styles.surfaceCard, { alignItems: 'center', padding: 24, gap: 12 }]}>
+              <IconSymbol name="globe" size={38} color={Colors.blue} />
+              <Text style={{ color: 'white', fontSize: 17, fontWeight: 'bold', textAlign: 'center' }}>
+                Online Friends on Mobile
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
+                Online friend search and requests are available on the mobile apps. Use the Pass & Play tab for local multiplayer names!
+              </Text>
+              <TouchableOpacity
+                style={{ marginTop: 8, backgroundColor: Colors.blue, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 18 }}
+                onPress={() => setActiveTab('offline')}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>Pass & Play Players</Text>
+              </TouchableOpacity>
+            </SurfaceBlur>
+          </View>
+        )}
+
+        {activeTab === 'online' && !isWeb && (
           <View style={styles.tabContent}>
             {/* Search card */}
             <SurfaceBlur style={styles.surfaceCard}>
@@ -428,7 +453,27 @@ export default function FriendsScreen() {
         )}
 
         {/* ── ROOMS TAB ── */}
-        {activeTab === 'rooms' && (
+        {activeTab === 'rooms' && isWeb && (
+          <View style={styles.tabContent}>
+            <SurfaceBlur style={[styles.surfaceCard, { alignItems: 'center', padding: 24, gap: 12 }]}>
+              <IconSymbol name="person.3.fill" size={38} color={Colors.blue} />
+              <Text style={{ color: 'white', fontSize: 17, fontWeight: 'bold', textAlign: 'center' }}>
+                Multiplayer Rooms on Mobile
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
+                Live public room discovery and multi-device sessions are supported on iOS & Android apps. All 16 party games are ready in local 1-Phone mode on web!
+              </Text>
+              <TouchableOpacity
+                style={{ marginTop: 8, backgroundColor: Colors.blue, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 18 }}
+                onPress={() => router.push('/')}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>Explore Local Games</Text>
+              </TouchableOpacity>
+            </SurfaceBlur>
+          </View>
+        )}
+
+        {activeTab === 'rooms' && !isWeb && (
           <View style={styles.tabContent}>
             {!currentUserId && (
               <TouchableOpacity 
@@ -472,6 +517,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',

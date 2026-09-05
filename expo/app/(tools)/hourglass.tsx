@@ -18,7 +18,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AudioManager } from '@/src/services/AudioManager';
 
 // Using the same single static hourglass image as the iOS version
-const HOURGLASS_IMG = require('@/assets/images/tools/hourglass.png');
+const HOURGLASS_IMG = require('@/assets/images/tools/hourglass.webp');
 
 const PRESETS = [
   { label: "30s", seconds: 30 },
@@ -212,6 +212,8 @@ export default function HourglassToolScreen() {
               return (
                 <Pressable
                   key={preset.label}
+                  testID={`hourglass-preset-${preset.label}`}
+                  accessibilityRole="button"
                   onPress={() => setPreset(preset.seconds)}
                   style={[styles.presetBtn, active ? styles.presetBtnActive : styles.presetBtnInactive]}
                 >
@@ -228,8 +230,8 @@ export default function HourglassToolScreen() {
       <View style={{ flex: 1 }} />
 
       {/* Timer Display */}
-      <Animated.View style={[styles.timerDisplay, animatedContainerStyle]}>
-        <Text style={[styles.timeText, isAlarming ? { color: Colors.red } : { color: '#007AFF' }]}>
+      <Animated.View testID="hourglass-stage" style={[styles.timerDisplay, animatedContainerStyle]}>
+        <Text testID="hourglass-timer-text" style={[styles.timeText, isAlarming ? { color: Colors.red } : { color: '#007AFF' }]}>
           {timeString}
         </Text>
 
@@ -268,6 +270,8 @@ export default function HourglassToolScreen() {
 
 const ControlButton = ({ title, icon, colors, onPress, disabled }: { title: string, icon: any, colors: readonly [string, string], onPress: () => void, disabled?: boolean }) => (
   <Pressable
+    testID={`hourglass-btn-${title.toLowerCase()}`}
+    accessibilityRole="button"
     onPress={onPress}
     disabled={disabled}
     style={({ pressed }) => [
@@ -288,6 +292,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 8,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   configSection: {
     gap: 16,

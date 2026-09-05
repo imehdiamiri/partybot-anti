@@ -14,6 +14,8 @@ import * as Haptics from '@/src/utils/safeHaptics';
 import { PhaseTransition } from './PhaseTransition';
 import { GamePassPhoneView, GamePlayerCompleteView } from './SharedGameComponents';
 import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
+import { isWeb } from '@/src/utils/platform';
+import { playWebTick, playWebDrumHit } from '@/src/utils/browserMediaAdapter';
 
 interface Props { session: GameSession; }
 
@@ -82,31 +84,35 @@ export function DrumChallengeSession({ session }: Props) {
   const waveAnim = useSharedValue(0);
 
   useEffect(() => {
-    (async () => {
-      try {
-        // Ensure audio mode is configured before any sound loads
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
-        });
-        // Preload drum hit (player tap feedback)
-        const { sound: drumSound } = await Audio.Sound.createAsync(DRUM_HIT_AUDIO, { shouldPlay: false });
-        drumRef.current = drumSound;
-        // Preload metronome tick
-        const { sound: tickSound } = await Audio.Sound.createAsync(METRONOME_TICK_AUDIO, { shouldPlay: false });
-        tickRef.current = tickSound;
-      } catch (e) {
-        console.warn('DrumChallenge: failed to init audio', e);
-      }
-    })();
+    if (!isWeb) {
+      (async () => {
+        try {
+          // Ensure audio mode is configured before any sound loads
+          await Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
+            shouldDuckAndroid: true,
+            playThroughEarpieceAndroid: false,
+          });
+          // Preload drum hit (player tap feedback)
+          const { sound: drumSound } = await Audio.Sound.createAsync(DRUM_HIT_AUDIO, { shouldPlay: false });
+          drumRef.current = drumSound;
+          // Preload metronome tick
+          const { sound: tickSound } = await Audio.Sound.createAsync(METRONOME_TICK_AUDIO, { shouldPlay: false });
+          tickRef.current = tickSound;
+        } catch (e) {
+          console.warn('DrumChallenge: failed to init audio', e);
+        }
+      })();
+    }
     return () => {
-      soundRef.current?.unloadAsync();
-      drumRef.current?.unloadAsync();
-      tickRef.current?.unloadAsync();
-      tickPoolRef.current.forEach(s => s.unloadAsync().catch(() => {}));
-      tickPoolRef.current = [];
+      if (!isWeb) {
+        soundRef.current?.unloadAsync();
+        drumRef.current?.unloadAsync();
+        tickRef.current?.unloadAsync();
+        tickPoolRef.current.forEach(s => s.unloadAsync().catch(() => {}));
+        tickPoolRef.current = [];
+      }
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       metronomeTimersRef.current.forEach(t => clearTimeout(t));
       metronomeTimersRef.current = [];
@@ -123,11 +129,13 @@ export function DrumChallengeSession({ session }: Props) {
         metronomeTimersRef.current = [];
         cancelAnimation(waveAnim);
         cancelAnimation(drumScale);
-        try {
-          if (soundRef.current) soundRef.current.stopAsync();
-          if (tickRef.current) tickRef.current.stopAsync();
-          tickPoolRef.current.forEach(s => s.stopAsync().catch(() => {}));
-        } catch (e) {}
+        if (!isWeb) {
+          try {
+            if (soundRef.current) soundRef.current.stopAsync();
+            if (tickRef.current) tickRef.current.stopAsync();
+            tickPoolRef.current.forEach(s => s.stopAsync().catch(() => {}));
+          } catch (e) {}
+        }
         const isLast = playerIdx + 1 >= players.length;
         if (isLast) {
           setPhase('results');
@@ -151,11 +159,13 @@ export function DrumChallengeSession({ session }: Props) {
     cancelAnimation(drumScale);
     drumScale.value = withTiming(1, { duration: 200 });
 
-    try {
-      if (soundRef.current) soundRef.current.stopAsync();
-      if (tickRef.current) tickRef.current.stopAsync();
-      tickPoolRef.current.forEach(s => s.stopAsync().catch(() => {}));
-    } catch (e) {}
+    if (!isWeb) {
+      try {
+        if (soundRef.current) soundRef.current.stopAsync();
+        if (tickRef.current) tickRef.current.stopAsync();
+        tickPoolRef.current.forEach(s => s.stopAsync().catch(() => {}));
+      } catch (e) {}
+    }
 
     setLastDiff(diff);
     setRecords(prev => {
@@ -188,6 +198,42 @@ export function DrumChallengeSession({ session }: Props) {
     drumScale.value = 1;
 
     if (modeKey === 'metronome') {
+      if (isWeb) {
+        metronomeTimersRef.current.forEach(t => clearTimeout(t));
+        metronomeTimersRef.current = [];
+
+        const bpm = metronomeRhythm === 'fast' ? 160 : metronomeRhythm === '3/4' ? 100 : 120;
+        const beatsPerCycle = metronomeRhythm === '3/4' ? 3 : 4;
+        const msPerBeat = 60000 / bpm;
+        
+        const playCycles = metronomeCycles;
+        const silentCycles = metronomeCycles;
+        const totalBeatsToPlay = playCycles * beatsPerCycle;
+        const totalSilentBeats = silentCycles * beatsPerCycle;
+        const targetTimeMs = (totalBeatsToPlay + totalSilentBeats) * msPerBeat;
+        modeConfig.beatTime = targetTimeMs;
+
+        playStartRef.current = performance.now();
+        for (let i = 0; i < totalBeatsToPlay; i++) {
+          const delay = i * msPerBeat;
+          const isDownbeat = i % beatsPerCycle === 0;
+          const timer = setTimeout(() => {
+            if (phaseRef.current !== 'listening') return;
+            playWebTick(isDownbeat);
+          }, delay);
+          metronomeTimersRef.current.push(timer);
+        }
+
+        const finishDelay = targetTimeMs + 2000;
+        const finishTimer = setTimeout(() => {
+          if (phaseRef.current === 'listening') {
+            finishAttempt(diffRef.current);
+          }
+        }, finishDelay);
+        metronomeTimersRef.current.push(finishTimer);
+        return;
+      }
+
       // Clean up any previous tick pool
       tickPoolRef.current.forEach(s => s.unloadAsync().catch(() => {}));
       tickPoolRef.current = [];
@@ -258,6 +304,14 @@ export function DrumChallengeSession({ session }: Props) {
       try {
         if (soundRef.current) { await soundRef.current.unloadAsync(); soundRef.current = null; }
 
+        if (isWeb) {
+          playStartRef.current = performance.now();
+          timeoutRef.current = setTimeout(() => {
+            finishAttempt(diffRef.current);
+          }, 28000);
+          return;
+        }
+
         // Re-ensure audio mode is active before each playback
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
@@ -314,12 +368,16 @@ export function DrumChallengeSession({ session }: Props) {
       setLastDiff(diff);
       diffRef.current = diff;
       
-      try {
-        if (drumRef.current) {
-          await drumRef.current.setPositionAsync(0);
-          await drumRef.current.playAsync();
-        }
-      } catch {}
+      if (isWeb) {
+        playWebDrumHit();
+      } else {
+        try {
+          if (drumRef.current) {
+            await drumRef.current.setPositionAsync(0);
+            await drumRef.current.playAsync();
+          }
+        } catch {}
+      }
 
       cancelAnimation(drumScale);
       drumScale.value = withSequence(
@@ -328,17 +386,13 @@ export function DrumChallengeSession({ session }: Props) {
       );
       drumGlow.value = withSequence(
         withTiming(1, { duration: 100 }),
-        withTiming(0, { duration: 600 }),
+        withTiming(0, { duration: 300 })
       );
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-      if (newTaps.length >= metronomeCycles) {
-        setTapped(true);
-        const avgAbs = Math.round(newTaps.reduce((a,b) => a + Math.abs(b), 0) / newTaps.length);
-        diffRef.current = avgAbs; // This will be passed to finishAttempt via timeout
-        setTimeout(() => finishAttempt(avgAbs), 500);
-      }
+      // Metronome mode: only need 1 tap
+      finishAttempt(diff);
       return;
     }
 
@@ -418,14 +472,12 @@ export function DrumChallengeSession({ session }: Props) {
   const glowStyle = useAnimatedStyle(() => ({ opacity: drumGlow.value }));
 
   if (phase === 'ready') {
-    const isFirst = playerIdx === 0;
-    // Non-first players: use the unified animated pass-phone screen
-    if (!isFirst) {
-      return (
+    return (
+      <PhaseTransition phaseKey={`ready-${playerIdx}`} style={{ flex: 1 }}>
         <GamePassPhoneView
           playerName={player?.displayName ?? 'Player'}
-          title="Pass the phone to"
-          subtitle={`Mode: ${modeConfig.title} · ${ATTEMPTS_PER_PLAYER} attempts`}
+          title={players.length > 1 && playerIdx > 0 ? "Pass the phone to" : "Get ready"}
+          subtitle={`Drum Challenge · Mode: ${modeConfig.title} · ${ATTEMPTS_PER_PLAYER} attempts`}
           accentColor="#FF2E93"
           buttonTitle="Start Listening"
           onReady={startListening}
@@ -440,31 +492,6 @@ export function DrumChallengeSession({ session }: Props) {
             }
           }}
         />
-      );
-    }
-    return (
-      <PhaseTransition phaseKey={phase} style={st.container}>
-        <ScrollView contentContainerStyle={st.readyContent}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(255,46,147,0.15)' }]}>
-            <Text style={{ fontSize: 56 }}>🥁</Text>
-          </View>
-          <Text style={st.eyebrow}>DRUM CHALLENGE</Text>
-          <Text style={st.nameTitle} numberOfLines={2}>{player?.displayName ?? 'Player'}</Text>
-          
-          <Text style={[st.eyebrow, { color: '#FFD166', fontSize: 16 }]}>MODE: {modeConfig.title}</Text>
-
-          <View style={st.rulesCard}>
-            <RuleRow num={1} color="#FF2E93" text={modeKey === 'metronome' ? `A metronome plays ${metronomeCycles} cycles, then goes silent for ${metronomeCycles} cycles.` : "A music clip plays with a dramatic build-up."} />
-            <RuleRow num={2} color="#FFD166" text={modeKey === 'metronome' ? "Keep counting the beats in your head during the silence." : "Listen carefully — after the pause, a drum beat will drop."} />
-            <RuleRow num={3} color="#00E5FF" text={modeKey === 'metronome' ? "Tap EXACTLY when the next cycle (beat 1) should start!" : "Tap the drum at the EXACT moment you think the beat hits!"} />
-            <RuleRow num={4} color={Colors.green} text="Your accuracy is measured in milliseconds. Closest to 0ms wins!" />
-          </View>
-
-          <Pressable style={[st.startBtn, { backgroundColor: '#FF2E93' }]} onPress={startListening}>
-            <IconSymbol name="play.fill" size={18} color="#fff" />
-            <Text style={st.startBtnTx}>Start Listening</Text>
-          </Pressable>
-        </ScrollView>
       </PhaseTransition>
     );
   }
@@ -480,7 +507,7 @@ export function DrumChallengeSession({ session }: Props) {
         <Text style={st.listenTitle}>Listen…</Text>
         <Text style={st.listenSub}>{modeConfig.title}</Text>
 
-        <Pressable onPress={handleDrumTap} disabled={tapped}>
+        <Pressable testID="drum-challenge-tap-btn" accessibilityRole="button" onPress={handleDrumTap} disabled={tapped}>
           <Animated.View style={[st.drumOuter, drumAnimStyle]}>
             <Animated.View style={[st.drumGlow, glowStyle]} />
             <View style={st.drumInner}>
@@ -502,7 +529,7 @@ export function DrumChallengeSession({ session }: Props) {
             <Pressable style={[st.startBtn, { backgroundColor: 'rgba(255,255,255,0.1)', flex: 1, marginTop: 0 }]} onPress={startListening}>
               <Text style={st.startBtnTx}>Restart</Text>
             </Pressable>
-            <Pressable style={[st.startBtn, { backgroundColor: '#FF2E93', flex: 1, marginTop: 0 }]} onPress={() => finishAttempt(diffRef.current)}>
+            <Pressable testID="drum-challenge-result-btn" accessibilityRole="button" style={[st.startBtn, { backgroundColor: '#FF2E93', flex: 1, marginTop: 0 }]} onPress={() => finishAttempt(diffRef.current)}>
               <Text style={st.startBtnTx}>Result</Text>
             </Pressable>
           </View>
@@ -552,7 +579,7 @@ export function DrumChallengeSession({ session }: Props) {
 
           <AttemptDots attempts={currentRecord.attempts} total={ATTEMPTS_PER_PLAYER} />
 
-          <Pressable style={[st.startBtn, { backgroundColor: '#007AFF' }]} onPress={continueAfterAttempt}>
+          <Pressable testID="drum-challenge-next-attempt" accessibilityRole="button" style={[st.startBtn, { backgroundColor: '#007AFF' }]} onPress={continueAfterAttempt}>
             <Text style={st.startBtnTx}>
               {(currentRecord?.attempts.length ?? 0) >= ATTEMPTS_PER_PLAYER ? 'See Result' : 'Next Attempt'}
             </Text>
@@ -581,9 +608,11 @@ export function DrumChallengeSession({ session }: Props) {
     .map(r => {
       const best = bestAbsDiff(r.attempts);
       const p = players.find(pp => pp.id === r.playerId);
-      return { record: r, best, name: p?.displayName ?? 'Player' };
+      const isSkipped = best == null;
+      return { record: r, best, isSkipped, name: p?.displayName ?? 'Player' };
     })
     .sort((a, b) => {
+      if (a.isSkipped !== b.isSkipped) return a.isSkipped ? 1 : -1;
       if (a.best == null && b.best == null) return 0;
       if (a.best == null) return 1;
       if (b.best == null) return -1;
@@ -592,8 +621,9 @@ export function DrumChallengeSession({ session }: Props) {
     .map((row): RankEntry => ({
       id: row.record.playerId,
       name: row.name,
-      primary: row.best == null ? '—' : `${row.best} ms`,
-      secondary: row.record.attempts.map(a => a.diffMs == null ? 'Miss' : `${a.diffMs > 0 ? '+' : ''}${a.diffMs}`).join(' · '),
+      isSkipped: row.isSkipped,
+      primary: row.isSkipped ? 'Skipped' : `${row.best} ms`,
+      secondary: row.isSkipped ? 'Did not play' : row.record.attempts.map(a => a.diffMs == null ? 'Miss' : `${a.diffMs > 0 ? '+' : ''}${a.diffMs}`).join(' · '),
     }));
 
   return (
@@ -671,8 +701,8 @@ function WaveBar({ index, anim }: { index: number; anim: SharedValue<number> }) 
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  readyContent: { padding: 20, paddingBottom: 60, alignItems: 'center', gap: 14 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
+  readyContent: { padding: 20, paddingBottom: 60, alignItems: 'center', gap: 14, maxWidth: 540, width: '100%', alignSelf: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12, maxWidth: 540, width: '100%', alignSelf: 'center' },
   iconBox: { width: 100, height: 100, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   title: { color: '#fff', fontSize: 36, fontFamily: 'Viral-Black', textAlign: 'center' },
   eyebrow: {
@@ -702,7 +732,7 @@ const st = StyleSheet.create({
   startBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 18, paddingHorizontal: 28,
-    borderRadius: 16, width: '100%', marginTop: 18,
+    borderRadius: 16, width: '100%', maxWidth: 540, alignSelf: 'center', marginTop: 18,
   },
   startBtnTx: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 

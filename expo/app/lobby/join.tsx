@@ -1,14 +1,20 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { Redirect, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { isWeb } from '@/src/utils/platform';
+import { Colors } from '@/src/theme/Colors';
 
 export default function JoinLobbyScreen() {
+  if (isWeb) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   

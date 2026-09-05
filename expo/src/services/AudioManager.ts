@@ -1,5 +1,6 @@
 import { Audio, AVPlaybackSource } from 'expo-av';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { isWeb } from '@/src/utils/platform';
 
 /**
  * AudioManager — Centralized sound effects service.
@@ -42,7 +43,7 @@ class _AudioManager {
 
   /** Initialize audio session — call once */
   async init(): Promise<void> {
-    if (this.initialized) return;
+    if (isWeb || this.initialized) return;
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
@@ -58,7 +59,7 @@ class _AudioManager {
 
   /** Preload a sound from a module source */
   async preload(id: SoundId, source: AVPlaybackSource): Promise<void> {
-    if (this.cache.has(id)) return;
+    if (isWeb || this.cache.has(id)) return;
     try {
       const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: false });
       this.cache.set(id, { sound, loaded: true });
@@ -69,7 +70,7 @@ class _AudioManager {
 
   /** Play a preloaded sound (fire-and-forget) */
   async play(id: SoundId, volume: number = 1.0): Promise<void> {
-    if (!useSettingsStore.getState().isSoundEnabled) return;
+    if (isWeb || !useSettingsStore.getState().isSoundEnabled) return;
 
     const cached = this.cache.get(id);
     if (!cached?.loaded) return;
@@ -86,7 +87,7 @@ class _AudioManager {
 
   /** Play a one-shot sound without preloading (for rare sounds) */
   async playOneShot(source: AVPlaybackSource, volume: number = 1.0): Promise<void> {
-    if (!useSettingsStore.getState().isSoundEnabled) return;
+    if (isWeb || !useSettingsStore.getState().isSoundEnabled) return;
 
     try {
       const { sound } = await Audio.Sound.createAsync(source, {
@@ -106,6 +107,7 @@ class _AudioManager {
 
   /** Unload all cached sounds */
   async unloadAll(): Promise<void> {
+    if (isWeb) return;
     for (const [id, cached] of this.cache) {
       try {
         await cached.sound.unloadAsync();

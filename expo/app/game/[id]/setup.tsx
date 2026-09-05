@@ -42,6 +42,10 @@ const TIO_TILE_OPTIONS: Record<number, number[]> = {
   7: [10, 14, 18, 24],
 };
 
+export function generateStaticParams(): { id: string }[] {
+  return Object.values(Games).map(game => ({ id: game.id }));
+}
+
 export default function GameSetupScreen() {
   const { id } = useLocalSearchParams<{ id: string, mode: GameMode }>();
   const router = useRouter();
@@ -50,7 +54,7 @@ export default function GameSetupScreen() {
   const { lastGameConfigs, lastPlayerNames, saveGameConfig, playerName, lastGlobalPlayerCount, lastGlobalPlayerNames } = useSettingsStore();
   
   
-  const gameKey = Object.keys(Games).find(key => Games[key].id === id);
+  const gameKey = id ? Object.keys(Games).find(key => Games[key].id === id) : null;
   const game = gameKey ? Games[gameKey] : null;
 
   // Default player names: Player 1 = the user's onboarding name; everyone else from global last session.
@@ -169,7 +173,7 @@ export default function GameSetupScreen() {
         <AppBackgroundView />
         <View style={st.centerContent}>
           <Text style={st.errorText}>Game not found</Text>
-          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={st.backBtn}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/(tabs)'); } }} style={st.backBtn}>
             <Text style={st.backBtnTx}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -178,7 +182,8 @@ export default function GameSetupScreen() {
   }
 
   const hasDuplicateNames = () => {
-    const trimmed = playerNames.map(n => n.trim().toLowerCase()).filter(n => n.length > 0);
+    const active = playerNames.slice(0, playerCount);
+    const trimmed = active.map(n => n.trim().toLowerCase()).filter(n => n.length > 0);
     return new Set(trimmed).size !== trimmed.length;
   };
 
@@ -207,8 +212,9 @@ export default function GameSetupScreen() {
   };
 
   const handleStart = () => {
-    // Default empty names to "Player N"
-    const finalNames = playerNames.map((n, i) => n.trim() || `Player ${i + 1}`);
+    // Default empty names to "Player N" on active player slots only
+    const active = playerNames.slice(0, playerCount);
+    const finalNames = active.map((n, i) => n.trim() || `Player ${i + 1}`);
     if (hasDuplicateNames()) { setShowDuplicateError(true); return; }
 
     // Build game-specific config
@@ -257,6 +263,20 @@ export default function GameSetupScreen() {
     }
   };
 
+  if (!game) {
+    return (
+      <View style={st.container}>
+        <AppBackgroundView />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Text style={{ color: 'white', fontSize: 18, fontFamily: 'Viral-Black', marginBottom: 16 }}>Loading Game...</Text>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/(tabs)'); } }} style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12 }}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const mpDiffObj = MP_DIFFICULTIES.find(d => d.id === mpDifficulty)!;
   const mpMinSteps = Math.max(3, (mpDiffObj?.gridSize || 5) - 1);
   const mpMaxSteps = Math.floor((mpDiffObj?.gridSize || 5) ** 2 / 2);
@@ -277,7 +297,15 @@ export default function GameSetupScreen() {
           headerBackVisible: false,
           headerLeft: () => (
             <TouchableOpacity 
-              onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}
+              testID="setup-back-btn"
+              accessibilityRole="button"
+              onPress={() => { 
+                if (Platform.OS !== 'web' && router.canGoBack()) { 
+                  router.back(); 
+                } else { 
+                  router.replace(`/game/${id}` as any); 
+                } 
+              }}
               hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
               style={{
                 flexDirection: 'row',
@@ -294,6 +322,7 @@ export default function GameSetupScreen() {
       />
 
       <ScrollView 
+        style={st.scrollView}
         contentContainerStyle={[st.scrollContent, { paddingTop: Platform.OS === 'android' ? 16 : 0 }]} 
         keyboardShouldPersistTaps="handled"
         contentInsetAdjustmentBehavior="automatic"
@@ -650,7 +679,9 @@ export default function GameSetupScreen() {
 
       {/* Bottom Start Button */}
       <View style={[st.bottomBar, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
-        <SetupStartButton subtitle={getSubtitle()} onPress={handleStart} />
+        <View style={st.bottomBarContent}>
+          <SetupStartButton subtitle={getSubtitle()} onPress={handleStart} />
+        </View>
       </View>
     </View>
   );
@@ -658,11 +689,12 @@ export default function GameSetupScreen() {
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'black' },
+  scrollView: { flex: 1, minHeight: 0 },
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { color: 'white', fontSize: 17, fontWeight: 'bold', marginBottom: 20 },
   backBtn: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 },
   backBtnTx: { color: 'white', fontWeight: 'bold' },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 120, gap: 14 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 120, gap: 14, maxWidth: 680, width: '100%', alignSelf: 'center' },
   errorLabel: { color: Colors.red, fontSize: 13, marginTop: 4 },
 
   // SurfaceCard style matching iOS
@@ -711,6 +743,9 @@ const st = StyleSheet.create({
     paddingHorizontal: 16, paddingTop: 16,
     backgroundColor: 'rgba(0,0,0,0.8)',
     borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  bottomBarContent: {
+    maxWidth: 680, width: '100%', alignSelf: 'center',
   },
   imposterCard: {
     marginTop: 10, padding: 14, borderRadius: 16,

@@ -110,6 +110,8 @@ function AnimatedCircle({
 
   return (
     <AnimatedPressable
+      testID={`color-trap-tile-${tile.id}`}
+      accessibilityRole="button"
       onPress={() => onTap(tile.id)}
       style={[
         st.circleTile,
@@ -168,7 +170,8 @@ export function ColorTrapSession({ session }: Props) {
   const player = players[playerIdx];
 
   const sw = Dimensions.get('window').width;
-  const tileSize = sw * 0.20;
+  const stageWidth = Math.min(sw, 560);
+  const tileSize = stageWidth * 0.20;
 
   const startGame = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -377,7 +380,7 @@ export function ColorTrapSession({ session }: Props) {
             </View>
           </View>
 
-          <Pressable style={[st.readyBtn, { backgroundColor: forbiddenColor }]} onPress={startGame}>
+          <Pressable testID="color-trap-ready-button" style={[st.readyBtn, { backgroundColor: forbiddenColor }]} onPress={startGame} accessibilityRole="button">
             <Text style={st.readyBtnText}>I'm Ready</Text>
             <IconSymbol name="arrow.right" size={18} color="white" weight="bold" />
           </Pressable>
@@ -488,15 +491,22 @@ export function ColorTrapSession({ session }: Props) {
   }
 
   // ═══ RESULTS ═══
-  const resultsData = results.map(r => ({
-    playerId: r.playerId,
-    score: r.score,
-    stats: [
-      { label: 'Hits', value: r.hits, color: Colors.green },
-      { label: 'Missed', value: r.misses, color: r.misses > 0 ? Colors.orange : Colors.green },
-      { label: 'Mistakes', value: r.mistakes, color: r.mistakes > 0 ? Colors.red : Colors.green },
-    ]
-  }));
+  const resultsData = players.map(p => {
+    const r = results.find(x => x.playerId === p.id);
+    const isSkipped = !r || (r.hits === 0 && r.misses === 0 && r.mistakes === 0 && r.score === 0);
+    return {
+      playerId: p.id,
+      score: r?.score ?? 0,
+      isSkipped,
+      stats: isSkipped ? [
+        { label: 'Status', value: 'Skipped', color: Colors.orange }
+      ] : [
+        { label: 'Hits', value: r!.hits, color: Colors.green },
+        { label: 'Missed', value: r!.misses, color: r!.misses > 0 ? Colors.orange : Colors.green },
+        { label: 'Mistakes', value: r!.mistakes, color: r!.mistakes > 0 ? Colors.red : Colors.green },
+      ]
+    };
+  });
 
   return (
     <GameResultsScreen
@@ -511,7 +521,7 @@ const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
 
   // ─── Ready Screen ───
-  readyScreen: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 40, paddingTop: 20 },
+  readyScreen: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 40, paddingTop: 20, maxWidth: 560, width: '100%', alignSelf: 'center' },
   readyTop: { alignItems: 'center', gap: 4 },
   readyTitle: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
   readyPlayerName: { color: '#fff', fontSize: 32, fontFamily: 'Viral-Black' },
@@ -554,6 +564,7 @@ const st = StyleSheet.create({
   readyBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 10, paddingVertical: 18, borderRadius: 28,
+    maxWidth: 560, width: '100%', alignSelf: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
   },
@@ -563,6 +574,7 @@ const st = StyleSheet.create({
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10,
+    maxWidth: 560, width: '100%', alignSelf: 'center',
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
   headerRight: { alignItems: 'flex-end' },
@@ -578,11 +590,13 @@ const st = StyleSheet.create({
   timerBar: {
     height: 4, backgroundColor: 'rgba(255,255,255,0.08)',
     marginHorizontal: 16, borderRadius: 2, overflow: 'hidden',
+    maxWidth: 560, width: '100%', alignSelf: 'center',
   },
   timerFill: { height: 4, borderRadius: 2 },
   statsRow: {
     flexDirection: 'row', gap: 8,
     paddingHorizontal: 16, paddingVertical: 8,
+    maxWidth: 560, width: '100%', alignSelf: 'center',
   },
   statPill: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -598,6 +612,7 @@ const st = StyleSheet.create({
     backgroundColor: 'transparent',
     marginHorizontal: 8, borderRadius: 16,
     position: 'relative',
+    maxWidth: 560, width: '100%', alignSelf: 'center',
   },
   circleTile: {
     position: 'absolute', justifyContent: 'center', alignItems: 'center',

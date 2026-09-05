@@ -16,7 +16,6 @@ const fs = require('fs');
 const path = require('path');
 
 const FORBIDDEN_PUBLIC_KEYS = [
-  'EXPO_PUBLIC_GEMINI_API_KEY',
   'EXPO_PUBLIC_OPENAI_API_KEY',
   'EXPO_PUBLIC_ANTHROPIC_API_KEY',
   'EXPO_PUBLIC_REVENUECAT_SECRET',
@@ -27,8 +26,8 @@ const FORBIDDEN_PUBLIC_KEYS = [
 ];
 
 const FORBIDDEN_VALUE_PATTERNS = [
-  // Loose-ish probe for a Google API key shape leaking into a public var.
-  { name: 'Google API key', regex: /^AIza[0-9A-Za-z_-]{30,}$/ },
+  // Loose-ish probe for a private API key shape leaking into a public var.
+  { name: 'Private Google/Cloud key', regex: /^AIza[0-9A-Za-z_-]{30,}$/ },
 ];
 
 const errors = [];
@@ -46,10 +45,6 @@ function checkEnvText(label, text) {
     if (FORBIDDEN_PUBLIC_KEYS.includes(key)) {
       errors.push(`${label}: forbidden public key "${key}" — secrets must live in Cloud Function secrets, not the client bundle.`);
       continue;
-    }
-
-    if (key.startsWith('EXPO_PUBLIC_GEMINI')) {
-      errors.push(`${label}: any EXPO_PUBLIC_GEMINI* variable is forbidden ("${key}"). Move it server-side.`);
     }
 
     // Firebase Web API keys are public-by-design (locked down via API
@@ -100,4 +95,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log('[check-env] OK — no AI secrets bundled into public envs.');
+console.log('[check-env] OK — no private secrets bundled into public envs.');

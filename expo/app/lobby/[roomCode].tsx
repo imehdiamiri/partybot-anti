@@ -1,19 +1,25 @@
 import { Colors } from '@/src/theme/Colors';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator, Share } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Games } from '@/src/models/AppModels';
+import { Games, GameMode } from '@/src/models/AppModels';
+import { useGameStore, MatchPhase } from '@/src/store/useGameStore';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
 import { multiplayerService } from '@/src/services/MultiplayerService';
 import { MultiplayerStatusBanner } from '@/src/components/MultiplayerStatusBanner';
 import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { ReportUserSheet } from '@/src/components/ReportUserSheet';
 import * as Clipboard from 'expo-clipboard';
+import { isWeb } from '@/src/utils/platform';
 
 export default function LobbyScreen() {
+  if (isWeb) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   const { roomCode } = useLocalSearchParams<{ roomCode: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -39,10 +45,29 @@ export default function LobbyScreen() {
 
   useEffect(() => {
     // If room is closed or game started, handle navigation
-    if (currentRoom?.status === 'playing') {
+    if (currentRoom?.status === 'playing' && game) {
+      const localId = useMultiplayerStore.getState().localPlayerId;
+      const normalizedPlayers = Object.values(currentRoom.players).map(p => ({
+        ...p,
+        isLocal: p.id === localId,
+        isHost: p.id === currentRoom.hostId,
+      }));
+
+      useGameStore.setState({
+        activeSession: {
+          id: currentRoom.roomCode,
+          game,
+          mode: GameMode.multiDevice,
+          roomCode: currentRoom.roomCode,
+          players: normalizedPlayers,
+          currentRoundIndex: 0,
+          phase: MatchPhase.playing,
+          maxRounds: 1,
+        }
+      });
       router.replace(`/game/${currentRoom.gameId}/session` as any);
     }
-  }, [currentRoom?.status, router]);
+  }, [currentRoom?.status, currentRoom?.roomCode, currentRoom?.hostId, currentRoom?.players, game, router]);
 
   useEffect(() => {
     if (error) {

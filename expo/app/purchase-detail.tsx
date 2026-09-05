@@ -19,6 +19,7 @@ import { GlowView } from '@/src/components/ui/GlowView';
 import { usePaywallStore } from '@/src/store/usePaywallStore';
 import { showToast } from '@/src/components/ToastOverlay';
 import { AppConstants } from '@/src/constants/AppConstants';
+import { isWeb } from '@/src/utils/platform';
 
 /**
  * PurchaseDetailScreen — detail sheet for a single RevenueCat package.
@@ -49,18 +50,18 @@ function classifyPackage(pkg: any): { kind: Kind; accent: string; icon: string; 
     const t = TIER_ACCENT[type];
     return { kind: 'subscription', accent: t.color, icon: t.icon, title: pkg?.product?.title || t.label };
   }
-  if (typeof pkg?.identifier === 'string' && /donat/i.test(pkg.identifier)) {
-    return { kind: 'donation', accent: Colors.pink, icon: 'heart.fill', title: pkg?.product?.title || 'Support PartyBot' };
+  if (pkg?.identifier?.includes('donation')) {
+    return { kind: 'donation', accent: Colors.pink, icon: 'heart.fill', title: pkg?.product?.title || 'Tip Jar' };
   }
-  return { kind: 'starPack', accent: Colors.orange, icon: 'star.fill', title: pkg?.product?.title || 'Stars' };
+  return { kind: 'starPack', accent: Colors.yellow, icon: 'star.fill', title: pkg?.product?.title || 'Star Pack' };
 }
 
 function buildBenefits(pkg: any, kind: Kind): Benefit[] {
   if (kind === 'subscription' || kind === 'lifetime') {
     const items: Benefit[] = [
-      { icon: 'gamecontroller.fill', color: '#007AFF', text: 'All Premium games unlocked' },
-      { icon: 'sparkles', color: Colors.yellow, text: 'AI cards cost 1 Star instead of 5' },
-      { icon: 'star.fill', color: Colors.orange, text: 'Bonus Stars credited every period' },
+      { icon: 'lock.open.fill', color: Colors.green, text: 'Unlock all party games instantly' },
+      { icon: 'bolt.fill', color: Colors.yellow, text: 'Unlimited party rounds' },
+      { icon: 'wrench.and.screwdriver.fill', color: Colors.mint, text: 'Full access to party tools' },
     ];
     if (kind === 'lifetime') items.push({ icon: 'infinity', color: '#FF2D55', text: 'Pay once, keep forever' });
     return items;
@@ -74,7 +75,7 @@ function buildBenefits(pkg: any, kind: Kind): Benefit[] {
   return [
     { icon: 'star.fill', color: Colors.orange, text: `${pkg?.product?.title || 'Stars'} added to your wallet` },
     { icon: 'bolt.fill', color: '#007AFF', text: 'Instant delivery after purchase' },
-    { icon: 'sparkles', color: Colors.yellow, text: 'Spend Stars on AI-generated cards' },
+    { icon: 'sparkles', color: Colors.yellow, text: 'Spend Stars on party perks & tools' },
   ];
 }
 
@@ -84,14 +85,43 @@ export default function PurchaseDetailScreen() {
   const { identifier } = useLocalSearchParams<{ identifier?: string }>();
   const { isPurchasing, restorePurchases, purchasePackage, packages } = usePaywallStore();
 
+  const safeBack = () => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } };
+
+  if (isWeb) {
+    return (
+      <View style={styles.container}>
+        <AppBackgroundView />
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+          <TouchableOpacity onPress={safeBack} style={styles.closeBtn}>
+            <IconSymbol name="xmark" size={14} color="#007AFF" />
+            <Text style={styles.closeBtnText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 }}>
+          <IconSymbol name="sparkles" size={48} color={Colors.yellow} />
+          <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold', textAlign: 'center' }}>
+            Local Play Unlocked
+          </Text>
+          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, textAlign: 'center', maxWidth: 360, lineHeight: 22 }}>
+            All party games and tools are completely free to play in local mode on web. Subscriptions and Star packs are available in the mobile app.
+          </Text>
+          <TouchableOpacity
+            style={{ marginTop: 12, backgroundColor: Colors.blue, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 }}
+            onPress={safeBack}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 15 }}>Back to Games</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const pkg = useMemo(() => {
     if (identifier) {
       return packages.find((p) => p.identifier === identifier) || null;
     }
     return packages.find((p) => p.packageType === 'ANNUAL') || packages[0] || null;
   }, [identifier, packages]);
-
-  const safeBack = () => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } };
 
   if (!pkg) {
     return (

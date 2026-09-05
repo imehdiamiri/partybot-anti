@@ -456,3 +456,122 @@ describe('ReverseSinging — base64 and audio helpers', () => {
   });
 });
 
+// ══════════════════════════════════════════════
+// 7. Game Catalogue & Offline Integrity
+// ══════════════════════════════════════════════
+
+import { Games } from '../models/AppModels';
+import * as fs from 'fs';
+import * as path from 'path';
+
+describe('Game Catalogue Integrity & Route Architecture', () => {
+  test('all games in Games catalogue are defined and have valid configuration', () => {
+    const gameList = Object.values(Games);
+    expect(gameList.length).toBeGreaterThan(0);
+
+    for (const game of gameList) {
+      expect(game.id).toBeTruthy();
+      expect(game.name).toBeTruthy();
+      expect(game.minPlayers).toBeGreaterThanOrEqual(1);
+      expect(game.maxPlayers).toBeGreaterThanOrEqual(game.minPlayers);
+      expect(game.supportedModes.length).toBeGreaterThan(0);
+    }
+  });
+
+  test('free and premium games have clear unlock models', () => {
+    const gameList = Object.values(Games);
+    for (const game of gameList) {
+      if (game.isFreeForever) {
+        expect(game.unlockCostStars).toBe(0);
+      }
+    }
+  });
+
+  test('Factory and AI game generator files are strictly absent from client codebase', () => {
+    const root = path.resolve(__dirname, '../..');
+    const forbiddenFiles = [
+      path.join(root, 'app/(tabs)/factory.tsx'),
+      path.join(root, 'app/factory.tsx'),
+      path.join(root, 'src/components/AIGeneratorPanel.tsx'),
+      path.join(root, 'src/services/LLMService.ts'),
+      path.join(root, 'src/store/useSavedIdeasStore.ts'),
+    ];
+
+    for (const file of forbiddenFiles) {
+      expect(fs.existsSync(file)).toBe(false);
+    }
+  });
+
+  test('all 16 games support singleDevice mode for offline / local-first play', () => {
+    const gameList = Object.values(Games);
+    expect(gameList.length).toBe(16);
+
+    for (const game of gameList) {
+      expect(game.supportedModes).toContain('singleDevice');
+    }
+  });
+});
+
+// ══════════════════════════════════════════════
+// 8. Platform Boundaries & Web Local Mode
+// ══════════════════════════════════════════════
+
+import { isWeb, isWebLocalMode, isIOS, isAndroid } from '../utils/platform';
+import { GameLibrary, GamesDefinitions } from '../models/AppModels';
+
+describe('Platform Boundary & Local-First Mode', () => {
+  test('platform helper exports expected boolean flags', () => {
+    expect(typeof isWeb).toBe('boolean');
+    expect(typeof isWebLocalMode).toBe('boolean');
+    expect(typeof isIOS).toBe('boolean');
+    expect(typeof isAndroid).toBe('boolean');
+  });
+
+  test('GameLibrary and GamesDefinitions contain all 16 predefined games with valid hero images', () => {
+    expect(GameLibrary.length).toBe(16);
+    expect(GamesDefinitions.length).toBe(16);
+
+    const libIds = GameLibrary.map(g => g.id).sort();
+    const defIds = GamesDefinitions.map(d => d.id.id).sort();
+    expect(libIds).toEqual(defIds);
+
+    // Verify all 16 games have a resolved heroImageLocal reference
+    for (const game of GameLibrary) {
+      expect(game.heroImageLocal).toBeDefined();
+      expect(game.heroImageLocal).not.toBeNull();
+    }
+  });
+});
+
+// ══════════════════════════════════════════════
+// 9. ColorMatch & Game Math Precision
+// ══════════════════════════════════════════════
+
+import { calculateColorMatchScore, hsvToHsl } from '../utils/colorMatchMath';
+
+describe('ColorMatch — HSV coordinate distance scoring and HSL conversion', () => {
+  test('hsvToHsl formats valid CSS HSL string', () => {
+    const hsl = hsvToHsl(180, 50, 50);
+    expect(hsl).toMatch(/^hsl\(\d+,\s*\d+%,\s*\d+%\)$/);
+  });
+  test('exact match yields 10.00 score', () => {
+    const c = { h: 210, s: 80, b: 70 };
+    expect(calculateColorMatchScore(c, c)).toBe(10.0);
+  });
+
+  test('opposite hue yields low score', () => {
+    const target = { h: 0, s: 100, b: 100 }; // Red
+    const guess = { h: 180, s: 100, b: 100 }; // Cyan
+    const score = calculateColorMatchScore(target, guess);
+    expect(score).toBeLessThanOrEqual(2.0);
+  });
+
+  test('close hue and saturation yields high score (>= 8.5)', () => {
+    const target = { h: 120, s: 80, b: 80 };
+    const guess = { h: 125, s: 78, b: 82 };
+    const score = calculateColorMatchScore(target, guess);
+    expect(score).toBeGreaterThanOrEqual(8.5);
+  });
+});
+
+

@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 
 import { GameSession } from '@/src/store/useGameStore';
@@ -10,6 +10,7 @@ import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ResultsScoreboard } from './ResultsScoreboard';
+import { PhaseTransition } from './PhaseTransition';
 
 interface Props { session: GameSession; }
 type Phase = 'ready' | 'countdown' | 'playing' | 'playerComplete' | 'results';
@@ -291,9 +292,11 @@ export function MemoryPathSession({ session }: Props) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const sw = Dimensions.get('window').width;
+  const { width: sw, height: sh } = useWindowDimensions();
+  const maxStageByHeight = Math.max(260, sh - 280);
+  const stageWidth = Math.min(Math.min(sw, 520), maxStageByHeight);
   const spacing = 6;
-  const tileSz = (sw - 24 * 2 - spacing * (GRID - 1)) / GRID;
+  const tileSz = Math.min((stageWidth - 24 * 2 - spacing * (GRID - 1)) / GRID, 75);
 
   const getTileColors = (state: TileState, isWrong: boolean): [string, string] => {
     if (isWrong) return ['rgba(255,59,48,0.5)', 'rgba(255,59,48,0.3)'];
@@ -317,19 +320,21 @@ export function MemoryPathSession({ session }: Props) {
 
   if (phase === 'ready') {
     return (
-      <GamePassPhoneView
-        playerName={player.displayName}
-        title={players.length > 1 && playerIndex > 0 ? "Pass the phone to" : "Get ready"}
-        subtitle={`Memory Path: Find the hidden path from Start to End!`}
-        accentColor="#00C7BE"
-        onReady={handleStart}
-        onSkip={() => {
-          // Record a skipped/DNF result for this player
-          setResults(prev => [...prev, { playerId: player.id, timeMs: 0, attempts: 0, finished: false, progress: 0 }]);
-          if (playerIndex + 1 >= players.length) setPhase('results');
-          else { setPlayerIndex(i => i + 1); setPhase('ready'); }
-        }}
-      />
+      <PhaseTransition phaseKey={`ready-${playerIndex}`} style={{ flex: 1 }}>
+        <GamePassPhoneView
+          playerName={player.displayName}
+          title={players.length > 1 && playerIndex > 0 ? "Pass the phone to" : "Get ready"}
+          subtitle={`Memory Path: Find the hidden path from Start to End!`}
+          accentColor="#00C7BE"
+          onReady={handleStart}
+          onSkip={() => {
+            // Record a skipped/DNF result for this player
+            setResults(prev => [...prev, { playerId: player.id, timeMs: 0, attempts: 0, finished: false, progress: 0 }]);
+            if (playerIndex + 1 >= players.length) setPhase('results');
+            else { setPlayerIndex(i => i + 1); setPhase('ready'); }
+          }}
+        />
+      </PhaseTransition>
     );
   }
 
@@ -381,7 +386,7 @@ export function MemoryPathSession({ session }: Props) {
                 }
 
                 return (
-                  <Pressable key={c} onPress={() => handleTap(r, c)}
+                  <Pressable key={c} testID={`path-tile-${r}-${c}`} accessibilityRole="button" onPress={() => handleTap(r, c)}
                     disabled={state === 'correct' || state === 'start'}
                     style={{ width: tileSz, height: tileSz }}>
                     <LinearGradient colors={colors as [string, string]} start={{x:0,y:0}} end={{x:1,y:1}}
@@ -413,25 +418,33 @@ export function MemoryPathSession({ session }: Props) {
   }
 
   // Results
-  const sorted = [...results].sort((a, b) => {
-    if (a.finished && !b.finished) return -1;
-    if (!a.finished && b.finished) return 1;
-    return a.timeMs - b.timeMs;
-  });
+  const sorted = [...players]
+    .map(p => {
+      const r = results.find(x => x.playerId === p.id);
+      const isFinished = !!r?.finished;
+      return {
+        player: p,
+        result: r,
+        isFinished,
+        isSkipped: !isFinished,
+      };
+    })
+    .sort((a, b) => {
+      if (a.isFinished !== b.isFinished) return a.isFinished ? -1 : 1;
+      return (a.result?.timeMs ?? 999999) - (b.result?.timeMs ?? 999999);
+    });
 
   return (
     <View style={s.container}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <ResultsScoreboard
-          entries={sorted.map(r => {
-            const p = players.find(x => x.id === r.playerId);
-            return {
-              id: r.playerId,
-              name: p?.displayName ?? 'Player',
-              primary: r.finished ? `${(r.timeMs / 1000).toFixed(1)}s` : 'DNF',
-              secondary: r.finished ? `${r.attempts} tries` : `${r.progress} steps completed`,
-            };
-          })}
+          entries={sorted.map(({ player, result, isSkipped, isFinished }) => ({
+            id: player.id,
+            name: player.displayName ?? 'Player',
+            isSkipped,
+            primary: isFinished ? `${(result!.timeMs / 1000).toFixed(1)}s` : 'Skipped',
+            secondary: isFinished ? `${result!.attempts} tries` : (result && result.progress > 0 ? `${result.progress} steps reached` : 'Did not finish'),
+          }))}
           title={players.length > 1 ? 'Final Rankings' : 'Complete!'}
           subtitle={players.length > 1 ? undefined : 'Great memory!'}
           shareGameName="Memory Path"
@@ -460,18 +473,18 @@ const s = StyleSheet.create({
   bubble: { alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14 },
   bv: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   bl: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
-  btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
+  btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', maxWidth: 520, alignSelf: 'center', alignItems: 'center', marginTop: 32 },
   btnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
+  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, maxWidth: 520, width: '100%', alignSelf: 'center' },
   hName: { color: '#fff', fontSize: 17, fontFamily: 'Viral-Black' },
   hSub: { color: '#00C7BE', fontSize: 12, fontWeight: '600', marginTop: 2 },
   timerPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
   timerTx: { color: '#fff', fontSize: 20, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
-  progWrap: { paddingHorizontal: 16, marginBottom: 12 },
+  progWrap: { paddingHorizontal: 16, marginBottom: 12, maxWidth: 520, width: '100%', alignSelf: 'center' },
   progBg: { height: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 4, overflow: 'hidden' },
   progFill: { height: 8, borderRadius: 4 },
   progTx: { color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '600', marginTop: 4 },
-  gridWrap: { alignSelf: 'center', gap: 6, paddingHorizontal: 24 },
+  gridWrap: { alignSelf: 'center', gap: 6, paddingHorizontal: 24, maxWidth: 520, width: '100%' },
   gridRow: { flexDirection: 'row', gap: 6 },
   tile: { flex: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1.2 },
   tileLbl: { fontSize: 10, fontFamily: 'Viral-Black' },

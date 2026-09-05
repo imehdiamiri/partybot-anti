@@ -23,6 +23,7 @@ import { AppBackgroundView } from '../../src/components/AppBackgroundView';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { AppConstants } from '../../src/constants/AppConstants';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { isWeb } from '../../src/utils/platform';
 
 // Platform-safe BlurView (conditional require, iOS only)
 let BlurView: any = null;
@@ -46,6 +47,41 @@ export default function AuthScreen() {
     signInWithApple,
     signInWithGoogle,
   } = useAuthStore();
+
+  if (isWeb) {
+    return (
+      <View style={styles.container}>
+        <AppBackgroundView variant="simple" />
+        <View style={[styles.scrollContent, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 24, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28, flex: 1, gap: 18 }]}>
+          <Image source={require('@/assets/images/partybot-logo.png')} style={{ width: 220, height: 52 }} resizeMode="contain" />
+          
+          <View style={{ alignItems: 'center', gap: 10, maxWidth: 380, marginTop: 10 }}>
+            <IconSymbol name="sparkles" size={48} color={Colors.yellow} />
+            <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold', textAlign: 'center' }}>
+              Local Play Ready
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
+              PartyBot Web runs in 100% offline Local Mode. All 16 party games and tools are completely unlocked for 1-Phone play with no login or account required!
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, textAlign: 'center', lineHeight: 18, marginTop: 4 }}>
+              Account sync, online friends, and multi-device rooms are available in the iOS and Android apps.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={{ backgroundColor: Colors.blue, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 24, marginTop: 12 }}
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace('/');
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Continue Playing</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   const handleSubmit = () => {
     const trimmedUser = username.trim();

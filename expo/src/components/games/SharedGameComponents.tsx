@@ -6,28 +6,11 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInUp, FadeInDown, ZoomIn, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { Player } from '@/src/models/Player';
-import { Audio } from 'expo-av';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 
-export async function playSharedSound(type: 'success' | 'fail' | 'game_over') {
-  try {
-    let source;
-    if (type === 'success') source = require('@/assets/sounds/success.wav');
-    else if (type === 'fail') source = require('@/assets/sounds/fail.wav');
-    else if (type === 'game_over') source = require('@/assets/sounds/game_over.wav');
-
-    const { sound } = await Audio.Sound.createAsync(source);
-    await sound.playAsync();
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-      }
-    });
-  } catch (e) {
-    // Ignore errors to not crash the game if sound fails
-  }
-}
+import { playSharedSound } from '@/src/utils/sharedSound';
+export { playSharedSound };
 
 // Platform-safe BlurView
 let BlurViewComponent: any = null;
@@ -215,8 +198,10 @@ export function GameHandoffView({
       </View>
       
       {/* Bottom button */}
-      <Animated.View entering={FadeInUp.duration(450).delay(400)} style={{ width: '100%', paddingHorizontal: 24 }}>
+      <Animated.View entering={FadeInUp.duration(450).delay(400)} style={{ width: '100%', maxWidth: 540, alignSelf: 'center', paddingHorizontal: 24 }}>
         <Pressable 
+          accessibilityRole="button"
+          testID="game-ready-button"
           style={({ pressed }) => [{
             height: 56,
             borderRadius: 28,
@@ -372,6 +357,7 @@ export interface GameResultData {
   score: number;
   stats: Array<{ label: string; value: string | number; color?: string }>;
   isEliminated?: boolean;
+  isSkipped?: boolean;
 }
 
 interface GameResultsScreenProps {
@@ -379,79 +365,118 @@ interface GameResultsScreenProps {
   results: GameResultData[];
   onPlayAgain: () => void;
   title?: string;
+  badgeLabel?: string;
 }
 
-export function GameResultsScreen({ players, results, onPlayAgain, title }: GameResultsScreenProps) {
-  const sorted = [...results].sort((a, b) => b.score - a.score);
-
+export function GameResultsScreen({ players, results, onPlayAgain, title, badgeLabel = 'STANDINGS' }: GameResultsScreenProps) {
   useEffect(() => {
-    // Determine if we should play success or fail sound
-    // If all players eliminated or scores very low, maybe fail? Usually results means end of game.
-    // We'll play success by default for the results screen!
     playSharedSound('success');
   }, []);
 
+  const validCompleted = results.filter(r => !r.isSkipped && r.score > 0);
+  const skippedList = results.filter(r => r.isSkipped || r.score === 0);
+
+  const sortedCompleted = [...validCompleted].sort((a, b) => b.score - a.score);
+
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
-      <Animated.ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={ZoomIn.duration(600).springify().damping(14)} style={{ alignItems: 'center', gap: 12, marginVertical: 30 }}>
-          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,204,0,0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)' }}>
-            <IconSymbol name="trophy.fill" size={48} color={Colors.yellow} />
+      <Animated.ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, maxWidth: 680, width: '100%', alignSelf: 'center' }} showsVerticalScrollIndicator={false}>
+        {/* Modern Header without trophy icon */}
+        <Animated.View entering={FadeInDown.duration(500).springify().damping(15)} style={{ alignItems: 'center', gap: 6, marginVertical: 20 }}>
+          <View style={{ paddingHorizontal: 14, paddingVertical: 4, borderRadius: 20, backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.12)', marginBottom: 4 }}>
+            <Text style={{ color: '#A855F7', fontSize: 11, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' }}>{badgeLabel}</Text>
           </View>
-          <Text style={{ color: '#fff', fontSize: 28, fontFamily: 'Viral-Black', letterSpacing: 0.3 }}>{title || (players.length > 1 ? 'Final Rankings' : 'Complete!')}</Text>
+          <Text style={{ color: '#fff', fontSize: 28, fontFamily: 'Viral-Black', letterSpacing: 0.2 }}>{title || (players.length > 1 ? 'Final Rankings' : 'Complete!')}</Text>
         </Animated.View>
 
-        <View style={{ gap: 16 }}>
-          {sorted.map((r, i) => {
+        <View style={{ gap: 12 }}>
+          {sortedCompleted.map((r, i) => {
             const p = players.find(x => x.id === r.playerId);
             const isFirst = i === 0;
             return (
-              <Animated.View key={r.playerId} entering={FadeInUp.delay(i * 150).springify().damping(14)} 
+              <Animated.View key={r.playerId} entering={FadeInUp.delay(i * 120).springify().damping(14)} 
                 style={[{ 
-                  flexDirection: 'row', alignItems: 'center', padding: 20, gap: 16, 
-                  backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 24, 
-                  borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', overflow: 'hidden' 
-                }, isFirst && { backgroundColor: 'rgba(255,204,0,0.06)', borderColor: 'rgba(255,204,0,0.2)' }]}>
+                  flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14, 
+                  backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 20, 
+                  borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', overflow: 'hidden' 
+                }, isFirst && { backgroundColor: 'rgba(255,204,0,0.08)', borderColor: 'rgba(255,204,0,0.3)' }]}>
                 
-                {isFirst && <LinearGradient colors={['rgba(255,204,0,0.1)', 'transparent']} style={StyleSheet.absoluteFillObject} start={{x:0, y:0}} end={{x:1, y:1}} />}
+                {isFirst && <LinearGradient colors={['rgba(255,204,0,0.15)', 'transparent']} style={StyleSheet.absoluteFillObject} start={{x:0, y:0}} end={{x:1, y:1}} />}
                 
-                <View style={[{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' }, isFirst && { backgroundColor: 'rgba(255,204,0,0.2)' }]}>
-                  <Text style={[{ color: 'rgba(255,255,255,0.5)', fontSize: 18, fontFamily: 'Viral-Black' }, isFirst && { color: Colors.yellow }]}>{i+1}</Text>
+                <View style={[{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' }, isFirst && { backgroundColor: 'rgba(255,204,0,0.2)' }]}>
+                  <Text style={[{ color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: 'Viral-Black' }, isFirst && { color: '#FFD700' }]}>{i+1}</Text>
                 </View>
 
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 17, fontFamily: 'Viral-Black', marginBottom: 10 }}>{p?.displayName}</Text>
+                  <Text style={{ color: '#fff', fontSize: 16, fontFamily: 'Viral-Black', marginBottom: 6 }}>{p?.displayName}</Text>
                   
-                  <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
+                  <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
                     {r.stats.map((stat, idx) => (
-                      <View key={idx} style={{ minWidth: 60 }}>
-                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8, marginBottom: 3 }}>{stat.label}</Text>
-                        <Text style={{ color: stat.color || '#fff', fontSize: 22, fontFamily: 'Viral-Black' }}>{stat.value}</Text>
+                      <View key={idx} style={{ minWidth: 50 }}>
+                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>{stat.label}</Text>
+                        <Text style={{ color: stat.color || '#fff', fontSize: 18, fontFamily: 'Viral-Black' }}>{stat.value}</Text>
                       </View>
                     ))}
                   </View>
                 </View>
 
                 <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8, marginBottom: 3 }}>Score</Text>
-                  <Text style={{ color: isFirst ? Colors.yellow : Colors.orange, fontSize: 36, fontFamily: 'Viral-Black', letterSpacing: -0.5 }}>{r.score}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>Score</Text>
+                  <Text style={{ color: isFirst ? '#FFD700' : Colors.orange, fontSize: 30, fontFamily: 'Viral-Black', letterSpacing: -0.5 }}>{r.score}</Text>
                 </View>
 
               </Animated.View>
             );
           })}
+
+          {/* Skipped / Incomplete players */}
+          {skippedList.length > 0 && (
+            <View style={{ marginTop: 8, gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 6 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 }}>Did Not Play / Skipped</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+              </View>
+
+              {skippedList.map((r, idx) => {
+                const p = players.find(x => x.id === r.playerId);
+                return (
+                  <Animated.View key={r.playerId} entering={FadeInUp.delay(200 + idx * 50).springify().damping(14)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 12,
+                      paddingVertical: 12, paddingHorizontal: 16, borderRadius: 16,
+                      backgroundColor: 'rgba(255,255,255,0.02)',
+                      borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
+                      opacity: 0.75,
+                    }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.04)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 'bold' }}>—</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: '600' }}>{p?.displayName || 'Player'}</Text>
+                      <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 1 }}>Skipped turn</Text>
+                    </View>
+                    <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.25)' }}>
+                      <Text style={{ color: '#F87171', fontSize: 11, fontWeight: '700' }}>Skipped</Text>
+                    </View>
+                  </Animated.View>
+                );
+              })}
+            </View>
+          )}
         </View>
 
-        <Animated.View entering={FadeInUp.delay(sorted.length * 150 + 200).springify()}>
+        <Animated.View entering={FadeInUp.delay((sortedCompleted.length + skippedList.length) * 100 + 200).springify()} style={{ marginTop: 24, maxWidth: 540, width: '100%', alignSelf: 'center' }}>
           <Pressable 
             style={({ pressed }) => [{ 
-              backgroundColor: Colors.green, paddingVertical: 18, borderRadius: 20, 
-              alignItems: 'center', marginTop: 40, shadowColor: Colors.green, 
-              shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 
-            }, pressed && { opacity: 0.8 }]} 
+              paddingVertical: 16, borderRadius: 18, 
+              alignItems: 'center', marginTop: 32, shadowColor: '#3B82F6', 
+              shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 6,
+              overflow: 'hidden'
+            }, pressed && { opacity: 0.85 }]} 
             onPress={onPlayAgain}>
-            <LinearGradient colors={[Colors.green, '#28A745']} style={[StyleSheet.absoluteFillObject, { borderRadius: 20 }]} />
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.3 }}>Play Again</Text>
+            <LinearGradient colors={['#3B82F6', '#2563EB', '#1D4ED8']} style={[StyleSheet.absoluteFillObject, { borderRadius: 18 }]} />
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.3 }}>Play Again</Text>
           </Pressable>
         </Animated.View>
       </Animated.ScrollView>
@@ -574,7 +599,7 @@ export function GameReadyScreen({
         </Animated.View>
       )}
 
-      <Animated.View entering={FadeInUp.delay(380).springify().damping(14)} style={{ width: '100%', marginTop: 44 }}>
+      <Animated.View entering={FadeInUp.delay(380).springify().damping(14)} style={{ width: '100%', maxWidth: 540, alignSelf: 'center', marginTop: 44 }}>
         <Pressable
           style={({ pressed }) => [{
             backgroundColor: iconColor, paddingVertical: 18, borderRadius: 20,
@@ -622,7 +647,8 @@ export function BeerBottleView({ width: w }: { width: number }) {
       elevation: 10,
     }}>
       <Image
-        source={require('@/assets/images/tools/bottle.png')}
+        testID="beer-bottle-img"
+        source={require('@/assets/images/tools/bottle.webp')}
         style={{
           width: w,
           height: h,

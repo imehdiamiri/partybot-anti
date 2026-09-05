@@ -1,7 +1,7 @@
 import { Colors } from '@/src/theme/Colors';
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
@@ -9,9 +9,18 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Games } from '@/src/models/AppModels';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { isWeb } from '@/src/utils/platform';
 
 export default function CreateLobbyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+
+  if (isWeb) {
+    if (id) {
+      return <Redirect href={`/game/${id}/setup?mode=singleDevice`} />;
+    }
+    return <Redirect href="/(tabs)" />;
+  }
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   

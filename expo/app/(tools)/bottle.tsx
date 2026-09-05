@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   Keyboard,
   Platform,
 } from 'react-native';
@@ -26,8 +26,6 @@ import { CurrentTurnPill, BeerBottleView } from '@/src/components/games/SharedGa
 import { AudioManager } from '@/src/services/AudioManager';
 import { FriendSuggestions } from '@/src/components/FriendSuggestions';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 // Safe haptics wrapper — web doesn't support haptics
 const safeHaptic = {
   selection: () => { try { Haptics.selectionAsync(); } catch {} },
@@ -39,6 +37,7 @@ const safeHaptic = {
 
 export default function BottleToolScreen() {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const [names, setNames] = useState<string[]>([]);
   const [draft, setDraft] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
@@ -94,7 +93,7 @@ export default function BottleToolScreen() {
     setTimeout(() => onSpinDone(target, hasNames), 8050);
   }, [isSpinning, names.length, bottleAngle, onSpinDone]);
 
-  const bottleSize = Math.min(SCREEN_WIDTH * 0.85, 360);
+  const bottleSize = Math.min((screenWidth > 0 ? screenWidth : 390) * 0.85, 360);
   const radius = bottleSize / 2 - 44;
 
   const bottleAnimatedStyle = useAnimatedStyle(() => ({
@@ -108,6 +107,7 @@ export default function BottleToolScreen() {
         {/* Input Row */}
       <View style={styles.inputContainer}>
         <TextInput
+          testID="bottle-name-input"
           style={styles.input}
           placeholder="Add a name"
           placeholderTextColor="rgba(255,255,255,0.3)"
@@ -118,6 +118,8 @@ export default function BottleToolScreen() {
           autoCapitalize="words"
         />
         <TouchableOpacity
+          testID="bottle-add-name-btn"
+          accessibilityRole="button"
           style={[styles.addButton, !draft.trim() && { opacity: 0.4 }]}
           onPress={addName}
           disabled={!draft.trim()}
@@ -141,7 +143,7 @@ export default function BottleToolScreen() {
         <View style={styles.chipsContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
             {names.map((name, i) => (
-              <View key={`${name}-${i}`} style={[
+              <View key={`${name}-${i}`} testID={`bottle-name-chip-${i}`} style={[
                 styles.chip,
                 selectedIndex === i && styles.chipSelected,
               ]}>
@@ -163,7 +165,7 @@ export default function BottleToolScreen() {
 
       {/* Spin Area */}
       <View style={styles.spinArea}>
-        <View style={[styles.wheelContainer, { width: bottleSize, height: bottleSize }]}>
+        <View testID="bottle-stage" style={[styles.wheelContainer, { width: bottleSize, height: bottleSize }]}>
           {/* Name Ring */}
           {names.length > 0 && names.map((name, index) => {
             const angle = (360 / names.length) * index - 90;
@@ -181,7 +183,9 @@ export default function BottleToolScreen() {
                 ]}
               >
                 {isSelected ? (
-                  <CurrentTurnPill playerName={name} accent={Colors.green} />
+                  <View testID="bottle-selected-pill">
+                    <CurrentTurnPill playerName={name} accent={Colors.green} />
+                  </View>
                 ) : (
                   <Text style={styles.nameText} numberOfLines={1}>{name}</Text>
                 )}
@@ -204,6 +208,8 @@ export default function BottleToolScreen() {
       {/* Spin Button */}
       <View style={[styles.bottomArea, { paddingBottom: Math.max(28, insets.bottom + 12) }]}>
         <TouchableOpacity
+          testID="bottle-spin-btn"
+          accessibilityRole="button"
           onPress={spin}
           disabled={isSpinning}
           activeOpacity={0.8}
@@ -236,6 +242,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   inputContainer: {
     flexDirection: 'row',

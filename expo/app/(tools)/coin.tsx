@@ -21,8 +21,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 
 import { AudioManager } from '@/src/services/AudioManager';
 
-const HEADS_IMG = require('@/assets/images/tools/coin-heads.png');
-const TAILS_IMG = require('@/assets/images/tools/coin-tails.png');
+const HEADS_IMG = require('@/assets/images/tools/coin-heads.webp');
+const TAILS_IMG = require('@/assets/images/tools/coin-tails.webp');
 
 type CoinState = {
   rotation: SharedValue<number>;
@@ -185,7 +185,8 @@ export default function CoinFlipToolScreen() {
   };
 
   const { width } = useWindowDimensions();
-  const coinSize = coinCount === 1 ? width * 0.6 : width * 0.4;
+  const baseWidth = width > 0 ? width : 390;
+  const coinSize = coinCount === 1 ? Math.min(baseWidth * 0.6, 260) : Math.min(baseWidth * 0.4, 160);
 
   return (
     <View style={styles.container}>
@@ -194,15 +195,17 @@ export default function CoinFlipToolScreen() {
         <View style={styles.statPill}>
           <View style={[styles.statDot, { backgroundColor: Colors.yellow }]} />
           <Text style={styles.statTitle}>HEADS</Text>
-          <Text style={styles.statValue}>{headsCount}</Text>
+          <Text testID="coin-heads-count" style={styles.statValue}>{headsCount}</Text>
         </View>
         <View style={styles.statPill}>
           <View style={[styles.statDot, { backgroundColor: Colors.orange }]} />
           <Text style={styles.statTitle}>TAILS</Text>
-          <Text style={styles.statValue}>{tailsCount}</Text>
+          <Text testID="coin-tails-count" style={styles.statValue}>{tailsCount}</Text>
         </View>
         <View style={{ flex: 1 }} />
         <Pressable 
+          testID="coin-reset-stats-btn"
+          accessibilityRole="button"
           onPress={resetStats} 
           style={({ pressed }) => [
             styles.resetBtn,
@@ -222,6 +225,8 @@ export default function CoinFlipToolScreen() {
           return (
             <Pressable
               key={n}
+              testID={`coin-count-btn-${n}`}
+              accessibilityRole="button"
               onPress={() => handleCoinCountChange(n)}
               style={[
                 styles.countBtn,
@@ -245,16 +250,19 @@ export default function CoinFlipToolScreen() {
       {/* Result Label */}
       <View style={[styles.resultContainer, isFlipping && { opacity: 0.4 }]}>
         <Text style={styles.resultHeader}>{hasResult ? "RESULT" : "READY"}</Text>
-        <Text style={[
-          styles.resultText,
-          hasResult ? { color: Colors.yellow, textShadowColor: 'rgba(255, 214, 10, 0.5)', textShadowRadius: 16, textShadowOffset: { width: 0, height: 4 } } : {}
-        ]}>
+        <Text 
+          testID="coin-result-text"
+          style={[
+            styles.resultText,
+            hasResult ? { color: Colors.yellow, textShadowColor: 'rgba(255, 214, 10, 0.5)', textShadowRadius: 16, textShadowOffset: { width: 0, height: 4 } } : {}
+          ]}
+        >
           {getResultText()}
         </Text>
       </View>
 
       {/* Coins Row */}
-      <View style={styles.coinsRow}>
+      <View testID="coin-stage" style={styles.coinsRow}>
         {Array.from({ length: coinCount }).map((_, i) => (
           <CoinComponent
             key={i}
@@ -272,6 +280,8 @@ export default function CoinFlipToolScreen() {
 
       {/* Flip Button */}
       <Pressable
+        testID="coin-flip-btn"
+        accessibilityRole="button"
         onPress={flip}
         disabled={isFlipping}
         style={({ pressed }) => [
@@ -301,6 +311,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 8,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   statsRow: {
     flexDirection: 'row',

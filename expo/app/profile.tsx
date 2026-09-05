@@ -24,17 +24,18 @@ import { usePaywallStore } from '@/src/store/usePaywallStore';
 import { useEconomyStore } from '@/src/store/useEconomyStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { AppConstants } from '@/src/constants/AppConstants';
+import { isWeb } from '@/src/utils/platform';
 
 // Platform-safe BlurView
 let BlurViewComponent: any = null;
 if (Platform.OS === 'ios') {
   try { BlurViewComponent = require('expo-blur').BlurView; } catch {}
 }
-const SurfaceCard = ({ children, style }: { children: React.ReactNode; style?: any }) => {
+const SurfaceCard = ({ children, style, testID }: { children: React.ReactNode; style?: any; testID?: string }) => {
   if (Platform.OS === 'ios' && BlurViewComponent) {
-    return <BlurViewComponent tint="dark" intensity={40} style={[styles.surfaceCard, style]}>{children}</BlurViewComponent>;
+    return <BlurViewComponent tint="dark" intensity={40} style={[styles.surfaceCard, style]} testID={testID}>{children}</BlurViewComponent>;
   }
-  return <View style={[styles.surfaceCard, style, { backgroundColor: 'rgba(20,20,30,0.92)' }]}>{children}</View>;
+  return <View style={[styles.surfaceCard, style, { backgroundColor: 'rgba(20,20,30,0.92)' }]} testID={testID}>{children}</View>;
 };
 
 const SectionHeaderView = ({ title, subtitle }: { title: string; subtitle?: string }) => (
@@ -85,6 +86,7 @@ export default function ProfileScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = () => {
+    if (isWeb) return;
     Alert.alert(
       'Delete Account?',
       'This will permanently delete your account, wallet, friends, invite history, and any rooms you host. This action cannot be undone.',
@@ -191,7 +193,7 @@ export default function ProfileScreen() {
 
   // Compact Identity Card
   const renderIdentityCard = () => (
-    <SurfaceCard>
+    <SurfaceCard testID="profile-identity-card">
       <View style={styles.identityRow}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatarPlaceholder}>
@@ -222,103 +224,129 @@ export default function ProfileScreen() {
 
   // Login Prompt Card
   const renderLoginPrompt = () => (
-    <TouchableOpacity style={styles.primaryActionBtn} onPress={handleLogin}>
+    <TouchableOpacity style={styles.primaryActionBtn} onPress={handleLogin} testID="profile-login-button" accessibilityRole="button">
       <Text style={styles.primaryActionText}>Login or Sign Up</Text>
     </TouchableOpacity>
   );
 
   // Wallet Section
-  const renderWalletSection = () => (
-    <View style={styles.sectionContainer}>
-      <SectionHeaderView title="Wallet" subtitle="Stars, membership, and unlocks." />
-      
-      <SurfaceCard style={styles.walletCardRow}>
-        <View style={styles.walletIconContainer}>
-          <Ionicons name="star" size={20} color={Colors.orange} />
-        </View>
-        <View style={styles.walletTextContainer}>
-          <Text style={styles.walletBalanceLabel}>Stars balance</Text>
-          <Text style={styles.walletBalanceValue}>{stars.toLocaleString()}</Text>
-        </View>
-        <Text style={styles.walletPublicRooms}>Public Rooms</Text>
-      </SurfaceCard>
+  const renderWalletSection = () => {
+    if (isWeb) {
+      return (
+        <View style={styles.sectionContainer} testID="profile-wallet-section">
+          <SectionHeaderView title="Local Mode" subtitle="Web gameplay status & settings." />
+          
+          <SurfaceCard style={styles.walletCardRow}>
+            <View style={[styles.walletIconContainer, { backgroundColor: Colors.whiteOverlay6 }]}>
+              <Ionicons name="sparkles" size={20} color={Colors.yellow} />
+            </View>
+            <View style={styles.walletTextContainer}>
+              <Text style={styles.walletBalanceLabel}>Party Games</Text>
+              <Text style={styles.walletMembershipValue}>All 16 Games Unlocked</Text>
+            </View>
+          </SurfaceCard>
 
-      <SurfaceCard>
-        <View style={styles.walletCardRow}>
-          <View style={[styles.walletIconContainer, { backgroundColor: Colors.whiteOverlay6 }]}>
-            <Ionicons name={isPremium ? "star" : "lock-closed"} size={20} color={isPremium ? Colors.orange : Colors.secondary} />
+          <SurfaceCard style={{ padding: 16 }}>
+            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 18 }}>
+              All party games and tools are completely free to play in local 1-Phone mode on the web. Online accounts, room multiplayer, and subscriptions are available in the iOS & Android mobile apps.
+            </Text>
+          </SurfaceCard>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.sectionContainer}>
+        <SectionHeaderView title="Wallet" subtitle="Stars, membership, and unlocks." />
+        
+        <SurfaceCard style={styles.walletCardRow}>
+          <View style={styles.walletIconContainer}>
+            <Ionicons name="star" size={20} color={Colors.orange} />
           </View>
           <View style={styles.walletTextContainer}>
-            <Text style={styles.walletBalanceLabel}>Membership</Text>
-            <Text style={styles.walletMembershipValue}>
-              {isPremium ? 'Premium \u2022 Active' : 'Free plan'}
-            </Text>
+            <Text style={styles.walletBalanceLabel}>Stars balance</Text>
+            <Text style={styles.walletBalanceValue}>{stars.toLocaleString()}</Text>
           </View>
-        </View>
-        
-        <View style={styles.plansContainer}>
-          {(() => {
-            const subs = getSubscriptionPackages();
-            const lifetime = getLifetimePackage();
-            const subColor: Record<string, string> = { WEEKLY: Colors.blue, MONTHLY: Colors.orange, ANNUAL: Colors.purple };
-            if (subs.length === 0 && !lifetime) {
-              return <Text style={styles.planSubtitle}>Plans appear here once the App Store finishes loading.</Text>;
-            }
-            return (
-              <>
-                {subs.map((p) => (
-                  <PlanRow
-                    key={p.identifier}
-                    title={p.product?.title || p.packageType}
-                    price={p.product?.priceString || ''}
-                    color={subColor[p.packageType as string] || Colors.blue}
-                    badge={p.packageType === 'ANNUAL' ? 'BEST VALUE' : undefined}
-                    onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: p.identifier } })}
-                  />
-                ))}
-                {lifetime && (
-                  <PlanRow
-                    title={lifetime.product?.title || 'Lifetime'}
-                    subtitle="One-time • Forever"
-                    price={lifetime.product?.priceString || ''}
-                    color={Colors.red}
-                    onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: lifetime.identifier } })}
-                  />
-                )}
-              </>
-            );
-          })()}
-        </View>
-      </SurfaceCard>
+          <Text style={styles.walletPublicRooms}>Public Rooms</Text>
+        </SurfaceCard>
 
-      <SurfaceCard>
-        <SectionHeaderView title="Star Packs" subtitle="Tap to purchase." />
-        <View style={styles.plansContainer}>
-          {(() => {
-            const packs = getStarPackages();
-            if (packs.length === 0) {
-              return <Text style={styles.planSubtitle}>Star packs appear here once the store loads.</Text>;
-            }
-            const biggestPriceCents = Math.max(...packs.map((p) => Number(p.product?.price ?? 0)));
-            return packs.map((p) => (
-              <PackRow
-                key={p.identifier}
-                title={p.product?.title || p.identifier}
-                price={p.product?.priceString || ''}
-                isBest={Number(p.product?.price ?? 0) === biggestPriceCents}
-                onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: p.identifier } })}
-              />
-            ));
-          })()}
-        </View>
-      </SurfaceCard>
+        <SurfaceCard>
+          <View style={styles.walletCardRow}>
+            <View style={[styles.walletIconContainer, { backgroundColor: Colors.whiteOverlay6 }]}>
+              <Ionicons name={isPremium ? "star" : "lock-closed"} size={20} color={isPremium ? Colors.orange : Colors.secondary} />
+            </View>
+            <View style={styles.walletTextContainer}>
+              <Text style={styles.walletBalanceLabel}>Membership</Text>
+              <Text style={styles.walletMembershipValue}>
+                {isPremium ? 'Premium \u2022 Active' : 'Free plan'}
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.plansContainer}>
+            {(() => {
+              const subs = getSubscriptionPackages();
+              const lifetime = getLifetimePackage();
+              const subColor: Record<string, string> = { WEEKLY: Colors.blue, MONTHLY: Colors.orange, ANNUAL: Colors.purple };
+              if (subs.length === 0 && !lifetime) {
+                return <Text style={styles.planSubtitle}>Plans appear here once the App Store finishes loading.</Text>;
+              }
+              return (
+                <>
+                  {subs.map((p) => (
+                    <PlanRow
+                      key={p.identifier}
+                      title={p.product?.title || p.packageType}
+                      price={p.product?.priceString || ''}
+                      color={subColor[p.packageType as string] || Colors.blue}
+                      badge={p.packageType === 'ANNUAL' ? 'BEST VALUE' : undefined}
+                      onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: p.identifier } })}
+                    />
+                  ))}
+                  {lifetime && (
+                    <PlanRow
+                      title={lifetime.product?.title || 'Lifetime'}
+                      subtitle="One-time • Forever"
+                      price={lifetime.product?.priceString || ''}
+                      color={Colors.red}
+                      onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: lifetime.identifier } })}
+                    />
+                  )}
+                </>
+              );
+            })()}
+          </View>
+        </SurfaceCard>
 
-      <TouchableOpacity style={styles.restoreBtn} onPress={() => restorePurchases()}>
-        <Ionicons name="refresh" size={14} color={Colors.secondary} />
-        <Text style={styles.restoreBtnText}>Restore Purchases</Text>
-      </TouchableOpacity>
-    </View>
-  );
+        <SurfaceCard>
+          <SectionHeaderView title="Star Packs" subtitle="Tap to purchase." />
+          <View style={styles.plansContainer}>
+            {(() => {
+              const packs = getStarPackages();
+              if (packs.length === 0) {
+                return <Text style={styles.planSubtitle}>Star packs appear here once the store loads.</Text>;
+              }
+              const biggestPriceCents = Math.max(...packs.map((p) => Number(p.product?.price ?? 0)));
+              return packs.map((p) => (
+                <PackRow
+                  key={p.identifier}
+                  title={p.product?.title || p.identifier}
+                  price={p.product?.priceString || ''}
+                  isBest={Number(p.product?.price ?? 0) === biggestPriceCents}
+                  onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: p.identifier } })}
+                />
+              ));
+            })()}
+          </View>
+        </SurfaceCard>
+
+        <TouchableOpacity style={styles.restoreBtn} onPress={() => restorePurchases()}>
+          <Ionicons name="refresh" size={14} color={Colors.secondary} />
+          <Text style={styles.restoreBtnText}>Restore Purchases</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   // Invite Section
   const renderInviteSection = () => (
@@ -340,7 +368,7 @@ export default function ProfileScreen() {
 
   // Preferences Card
   const renderPreferences = () => (
-    <SurfaceCard>
+    <SurfaceCard testID="profile-preferences-card">
       <SectionHeaderView title="Preferences" subtitle="Sound and feedback settings." />
       
       <View style={styles.prefRow}>
@@ -353,6 +381,8 @@ export default function ProfileScreen() {
           onValueChange={setSoundEnabled}
           trackColor={{ false: Colors.whiteOverlay8, true: Colors.green }}
           thumbColor={Colors.white}
+          testID="profile-sound-switch"
+          accessibilityLabel="Sound"
         />
       </View>
 
@@ -366,6 +396,8 @@ export default function ProfileScreen() {
           onValueChange={setVibrationEnabled}
           trackColor={{ false: Colors.whiteOverlay8, true: Colors.green }}
           thumbColor={Colors.white}
+          testID="profile-vibration-switch"
+          accessibilityLabel="Vibration"
         />
       </View>
 
@@ -406,31 +438,56 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.prefRow} onPress={() => restorePurchases()}>
-        <View style={styles.prefLeft}>
-          <Ionicons name="refresh" size={20} color={Colors.white} />
-          <Text style={styles.prefText}>Restore Purchases</Text>
-        </View>
-      </TouchableOpacity>
+      {!isWeb && (
+        <TouchableOpacity style={styles.prefRow} onPress={() => restorePurchases()}>
+          <View style={styles.prefLeft}>
+            <Ionicons name="refresh" size={20} color={Colors.white} />
+            <Text style={styles.prefText}>Restore Purchases</Text>
+          </View>
+        </TouchableOpacity>
+      )}
     </SurfaceCard>
   );
 
-  // Danger Zone
-  const renderDangerZone = () => (
-    <SurfaceCard>
-      <SectionHeaderView title="Account" subtitle="Log out or permanently delete your account." />
-      
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color={Colors.white} />
-        <Text style={styles.logoutBtnText}>Log Out</Text>
-      </TouchableOpacity>
+  // Danger Zone / Local Session
+  const renderDangerZone = () => {
+    if (isWeb) {
+      return (
+        <SurfaceCard>
+          <SectionHeaderView title="Local Session" subtitle="Reset local profile and party session." />
+          
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={() => {
+              if (activeSession) exitActiveSession();
+              signOut();
+              setUsername('Guest');
+              safeBack();
+            }}
+          >
+            <Ionicons name="refresh-outline" size={20} color={Colors.white} />
+            <Text style={styles.logoutBtnText}>Reset Local Session</Text>
+          </TouchableOpacity>
+        </SurfaceCard>
+      );
+    }
 
-      <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} disabled={isDeleting}>
-        <Ionicons name="trash" size={20} color={Colors.red} />
-        <Text style={styles.deleteBtnText}>{isDeleting ? 'Deleting…' : 'Delete Account'}</Text>
-      </TouchableOpacity>
-    </SurfaceCard>
-  );
+    return (
+      <SurfaceCard>
+        <SectionHeaderView title="Account" subtitle="Log out or permanently delete your account." />
+        
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={20} color={Colors.white} />
+          <Text style={styles.logoutBtnText}>Log Out</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} disabled={isDeleting}>
+          <Ionicons name="trash" size={20} color={Colors.red} />
+          <Text style={styles.deleteBtnText}>{isDeleting ? 'Deleting…' : 'Delete Account'}</Text>
+        </TouchableOpacity>
+      </SurfaceCard>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -438,7 +495,7 @@ export default function ProfileScreen() {
       
       <Stack.Screen 
         options={{
-          headerShown: true,
+          headerShown: !isWeb,
           title: "Profile",
           headerTransparent: Platform.OS === 'ios',
           headerBlurEffect: 'systemThinMaterialDark',
@@ -462,8 +519,26 @@ export default function ProfileScreen() {
         }}
       />
 
+      {isWeb && (
+        <View style={styles.webHeaderWrapper}>
+          <View style={styles.webHeaderInner}>
+            <Text style={styles.headerTitle}>Profile</Text>
+            <TouchableOpacity 
+              onPress={() => safeBack()} 
+              style={styles.headerDoneBtn}
+              accessibilityRole="button"
+              testID="profile-done-button"
+            >
+              <Text style={styles.headerDoneText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       <ScrollView 
+        testID="profile-scroll-view"
         contentInsetAdjustmentBehavior="automatic"
+        style={{ flex: 1, minHeight: 0 }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40, paddingTop: Platform.OS === 'ios' ? 0 : 16 }]}
       >
         {renderIdentityCard()}
@@ -529,6 +604,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.black,
   },
+  webHeaderWrapper: {
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.whiteOverlay8,
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  webHeaderInner: {
+    width: '100%',
+    maxWidth: 760,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    position: 'relative',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -546,16 +638,21 @@ const styles = StyleSheet.create({
   headerDoneBtn: {
     position: 'absolute',
     right: 16,
-    bottom: 16,
+    top: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   headerDoneText: {
     color: Colors.white,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,
     gap: 14,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
   },
   surfaceCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.03)',

@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -45,8 +45,8 @@ export function SpinBottleSession({ session }: Props) {
   const bottleAngleRef = useRef(0);
   const bottleStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${bottleAnim.value}deg` }] }));
 
-  const sw = Dimensions.get('window').width;
-  const circleSize = sw - 64;
+  const { width: sw, height: sh } = useWindowDimensions();
+  const circleSize = Math.min(Math.min(sw - 64, 400), sh - 280);
   const radius = circleSize / 2 - 48;
 
   const anglePerPlayer = 360 / players.length;
@@ -156,7 +156,7 @@ export function SpinBottleSession({ session }: Props) {
             </View>
           </LiquidGlass>
 
-          <Pressable onPress={handleDone}>
+          <Pressable testID="spin-bottle-done-btn" accessibilityRole="button" onPress={handleDone}>
             <LinearGradient colors={['rgba(52,199,89,0.9)', 'rgba(52,199,89,0.6)']}
               start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={st.doneBtn}>
               <IconSymbol name="checkmark" size={16} color="#fff" />
@@ -243,7 +243,7 @@ export function SpinBottleSession({ session }: Props) {
       {/* Action area */}
       <View style={st.actionArea}>
         {phase === 'idle' && (
-          <Pressable onPress={spin}>
+          <Pressable testID="spin-bottle-spin-btn" accessibilityRole="button" onPress={spin}>
             <LinearGradient colors={['rgba(255,59,48,0.9)', 'rgba(255,45,85,0.7)']}
               start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={st.spinBtn}>
               <IconSymbol name="arrow.trianglehead.2.clockwise.rotate.90" size={18} color="#fff" />
@@ -255,7 +255,7 @@ export function SpinBottleSession({ session }: Props) {
           <Text style={st.spinningTx}>Spinning...</Text>
         )}
         {phase === 'landed' && (
-          <Pressable onPress={() => setPhase('choosing')}>
+          <Pressable testID="spin-bottle-continue-btn" accessibilityRole="button" onPress={() => setPhase('choosing')}>
             <LinearGradient colors={['rgba(0,122,255,0.9)', 'rgba(0,122,255,0.6)']}
               start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={st.spinBtn}>
               <Text style={st.spinBtnTx}>Continue</Text>
@@ -264,14 +264,14 @@ export function SpinBottleSession({ session }: Props) {
         )}
         {phase === 'choosing' && (
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable style={{ flex: 1 }} onPress={() => handleChoose('truth')}>
+            <Pressable testID="spin-bottle-truth-btn" accessibilityRole="button" style={{ flex: 1 }} onPress={() => handleChoose('truth')}>
               <LinearGradient colors={['rgba(0,122,255,0.85)', 'rgba(0,122,255,0.55)']}
                 start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={st.choiceBtn}>
                 <IconSymbol name={"bubble.left.and.bubble.right.fill" as any} size={22} color="#fff" />
                 <Text style={st.choiceBtnTx}>Truth</Text>
               </LinearGradient>
             </Pressable>
-            <Pressable style={{ flex: 1 }} onPress={() => handleChoose('dare')}>
+            <Pressable testID="spin-bottle-dare-btn" accessibilityRole="button" style={{ flex: 1 }} onPress={() => handleChoose('dare')}>
               <LinearGradient colors={['rgba(255,59,48,0.85)', 'rgba(255,59,48,0.55)']}
                 start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={st.choiceBtn}>
                 <IconSymbol name="flame.fill" size={22} color="#fff" />
@@ -287,12 +287,12 @@ export function SpinBottleSession({ session }: Props) {
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8, maxWidth: 540, width: '100%', alignSelf: 'center' },
   headerTitle: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   headerSub: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 },
   vibePill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: 'rgba(255,59,48,0.14)', borderRadius: 20 },
   vibeTx: { color: Colors.red, fontSize: 12, fontWeight: 'bold' },
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 20, marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1.2 },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 20, marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1.2, maxWidth: 540, width: '100%', alignSelf: 'center' },
   bannerLabel: { color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
   bannerName: { color: '#fff', fontSize: 15, fontFamily: 'Viral-Black' },
   avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
@@ -301,14 +301,14 @@ const st = StyleSheet.create({
   playerNode: { position: 'absolute', alignItems: 'center' },
   playerNodeTx: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Viral-Black', maxWidth: 90 },
   restartBtn: { position: 'absolute', top: 8, right: 8, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
-  actionArea: { paddingHorizontal: 20, paddingBottom: 24, marginTop: 'auto' },
+  actionArea: { paddingHorizontal: 20, paddingBottom: 24, marginTop: 'auto', maxWidth: 540, width: '100%', alignSelf: 'center' },
   spinBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16 },
   spinBtnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   spinningTx: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 16 },
   choiceBtn: { alignItems: 'center', gap: 6, paddingVertical: 18, borderRadius: 18 },
   choiceBtnTx: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   // Prompt screen
-  promptWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, gap: 16 },
+  promptWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, gap: 16, maxWidth: 540, width: '100%', alignSelf: 'center' },
   choicePill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   choicePillTx: { color: '#fff', fontSize: 12, fontFamily: 'Viral-Black', letterSpacing: 2 },
   promptPlayer: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black' },

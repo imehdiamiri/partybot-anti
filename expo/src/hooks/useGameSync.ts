@@ -115,14 +115,15 @@ export function useGameSync<T>(
   }, [isMultiplayer, isHost, broadcastState, setLocalState]);
 
   // --- ANY: send an interaction. On host or single-device runs locally; on
-  // client devices it enqueues for the host. ---
-  const sendAction = useCallback((type: string, data: any) => {
+  // client devices it enqueues for the host and awaits Firebase delivery. ---
+  const sendAction = useCallback(async (type: string, data: any): Promise<void> => {
     if (isMultiplayer && !isHost) {
-      pushAction(type, data);
+      await pushAction(type, data);
       return;
     }
     if (onActionReceived) {
-      onActionReceived(type, data, 'host');
+      const senderId = useMultiplayerStore.getState().localPlayerId || 'host';
+      onActionReceived(type, data, senderId);
     }
   }, [isMultiplayer, isHost, pushAction, onActionReceived]);
 

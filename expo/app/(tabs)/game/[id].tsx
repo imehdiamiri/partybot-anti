@@ -11,19 +11,25 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Games, GamesDefinitions, GameMode, GameModeDetails } from '@/src/models/AppModels';
 import { getGameInstructions } from '@/src/constants/GameLocalization';
 import { useEconomyStore } from '@/src/store/useEconomyStore';
+import { isWeb } from '@/src/utils/platform';
+import { showToast } from '@/src/components/ToastOverlay';
+
+export function generateStaticParams(): { id: string }[] {
+  return GamesDefinitions.map(game => ({ id: game.id.id }));
+}
 
 export default function GameDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  const gameKey = Object.keys(Games).find(key => Games[key].id === id);
+  const gameKey = id ? Object.keys(Games).find(key => Games[key].id === id) : null;
   const game = gameKey ? Games[gameKey] : null;
-  const gameDef = GamesDefinitions.find(def => def.id.id === id);
+  const gameDef = id ? GamesDefinitions.find(def => def.id.id === id) : undefined;
 
   const [showPaywall, setShowPaywall] = useState(false);
   const [heroLoaded, setHeroLoaded] = useState(false);
-  const [heroAspectRatio, setHeroAspectRatio] = useState(16 / 9); // fallback
+  const [heroAspectRatio, setHeroAspectRatio] = useState(3 / 2); // 3:2 matches 1536x1024 hero assets
   const { isPremium } = useEconomyStore();
 
   const onHeroLoad = useCallback(() => setHeroLoaded(true), []);
@@ -35,17 +41,29 @@ export default function GameDetailScreen() {
     if (!source) return;
 
     if (game.heroImageLocal) {
-      // For local assets, use resolveAssetSource
-      const resolved = Image.resolveAssetSource(game.heroImageLocal);
-      if (resolved?.width && resolved?.height) {
-        setHeroAspectRatio(resolved.width / resolved.height);
+      // For local assets, use resolveAssetSource if available
+      try {
+        if (typeof Image.resolveAssetSource === 'function') {
+          const resolved = Image.resolveAssetSource(game.heroImageLocal);
+          if (resolved?.width && resolved?.height) {
+            setHeroAspectRatio(resolved.width / resolved.height);
+          }
+        }
+      } catch {
+        setHeroAspectRatio(3 / 2);
       }
     } else if (game.heroImageURL) {
-      Image.getSize(
-        game.heroImageURL,
-        (w, h) => { if (w && h) setHeroAspectRatio(w / h); },
-        () => {} // keep fallback
-      );
+      try {
+        if (typeof Image.getSize === 'function') {
+          Image.getSize(
+            game.heroImageURL,
+            (w, h) => { if (w && h) setHeroAspectRatio(w / h); },
+            () => { setHeroAspectRatio(3 / 2); }
+          );
+        }
+      } catch {
+        setHeroAspectRatio(3 / 2);
+      }
     }
   }, [game?.id]);
 
@@ -90,11 +108,15 @@ export default function GameDetailScreen() {
     }
   };
 
-  const isLocked = gameDef.id.isPremium && !isPremium;
+  const isLocked = !isWeb && gameDef.id.isPremium && !isPremium;
   const accentColor = getAccentColor(gameDef.accentName);
 
   const handleModeSelect = (mode: GameMode) => {
     if (mode === GameMode.multiDevice || mode === GameMode.teamMode) {
+      if (isWeb) {
+        showToast.info('Multiplayer modes are supported in the mobile apps. Play 1-Phone mode on web!');
+        return;
+      }
       router.push(`/game/${id}/lobby/create` as any);
     } else {
       router.push(`/game/${id}/setup?mode=singleDevice` as any);
@@ -107,11 +129,13 @@ export default function GameDetailScreen() {
       
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity 
+          testID="game-detail-back-btn"
+          accessibilityRole="button"
           onPress={() => {
-            if (router.canGoBack()) {
+            if (Platform.OS !== 'web' && router.canGoBack()) {
               router.back();
             } else {
-              router.replace('/');
+              router.replace('/(tabs)' as any);
             }
           }}
           hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
@@ -130,14 +154,8 @@ export default function GameDetailScreen() {
       >
         
         {/* Hero Card */}
-        <View style={styles.heroCard}>
+        <View testID="game-detail-hero" style={styles.heroCard}>
           <View style={[styles.heroContainer, { aspectRatio: heroAspectRatio }]}>
-            <LinearGradient
-              colors={getGradientColors(gameDef.accentName)}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
-            />
             {(game.heroImageLocal || game.heroImageURL) ? (
               <>
                 {!heroLoaded && (
@@ -147,12 +165,13 @@ export default function GameDetailScreen() {
                 )}
                 <Image
                   key={game.id}
+                  testID="game-detail-hero-img"
                   source={game.heroImageLocal ? game.heroImageLocal : { uri: game.heroImageURL! }}
                   style={[
                     { width: '100%', height: '100%' },
                     !heroLoaded && { opacity: 0 },
                   ]}
-                  resizeMode="contain"
+                  resizeMode="cover"
                   onLoad={onHeroLoad}
                 />
                 {heroLoaded && (
@@ -198,7 +217,7 @@ export default function GameDetailScreen() {
               </View>
               <View style={styles.bulletRow}>
                 <IconSymbol name="sparkles" size={16} color="orange" />
-                <Text style={styles.bulletText}>AI cards cost just 1 ★ instead of 5</Text>
+                <Text style={styles.bulletText}>Full party tools & game modes</Text>
               </View>
               <View style={styles.bulletRow}>
                 <IconSymbol name="star.fill" size={16} color="orange" />
@@ -228,13 +247,15 @@ export default function GameDetailScreen() {
             <Text style={styles.sectionTitle}>Choose a Mode</Text>
             
             <View style={styles.modesContainer}>
-              {game.supportedModes.map(mode => {
+              {(isWeb ? [GameMode.singleDevice] : game.supportedModes).map(mode => {
                 const modeDetails = GameModeDetails[mode];
                 const modeAccent = modeDetails.accentColor;
                 
                 return (
                   <TouchableOpacity 
                     key={mode} 
+                    testID={`game-detail-mode-${mode}`}
+                    accessibilityRole="button"
                     style={styles.modeCard}
                     activeOpacity={0.7}
                     onPress={() => handleModeSelect(mode)}
@@ -252,9 +273,9 @@ export default function GameDetailScreen() {
                     </View>
                     
                     <View style={styles.modeTextContainer}>
-                      <Text style={styles.modeTitle}>{modeDetails.title}</Text>
+                      <Text style={styles.modeTitle}>{isWeb ? '1-Phone Pass & Play' : modeDetails.title}</Text>
                       <Text style={styles.modeSubtitle} numberOfLines={2}>
-                        {modeDetails.subtitle}
+                        {isWeb ? 'Play with everyone on this device' : modeDetails.subtitle}
                       </Text>
                     </View>
                     
@@ -268,7 +289,7 @@ export default function GameDetailScreen() {
           </View>
         )}
 
-        <View style={styles.card}>
+        <View testID="game-detail-instructions" style={styles.card}>
           <Text style={styles.sectionHeaderTitle}>How it works</Text>
           <View style={styles.instructionsContainer}>
             {getGameInstructions(id!).map((step, i) => (
@@ -338,6 +359,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingBottom: 10,
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
   },
   headerButton: {
     width: 40,
@@ -355,6 +379,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 40,
     gap: 16,
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
   },
   heroCard: {
     borderRadius: 16,

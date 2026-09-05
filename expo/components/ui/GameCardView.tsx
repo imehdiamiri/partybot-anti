@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GameDefinition, GameModeDetails, getPlayerCountText } from '@/src/models/AppModels';
+import { GameDefinition, GameMode, GameModeDetails, getPlayerCountText } from '@/src/models/AppModels';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { platformShadow } from '@/src/theme/Colors';
 
@@ -107,7 +107,7 @@ const IOSGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
         <View style={iosStyles.spacerMiddle2} />
 
         <View style={iosStyles.modesContainer}>
-          {game.id.supportedModes.map((mode) => {
+          {(Platform.OS === 'web' ? [GameMode.singleDevice] : game.id.supportedModes).map((mode) => {
             const modeDetails = GameModeDetails[mode];
             return (
               <View key={mode} style={iosStyles.modePill}>

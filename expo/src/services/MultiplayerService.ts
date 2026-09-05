@@ -58,7 +58,7 @@ class MultiplayerService {
       id: hostId,
       displayName: hostName,
       isHost: true,
-      isLocal: true,
+      isLocal: false,
       isReady: true,
       joinedAt: now,
     };
@@ -84,31 +84,43 @@ class MultiplayerService {
 
   async joinRoom(roomCode: string, playerName: string): Promise<{ hostId: string; playerId: string }> {
     const playerId = this.requireUid();
-    const roomRef = ref(database, `rooms/${roomCode}`);
-    const snapshot = await get(roomRef);
-
-    if (!snapshot.exists()) throw new Error('Room not found');
-
-    const roomData = snapshot.val() as MultiplayerRoom;
-    if (roomData.status === 'closed') throw new Error('Room is closed');
-    if (roomData.status !== 'waiting') throw new Error('Game already started');
-
+    const playerRef = ref(database, `rooms/${roomCode}/players/${playerId}`);
     const now = Date.now();
     const newPlayer: MultiplayerPlayer = {
       id: playerId,
       displayName: playerName,
       isHost: false,
-      isLocal: true,
+      isLocal: false,
       isReady: false,
       joinedAt: now,
     };
 
-    await update(ref(database, `rooms/${roomCode}`), {
-      [`players/${playerId}`]: newPlayer,
-      lastActivityAt: now,
-    });
+    // 1. Join room by writing player record directly. If room does not exist
+    // or is not in 'waiting' status, RTDB rules will reject the write.
+    try {
+      await set(playerRef, newPlayer);
+    } catch {
+      throw new Error('Room not found or game already started');
+    }
 
-    const playerRef = ref(database, `rooms/${roomCode}/players/${playerId}`);
+    // 2. Now that membership is established, read room data to obtain hostId
+    const roomRef = ref(database, `rooms/${roomCode}`);
+    const snapshot = await get(roomRef);
+    if (!snapshot.exists()) {
+      await remove(playerRef).catch(() => {});
+      throw new Error('Room not found');
+    }
+
+    const roomData = snapshot.val() as MultiplayerRoom;
+    if (roomData.status === 'closed') {
+      await remove(playerRef).catch(() => {});
+      throw new Error('Room is closed');
+    }
+
+    try {
+      await set(ref(database, `rooms/${roomCode}/lastActivityAt`), now);
+    } catch {}
+
     await onDisconnect(playerRef).remove();
 
     return { hostId: roomData.hostId, playerId };
@@ -128,7 +140,7 @@ class MultiplayerService {
     await remove(playerRef);
     // Best-effort activity bump so sweeper resets TTL on the room.
     try {
-      await update(ref(database, `rooms/${roomCode}`), { lastActivityAt: Date.now() });
+      await set(ref(database, `rooms/${roomCode}/lastActivityAt`), Date.now());
     } catch {}
   }
 

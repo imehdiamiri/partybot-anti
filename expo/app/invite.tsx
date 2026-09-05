@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Share } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
@@ -14,6 +14,7 @@ import { ScreenHeader } from '@/src/components/ScreenHeader';
 
 export default function InviteScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ code?: string }>();
   const [code, setCode] = useState('');
   const [stats, setStats] = useState({ totalInvites: 0, starsEarned: 0 });
   const [redeemCode, setRedeemCode] = useState('');
@@ -23,6 +24,12 @@ export default function InviteScreen() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (params.code && typeof params.code === 'string') {
+      setRedeemCode(params.code.trim().toUpperCase());
+    }
+  }, [params.code]);
 
   const loadData = async () => {
     try {

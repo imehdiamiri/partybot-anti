@@ -3,6 +3,7 @@ import { rtdb, functions } from '../lib/firebase';
 import { ref, onValue, off } from 'firebase/database';
 import { httpsCallable } from 'firebase/functions';
 import { showToast } from '../components/ToastOverlay';
+import { isWeb } from '../utils/platform';
 
 /**
  * useEconomyStore — single source of truth for the user wallet and
@@ -11,10 +12,7 @@ import { showToast } from '../components/ToastOverlay';
  * the wallet (RTDB rules forbid client writes to users/$uid/wallet and
  * users/$uid/isPremium).
  *
- * Bridged to RevenueCat via usePaywallStore — the paywall calls
- * `syncEntitlement(uid)` after configure / purchase / restore which in
- * turn invokes the Cloud Function that mirrors the RC subscriber state
- * onto Firebase.
+ * On Web, runs in offline/local-first mode without RTDB listeners or Cloud Function calls.
  */
 
 type GameUnlockStatus = 'free' | 'subscriberUnlocked' | 'trialUsed';
@@ -45,13 +43,21 @@ let unsubscribe: (() => void) | null = null;
 
 export const useEconomyStore = create<EconomyState>()((set, get) => ({
   starsBalance: 0,
-  isPremium: true, // TEMPORARY FOR TEST
+  isPremium: false,
   isLifetime: false,
   lastDailyClaim: null,
   isProcessingWalletAction: false,
   isHydrated: false,
 
   attach: (uid: string) => {
+    if (isWeb) {
+      set({
+        starsBalance: 10,
+        isPremium: true,
+        isHydrated: true,
+      });
+      return;
+    }
     if (attachedUid === uid) return;
     get().detach();
     attachedUid = uid;
@@ -65,7 +71,7 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
         set({
           starsBalance: typeof wallet.balance === 'number' ? wallet.balance : 0,
           lastDailyClaim: wallet.lastDailyClaim || null,
-          isPremium: true, // TEMPORARY FOR TEST: !!v.isPremium,
+          isPremium: !!v.isPremium,
           isLifetime: !!v.isLifetime,
           isHydrated: true,
         });
@@ -87,7 +93,7 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
     attachedUid = null;
     set({
       starsBalance: 0,
-      isPremium: true, // TEMPORARY FOR TEST
+      isPremium: false,
       isLifetime: false,
       lastDailyClaim: null,
       isHydrated: false,
@@ -100,6 +106,16 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
       showToast.info('Already claimed — come back tomorrow.');
       return;
     }
+    const today = new Date().toISOString().split('T')[0];
+    if (isWeb) {
+      set({
+        starsBalance: get().starsBalance + 5,
+        lastDailyClaim: today,
+      });
+      showToast.success('+5 Stars — Daily reward claimed.');
+      return;
+    }
+
     set({ isProcessingWalletAction: true });
     try {
       const fn = httpsCallable<{}, { granted: number; balance: number; lastDailyClaim: string }>(
@@ -123,6 +139,7 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
   },
 
   syncEntitlement: async () => {
+    if (isWeb) return null;
     try {
       const fn = httpsCallable<{}, { isPremium: boolean; isLifetime: boolean; credited: number; skipped?: boolean }>(
         functions,
@@ -140,7 +157,7 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
   },
 
   unlockStatus: (_gameId: string, isPremiumGame: boolean): GameUnlockStatus => {
-    if (!isPremiumGame) return 'free';
+    if (isWeb || !isPremiumGame) return 'free';
     return get().isPremium ? 'subscriberUnlocked' : 'trialUsed';
   },
 
@@ -149,8 +166,3 @@ export const useEconomyStore = create<EconomyState>()((set, get) => ({
     return get().lastDailyClaim !== today;
   },
 }));
-
-/** Cost in Stars to generate one AI card, based on entitlement. */
-export function aiCardCost(isPremium: boolean): number {
-  return isPremium ? 1 : 5;
-}

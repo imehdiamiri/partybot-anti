@@ -1,25 +1,16 @@
 import React from 'react';
-import { Dimensions, Platform, StyleSheet, View } from 'react-native';
+import { Dimensions, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
-const { width, height } = Dimensions.get('window');
 
 interface AppBackgroundViewProps {
   /** 'default' = colorful blobs, 'simple' = clean dark gradient */
   variant?: 'default' | 'simple';
 }
 
-/**
- * AppBackgroundView
- * A premium ambient backdrop used behind every screen so the Liquid Glass
- * surfaces have something rich to refract.
- *
- * iOS — multi-blob mesh gradient (refracts beautifully through BlurView).
- * Android — layered Material 3 ambient washes (no blur, but tonal depth).
- *
- * variant="simple" — clean dark gradient without blobs (for Auth, Join, etc.)
- */
 export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProps) => {
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const width = windowWidth;
+  const height = windowHeight;
   if (variant === 'simple') {
     return (
       <View style={[StyleSheet.absoluteFillObject, { zIndex: -1 }]} pointerEvents="none">
@@ -48,27 +39,27 @@ export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProp
   const blobs = [
     {
       color: 'rgba(122, 81, 245, 0.45)', // violet
-      size: width * 0.95,
-      top: -width * 0.25,
-      left: -width * 0.2,
+      width: '95%',
+      top: '-25%',
+      left: '-20%',
     },
     {
       color: 'rgba(10, 132, 255, 0.38)', // blue
-      size: width * 0.9,
-      top: height * 0.18,
-      left: width * 0.45,
+      width: '90%',
+      top: '18%',
+      left: '45%',
     },
     {
       color: 'rgba(255, 55, 95, 0.28)', // pink
-      size: width * 0.8,
-      top: height * 0.55,
-      left: -width * 0.3,
+      width: '80%',
+      top: '55%',
+      left: '-30%',
     },
     {
       color: 'rgba(102, 212, 207, 0.18)', // mint
-      size: width * 0.7,
-      top: height * 0.7,
-      left: width * 0.5,
+      width: '70%',
+      top: '70%',
+      left: '50%',
     },
   ];
 
@@ -84,11 +75,11 @@ export const AppBackgroundView = ({ variant = 'default' }: AppBackgroundViewProp
           key={i}
           style={{
             position: 'absolute',
-            top: b.top,
-            left: b.left,
-            width: b.size,
-            height: b.size,
-            borderRadius: b.size / 2,
+            top: b.top as any,
+            left: b.left as any,
+            width: b.width as any,
+            aspectRatio: 1,
+            borderRadius: 9999,
             backgroundColor: b.color,
             opacity: Platform.OS === 'android' ? 0.55 : 1,
           }}

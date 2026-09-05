@@ -1,33 +1,15 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import Animated, { FadeInUp, FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PartyGameTutorial, PartyGameTutorials } from '@/src/models/PartyGameTutorial';
 
-// Platform-safe imports: reanimated + blur
-let Animated: any;
-let FadeInUp: any;
-let FadeIn: any;
-let FadeOut: any;
-let Layout: any;
 let BlurView: any;
-
-if (Platform.OS !== 'web') {
-  const Reanimated = require('react-native-reanimated');
-  Animated = Reanimated.default;
-  FadeInUp = Reanimated.FadeInUp;
-  FadeIn = Reanimated.FadeIn;
-  FadeOut = Reanimated.FadeOut;
-  Layout = Reanimated.Layout;
-  if (Platform.OS === 'ios') {
-    try { BlurView = require('expo-blur').BlurView; } catch {}
-  }
-} else {
-  Animated = { View };
-  FadeInUp = undefined;
-  FadeIn = undefined;
-  FadeOut = undefined;
-  Layout = undefined;
+if (Platform.OS === 'ios') {
+  try {
+    BlurView = require('expo-blur').BlurView;
+  } catch {}
 }
 
 export function OtherFunListView() {

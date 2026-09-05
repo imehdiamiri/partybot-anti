@@ -15,12 +15,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { GlowView } from '@/src/components/ui/GlowView';
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
-import { usePaywallStore } from '@/src/store/usePaywallStore';
+import { usePaywallStore, type PurchasesPackage } from '@/src/store/usePaywallStore';
 import { useEconomyStore } from '@/src/store/useEconomyStore';
 import { useAuthStore } from '@/src/store/useAuthStore';
-import { PurchasesPackage } from 'react-native-purchases';
 import * as Linking from 'expo-linking';
 import { AppConstants } from '@/src/constants/AppConstants';
+import { isWeb } from '@/src/utils/platform';
 
 // Types and Enums
 enum PaywallTab {
@@ -51,6 +51,33 @@ export default function PaywallScreen() {
 
   const [tab, setTab] = useState<PaywallTab>(PaywallTab.Subscription);
   const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
+
+  if (isWeb) {
+    return (
+      <View style={styles.container}>
+        <AppBackgroundView />
+        <View style={[styles.centerWebContainer, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 40 }]}>
+          <IconSymbol name="sparkles" size={54} color={Colors.yellow} />
+          <Text style={styles.webTitle}>Local Play Unlocked</Text>
+          <Text style={styles.webSubtitle}>
+            All party games and tools are completely free to play in local 1-Phone mode on the web!
+          </Text>
+          <Text style={styles.webDetail}>
+            Premium subscriptions and Star packs are available in the mobile app for iOS and Android.
+          </Text>
+          <TouchableOpacity
+            style={styles.webBackButton}
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace('/');
+            }}
+          >
+            <Text style={styles.webBackButtonText}>Back to Games</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   useEffect(() => {
     if (uid) configure(uid);
@@ -119,7 +146,7 @@ export default function PaywallScreen() {
       </Text>
       {!isPremium && (
         <Text style={styles.heroSubtitle}>
-          Plus cheap AI cards (1 ★ instead of 5) and all games unlocked
+          Unlock all premium games, tools, and party features
         </Text>
       )}
     </View>
@@ -135,7 +162,7 @@ export default function PaywallScreen() {
         <View style={styles.featuresBlock}>
           <FeatureRow icon="gamecontroller.fill" color="#007AFF" text="All 7 Premium games unlocked" />
           <FeatureRow icon="star.fill" color={Colors.orange} text="Star bonus each billing period" />
-          <FeatureRow icon="sparkles" color={Colors.yellow} text="AI cards at 1 ★ (instead of 5)" />
+          <FeatureRow icon="wrench.and.screwdriver.fill" color={Colors.mint} text="Full party tools & games access" />
           <FeatureRow icon="sparkles" color="#AF52DE" text="Support ongoing development" />
         </View>
 
@@ -191,7 +218,7 @@ export default function PaywallScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Star Packs</Text>
           <Text style={styles.sectionDescription}>
-            Stars power AI card generation. Subscribers spend just 1 ★ per card.
+            Stars power party tools, premium rewards, and bonus features.
           </Text>
         </View>
 
@@ -624,5 +651,44 @@ const styles = StyleSheet.create({
   legalDot: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 11,
-  }
+  },
+  centerWebContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    gap: 16,
+  },
+  webTitle: {
+    color: 'white',
+    fontSize: 26,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  webSubtitle: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  webDetail: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 380,
+  },
+  webBackButton: {
+    marginTop: 16,
+    backgroundColor: Colors.blue,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 24,
+  },
+  webBackButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
 });

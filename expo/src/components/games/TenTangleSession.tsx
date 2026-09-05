@@ -157,7 +157,7 @@ export function TenTangleSession({ session }: Props) {
         <Text style={[st.title, { color: Colors.orange, fontSize: 34 }]}>{guesser.displayName}</Text>
         <Text style={st.sub}>You are the Guesser this round!</Text>
         <Text style={st.hint}>Everyone else will get a secret number. Watch them act and guess their numbers.</Text>
-        <Pressable style={st.btn} onPress={handleProceedToPass}><Text style={st.btnTx}>Continue</Text></Pressable>
+        <Pressable testID="ten-tangle-announce-continue" accessibilityRole="button" style={st.btn} onPress={handleProceedToPass}><Text style={st.btnTx}>Continue</Text></Pressable>
       </View></PhaseTransition>
     );
   }
@@ -197,7 +197,7 @@ export function TenTangleSession({ session }: Props) {
         {lbl ? <Text style={[st.numLabel, { color: col }]}>{lbl}</Text> : null}
         <Text style={[st.sub, { fontSize: 22 }]}>Remember this number, {p?.displayName}!</Text>
         <Text style={[st.hint, { marginTop: 20 }]}>1 = Disaster 😬 · {maxNumber} = Perfect 😍</Text>
-        <Pressable style={st.btn} onPress={handleGotIt}><Text style={st.btnTx}>Got it!</Text></Pressable>
+        <Pressable testID="ten-tangle-got-it" accessibilityRole="button" style={st.btn} onPress={handleGotIt}><Text style={st.btnTx}>Got it!</Text></Pressable>
       </View></PhaseTransition>
     );
   }
@@ -212,7 +212,7 @@ export function TenTangleSession({ session }: Props) {
           <Text style={st.scenarioText}>{scenario}</Text>
         </View>
         <Text style={st.hint}>Each player acts out this scenario at their number&apos;s intensity level.</Text>
-        <Pressable style={st.btn} onPress={handleStartActing}><Text style={st.btnTx}>Start Acting!</Text></Pressable>
+        <Pressable testID="ten-tangle-start-acting" accessibilityRole="button" style={st.btn} onPress={handleStartActing}><Text style={st.btnTx}>Start Acting!</Text></Pressable>
       </View></PhaseTransition>
     );
   }
@@ -225,7 +225,7 @@ export function TenTangleSession({ session }: Props) {
         <Text style={st.title}>Acting Time!</Text>
         <View style={st.scenarioCard}><Text style={st.scenarioText}>{scenario}</Text></View>
         <Text style={[st.sub, { fontSize: 20 }]}>{guesser.displayName} — watch everyone carefully!</Text>
-        <Pressable style={st.btn} onPress={handleStartGuessing}><Text style={st.btnTx}>{guesser.displayName}, Start Guessing</Text></Pressable>
+        <Pressable testID="ten-tangle-start-guessing" accessibilityRole="button" style={st.btn} onPress={handleStartGuessing}><Text style={st.btnTx}>{guesser.displayName}, Start Guessing</Text></Pressable>
       </View></PhaseTransition>
     );
   }
@@ -245,7 +245,11 @@ export function TenTangleSession({ session }: Props) {
                   {Array.from({ length: maxNumber }, (_, i) => i + 1).map(n => {
                     const sel = guesses[p.id] === n;
                     return (
-                      <Pressable key={n} onPress={() => { Haptics.selectionAsync(); setGuesses(prev => ({ ...prev, [p.id]: n })); }}
+                      <Pressable 
+                        key={n} 
+                        testID={`ten-tangle-num-${p.id}-${n}`}
+                        accessibilityRole="button"
+                        onPress={() => { Haptics.selectionAsync(); setGuesses(prev => ({ ...prev, [p.id]: n })); }}
                         style={[st.numBtn, sel && { backgroundColor: Colors.orange, borderColor: Colors.orange }]}>
                         <Text style={[st.numBtnTx, sel && { color: '#fff' }]}>{n}</Text>
                       </Pressable>
@@ -255,7 +259,7 @@ export function TenTangleSession({ session }: Props) {
               </ScrollView>
             </View>
           ))}
-          <Pressable style={[st.btn, !allGuessed && { opacity: 0.4 }]} onPress={handleSubmitGuesses} disabled={!allGuessed}>
+          <Pressable testID="ten-tangle-submit-guesses" accessibilityRole="button" style={[st.btn, !allGuessed && { opacity: 0.4 }]} onPress={handleSubmitGuesses} disabled={!allGuessed}>
             <Text style={st.btnTx}>Submit Guesses</Text>
           </Pressable>
         </ScrollView>
@@ -287,7 +291,7 @@ export function TenTangleSession({ session }: Props) {
             );
           })}
           <Text style={[st.sub, { textAlign: 'center', marginTop: 16, fontSize: 20 }]}>{guesser.displayName} got {correct}/{nonGuessers.length} correct!</Text>
-          <Pressable style={st.btn} onPress={handleShowScoreboard}><Text style={st.btnTx}>Scoreboard</Text></Pressable>
+          <Pressable testID="ten-tangle-show-scoreboard" accessibilityRole="button" style={st.btn} onPress={handleShowScoreboard}><Text style={st.btnTx}>Scoreboard</Text></Pressable>
         </ScrollView>
       </PhaseTransition>
     );
@@ -352,18 +356,18 @@ export function TenTangleSession({ session }: Props) {
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  scrollPad: { padding: 16, paddingBottom: 40 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, maxWidth: 600, width: '100%', alignSelf: 'center' },
+  scrollPad: { padding: 16, paddingBottom: 40, maxWidth: 600, width: '100%', alignSelf: 'center' },
   iconBox: { width: 100, height: 100, borderRadius: 28, backgroundColor: 'rgba(255,149,0,0.14)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   title: { color: '#fff', fontSize: 22, fontFamily: 'Viral-Black' },
   sub: { color: 'rgba(255,255,255,0.5)', fontSize: 15, marginTop: 8, textAlign: 'center' },
   hint: { color: 'rgba(255,255,255,0.35)', fontSize: 13, marginTop: 12, textAlign: 'center', paddingHorizontal: 20 },
   roundLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: '600', marginBottom: 8 },
-  btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', alignItems: 'center', marginTop: 32 },
+  btn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 16, width: '100%', maxWidth: 600, alignSelf: 'center', alignItems: 'center', marginTop: 32 },
   btnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   bigNumber: { fontSize: 72, fontFamily: 'Viral-Black' },
   numLabel: { fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  scenarioCard: { backgroundColor: 'rgba(255,204,0,0.12)', borderRadius: 20, padding: 24, marginTop: 20, borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)', width: '100%' },
+  scenarioCard: { backgroundColor: 'rgba(255,204,0,0.12)', borderRadius: 20, padding: 24, marginTop: 20, borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)', width: '100%', maxWidth: 600, alignSelf: 'center' },
   scenarioText: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', textAlign: 'center', lineHeight: 28 },
   guessRow: { marginBottom: 16 },
   guessName: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', marginBottom: 8 },

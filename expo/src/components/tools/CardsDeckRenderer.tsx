@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, PanResponder, Dimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, PanResponder, useWindowDimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard, CardSubtype } from '@/src/models/CardModels';
@@ -22,8 +22,6 @@ if (Platform.OS === 'ios') {
   try { BlurView = require('expo-blur').BlurView; } catch {}
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = 0.25 * SCREEN_WIDTH;
 const SWIPE_OUT_DURATION = 240;
 
 interface Props {
@@ -90,6 +88,22 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     prevIndexRef.current = currentIndex;
   }, [currentIndex, position]);
 
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const baseW = windowWidth > 0 ? windowWidth : 390;
+  const baseH = windowHeight > 0 ? windowHeight : 844;
+  const maxCardHeight = Math.max(300, baseH - 240);
+  // Intentional bounded portrait card with aspect ratio ~ 1 : 1.38, max width 460px on desktop
+  const cardWidth = Math.min(Math.min(baseW - 32, 460), maxCardHeight / 1.38);
+  const cardHeight = cardWidth * 1.38;
+  const swipeThreshold = cardWidth * 0.3;
+  const swipeOutDistance = cardWidth * 1.5;
+
+  const swipeThresholdRef = useRef(swipeThreshold);
+  swipeThresholdRef.current = swipeThreshold;
+
+  const swipeOutDistanceRef = useRef(swipeOutDistance);
+  swipeOutDistanceRef.current = swipeOutDistance;
+
   const forceSwipeRef = useRef<(direction: 'left' | 'right') => void>(() => {});
   const resetPositionRef = useRef<() => void>(() => {});
 
@@ -97,13 +111,15 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
+      onPanResponderTerminationRequest: () => false,
       onPanResponderMove: (_event, gesture) => {
         position.setValue({ x: gesture.dx, y: gesture.dy });
       },
       onPanResponderRelease: (_event, gesture) => {
-        if (gesture.dx > SWIPE_THRESHOLD) {
+        const threshold = swipeThresholdRef.current;
+        if (gesture.dx > threshold) {
           forceSwipeRef.current('right');
-        } else if (gesture.dx < -SWIPE_THRESHOLD) {
+        } else if (gesture.dx < -threshold) {
           forceSwipeRef.current('left');
         } else {
           resetPositionRef.current();
@@ -116,7 +132,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   ).current;
 
   const forceSwipe = (direction: 'left' | 'right') => {
-    const x = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
+    const distance = swipeOutDistanceRef.current;
+    const x = direction === 'right' ? distance : -distance;
     Animated.timing(position, {
       toValue: { x, y: 0 },
       duration: SWIPE_OUT_DURATION,
@@ -182,17 +199,17 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   };
 
   const rotate = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH * 1.5, 0, SCREEN_WIDTH * 1.5],
+    inputRange: [-swipeOutDistance, 0, swipeOutDistance],
     outputRange: ['-12deg', '0deg', '12deg'],
   });
 
   const nextOpacity = position.x.interpolate({
-    inputRange: [0, SCREEN_WIDTH * 0.25],
+    inputRange: [0, swipeThreshold],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
   const prevOpacity = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH * 0.25, 0],
+    inputRange: [-swipeThreshold, 0],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
@@ -241,7 +258,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const renderCards = () => {
     if (currentIndex >= deck.length) {
       return (
-        <View style={styles.emptyDeck}>
+        <View style={[styles.emptyDeck, { width: cardWidth, height: cardHeight }]} testID="cards-empty-deck">
           <IconSymbol name="sparkle.magnifyingglass" size={48} color="rgba(255,255,255,0.3)" />
           <Text style={styles.emptyTextTitle}>No more cards</Text>
           <Text style={styles.emptyText}>Change your filters or shuffle to start over.</Text>
@@ -260,7 +277,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     const swipeProgress = isTransitioning
       ? staticOne
       : position.x.interpolate({
-          inputRange: [-SCREEN_WIDTH * 1.5, 0, SCREEN_WIDTH * 1.5],
+          inputRange: [-swipeOutDistance, 0, swipeOutDistance],
           outputRange: [1, 0, 1],
           extrapolate: 'clamp',
         });
@@ -273,9 +290,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
         return (
           <Animated.View
             key={card.id}
+            testID="front-card"
             style={[
               styles.cardStyle,
               {
+                width: cardWidth,
+                height: cardHeight,
                 zIndex: 99,
                 transform: [
                   { translateX: position.x },
@@ -343,6 +363,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
           style={[
             styles.cardStyle,
             {
+              width: cardWidth,
+              height: cardHeight,
               top,
               transform: [
                 { translateX },
@@ -369,7 +391,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     const progress = (currentIndex + 1) / Math.max(total, 1);
 
     return (
-      <View style={[styles.actionWrap, { paddingBottom: Math.max(16, insets.bottom) }]}>
+      <View style={[styles.actionWrap, { maxWidth: cardWidth, paddingBottom: Math.max(16, insets.bottom) }]}>
         <View style={styles.progressRow}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: category.accentColor }]} />
@@ -384,7 +406,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
           </Pressable>
 
           {/* Center: Next */}
-          <Pressable style={styles.nextButton} onPress={() => forceSwipe('left')}>
+          <Pressable 
+            accessibilityRole="button"
+            testID="deck-next-button"
+            style={styles.nextButton} 
+            onPress={() => forceSwipe('left')}
+          >
             <Text style={styles.nextButtonText}>Next</Text>
             <IconSymbol name="arrow.right" size={18} color="black" />
           </Pressable>
@@ -503,6 +530,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
+    width: '100%',
+    maxWidth: 680,
+    alignSelf: 'center',
   },
   filtersContainer: {
     marginBottom: 14,
@@ -510,12 +540,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   filtersBlur: {
     paddingVertical: 10,
   },
   filtersInner: {
     gap: 10,
+    width: '100%',
+    alignSelf: 'center',
   },
   chipsWrap: {
     paddingHorizontal: 12,
@@ -552,16 +587,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   cardStyle: {
     position: 'absolute',
-    width: '92%',
     alignSelf: 'center',
-    height: SCREEN_WIDTH * 1.2,
   },
   emptyDeck: {
-    width: '92%',
-    height: SCREEN_WIDTH * 1.2,
     borderRadius: 26,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
@@ -570,6 +604,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 30,
     gap: 12,
+    alignSelf: 'center',
   },
   emptyTextTitle: {
     fontFamily: 'Viral-Black',
@@ -707,6 +742,8 @@ const styles = StyleSheet.create({
   },
 
   actionWrap: {
+    width: '100%',
+    alignSelf: 'center',
     paddingTop: 6,
     paddingBottom: 16,
     gap: 12,

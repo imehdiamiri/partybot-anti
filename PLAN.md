@@ -309,3 +309,13 @@
 - [x] Audit confirmed no `tournament` / `practice mode` / `crypto withdrawal` / `gambling` / `Guess the Real Answer` references in `expo/src` or `expo/app`.
 - [x] Tabs left as-is per user direction (current Games / Tools / Friends / Factory preserved — Tools holds Cards + Party Tools, Factory is the AI Generator).
 - [x] runChecks passes.
+
+### Phase L17 — Backend Concurrency, Security & AI Quota Hardening
+- [x] **RevenueCat Atomic Crediting**: Refactored `syncRevenueCat` to use a single atomic RTDB transaction on `users/${uid}`, guaranteeing exactly-once crediting under duplicate/concurrent calls and exact closure-scoped `credited` reporting during transaction retries.
+- [x] **Invite Code Registry & Collision Safety**: Added authoritative `inviteCodes/${code}` registry in `ensureInviteCode` and `redeemInvite`, preventing collisions with unmigrated legacy user profiles, auto-migrating legacy users without overwriting concurrent registry winners, and eliminating orphaned reservations.
+- [x] **Ownership-Safe Account Deletion**: `deleteAccount` now conditionally cleans up `inviteCodes/{code}` (`cur === uid ? null : cur`), guaranteeing legitimate reservations owned by other UIDs are never wiped.
+- [x] **Deterministic Test Infrastructure**: Built `functions/test-runner.js` with automated live emulator reuse (port 9012) and fresh isolated emulator launch on Windows, achieving clean process exit with zero open handles without `--forceExit`.
+- [x] **AI Generation Pipeline & Quota Rollback**: Hardened `generateCard` with prompt & system moderation (`isSafe`), empty/whitespace validation, `x-goog-api-key` header protection, request-isolated quota reservations (`hasReservedQuota`), and exactly-once rollback on upstream 5xx errors or flagged content without double-decrements or cross-request quota loss.
+- [x] **Multiplayer Room Sweeper**: Hardened `sweepStaleRooms` with positive timestamp validation (`last > 0`), inclusion of active turns (`gameState.lastUpdatedAt`), and chunked batch deletion (500 keys) to protect active and initializing rooms.
+- [x] **Automated Suite**: Expanded backend test suite to 20 deterministic tests (100% passing).
+

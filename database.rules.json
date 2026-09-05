@@ -6,17 +6,17 @@
         ".read": "auth != null",
         ".write": "auth != null && auth.uid == $uid",
 
-        "wallet":                    { ".write": false, "balance": { ".validate": "newData.isNumber() && newData.val() >= 0" } },
-        "isPremium":                 { ".write": false },
-        "isLifetime":                { ".write": false },
-        "entitlementUpdatedAt":      { ".write": false },
-        "processedTransactions":     { ".write": false },
-        "inviteStats":               { ".write": false },
-        "invitedBy":                 { ".write": false },
+        "wallet":                    { ".validate": false },
+        "isPremium":                 { ".validate": false },
+        "isLifetime":                { ".validate": false },
+        "entitlementUpdatedAt":      { ".validate": false },
+        "processedTransactions":     { ".validate": false },
+        "inviteStats":               { ".validate": false },
+        "invitedBy":                 { ".validate": false },
+        "inviteCode":                { ".validate": false },
 
         "username":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
-        "usernameLower": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
-        "inviteCode":    { ".validate": "newData.isString() && newData.val().length >= 4 && newData.val().length <= 12" }
+        "usernameLower": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" }
       }
     },
 
@@ -52,8 +52,8 @@
 
     "rooms": {
       "$code": {
-        ".read":  "auth != null",
-        ".write": "auth != null && (!data.exists() || data.child('hostId').val() == auth.uid || (newData.child('hostId').val() == auth.uid && !data.child('players').hasChild(data.child('hostId').val())))",
+        ".read":  "auth != null && data.child('players').hasChild(auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostId').val() == auth.uid) || (data.exists() && data.child('hostId').val() == auth.uid && data.child('players').hasChild(auth.uid)) || (data.exists() && newData.child('hostId').val() == auth.uid && data.child('players').hasChild(auth.uid) && !data.child('players').hasChild(data.child('hostId').val())))",
         ".validate": "$code.matches(/^[0-9]{6}$/)",
 
         "roomCode":       { ".validate": "newData.isString()" },
@@ -61,11 +61,14 @@
         "hostId":         { ".validate": "newData.isString()" },
         "status":         { ".validate": "newData.isString() && (newData.val() == 'waiting' || newData.val() == 'playing' || newData.val() == 'closed')" },
         "createdAt":      { ".validate": "newData.isNumber()" },
-        "lastActivityAt": { ".validate": "newData.isNumber()" },
+        "lastActivityAt": {
+          ".write": "auth != null && (data.parent().child('players').hasChild(auth.uid) || (!data.exists() && newData.parent().child('hostId').val() == auth.uid))",
+          ".validate": "newData.isNumber()"
+        },
 
         "players": {
           "$pid": {
-            ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)",
+            ".write": "auth != null && ((auth.uid == $pid && ((!data.exists() && data.parent().parent().exists() && data.parent().parent().child('status').val() == 'waiting') || data.exists())) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))",
             ".validate": "newData.hasChildren(['id','displayName']) || !newData.exists()",
             "id":          { ".validate": "newData.val() == $pid" },
             "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
@@ -76,7 +79,7 @@
         },
 
         "gameState": {
-          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid",
+          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid && data.parent().child('players').hasChild(auth.uid)",
           "version":       { ".validate": "newData.isNumber() && (!data.exists() || newData.val() >= data.val())" },
           "phase":         { ".validate": "newData.isString() && newData.val().length <= 32" },
           "lastUpdatedAt": { ".validate": "newData.isNumber()" },
@@ -97,16 +100,16 @@
           // Watermark of action keys the host has drained, so a freshly
           // promoted host doesn't replay them. Host-only writes; values are
           // numeric server timestamps.
-          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid",
+          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid && data.parent().child('players').hasChild(auth.uid)",
           "$actionKey": {
             ".validate": "newData.isNumber()"
           }
         },
 
         "actions": {
-          ".read": "auth != null",
+          ".read": "auth != null && data.parent().child('players').hasChild(auth.uid)",
           "$actionKey": {
-            ".write": "auth != null && (!newData.exists() || (newData.child('playerId').val() == auth.uid && newData.child('type').isString() && newData.child('type').val().length <= 64) || data.parent().parent().child('hostId').val() == auth.uid)",
+            ".write": "auth != null && ((!newData.exists() && (data.child('playerId').val() == auth.uid || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))) || (newData.exists() && data.parent().parent().child('players').hasChild(auth.uid) && ((newData.child('playerId').val() == auth.uid && newData.child('type').isString() && newData.child('type').val().length <= 64) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))))",
             "playerId": { ".validate": "newData.val() == auth.uid" },
             "type":     { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64" },
             "ts":       { ".validate": "newData.isNumber()" }
@@ -115,7 +118,7 @@
 
         "presence": {
           "$pid": {
-            ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)",
+            ".write": "auth != null && ((auth.uid == $pid && data.parent().parent().child('players').hasChild(auth.uid)) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))",
             "online":   { ".validate": "newData.isBoolean()" },
             "lastSeen": { ".validate": "newData.isNumber()" }
           }
@@ -125,8 +128,8 @@
 
     "sessions": {
       "$sid": {
-        ".read":  "auth != null",
-        ".write": "auth != null && (!data.exists() || data.child('hostId').val() == auth.uid)",
+        ".read":  "auth != null && data.child('players').hasChild(auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostId').val() == auth.uid) || (data.exists() && data.child('hostId').val() == auth.uid && data.child('players').hasChild(auth.uid)))",
         ".validate": "newData.hasChild('hostId')",
 
         "hostId":    { ".validate": "newData.isString()" },
@@ -136,7 +139,7 @@
 
         "players": {
           "$pid": {
-            ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)",
+            ".write": "auth != null && ((auth.uid == $pid && ((!data.exists() && data.parent().parent().exists()) || data.exists())) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))",
             ".validate": "newData.hasChildren(['id','displayName']) || !newData.exists()",
             "id":          { ".validate": "newData.val() == $pid" },
             "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" }
@@ -144,16 +147,9 @@
         },
 
         "state": {
-          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid",
+          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid && data.parent().child('players').hasChild(auth.uid)",
           ".validate": "!newData.isString() || newData.val().length <= 16384"
         }
-      }
-    },
-
-    "aiUsage": {
-      "$uid": {
-        ".read":  "auth != null && auth.uid == $uid",
-        ".write": false
       }
     },
 

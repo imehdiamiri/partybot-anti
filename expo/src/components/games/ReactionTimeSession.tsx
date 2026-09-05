@@ -1,18 +1,23 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, Easing, cancelAnimation } from 'react-native-reanimated';
 import { Colors } from '@/src/theme/Colors';
 import { GameSession } from '@/src/store/useGameStore';
+import { GameMode } from '@/src/models/AppModels';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
 import { GamePassPhoneView, GamePlayerCompleteView } from './SharedGameComponents';
 import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 import { PhaseTransition } from './PhaseTransition';
+import { useCompetitiveRound } from '@/src/hooks/useCompetitiveRound';
+import { rankReactionTimeResults } from '@/src/models/CompetitiveRound';
+import { getServerNow } from '@/src/services/ServerClock';
 import * as Haptics from '@/src/utils/safeHaptics';
 
 interface Props { session: GameSession; }
 
 type Phase = 'ready' | 'waiting' | 'go' | 'tapped' | 'foul' | 'playerComplete' | 'results';
+type MultiSubPhase = 'init' | 'waiting' | 'go' | 'tapped' | 'foul';
 
 const ATTEMPTS_PER_PLAYER = 3;
 const MIN_DELAY_MS = 3000;
@@ -29,6 +34,25 @@ interface PlayerRecord {
 export function ReactionTimeSession({ session }: Props) {
   const registerSkip = useRegisterSkip();
   const players = session.players;
+  const isMultiplayer = session.mode === GameMode.multiDevice || session.mode === GameMode.teamMode;
+
+  // ─── MULTIPLAYER SYNC HOOK ───
+  const compRound = useCompetitiveRound({
+    gameId: session.game.id,
+    mode: session.mode,
+    players: session.players,
+    roundDurationSeconds: 35,
+    countdownSeconds: 5,
+  });
+
+  const localPlayerId = compRound.localPlayerId;
+  const localPlayer = players.find(p => p.id === localPlayerId) || players.find(p => p.isLocal) || players[0];
+
+  // Local multiplayer sub-state
+  const [multiSubPhase, setMultiSubPhase] = useState<MultiSubPhase>('init');
+  const [multiRecordedMs, setMultiRecordedMs] = useState<number | null>(null);
+
+  // Single-device state
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIdx, setPlayerIdx] = useState<number>(0);
   const [attemptIdx, setAttemptIdx] = useState<number>(0);
@@ -52,7 +76,44 @@ export function ReactionTimeSession({ session }: Props) {
     };
   }, [pulse]);
 
+  const goAtTimestamp = compRound.goAtTimestamp || (compRound.roundState.scheduledStartAt + 3000 + (compRound.seed % 3000));
+
+  // Handle multiplayer round transitions & continuous server-aligned phase tracking
   useEffect(() => {
+    if (!isMultiplayer) return;
+
+    if (compRound.phase === 'countdown') {
+      setMultiSubPhase('init');
+      setMultiRecordedMs(null);
+      return;
+    }
+
+    if (compRound.phase === 'playing' && !compRound.localSubmitted) {
+      const interval = setInterval(() => {
+        const now = getServerNow();
+        if (now < compRound.roundState.scheduledStartAt) {
+          return;
+        }
+        if (now < goAtTimestamp) {
+          setMultiSubPhase(prev => (prev === 'tapped' || prev === 'foul' ? prev : 'waiting'));
+        } else {
+          setMultiSubPhase(prev => {
+            if (prev === 'tapped' || prev === 'foul' || prev === 'go') return prev;
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            return 'go';
+          });
+        }
+      }, 50);
+
+      return () => clearInterval(interval);
+    }
+  }, [isMultiplayer, compRound.phase, compRound.localSubmitted, compRound.roundState.roundId, compRound.roundState.scheduledStartAt, goAtTimestamp]);
+
+  useEffect(() => {
+    if (isMultiplayer) {
+      registerSkip(null);
+      return;
+    }
     if (phase === 'waiting' || phase === 'go' || phase === 'tapped' || phase === 'foul') {
       registerSkip(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -70,7 +131,7 @@ export function ReactionTimeSession({ session }: Props) {
       registerSkip(null);
     }
     return () => registerSkip(null);
-  }, [phase, playerIdx, player]);
+  }, [isMultiplayer, phase, playerIdx, player, registerSkip, pulse, players.length]);
 
   const beginAttempt = useCallback(() => {
     setPhase('waiting');
@@ -94,7 +155,42 @@ export function ReactionTimeSession({ session }: Props) {
     });
   }, [playerIdx]);
 
+  // Handle screen press for multiplayer anchored to absolute goAtTimestamp
+  const handleMultiScreenPress = () => {
+    if (compRound.phase !== 'playing' || compRound.localSubmitted) return;
+    const now = getServerNow();
+
+    if (now < goAtTimestamp) {
+      // Foul — tapped before green
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setMultiRecordedMs(null);
+      setMultiSubPhase('foul');
+      compRound.submitResult({
+        score: 99999,
+        completedAt: now,
+        didFinish: false,
+        details: { foul: true },
+      });
+      return;
+    }
+
+    // Valid tap on green
+    const reactionMs = Math.max(1, Math.round(now - goAtTimestamp));
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setMultiRecordedMs(reactionMs);
+    setMultiSubPhase('tapped');
+    compRound.submitResult({
+      score: reactionMs,
+      completedAt: now,
+      didFinish: true,
+    });
+  };
+
   const handleScreenPress = () => {
+    if (isMultiplayer) {
+      handleMultiScreenPress();
+      return;
+    }
     if (phase === 'waiting') {
       // Foul — tapped too early
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -115,6 +211,144 @@ export function ReactionTimeSession({ session }: Props) {
       return;
     }
   };
+
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+
+  // ══════════════════════════════════════════════════════════
+  // MULTIPLAYER MODES
+  // ══════════════════════════════════════════════════════════
+  if (isMultiplayer) {
+    // 1. Synchronized Countdown
+    if (compRound.phase === 'countdown') {
+      return (
+        <PhaseTransition phaseKey="multi-countdown" style={st.container}>
+          <View style={st.center}>
+            <View style={[st.iconBox, { backgroundColor: 'rgba(52,199,89,0.15)' }]}>
+              <IconSymbol name="bolt.fill" size={54} color={Colors.green} />
+            </View>
+            <Text style={st.title}>Get Ready!</Text>
+            <Text style={st.sub}>Wait for the screen to turn GREEN, then tap as fast as you can.</Text>
+            <View style={st.countdownCircle}>
+              <Text style={st.countdownNum}>{compRound.countdownRemaining}</Text>
+            </View>
+            <Text style={st.waitingSub}>Starting synchronized round for all devices...</Text>
+          </View>
+        </PhaseTransition>
+      );
+    }
+
+    // 2. Synchronized Active Play / Waiting for other players
+    if (compRound.phase === 'playing') {
+      // If completed or submitted on this device (sending, delivered, accepted, or error), show status panel
+      if (compRound.isLocallyCompleted || multiSubPhase === 'tapped' || multiSubPhase === 'foul') {
+        const isFoul = compRound.pendingResult?.details?.foul === true || multiSubPhase === 'foul' || (compRound.pendingResult?.score ?? 0) >= 99999;
+        const displayScore = compRound.pendingResult?.score ?? multiRecordedMs ?? 0;
+        return (
+          <PhaseTransition phaseKey="multi-submitted" style={st.container}>
+            <View style={st.center}>
+              <View style={[st.iconBox, { backgroundColor: isFoul ? 'rgba(255,59,48,0.15)' : 'rgba(52,199,89,0.15)' }]}>
+                <IconSymbol 
+                  name={isFoul ? "xmark.octagon.fill" : "checkmark.circle.fill"} 
+                  size={54} 
+                  color={isFoul ? Colors.red : Colors.green} 
+                />
+              </View>
+              <Text style={st.title}>{isFoul ? 'Too Early (Foul)' : `${displayScore} ms`}</Text>
+              <Text style={st.sub}>{isFoul ? 'You tapped while screen was red.' : describeTime(displayScore)}</Text>
+              
+              {compRound.submissionStatus === 'error' && compRound.submissionError ? (
+                <Pressable
+                  style={[st.waitingBox, { backgroundColor: 'rgba(255,59,48,0.12)', borderColor: 'rgba(255,59,48,0.3)', borderWidth: 1 }]}
+                  onPress={() => compRound.retrySubmission()}>
+                  <IconSymbol name="arrow.clockwise" size={16} color={Colors.red} />
+                  <Text style={[st.waitingBoxText, { color: Colors.red }]}>
+                    {compRound.submissionError} (Tap to retry)
+                  </Text>
+                </Pressable>
+              ) : compRound.submissionStatus === 'sending' ? (
+                <View style={st.waitingBox}>
+                  <ActivityIndicator size="small" color="#FF9500" />
+                  <Text style={[st.waitingBoxText, { color: '#FF9500' }]}>
+                    Delivering result to host...
+                  </Text>
+                </View>
+              ) : (
+                <View style={st.waitingBox}>
+                  <ActivityIndicator size="small" color="#007AFF" />
+                  <Text style={st.waitingBoxText}>
+                    Waiting for other players... ({compRound.completedCount} / {compRound.totalPlayers})
+                  </Text>
+                </View>
+              )}
+            </View>
+          </PhaseTransition>
+        );
+      }
+
+      // Waiting (Red)
+      if (multiSubPhase === 'waiting' || multiSubPhase === 'init') {
+        return (
+          <Pressable style={[st.fullPress, { backgroundColor: Colors.red }]} onPress={handleMultiScreenPress}>
+            <Animated.View style={[st.fullCenter, pulseStyle]} pointerEvents="none">
+              <Text style={st.waitText}>Wait for green</Text>
+            </Animated.View>
+            <View style={st.attemptBadge}>
+              <Text style={st.attemptBadgeTx}>Multiplayer · 1 Attempt</Text>
+            </View>
+          </Pressable>
+        );
+      }
+
+      // Go (Green)
+      if (multiSubPhase === 'go') {
+        return (
+          <Pressable style={[st.fullPress, { backgroundColor: Colors.green }]} onPress={handleMultiScreenPress}>
+            <View style={st.fullCenter}>
+              <Text style={st.megaText}>TAP!</Text>
+            </View>
+          </Pressable>
+        );
+      }
+    }
+
+    // 3. Synchronized Results
+    if (compRound.phase === 'results') {
+      const playerNamesMap = Object.fromEntries(players.map(p => [p.id, p.displayName]));
+      const participantIds = compRound.roundState.participantIds?.length ? compRound.roundState.participantIds : players.map(p => p.id);
+      const ranked = rankReactionTimeResults(
+        compRound.results,
+        participantIds,
+        playerNamesMap
+      );
+
+      const entries: RankEntry[] = ranked.map(r => ({
+        id: r.playerId,
+        name: r.displayName,
+        isSkipped: !r.didFinish,
+        primary: r.didFinish ? `${r.score} ms` : 'Foul / DNF',
+        secondary: r.didFinish ? describeTime(r.score) : 'Tapped early or timed out',
+      }));
+
+      return (
+        <PhaseTransition phaseKey="multi-results" style={st.container}>
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+            <ResultsScoreboard
+              entries={entries}
+              title="Round Leaderboard"
+              subtitle="Fastest reaction time wins"
+              onPlayAgain={compRound.isHost ? compRound.playAgain : undefined}
+              playAgainTitle="Next Round"
+              shareGameName="Reaction Time"
+            />
+          </ScrollView>
+        </PhaseTransition>
+      );
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // SINGLE-DEVICE (PASS & PLAY) FLOW
+  // ══════════════════════════════════════════════════════════
 
   const continueAfterAttempt = () => {
     const done = (currentRecord?.attempts.length ?? 0);
@@ -150,53 +384,27 @@ export function ReactionTimeSession({ session }: Props) {
     setPhase('ready');
   };
 
-  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
-
   // ─── READY ───
   if (phase === 'ready') {
-    const isFirstPlayer = playerIdx === 0;
-    
-    if (!isFirstPlayer) {
-      return (
-        <PhaseTransition phaseKey={phase} style={{ flex: 1 }}>
-          <GamePassPhoneView
-            playerName={player?.displayName || 'Player'}
-            title={`PLAYER ${playerIdx + 1} OF ${players.length}`}
-            subtitle="Get ready for your reaction time test!"
-            accentColor={Colors.green}
-            onReady={beginAttempt}
-            onSkip={() => {
-              const isLast = playerIdx + 1 >= players.length;
-              if (isLast) {
-                setPhase('results');
-              } else {
-                setPlayerIdx(playerIdx + 1);
-                setAttemptIdx(0);
-                setPhase('ready');
-              }
-            }}
-          />
-        </PhaseTransition>
-      );
-    }
-
     return (
-      <PhaseTransition phaseKey={phase} style={st.container}>
-        <ScrollView contentContainerStyle={st.readyContent}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(52,199,89,0.15)' }]}>
-            <IconSymbol name="bolt.fill" size={64} color={Colors.green} />
-          </View>
-          <Text style={st.eyebrow}>REACTION TIME</Text>
-          <Text style={st.nameTitle} numberOfLines={2}>{player?.displayName ?? 'Player'}</Text>
-          <View style={st.pill}>
-            <Text style={st.pillTx}>Are you ready?</Text>
-          </View>
-
-          <Pressable style={[st.startBtn, { backgroundColor: Colors.green }]} onPress={beginAttempt}>
-            <IconSymbol name="play.fill" size={24} color="#fff" />
-            <Text style={st.startBtnTx}>I{"'"}m Ready</Text>
-          </Pressable>
-        </ScrollView>
+      <PhaseTransition phaseKey={`ready-${playerIdx}`} style={{ flex: 1 }}>
+        <GamePassPhoneView
+          playerName={player?.displayName || 'Player'}
+          title={players.length > 1 && playerIdx > 0 ? "Pass the phone to" : "Get ready"}
+          subtitle="Get ready for your reaction time test!"
+          accentColor={Colors.green}
+          onReady={beginAttempt}
+          onSkip={() => {
+            const isLast = playerIdx + 1 >= players.length;
+            if (isLast) {
+              setPhase('results');
+            } else {
+              setPlayerIdx(playerIdx + 1);
+              setAttemptIdx(0);
+              setPhase('ready');
+            }
+          }}
+        />
       </PhaseTransition>
     );
   }
@@ -204,7 +412,7 @@ export function ReactionTimeSession({ session }: Props) {
   // ─── WAITING (RED) ───
   if (phase === 'waiting') {
     return (
-      <Pressable style={[st.fullPress, { backgroundColor: Colors.red }]} onPress={handleScreenPress}>
+      <Pressable testID="reaction-time-press" style={[st.fullPress, { backgroundColor: Colors.red }]} onPress={handleScreenPress}>
         <Animated.View style={[st.fullCenter, pulseStyle]} pointerEvents="none">
           <Text style={st.waitText}>Wait for green</Text>
         </Animated.View>
@@ -219,7 +427,7 @@ export function ReactionTimeSession({ session }: Props) {
   // ─── GO (GREEN) ───
   if (phase === 'go') {
     return (
-      <Pressable style={[st.fullPress, { backgroundColor: Colors.green }]} onPress={handleScreenPress}>
+      <Pressable testID="reaction-time-press" style={[st.fullPress, { backgroundColor: Colors.green }]} onPress={handleScreenPress}>
         <View style={st.fullCenter}>
           <Text style={st.megaText}>TAP!</Text>
         </View>
@@ -238,7 +446,7 @@ export function ReactionTimeSession({ session }: Props) {
           <Text style={st.title}>{lastMs} ms</Text>
           <Text style={st.sub}>{describeTime(lastMs ?? 0)}</Text>
           <AttemptDots attempts={currentRecord.attempts} total={ATTEMPTS_PER_PLAYER} />
-          <Pressable style={[st.startBtn, { backgroundColor: '#007AFF' }]} onPress={continueAfterAttempt}>
+          <Pressable testID="reaction-time-continue-button" style={[st.startBtn, { backgroundColor: '#007AFF' }]} onPress={continueAfterAttempt}>
             <Text style={st.startBtnTx}>
               {attemptsDone >= ATTEMPTS_PER_PLAYER ? 'See Result' : 'Next Attempt'}
             </Text>
@@ -259,7 +467,7 @@ export function ReactionTimeSession({ session }: Props) {
           <Text style={st.title}>Too Early!</Text>
           <Text style={st.sub}>You tapped while still red — that attempt is a foul.</Text>
           <AttemptDots attempts={currentRecord.attempts} total={ATTEMPTS_PER_PLAYER} />
-          <Pressable style={[st.startBtn, { backgroundColor: Colors.orange }]} onPress={continueAfterAttempt}>
+          <Pressable testID="reaction-time-continue-button" style={[st.startBtn, { backgroundColor: Colors.orange }]} onPress={continueAfterAttempt}>
             <Text style={st.startBtnTx}>
               {attemptsDone >= ATTEMPTS_PER_PLAYER ? 'See Result' : 'Try Again'}
             </Text>
@@ -303,8 +511,9 @@ export function ReactionTimeSession({ session }: Props) {
     .map((row): RankEntry => ({
       id: row.record.playerId,
       name: row.name,
-      primary: row.best == null ? '—' : `${row.best} ms`,
-      secondary: attemptsSummary(row.record.attempts),
+      isSkipped: row.best == null,
+      primary: row.best == null ? 'Skipped' : `${row.best} ms`,
+      secondary: row.best == null ? 'Did not play' : attemptsSummary(row.record.attempts),
     }));
 
   return (
@@ -375,8 +584,8 @@ function AttemptDots({ attempts, total }: { attempts: Attempt[]; total: number }
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  readyContent: { padding: 20, paddingBottom: 60, alignItems: 'center', gap: 14 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
+  readyContent: { padding: 20, paddingBottom: 60, alignItems: 'center', gap: 14, maxWidth: 540, width: '100%', alignSelf: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12, maxWidth: 540, width: '100%', alignSelf: 'center' },
   iconBox: {
     width: 100, height: 100, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center',
@@ -440,7 +649,7 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8,
     paddingVertical: 18, paddingHorizontal: 32,
-    borderRadius: 16, width: '100%',
+    borderRadius: 16, width: '100%', maxWidth: 540, alignSelf: 'center',
     marginTop: 18,
   },
   startBtnTx: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
@@ -483,6 +692,8 @@ const st = StyleSheet.create({
 
   attemptList: {
     width: '100%',
+    maxWidth: 540,
+    alignSelf: 'center',
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 16, padding: 16, gap: 8,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
@@ -494,4 +705,45 @@ const st = StyleSheet.create({
   },
   attemptIdx: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600' },
   attemptVal: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black', fontVariant: ['tabular-nums'] },
+  countdownCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(52,199,89,0.2)',
+    borderWidth: 2,
+    borderColor: Colors.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+  },
+  countdownNum: {
+    color: '#fff',
+    fontSize: 44,
+    fontFamily: 'Viral-Black',
+  },
+  waitingSub: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  waitingBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginTop: 16,
+    maxWidth: 540,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  waitingBoxText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });

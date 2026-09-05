@@ -2,12 +2,28 @@
 
 ## 🚀 Pre-Launch / Production Checklist
 
-The following items are temporary developer bypasses that **MUST BE REMOVED** before publishing to the App Store / Google Play:
+The following items are verified for App Store / Google Play publishing:
 
-- [ ] **Onboarding Bypass:** Remove `useSettingsStore.getState().setHasCompletedOnboarding(false);` in `expo/app/_layout.tsx`. Currently, it's forcing the onboarding screen to show on every app load for testing the new UI.
-- [ ] **Premium Games Lock:** Remove the temporary `const isPremium = true;` bypass in `expo/app/(tabs)/game/[id].tsx`. The app needs to correctly check RevenueCat/EconomyStore so free users hit the paywall.
+- [x] **Onboarding Bypass:** Removed developer force-onboarding flag in `expo/app/_layout.tsx`.
+- [x] **Premium Games Lock:** `isPremium` in `useEconomyStore.ts` strictly syncs with live Firebase RTDB state and RevenueCat entitlement.
 
 ---
+
+### v3.0.0 - Production Backend Hardening, Concurrency & Deterministic Test Suite
+* **Date:** August 17, 2026
+* **Changes:**
+  * **RevenueCat Concurrency:** Refactored `syncRevenueCat` to use single atomic RTDB transactions on `users/${uid}`, guaranteeing exactly-once crediting under duplicate/concurrent calls and exact closure-scoped `credited` tracking during transaction retries.
+  * **Invite Code Registry & Collision Safety:** Built authoritative `inviteCodes/${code}` registry in `ensureInviteCode` and `redeemInvite`, preventing collisions with unmigrated legacy user profiles, auto-migrating legacy users without overwriting concurrent registry winners, and eliminating orphaned reservations.
+  * **Ownership-Safe Account Deletion:** Made `deleteAccount` registry cleanup conditional (`cur === uid ? null : cur`), guaranteeing legitimate reservations owned by other UIDs are never wiped.
+  * **AI Generation Pipeline & Quota Rollback:** Hardened `generateCard` with prompt & system moderation (`isSafe`), empty/whitespace validation, `x-goog-api-key` header protection, request-isolated quota reservations (`hasReservedQuota`), and exactly-once rollback on upstream 5xx errors or flagged content without double-decrements or cross-request quota loss.
+  * **Multiplayer Room Sweeper:** Hardened `sweepStaleRooms` with positive timestamp validation (`last > 0`), inclusion of active turns (`gameState.lastUpdatedAt`), and chunked batch deletion (500 keys) to protect active and initializing rooms.
+  * **Backend Test Infrastructure:** Added `functions/test-runner.js` supporting both live emulator reuse (port 9012) and fresh isolated emulator execution, expanding deterministic automated coverage to 20 tests with clean process exits without `--forceExit`.
+* **Modified Files:**
+  * [functions/index.js](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/functions/index.js)
+  * [functions/index.test.js](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/functions/index.test.js)
+  * [functions/test-runner.js](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/functions/test-runner.js)
+  * [functions/run-jest.js](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/functions/run-jest.js)
+  * [functions/package.json](file:///d:/VC%20PROJECT/PlayVirals/PlayBot%20Antigravity/functions/package.json)
 
 ### v2.9.0 - Android iOS Parity & Build Fixes
 * **Date:** July 11, 2026

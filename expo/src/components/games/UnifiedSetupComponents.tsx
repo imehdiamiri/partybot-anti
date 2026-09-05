@@ -192,6 +192,8 @@ export function SetupStartButton({
 }: SetupStartButtonProps) {
   return (
     <Pressable 
+      accessibilityRole="button"
+      testID="setup-start-button"
       style={[styles.startButton, { backgroundColor: tint, opacity: disabled ? 0.5 : 1 }]}
       onPress={onPress}
       disabled={disabled}
@@ -292,6 +294,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     gap: 10,
     marginTop: 10,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
   startTextContainer: {
     alignItems: 'center',

@@ -6,34 +6,35 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp, FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 /**
- * Shared "final scoreboard" primitive used by Memory Grid, Guess the Seconds
- * and Pass & Guess. Renders a sorted ranking with a winner highlight.
- *
- * Pass `entries` already sorted (best → worst). The first row is gilded.
+ * Shared modern final scoreboard primitive used across mini-games.
+ * Renders an ultra-modern ranking card with podium highlights and
+ * dedicated handling for skipped / DNF players.
  */
 
 export interface RankEntry {
   id: string;
   name: string;
-  /** Primary metric shown big on the right (e.g. "12 pts" or "3.21s"). */
+  /** Primary metric shown on the right (e.g. "12.4s" or "350 pts") or "Skipped". */
   primary: string;
   /** Optional secondary line under the player name. */
   secondary?: string;
   /** Optional tint override for the player name. */
   nameColor?: string;
+  /** When true, player is clearly marked as skipped and placed at the bottom without winning. */
+  isSkipped?: boolean;
 }
 
 interface Props {
   entries: RankEntry[];
   title?: string;
   subtitle?: string;
-  trophyColor?: string;
   /** When provided, renders a primary "Play Again" CTA under the scoreboard. */
   onPlayAgain?: () => void;
   /** Game name used in the share-card text; enables a share button when set. */
   shareGameName?: string;
   playAgainTitle?: string;
   playAgainIcon?: string;
+  badgeLabel?: string;
 }
 
 // Platform-safe BlurView
@@ -45,130 +46,196 @@ const SurfaceBlur = ({ style, children, intensity = 40 }: any) => {
   if (Platform.OS === 'ios' && BlurViewComponent) {
     return <BlurViewComponent intensity={intensity} tint="dark" style={style}>{children}</BlurViewComponent>;
   }
-  return <View style={[style, { backgroundColor: 'rgba(30,30,40,0.85)' }]}>{children}</View>;
+  return <View style={[style, { backgroundColor: 'rgba(20,20,28,0.85)' }]}>{children}</View>;
 };
 
 export function ResultsScoreboard({
   entries,
   title = 'Final Results',
   subtitle,
-  trophyColor = Colors.yellow,
   onPlayAgain,
   shareGameName,
   playAgainTitle = 'Play Again',
   playAgainIcon = 'arrow.clockwise',
+  badgeLabel = 'STANDINGS',
 }: Props) {
   const handleShare = async () => {
     if (!shareGameName) return;
     try {
-      const winner = entries[0];
+      const winner = validCompleted[0];
       const lines = [
-        `🏆 ${winner?.name ?? 'I'} won ${shareGameName} on PlayVirals!`,
-        `${winner?.primary ?? ''}`.trim(),
+        `🎮 ${winner ? `${winner.name} won` : 'Finished'} ${shareGameName} on PartyBot!`,
+        winner?.primary ? `Score: ${winner.primary}` : '',
         '',
-        'Play with friends → https://www.playvirals.com',
+        'Play with friends → https://partybot.games',
       ].filter(Boolean);
       await Share.share({ message: lines.join('\n') });
     } catch {}
   };
 
   useEffect(() => {
-    // Attempt to play a sound on mount to make it exciting
     import('@/src/services/AudioManager').then(({ AudioManager }) => {
       AudioManager.play('success');
     }).catch(() => {});
   }, []);
 
-  const winner = entries[0];
-  const runnersUp = entries.slice(1);
+  // Separate completed players from skipped players
+  const validCompleted = entries.filter(e => !e.isSkipped && e.primary !== 'Skipped' && e.primary !== '—');
+  const skippedList = entries.filter(e => e.isSkipped || e.primary === 'Skipped' || e.primary === '—');
+
+  const winner = validCompleted.length > 0 ? validCompleted[0] : null;
+  const runnersUp = validCompleted.length > 1 ? validCompleted.slice(1) : [];
 
   return (
     <View style={styles.wrap}>
-      {/* Header with Animated Trophy */}
-      <Animated.View entering={FadeInDown.duration(600).springify().damping(14)} style={styles.header}>
-        <View style={styles.trophyContainer}>
-          <Animated.View entering={ZoomIn.delay(200).springify().damping(12)}>
-            <IconSymbol name="trophy.fill" size={72} color={trophyColor} />
-          </Animated.View>
-          <View style={[styles.trophyGlow, { backgroundColor: trophyColor }]} />
+      {/* Modern Header (No Trophy Icon) */}
+      <Animated.View entering={FadeInDown.duration(500).springify().damping(15)} style={styles.header}>
+        <View style={styles.badgePill}>
+          <Text style={styles.badgePillText}>{badgeLabel}</Text>
         </View>
         <Text style={styles.title}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </Animated.View>
 
       <View style={styles.list}>
-        {/* Winner Card */}
+        {/* Winner Hero Card (Only if a valid completed winner exists) */}
         {winner && (
           <Animated.View entering={FadeInUp.delay(100).springify().damping(14)}>
-            <LinearGradient
-              colors={['rgba(255, 215, 0, 0.3)', 'rgba(255, 140, 0, 0.15)']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={styles.winnerCardWrapper}
-            >
+            <View style={styles.winnerCardWrapper}>
               <LinearGradient
-                colors={['#FFD700', '#FFA500']}
+                colors={['rgba(255, 215, 0, 0.18)', 'rgba(255, 140, 0, 0.08)', 'rgba(0, 0, 0, 0.4)']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={styles.winnerBorder}
+                style={StyleSheet.absoluteFillObject}
               />
+              <LinearGradient
+                colors={['#FFD700', '#FFA500', 'transparent']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={styles.winnerTopBar}
+              />
+
               <View style={styles.winnerCardInner}>
-                <View style={styles.winnerHeader}>
-                  <IconSymbol name="crown.fill" size={26} color="#FFD700" />
-                  <Text style={styles.winnerText}>WINNER</Text>
-                  <IconSymbol name="crown.fill" size={26} color="#FFD700" />
+                <View style={styles.winnerCrownBadge}>
+                  <Text style={styles.crownEmoji}>👑</Text>
+                  <Text style={styles.winnerCrownText}>WINNER</Text>
+                  <Text style={styles.crownEmoji}>👑</Text>
                 </View>
+
                 <Text 
                   style={[styles.winnerName, winner.nameColor ? { color: winner.nameColor } : null]} 
                   numberOfLines={1}
                 >
                   {winner.name}
                 </Text>
-                <Text style={styles.winnerPrimary}>{winner.primary}</Text>
-                {winner.secondary ? <Text style={styles.winnerSecondary}>{winner.secondary}</Text> : null}
+
+                <View style={styles.winnerScoreContainer}>
+                  <Text style={styles.winnerPrimary}>{winner.primary}</Text>
+                  {winner.secondary ? (
+                    <View style={styles.winnerSecondaryBadge}>
+                      <Text style={styles.winnerSecondary}>{winner.secondary}</Text>
+                    </View>
+                  ) : null}
+                </View>
               </View>
-            </LinearGradient>
+            </View>
           </Animated.View>
         )}
 
-        {/* Runners up */}
-        {runnersUp.map((entry, idx) => (
-          <Animated.View 
-            key={entry.id} 
-            entering={FadeInUp.delay(200 + idx * 100).springify().damping(14)} 
-          >
-            <SurfaceBlur style={styles.runnerRow} intensity={50}>
-              <View style={styles.runnerBadge}>
-                <Text style={styles.runnerBadgeText}>#{idx + 2}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.runnerName, entry.nameColor ? { color: entry.nameColor } : null]}>
-                  {entry.name}
-                </Text>
-                {entry.secondary ? <Text style={styles.runnerSecondary}>{entry.secondary}</Text> : null}
-              </View>
-              <Text style={styles.runnerPrimary}>{entry.primary}</Text>
-            </SurfaceBlur>
+        {/* If no players finished */}
+        {!winner && validCompleted.length === 0 && (
+          <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.allSkippedCard}>
+            <Text style={styles.allSkippedEmoji}>⚡</Text>
+            <Text style={styles.allSkippedTitle}>Round Ended</Text>
+            <Text style={styles.allSkippedSub}>No completed scores recorded this round.</Text>
           </Animated.View>
-        ))}
+        )}
+
+        {/* Runners Up List (#2, #3, etc.) */}
+        {runnersUp.map((entry, idx) => {
+          const rankNumber = idx + 2;
+          const isSecond = rankNumber === 2;
+          const isThird = rankNumber === 3;
+          const badgeColor = isSecond ? '#E2E8F0' : isThird ? '#CD7F32' : 'rgba(255,255,255,0.7)';
+          const badgeBg = isSecond ? 'rgba(226, 232, 240, 0.15)' : isThird ? 'rgba(205, 127, 50, 0.15)' : 'rgba(255,255,255,0.06)';
+
+          return (
+            <Animated.View 
+              key={entry.id} 
+              entering={FadeInUp.delay(150 + idx * 80).springify().damping(14)} 
+            >
+              <SurfaceBlur style={styles.runnerRow} intensity={45}>
+                <View style={[styles.runnerBadge, { backgroundColor: badgeBg }]}>
+                  <Text style={[styles.runnerBadgeText, { color: badgeColor }]}>#{rankNumber}</Text>
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.runnerName, entry.nameColor ? { color: entry.nameColor } : null]} numberOfLines={1}>
+                    {entry.name}
+                  </Text>
+                  {entry.secondary ? <Text style={styles.runnerSecondary}>{entry.secondary}</Text> : null}
+                </View>
+
+                <View style={styles.runnerScoreCol}>
+                  <Text style={styles.runnerPrimary}>{entry.primary}</Text>
+                </View>
+              </SurfaceBlur>
+            </Animated.View>
+          );
+        })}
+
+        {/* Skipped / Incomplete Players Section */}
+        {skippedList.length > 0 && (
+          <View style={styles.skippedSection}>
+            <View style={styles.skippedDivider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.skippedHeaderTitle}>Did Not Play / Skipped</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {skippedList.map((entry, idx) => (
+              <Animated.View 
+                key={entry.id} 
+                entering={FadeInUp.delay(250 + idx * 60).springify().damping(14)} 
+              >
+                <View style={styles.skippedRow}>
+                  <View style={styles.skippedBadge}>
+                    <Text style={styles.skippedBadgeText}>—</Text>
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.skippedName} numberOfLines={1}>
+                      {entry.name}
+                    </Text>
+                    <Text style={styles.skippedSub}>{entry.secondary || 'Skipped turn'}</Text>
+                  </View>
+
+                  <View style={styles.skippedPill}>
+                    <Text style={styles.skippedPillText}>Skipped</Text>
+                  </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        )}
       </View>
 
-      {/* CTAs */}
+      {/* Modern CTAs */}
       {(onPlayAgain || shareGameName) && (
-        <Animated.View entering={FadeInUp.delay(300 + runnersUp.length * 100).springify().damping(14)} style={styles.ctas}>
+        <Animated.View entering={FadeInUp.delay(300 + entries.length * 60).springify().damping(14)} style={styles.ctas}>
           {onPlayAgain && (
-            <TouchableOpacity style={styles.playAgainBtn} onPress={onPlayAgain} accessibilityRole="button" activeOpacity={0.8}>
+            <TouchableOpacity style={styles.playAgainBtn} onPress={onPlayAgain} accessibilityRole="button" activeOpacity={0.85}>
               <LinearGradient 
-                colors={[Colors.blue, '#0A58D6']} 
+                colors={['#3B82F6', '#2563EB', '#1D4ED8']} 
                 start={{x: 0, y: 0}} end={{x: 1, y: 1}}
                 style={StyleSheet.absoluteFillObject} 
               />
-              <IconSymbol name={playAgainIcon as any} size={22} color="white" />
+              <IconSymbol name={playAgainIcon as any} size={20} color="white" />
               <Text style={styles.playAgainText}>{playAgainTitle}</Text>
             </TouchableOpacity>
           )}
           {shareGameName && (
-            <TouchableOpacity style={styles.shareBtn} onPress={handleShare} accessibilityRole="button" activeOpacity={0.8}>
-              <SurfaceBlur style={StyleSheet.absoluteFillObject} intensity={70} />
-              <IconSymbol name="square.and.arrow.up" size={20} color="white" />
+            <TouchableOpacity style={styles.shareBtn} onPress={handleShare} accessibilityRole="button" activeOpacity={0.85}>
+              <SurfaceBlur style={StyleSheet.absoluteFillObject} intensity={60} />
+              <IconSymbol name="square.and.arrow.up" size={18} color="white" />
               <Text style={styles.shareText}>Share</Text>
             </TouchableOpacity>
           )}
@@ -179,100 +246,142 @@ export function ResultsScoreboard({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 24, paddingHorizontal: 4 },
-  header: { alignItems: 'center', gap: 10, marginTop: 16 },
-  trophyContainer: {
-    width: 140, height: 140,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 12,
-  },
-  trophyGlow: {
-    position: 'absolute',
-    width: 100, height: 100,
-    borderRadius: 50,
-    opacity: 0.4,
-    transform: [{ scale: 1.6 }],
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 50,
-    elevation: 12,
-  },
-  title: { color: 'white', fontSize: 28, fontFamily: 'Viral-Black', letterSpacing: 0.3, textAlign: 'center' },
-  subtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 18, fontWeight: '600', textAlign: 'center' },
+  wrap: { gap: 20, paddingHorizontal: 4, paddingBottom: 24, maxWidth: 680, width: '100%', alignSelf: 'center' },
   
-  list: { gap: 16 },
+  // Header
+  header: { alignItems: 'center', gap: 6, marginTop: 8, marginBottom: 8 },
+  badgePill: {
+    paddingHorizontal: 14, paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.12)',
+    marginBottom: 4,
+  },
+  badgePillText: {
+    color: '#A855F7', fontSize: 11, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase',
+  },
+  title: { color: 'white', fontSize: 30, fontFamily: 'Viral-Black', letterSpacing: 0.2, textAlign: 'center' },
+  subtitle: { color: 'rgba(255,255,255,0.6)', fontSize: 15, fontWeight: '500', textAlign: 'center' },
+  
+  list: { gap: 12 },
   
   // Winner Card Styles
   winnerCardWrapper: {
-    borderRadius: 28,
+    borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.5)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    backgroundColor: 'rgba(18, 18, 24, 0.8)',
     shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  winnerBorder: {
+  winnerTopBar: {
     position: 'absolute',
     top: 0, left: 0, right: 0,
-    height: 4,
-    opacity: 0.9,
+    height: 3,
   },
   winnerCardInner: {
-    padding: 32,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.25)',
   },
-  winnerHeader: {
+  winnerCrownBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 24,
+    gap: 8,
+    marginBottom: 12,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 1, borderColor: 'rgba(255, 215, 0, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  winnerText: { color: '#FFD700', fontSize: 13, fontFamily: 'Viral-Black', letterSpacing: 2 },
-  winnerName: { color: 'white', fontSize: 28, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 10 },
-  winnerPrimary: { color: Colors.green, fontSize: 40, fontFamily: 'Viral-Black', letterSpacing: -0.5, textShadowColor: 'rgba(52, 199, 89, 0.4)', textShadowOffset: {width: 0, height: 4}, textShadowRadius: 10 },
-  winnerSecondary: { color: 'rgba(255,255,255,0.9)', fontSize: 16, fontWeight: '600', marginTop: 10 },
+  crownEmoji: { fontSize: 13 },
+  winnerCrownText: { color: '#FFD700', fontSize: 12, fontFamily: 'Viral-Black', letterSpacing: 1.5 },
+  winnerName: { color: 'white', fontSize: 26, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 8 },
+  winnerScoreContainer: { alignItems: 'center', gap: 6 },
+  winnerPrimary: { 
+    color: '#22C55E', fontSize: 38, fontFamily: 'Viral-Black', letterSpacing: -0.5,
+    textShadowColor: 'rgba(34, 197, 94, 0.3)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8,
+  },
+  winnerSecondaryBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12,
+  },
+  winnerSecondary: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '600' },
+
+  // All Skipped State
+  allSkippedCard: {
+    padding: 24, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center', gap: 8,
+  },
+  allSkippedEmoji: { fontSize: 32 },
+  allSkippedTitle: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black' },
+  allSkippedSub: { color: 'rgba(255,255,255,0.5)', fontSize: 13, textAlign: 'center' },
 
   // Runners up Styles
   runnerRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    padding: 20, borderRadius: 24,
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.12)',
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingVertical: 14, paddingHorizontal: 16, borderRadius: 18,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
   },
   runnerBadge: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    width: 38, height: 38, borderRadius: 19,
     alignItems: 'center', justifyContent: 'center',
   },
-  runnerBadgeText: { color: 'rgba(255,255,255,0.95)', fontFamily: 'Viral-Black', fontSize: 16 },
-  runnerName: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black' },
-  runnerSecondary: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 5, fontWeight: '600' },
-  runnerPrimary: { color: 'white', fontSize: 22, fontFamily: 'Viral-Black' },
+  runnerBadgeText: { fontFamily: 'Viral-Black', fontSize: 14 },
+  runnerName: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black' },
+  runnerSecondary: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2, fontWeight: '500' },
+  runnerScoreCol: { alignItems: 'flex-end', justifyContent: 'center' },
+  runnerPrimary: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black' },
 
-  // CTA Styles
-  ctas: { flexDirection: 'row', gap: 16, marginTop: 24 },
+  // Skipped Section Styles
+  skippedSection: { marginTop: 10, gap: 8 },
+  skippedDivider: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 6 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
+  skippedHeaderTitle: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },
+  skippedRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 12, paddingHorizontal: 16, borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
+    opacity: 0.75,
+  },
+  skippedBadge: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  skippedBadgeText: { color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 'bold' },
+  skippedName: { color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: '600' },
+  skippedSub: { color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 1 },
+  skippedPill: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
+    borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  skippedPillText: { color: '#F87171', fontSize: 11, fontWeight: '700' },
+
+  // CTAs
+  ctas: { flexDirection: 'row', gap: 12, marginTop: 16, maxWidth: 540, width: '100%', alignSelf: 'center' },
   playAgainBtn: {
-    flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-    paddingVertical: 22, borderRadius: 24, overflow: 'hidden',
-    shadowColor: Colors.blue, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6,
+    flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    paddingVertical: 16, borderRadius: 18, overflow: 'hidden',
+    shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 4,
   },
-  playAgainText: { color: 'white', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.3 },
+  playAgainText: { color: 'white', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.3 },
   shareBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-    paddingVertical: 22, borderRadius: 24, overflow: 'hidden',
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)',
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 16, borderRadius: 18, overflow: 'hidden',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
   },
-  shareText: { color: 'white', fontSize: 17, fontWeight: 'bold' },
+  shareText: { color: 'white', fontSize: 15, fontWeight: '600' },
 });
 
-// Re-export Platform so callers can detect ios-only behaviours if needed.
 export { Platform };

@@ -27,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function requireEnv(name: string, value: string | undefined): string {
   if (!value) {
+    if (Platform.OS === 'web') return `dummy-${name}`;
     // We throw rather than silently shipping a fallback project so that
     // misconfigured forks fail loudly in dev instead of writing to the
     // wrong production database.

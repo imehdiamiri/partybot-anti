@@ -32,18 +32,53 @@ interface GameInfo {
 }
 
 const GAMES: GameInfo[] = [
-  // Web Playable Games First
   {
-    id: "sound_match",
-    name: "Sound Match",
-    description: "Listen to a target tone, then recreate its pitch from memory using a frequency slider.",
+    id: "memory_grid",
+    name: "Memory Grid",
+    description: "Flip tiles, find matching pairs, and race the clock — or your friends.",
     minPlayers: 1,
     maxPlayers: 30,
     isPremium: false,
     playableOnWeb: true,
-    playUrl: "/game/sound-match",
-    accent: "from-pink-500 to-rose-500",
-    heroImage: "/images/heroes/sound-match.png"
+    playUrl: "/game/memory_grid",
+    accent: "from-blue-500 to-indigo-500",
+    heroImage: "/images/heroes/memory-grid.webp"
+  },
+  {
+    id: "reaction_time",
+    name: "Reaction Time",
+    description: "Wait for green, then tap as fast as you can. Lowest reaction time wins.",
+    minPlayers: 1,
+    maxPlayers: 30,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/reaction_time",
+    accent: "from-green-500 to-emerald-500",
+    heroImage: "/images/heroes/reaction-time.webp"
+  },
+  {
+    id: "eye_sight",
+    name: "Eye Sight",
+    description: "Numbers flash for a split second — memorize them and type them back. Each round gets harder.",
+    minPlayers: 1,
+    maxPlayers: 30,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/eye_sight",
+    accent: "from-cyan-500 to-teal-500",
+    heroImage: "/images/heroes/eye-sight.webp"
+  },
+  {
+    id: "drum_challenge",
+    name: "Drum Challenge",
+    description: "A music clip plays — tap the drum at the EXACT moment the beat drops. Closest to 0 ms wins.",
+    minPlayers: 1,
+    maxPlayers: 30,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/drum_challenge",
+    accent: "from-fuchsia-500 to-pink-500",
+    heroImage: "/images/heroes/drum-challenge.webp"
   },
   {
     id: "color_match",
@@ -53,32 +88,69 @@ const GAMES: GameInfo[] = [
     maxPlayers: 30,
     isPremium: false,
     playableOnWeb: true,
-    playUrl: "/game/color-match",
+    playUrl: "/game/color_match",
     accent: "from-emerald-500 to-teal-500",
-    heroImage: "/images/heroes/color-match.png"
+    heroImage: "/images/heroes/color-match.webp"
   },
-  // Free Mobile Games
+  {
+    id: "sound_match",
+    name: "Sound Match",
+    description: "Listen to a target tone, then recreate its pitch from memory using a frequency slider.",
+    minPlayers: 1,
+    maxPlayers: 30,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/sound_match",
+    accent: "from-pink-500 to-rose-500",
+    heroImage: "/images/heroes/sound-match.webp"
+  },
+  {
+    id: "color_trap",
+    name: "Color Trap",
+    description: "Tap every color except the forbidden one. Three strikes and you're out.",
+    minPlayers: 1,
+    maxPlayers: 30,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/color_trap",
+    accent: "from-rose-500 to-red-600",
+    heroImage: "/images/heroes/color-trap.webp"
+  },
+  {
+    id: "tap_in_order",
+    name: "Tap in Order",
+    description: "Race against the clock to tap numbered tiles in order. Same board for every player.",
+    minPlayers: 1,
+    maxPlayers: 30,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/tap_in_order",
+    accent: "from-teal-500 to-cyan-500",
+    heroImage: "/images/heroes/tap-in-order.webp"
+  },
   {
     id: "guess_the_seconds",
     name: "Guess the Seconds",
     description: "Choose a target time, hide it, count in your head, then stop as close as you can.",
-    minPlayers: 2,
+    minPlayers: 1,
     maxPlayers: 30,
     isPremium: false,
-    playableOnWeb: false,
+    playableOnWeb: true,
+    playUrl: "/game/guess_the_seconds",
     accent: "from-cyan-500 to-blue-500",
-    heroImage: "/images/heroes/guess-the-seconds.png"
+    heroImage: "/images/heroes/guess-the-seconds.webp"
   },
   {
     id: "reverse_singing",
     name: "Reverse Singing",
     description: "Pass the phone. Record anything. Hear it reversed. Mimic it. Compare the chaos.",
     minPlayers: 2,
-    maxPlayers: 2,
+    maxPlayers: 30,
     isPremium: false,
-    playableOnWeb: false,
+    playableOnWeb: true,
+    playUrl: "/game/reverse_singing",
     accent: "from-pink-500 to-purple-500",
-    heroImage: "/images/heroes/reverse-singing.png"
+    heroImage: "/images/heroes/reverse-singing.webp"
   },
   {
     id: "imposter",
@@ -87,65 +159,22 @@ const GAMES: GameInfo[] = [
     minPlayers: 4,
     maxPlayers: 30,
     isPremium: false,
-    playableOnWeb: false,
+    playableOnWeb: true,
+    playUrl: "/game/imposter",
     accent: "from-red-500 to-rose-600",
-    heroImage: "/images/heroes/imposter.png"
+    heroImage: "/images/heroes/imposter.webp"
   },
-  {
-    id: "memory_grid",
-    name: "Memory Grid",
-    description: "Flip tiles, find matching pairs, and race the clock — or your friends.",
-    minPlayers: 1,
-    maxPlayers: 30,
-    isPremium: false,
-    playableOnWeb: false,
-    accent: "from-blue-500 to-indigo-500",
-    heroImage: "/images/heroes/memory-grid.png"
-  },
-  {
-    id: "reaction_time",
-    name: "Reaction Time",
-    description: "Wait for green, then tap as fast as you can. Lowest reaction time wins.",
-    minPlayers: 1,
-    maxPlayers: 30,
-    isPremium: false,
-    playableOnWeb: false,
-    accent: "from-green-500 to-emerald-500",
-    heroImage: "/images/heroes/reaction-time.png"
-  },
-  {
-    id: "eye_sight",
-    name: "Eye Sight",
-    description: "Numbers flash for a split second — memorize them and type them back. Each round gets harder.",
-    minPlayers: 1,
-    maxPlayers: 30,
-    isPremium: false,
-    playableOnWeb: false,
-    accent: "from-cyan-500 to-teal-500",
-    heroImage: "/images/heroes/eye-sight.png"
-  },
-  {
-    id: "drum_challenge",
-    name: "Drum Challenge",
-    description: "A music clip plays — tap the drum at the EXACT moment the beat drops. Closest to 0 ms wins.",
-    minPlayers: 1,
-    maxPlayers: 30,
-    isPremium: false,
-    playableOnWeb: false,
-    accent: "from-fuchsia-500 to-pink-500",
-    heroImage: "/images/heroes/drum-challenge.png"
-  },
-  // Premium Mobile Games
   {
     id: "ten_tangle",
     name: "Ten Tangle",
     description: "Get a secret number 1–10, act it out for a scenario, and fool the guesser.",
     minPlayers: 3,
     maxPlayers: 11,
-    isPremium: true,
-    playableOnWeb: false,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/ten_tangle",
     accent: "from-purple-500 to-indigo-600",
-    heroImage: "/images/heroes/ten-tangle.png"
+    heroImage: "/images/heroes/ten-tangle.webp"
   },
   {
     id: "memory_path",
@@ -153,10 +182,11 @@ const GAMES: GameInfo[] = [
     description: "Find the hidden path from start to end — one wrong step and you restart.",
     minPlayers: 2,
     maxPlayers: 30,
-    isPremium: true,
-    playableOnWeb: false,
+    isPremium: false,
+    playableOnWeb: true,
+    playUrl: "/game/memory_path",
     accent: "from-orange-500 to-amber-500",
-    heroImage: "/images/heroes/memory-path.png"
+    heroImage: "/images/heroes/memory-path.webp"
   },
   {
     id: "pass_guess",
@@ -164,32 +194,10 @@ const GAMES: GameInfo[] = [
     description: "Pass one phone, write private answers, then guess who wrote each one before the final reveal.",
     minPlayers: 3,
     maxPlayers: 30,
-    isPremium: true,
+    isPremium: false,
     playableOnWeb: false,
     accent: "from-yellow-500 to-amber-600",
-    heroImage: "/images/heroes/pass-guess.png"
-  },
-  {
-    id: "tap_in_order",
-    name: "Tap in Order",
-    description: "Race against the clock to tap numbered tiles in order. Same board for every player.",
-    minPlayers: 1,
-    maxPlayers: 30,
-    isPremium: true,
-    playableOnWeb: false,
-    accent: "from-teal-500 to-cyan-500",
-    heroImage: "/images/heroes/tap-in-order.png"
-  },
-  {
-    id: "color_trap",
-    name: "Color Trap",
-    description: "Tap every color except the forbidden one. Three strikes and you're out.",
-    minPlayers: 1,
-    maxPlayers: 30,
-    isPremium: true,
-    playableOnWeb: false,
-    accent: "from-rose-500 to-red-600",
-    heroImage: "/images/heroes/color-trap.png"
+    heroImage: "/images/heroes/pass-guess.webp"
   },
   {
     id: "draw_rush",
@@ -197,10 +205,10 @@ const GAMES: GameInfo[] = [
     description: "One player draws a secret concept while everyone else rushes to guess what it is.",
     minPlayers: 2,
     maxPlayers: 12,
-    isPremium: true,
+    isPremium: false,
     playableOnWeb: false,
     accent: "from-blue-500 to-indigo-500",
-    heroImage: "/images/heroes/draw-rush.png"
+    heroImage: "/images/heroes/draw-rush.webp"
   },
   {
     id: "spin_bottle",
@@ -208,10 +216,10 @@ const GAMES: GameInfo[] = [
     description: "Spin the bottle, get picked, and pick Truth or Dare. Classic party energy.",
     minPlayers: 3,
     maxPlayers: 12,
-    isPremium: true,
+    isPremium: false,
     playableOnWeb: false,
     accent: "from-violet-500 to-purple-600",
-    heroImage: "/images/heroes/spin-bottle.png"
+    heroImage: "/images/heroes/spin-bottle.webp"
   }
 ];
 

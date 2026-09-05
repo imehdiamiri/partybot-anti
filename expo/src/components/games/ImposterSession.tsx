@@ -271,7 +271,7 @@ export function ImposterSession({ session }: Props) {
                       </View>
                     </>
                   )}
-                  <Pressable style={[styles.primaryBtn, { marginTop: 30 }]} onPress={handleGotIt}>
+                  <Pressable testID="imposter-got-it-button" accessibilityRole="button" style={[styles.primaryBtn, { marginTop: 30 }]} onPress={handleGotIt}>
                     <Text style={styles.primaryBtnText}>Got it, pass the phone</Text>
                   </Pressable>
                 </View>
@@ -290,7 +290,7 @@ export function ImposterSession({ session }: Props) {
             {gameStyle === 'clue' ? 'Get ready to give clues!' : `Get ready for discussion!`}
           </Text>
           
-          <Pressable style={[styles.primaryBtn, { marginTop: 40, paddingHorizontal: 60 }]} onPress={handleStartDiscussion}>
+          <Pressable testID="imposter-start-discussion-button" accessibilityRole="button" style={[styles.primaryBtn, { marginTop: 40, paddingHorizontal: 60 }]} onPress={handleStartDiscussion}>
             <Text style={styles.primaryBtnText}>{gameStyle === 'clue' ? 'Start Clues' : 'Start Discussion'}</Text>
           </Pressable>
         </ScrollView>
@@ -325,7 +325,7 @@ export function ImposterSession({ session }: Props) {
             </View>
           </LiquidGlass>
 
-          <Pressable style={styles.secondaryBtn} onPress={handleMoveToVoting}>
+          <Pressable testID="imposter-skip-to-voting-button" accessibilityRole="button" style={styles.secondaryBtn} onPress={handleMoveToVoting}>
             <Text style={styles.secondaryBtnText}>Skip to Voting</Text>
           </Pressable>
         </ScrollView>
@@ -399,6 +399,8 @@ export function ImposterSession({ session }: Props) {
               {session.players.filter(p => p.id !== currentPlayer.id).map((p, i) => (
                 <Pressable 
                   key={p.id}
+                  testID={`imposter-suspect-${p.id}`}
+                  accessibilityRole="button"
                   style={[styles.candidateBtn, selectedSuspect === p.id && styles.candidateBtnActive]}
                   onPress={() => setSelectedSuspect(p.id)}
                 >
@@ -409,6 +411,8 @@ export function ImposterSession({ session }: Props) {
             </View>
 
             <Pressable 
+              testID="imposter-confirm-vote-button"
+              accessibilityRole="button"
               style={[styles.primaryBtn, { marginTop: 30 }, !selectedSuspect && { opacity: 0.5 }]} 
               onPress={handleSubmitVote}
               disabled={!selectedSuspect}
@@ -487,7 +491,7 @@ export function ImposterSession({ session }: Props) {
                   </View>
                 </LiquidGlass>
 
-                <Pressable style={styles.primaryBtn} onPress={nextPhase}>
+                <Pressable testID="imposter-continue-button" accessibilityRole="button" style={styles.primaryBtn} onPress={nextPhase}>
                   <Text style={styles.primaryBtnText}>Continue</Text>
                 </Pressable>
               </>
@@ -554,8 +558,8 @@ export function ImposterSession({ session }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16 },
-  scrollContent: { paddingBottom: 40, paddingTop: 20 },
-  centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 40 },
+  scrollContent: { paddingBottom: 40, paddingTop: 20, maxWidth: 600, width: '100%', alignSelf: 'center' },
+  centerContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 40, maxWidth: 600, width: '100%', alignSelf: 'center' },
   centerItems: { alignItems: 'center', width: '100%' },
   
   title: { color: 'white', fontSize: 24, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 8 },

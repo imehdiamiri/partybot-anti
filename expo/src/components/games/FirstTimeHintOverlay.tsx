@@ -67,7 +67,12 @@ export function FirstTimeHintOverlay({ storageKey, icon, title, tip, accent = '#
           <Text style={st.tip}>{tip}</Text>
 
           {/* Got it */}
-          <Pressable style={[st.btn, { backgroundColor: accent }]} onPress={dismiss}>
+          <Pressable 
+            testID="first-time-hint-got-it"
+            accessibilityRole="button"
+            style={[st.btn, { backgroundColor: accent }]} 
+            onPress={dismiss}
+          >
             <Text style={st.btnTx}>Got it</Text>
           </Pressable>
         </Animated.View>
@@ -86,7 +91,7 @@ const st = StyleSheet.create({
   },
   card: {
     backgroundColor: 'rgba(40,40,45,0.95)',
-    borderRadius: 24, padding: 22, width: Dimensions.get('window').width - 64,
+    borderRadius: 24, padding: 22, width: '90%', maxWidth: 440,
     alignItems: 'center', gap: 12,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },

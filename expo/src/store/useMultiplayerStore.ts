@@ -1,32 +1,14 @@
 import { create } from 'zustand';
 import { multiplayerService, MultiplayerRoom } from '../services/MultiplayerService';
 import { gameSyncService, GameStatePayload, PlayerAction } from '../services/GameSyncService';
+import { serverClock } from '../services/ServerClock';
 import { auth, rtdb } from '../lib/firebase';
 import { ref, onValue } from 'firebase/database';
 import { showToast } from '../components/ToastOverlay';
 
-/**
- * useMultiplayerStore — single source of truth for the active room session.
- *
- * Identity: `localPlayerId` is ALWAYS `auth.currentUser.uid`. RTDB rules
- * require this for player/presence/action writes. Anonymous users get a
- * persistent uid via Firebase anonymous sign-in (handled in _layout.tsx),
- * so even guest play works without random ids.
- *
- * Host migration: when the current host's player row disappears (left or
- * presence timed out) the store calls `multiplayerService.claimHost`. The
- * lowest joinedAt remaining player wins. Failure is silent (another peer
- * already won the race). Transitions emit toasts ("Reconnecting…",
- * "<player> is the new host") so users get clear UX feedback.
- *
- * Connection state: `.info/connected` is observed while the user is in a
- * room. `connectionState === 'reconnecting'` flips when RTDB drops, which
- * the `<MultiplayerStatusBanner/>` surfaces to the player.
- */
+export type ConnectionState = 'connected' | 'reconnecting' | 'offline';
 
-export type ConnectionState = 'connected' | 'reconnecting';
-
-interface MultiplayerState {
+export interface MultiplayerState {
   currentRoom: MultiplayerRoom | null;
   roomCode: string | null;
   isHost: boolean;
@@ -35,11 +17,12 @@ interface MultiplayerState {
   isBusy: boolean;
   connectionState: ConnectionState;
 
-  // Game sync state
+  // Real-time synced game state
   gameState: GameStatePayload | null;
   playerActions: Record<string, PlayerAction>;
   presence: Record<string, { online: boolean; lastSeen: number }>;
 
+  // Actions
   createRoom: (gameId: string, hostName: string) => Promise<string>;
   joinRoom: (roomCode: string, playerName: string) => Promise<void>;
   leaveRoom: () => Promise<void>;
@@ -61,24 +44,29 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
   let actionsUnsub: (() => void) | null = null;
   let presenceUnsub: (() => void) | null = null;
   let connectedUnsub: (() => void) | null = null;
+  let subscribedRoomCode: string | null = null;
   // Track the previous hostId so we can detect (and announce) host migration.
   let previousHostId: string | null = null;
 
   function startConnectionWatcher(): void {
     if (connectedUnsub) return;
-    const r = ref(rtdb, '.info/connected');
-    connectedUnsub = onValue(r, (snap) => {
-      const connected = snap.val() === true;
-      const next: ConnectionState = connected ? 'connected' : 'reconnecting';
-      const prev = get().connectionState;
-      if (next === prev) return;
-      set({ connectionState: next });
-      if (next === 'reconnecting') {
-        showToast.warning('Reconnecting to room…');
-      } else if (prev === 'reconnecting') {
-        showToast.success('Back online');
-      }
-    });
+    try {
+      const r = ref(rtdb, '.info/connected');
+      connectedUnsub = onValue(r, (snap) => {
+        const connected = snap.val() === true;
+        const next: ConnectionState = connected ? 'connected' : 'reconnecting';
+        const prev = get().connectionState;
+        if (next === prev) return;
+        set({ connectionState: next });
+        if (next === 'reconnecting') {
+          showToast.warning('Reconnecting to room…');
+        } else if (prev === 'reconnecting') {
+          showToast.success('Back online');
+        }
+      });
+    } catch {
+      // Offline / testing fallback
+    }
   }
 
   function stopConnectionWatcher(): void {
@@ -155,13 +143,30 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
           isBusy: false,
         });
         startConnectionWatcher();
+        serverClock.start();
 
         unsubscribe = multiplayerService.listenToRoom(roomCode, (room) => {
           if (!room || room.status === 'closed') {
-            if (get().currentRoom) {
-              set({ currentRoom: null, roomCode: null, error: 'Room was closed' });
-              if (unsubscribe) unsubscribe();
+            if (get().currentRoom || get().roomCode) {
+              if (unsubscribe) { unsubscribe(); unsubscribe = null; }
               stopConnectionWatcher();
+              serverClock.stop();
+              get().unsubscribeAll();
+              const code = get().roomCode;
+              const pid = get().localPlayerId;
+              if (code && pid) {
+                gameSyncService.stopHeartbeat(code, pid);
+              }
+              set({
+                currentRoom: null,
+                roomCode: null,
+                localPlayerId: null,
+                isHost: false,
+                gameState: null,
+                playerActions: {},
+                presence: {},
+                error: 'Room was closed',
+              });
             }
             return;
           }
@@ -169,9 +174,24 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
         });
 
         await gameSyncService.setPresence(roomCode, hostId);
+        get().subscribeToGameState();
         return roomCode;
       } catch (err: any) {
-        set({ error: err.message, isBusy: false });
+        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+        stopConnectionWatcher();
+        serverClock.stop();
+        get().unsubscribeAll();
+        set({
+          currentRoom: null,
+          roomCode: null,
+          localPlayerId: null,
+          isHost: false,
+          gameState: null,
+          playerActions: {},
+          presence: {},
+          error: err.message,
+          isBusy: false,
+        });
         throw err;
       }
     },
@@ -189,13 +209,30 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
           isBusy: false,
         });
         startConnectionWatcher();
+        serverClock.start();
 
         unsubscribe = multiplayerService.listenToRoom(code, (room) => {
           if (!room || room.status === 'closed') {
-            if (get().currentRoom) {
-              set({ currentRoom: null, roomCode: null, error: 'Room was closed' });
-              if (unsubscribe) unsubscribe();
+            if (get().currentRoom || get().roomCode) {
+              if (unsubscribe) { unsubscribe(); unsubscribe = null; }
               stopConnectionWatcher();
+              serverClock.stop();
+              get().unsubscribeAll();
+              const rCode = get().roomCode;
+              const pid = get().localPlayerId;
+              if (rCode && pid) {
+                gameSyncService.stopHeartbeat(rCode, pid);
+              }
+              set({
+                currentRoom: null,
+                roomCode: null,
+                localPlayerId: null,
+                isHost: false,
+                gameState: null,
+                playerActions: {},
+                presence: {},
+                error: 'Room was closed',
+              });
             }
             return;
           }
@@ -203,8 +240,23 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
         });
 
         await gameSyncService.setPresence(code, playerId);
+        get().subscribeToGameState();
       } catch (err: any) {
-        set({ error: err.message, isBusy: false });
+        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+        stopConnectionWatcher();
+        serverClock.stop();
+        get().unsubscribeAll();
+        set({
+          currentRoom: null,
+          roomCode: null,
+          localPlayerId: null,
+          isHost: false,
+          gameState: null,
+          playerActions: {},
+          presence: {},
+          error: err.message,
+          isBusy: false,
+        });
         throw err;
       }
     },
@@ -227,8 +279,9 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
         console.warn('Multiplayer: leaveRoom error', (e as Error)?.message);
       } finally {
         get().unsubscribeAll();
-        if (unsubscribe) unsubscribe();
+        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
         stopConnectionWatcher();
+        serverClock.stop();
         previousHostId = null;
         set({
           currentRoom: null,
@@ -265,7 +318,7 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
       await gameSyncService.broadcastState(roomCode, partialState);
     },
 
-    pushAction: async (type: string, data: any) => {
+    pushAction: async (type: string, data: any): Promise<void> => {
       const { roomCode, localPlayerId } = get();
       if (!roomCode || !localPlayerId) return;
       await gameSyncService.pushAction(roomCode, {
@@ -285,6 +338,22 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
       const { roomCode } = get();
       if (!roomCode) return;
 
+      // If already subscribed to this exact room with active listeners, it's a strict no-op
+      if (subscribedRoomCode === roomCode && gameStateUnsub && actionsUnsub && presenceUnsub) {
+        return;
+      }
+
+      // If room changed or partial listeners exist, clean up first
+      if (subscribedRoomCode && subscribedRoomCode !== roomCode) {
+        get().unsubscribeAll();
+      } else {
+        if (gameStateUnsub) { gameStateUnsub(); gameStateUnsub = null; }
+        if (actionsUnsub) { actionsUnsub(); actionsUnsub = null; }
+        if (presenceUnsub) { presenceUnsub(); presenceUnsub = null; }
+      }
+
+      subscribedRoomCode = roomCode;
+
       gameStateUnsub = gameSyncService.listenToGameState(roomCode, (state) => {
         set({ gameState: state });
       });
@@ -302,11 +371,14 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
     },
 
     unsubscribeAll: () => {
-      const { roomCode } = get();
-      if (roomCode) gameSyncService.removeAllListeners(roomCode);
+      const activeRoom = subscribedRoomCode || get().roomCode;
+      if (activeRoom) {
+        gameSyncService.removeAllListeners(activeRoom);
+      }
       if (gameStateUnsub) { gameStateUnsub(); gameStateUnsub = null; }
       if (actionsUnsub) { actionsUnsub(); actionsUnsub = null; }
       if (presenceUnsub) { presenceUnsub(); presenceUnsub = null; }
+      subscribedRoomCode = null;
     },
   };
 });

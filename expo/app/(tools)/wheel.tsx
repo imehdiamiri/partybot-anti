@@ -9,7 +9,7 @@ import {
   ScrollView,
   Alert,
   Keyboard,
-  Dimensions,
+  useWindowDimensions,
   Platform,
 } from 'react-native';
 import Svg, { Path, G, Circle, Text as SvgText, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -66,8 +66,8 @@ const fitLabel = (label: string, sliceCount: number) => {
 };
 
 export default function WheelToolScreen() {
-  const screenW = Dimensions.get('window').width;
-  const wheelSize = Math.min(screenW - 40, 360);
+  const { width: screenW } = useWindowDimensions();
+  const wheelSize = Math.min((screenW > 0 ? screenW : 390) - 40, 360);
   const radius = wheelSize / 2;
 
   const [options, setOptions] = useState<string[]>(['Truth', 'Dare']);
@@ -251,7 +251,7 @@ export default function WheelToolScreen() {
     >
       {/* Wheel */}
       <View style={styles.wheelArea}>
-        <View style={[styles.wheelWrap, { width: wheelSize, height: wheelSize }]}>
+        <View testID="wheel-stage" style={[styles.wheelWrap, { width: wheelSize, height: wheelSize }]}>
           <Animated.View style={[{ width: wheelSize, height: wheelSize }, wheelAnimatedStyle]}>
             <Svg width={wheelSize} height={wheelSize} viewBox={`0 0 ${wheelSize} ${wheelSize}`}>
               <Defs>
@@ -364,7 +364,7 @@ export default function WheelToolScreen() {
         {/* Result */}
         <View style={styles.resultArea}>
           <Text style={styles.resultLabel}>{isSpinning ? 'SPINNING…' : winner ? 'WINNER' : 'TAP SPIN'}</Text>
-          <Text style={[styles.resultValue, isSpinning && { opacity: 0.4 }]} numberOfLines={1}>
+          <Text testID="wheel-result-value" style={[styles.resultValue, isSpinning && { opacity: 0.4 }]} numberOfLines={1}>
             {winner ?? '—'}
           </Text>
           <Text style={styles.hintText}>The highlighted segment at the pointer shows the winner.</Text>
@@ -373,6 +373,8 @@ export default function WheelToolScreen() {
 
       {/* Spin button */}
       <Pressable
+        testID="wheel-spin-btn"
+        accessibilityRole="button"
         onPress={spin}
         disabled={isSpinning || options.length < MIN_OPTIONS}
         style={({ pressed }) => [
@@ -417,6 +419,7 @@ export default function WheelToolScreen() {
         <View style={styles.inputContainer}>
           <TextInput
             ref={inputRef}
+            testID="wheel-option-input"
             style={styles.input}
             placeholder="Add an option"
             placeholderTextColor="rgba(255,255,255,0.4)"
@@ -431,6 +434,8 @@ export default function WheelToolScreen() {
           />
         </View>
         <Pressable
+          testID="wheel-add-option-btn"
+          accessibilityRole="button"
           onPress={addOption}
           disabled={!draft.trim() || isSpinning}
           style={({ pressed }) => [
@@ -460,6 +465,7 @@ export default function WheelToolScreen() {
           return (
             <View
               key={`${opt}-${i}`}
+              testID={`wheel-option-item-${i}`}
               style={[styles.chip, { borderColor: `${color}66`, backgroundColor: `${color}1F` }]}
             >
               <View style={[styles.chipDot, { backgroundColor: color }]} />
@@ -467,6 +473,8 @@ export default function WheelToolScreen() {
                 {opt}
               </Text>
               <Pressable
+                testID={`wheel-remove-option-${i}`}
+                accessibilityRole="button"
                 onPress={() => removeOption(i)}
                 disabled={isSpinning}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -491,6 +499,9 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingBottom: 32,
     alignItems: 'center',
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   wheelArea: {
     alignItems: 'center',

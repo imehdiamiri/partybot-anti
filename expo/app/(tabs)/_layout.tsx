@@ -18,7 +18,6 @@ const TAB_ITEMS = [
   { name: 'index', label: 'Games', icon: 'gamecontroller.fill', accent: Colors.blue },
   { name: 'tools', label: 'Tools', icon: 'wrench.and.screwdriver.fill', accent: Colors.mint },
   { name: 'friends', label: 'Friends', icon: 'person.2.fill', accent: Colors.pink },
-  { name: 'factory', label: 'Factory', icon: 'wand.and.stars', accent: Colors.purple },
 ] as const;
 
 const ACTIVE_BLUE = '#0A84FF';
@@ -79,79 +78,80 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   if (keyboardVisible) return null;
 
   return (
-    <View style={[styles.tabBarContainer, { bottom }]} pointerEvents="box-none">
-      <LiquidGlass
-        variant="chrome"
-        radius={32}
-        specular
-        shadow
-        style={styles.tabBarShell}
-      >
-        <View style={styles.tabBarContent}>
-          {state.routes
-            .filter((r: any) => TAB_ITEMS.some((t) => t.name === r.name))
-            .map((route: any) => {
-              const item = TAB_ITEMS.find((t) => t.name === route.name);
-              if (!item) return null;
-              const realIndex = state.routes.findIndex((r: any) => r.key === route.key);
-              const isFocused = state.index === realIndex;
-              const { options } = descriptors[route.key];
+    <View style={[styles.tabBarOuterWrapper, { bottom }]} pointerEvents="box-none">
+      <View testID="bottom-tab-bar" style={styles.tabBarContainer} pointerEvents="box-none">
+        <LiquidGlass
+          variant="chrome"
+          radius={32}
+          specular
+          shadow
+          style={styles.tabBarShell}
+        >
+          <View style={styles.tabBarContent}>
+            {state.routes
+              .filter((r: any) => TAB_ITEMS.some((t) => t.name === r.name))
+              .map((route: any) => {
+                const item = TAB_ITEMS.find((t) => t.name === route.name);
+                if (!item) return null;
+                const realIndex = state.routes.findIndex((r: any) => r.key === route.key);
+                const isFocused = state.index === realIndex;
+                const { options } = descriptors[route.key];
 
-              const onPress = () => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(
-                    isFocused
-                      ? Haptics.ImpactFeedbackStyle.Light
-                      : Haptics.ImpactFeedbackStyle.Medium
-                  );
-                }
-                const event = navigation.emit({
-                  type: 'tabPress',
-                  target: route.key,
-                  canPreventDefault: true,
-                });
-                if (!event.defaultPrevented) {
-                  if (route.name === 'index') {
-                    navigation.navigate(route.name, { defaultTab: 'Games', resetAt: Date.now().toString() });
-                  } else if (route.name === 'factory') {
-                    navigation.navigate(route.name, { resetAt: Date.now().toString() });
-                  } else if (!isFocused) {
-                    navigation.navigate(route.name);
+                const onPress = () => {
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(
+                      isFocused
+                        ? Haptics.ImpactFeedbackStyle.Light
+                        : Haptics.ImpactFeedbackStyle.Medium
+                    );
                   }
-                }
-              };
+                  const event = navigation.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+                  if (!event.defaultPrevented) {
+                    if (route.name === 'index') {
+                      navigation.navigate(route.name, { defaultTab: 'Games', resetAt: Date.now().toString() });
+                    } else if (!isFocused) {
+                      navigation.navigate(route.name);
+                    }
+                  }
+                };
 
-              const tint = isFocused ? ACTIVE_BLUE : 'rgba(255,255,255,0.6)';
+                const tint = isFocused ? ACTIVE_BLUE : 'rgba(255,255,255,0.6)';
 
-              return (
-                <Pressable
-                  key={route.key}
-                  onPress={onPress}
-                  android_ripple={{
-                    color: 'rgba(10,132,255,0.20)',
-                    borderless: true,
-                    radius: 40,
-                  }}
-                  accessibilityRole="button"
-                  accessibilityState={isFocused ? { selected: true } : {}}
-                  accessibilityLabel={options.tabBarAccessibilityLabel}
-                  style={styles.tabItem}
-                >
-                  <View style={styles.pill}>
-                    <TabIndicator focused={isFocused} />
-                    <IconSymbol size={30} name={item.icon as any} color={tint} />
-                    <Text
-                      style={[styles.label, isFocused && styles.labelActive]}
-                      numberOfLines={1}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-        </View>
-      </LiquidGlass>
+                return (
+                  <Pressable
+                    key={route.key}
+                    testID={`tab-btn-${route.name}`}
+                    onPress={onPress}
+                    android_ripple={{
+                      color: 'rgba(10,132,255,0.20)',
+                      borderless: true,
+                      radius: 40,
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={isFocused ? { selected: true } : {}}
+                    accessibilityLabel={options.tabBarAccessibilityLabel}
+                    style={styles.tabItem}
+                  >
+                    <View style={styles.pill}>
+                      <TabIndicator focused={isFocused} />
+                      <IconSymbol size={30} name={item.icon as any} color={tint} />
+                      <Text
+                        style={[styles.label, isFocused && styles.labelActive]}
+                        numberOfLines={1}
+                      >
+                        {item.label}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+          </View>
+        </LiquidGlass>
+      </View>
     </View>
   );
 }
@@ -162,16 +162,22 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ title: 'Games' }} />
       <Tabs.Screen name="tools" options={{ title: 'Tools' }} />
       <Tabs.Screen name="friends" options={{ title: 'Friends' }} />
-      <Tabs.Screen name="factory" options={{ title: 'Factory' }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  tabBarContainer: {
+  tabBarOuterWrapper: {
     position: 'absolute',
-    left: 22,
-    right: 22,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  tabBarContainer: {
+    width: '100%',
+    maxWidth: 440,
+    paddingHorizontal: 16,
     height: 64,
     ...platformShadow(18, '#000', 0.5, 28),
   },

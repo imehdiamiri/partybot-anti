@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useGameSync } from '@/src/hooks/useGameSync';
@@ -13,11 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 import Animated, { FadeInUp, FadeInDown, ZoomIn, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withSpring } from 'react-native-reanimated';
 
-// Platform-safe haptics
-let Haptics: any = null;
-if (Platform.OS !== 'web') {
-  try { Haptics = require('expo-haptics'); } catch {}
-}
+import * as Haptics from '@/src/utils/safeHaptics';
 
 interface Props {
   session: GameSession;
@@ -254,10 +250,14 @@ export function GuessTheSecondsSession({ session }: Props) {
     if (players.length === 0) return [];
     return players.map(p => {
       const pResults = sync.results.filter(r => r.playerName === p.displayName);
+      const isSkipped = pResults.length === 0;
       const total = pResults.reduce((sum, r) => sum + r.difference, 0);
       const avg = pResults.length > 0 ? total / pResults.length : 0;
-      return { player: p.displayName, total, avg, turns: pResults.length };
-    }).sort((a, b) => a.total - b.total);
+      return { player: p.displayName, total, avg, turns: pResults.length, isSkipped };
+    }).sort((a, b) => {
+      if (a.isSkipped !== b.isSkipped) return a.isSkipped ? 1 : -1;
+      return a.total - b.total;
+    });
   }, [sync.results, players]);
 
   if (players.length === 0) {
@@ -356,7 +356,7 @@ export function GuessTheSecondsSession({ session }: Props) {
               </Text>
             </View>
           </View>
-          <Animated.View entering={ZoomIn.springify().bounciness(12).duration(600)} style={{ width: '100%', marginBottom: 12 }}>
+          <Animated.View entering={ZoomIn.springify().damping(12).stiffness(100).duration(600)} style={{ width: '100%', marginBottom: 12 }}>
             <LiquidGlass radius={20} variant="low" style={styles.resultMainMetricBox}>
               <Text style={styles.metricLabel}>Stopped at</Text>
               <Text style={[styles.mainMetricValue, { color: getAccuracyBand(sync.lastResult.difference).color }]}>
@@ -378,6 +378,8 @@ export function GuessTheSecondsSession({ session }: Props) {
           </View>
 
           <Pressable
+            testID="guess-seconds-next-button"
+            accessibilityRole="button"
             style={[
               styles.primaryButton,
               { backgroundColor: Colors.blue, marginTop: 16 },
@@ -439,6 +441,8 @@ export function GuessTheSecondsSession({ session }: Props) {
             {sync.turnPhase === 'ready' && (
               <PhaseTransition phaseKey="start-btn" type="scale">
                 <Pressable
+                  testID="guess-seconds-start-button"
+                  accessibilityRole="button"
                   style={[styles.primaryButton, styles.giantButton, { backgroundColor: Colors.blue }, !isLocalActive && { opacity: 0.5 }]}
                   onPress={startTurn}
                   disabled={!isLocalActive}
@@ -451,6 +455,8 @@ export function GuessTheSecondsSession({ session }: Props) {
             {sync.turnPhase === 'running' && (
               <PhaseTransition phaseKey="stop-btn" type="scale">
                 <Pressable
+                  testID="guess-seconds-stop-button"
+                  accessibilityRole="button"
                   style={[styles.primaryButton, styles.giantButton, { backgroundColor: Colors.red }, !isLocalActive && { opacity: 0.5 }]}
                   onPress={stopTurn}
                   disabled={!isLocalActive}
@@ -520,8 +526,9 @@ export function GuessTheSecondsSession({ session }: Props) {
             entries={playerScores.map<RankEntry>((rank) => ({
               id: rank.player,
               name: rank.player,
-              primary: rank.total.toFixed(2),
-              secondary: `Avg ${rank.avg.toFixed(2)}`,
+              isSkipped: rank.isSkipped,
+              primary: rank.isSkipped ? 'Skipped' : `${rank.total.toFixed(2)}s diff`,
+              secondary: rank.isSkipped ? 'Did not play' : `Avg ${rank.avg.toFixed(2)}s`,
             }))}
           />
 
@@ -546,7 +553,7 @@ export function GuessTheSecondsSession({ session }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 16, paddingBottom: 40 },
+  container: { padding: 16, gap: 16, paddingBottom: 40, maxWidth: 600, width: '100%', alignSelf: 'center' },
   card: {
     padding: 20,
   },

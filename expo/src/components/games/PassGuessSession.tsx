@@ -8,6 +8,7 @@ import { GamePassPhoneView } from './SharedGameComponents';
 import { PhaseTransition } from './PhaseTransition';
 
 import * as Haptics from '@/src/utils/safeHaptics';
+import { isWeb } from '@/src/utils/platform';
 
 interface Props {
   session: GameSession;
@@ -103,6 +104,38 @@ export function PassGuessSession({ session }: Props) {
       setScores(initialScores);
     }
   }, []);
+
+  // Web keyboard controls
+  useEffect(() => {
+    if (!isWeb || typeof window === 'undefined') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept typing when in text input
+      const target = e.target as HTMLElement | null;
+      const isInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA';
+
+      if (e.key === ' ' && !isInput) {
+        e.preventDefault();
+        if (showPrivacyScreen) {
+          handlePrivacyReady();
+        }
+      } else if (e.key === 'Enter') {
+        if (showPrivacyScreen) {
+          e.preventDefault();
+          handlePrivacyReady();
+        } else if (phase === 'answering' && !e.shiftKey && currentAnswer.trim()) {
+          e.preventDefault();
+          handleSubmitAnswer(false);
+        } else if (phase === 'hostGuessing' && allCurrentAnswersAssigned) {
+          e.preventDefault();
+          handleSubmitCurrentGuesses();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showPrivacyScreen, phase, currentAnswer, allCurrentAnswersAssigned, visibleAnswers]);
 
   const handleStartRound = () => {
     if (playMode === 'classic' && useCustom && !customQuestion.trim()) return;
@@ -327,7 +360,7 @@ export function PassGuessSession({ session }: Props) {
             </ScrollView>
 
             <View style={styles.stickyBottom}>
-              <Pressable style={[styles.primaryBtn, (playMode === 'classic' && useCustom && !customQuestion.trim()) && { opacity: 0.5 }]} onPress={handleStartRound} disabled={playMode === 'classic' && useCustom && !customQuestion.trim()}>
+              <Pressable testID="pass-guess-start-round" accessibilityRole="button" style={[styles.primaryBtn, (playMode === 'classic' && useCustom && !customQuestion.trim()) && { opacity: 0.5 }]} onPress={handleStartRound} disabled={playMode === 'classic' && useCustom && !customQuestion.trim()}>
                 <IconSymbol name="play.fill" size={18} color="white" />
                 <Text style={styles.primaryBtnText}>Start Round</Text>
               </Pressable>
@@ -368,9 +401,9 @@ export function PassGuessSession({ session }: Props) {
                   <Text style={[styles.timerText, timer <= 10 && { color: Colors.red }]}>{timer}s</Text>
                 </View>
               )}
-              <TextInput style={styles.input} placeholder={playMode === 'classic' ? "Write your answer" : "Write something about yourself..."} placeholderTextColor="rgba(255,255,255,0.3)" value={currentAnswer} onChangeText={setCurrentAnswer} multiline maxLength={120} autoFocus />
+              <TextInput testID="pass-guess-answer-input" style={styles.input} placeholder={playMode === 'classic' ? "Write your answer" : "Write something about yourself..."} placeholderTextColor="rgba(255,255,255,0.3)" value={currentAnswer} onChangeText={setCurrentAnswer} multiline maxLength={120} autoFocus />
               <Text style={styles.charCount}>{currentAnswer.length}/120</Text>
-              <Pressable style={[styles.primaryBtn, !currentAnswer.trim() && { opacity: 0.5 }]} onPress={() => handleSubmitAnswer(false)} disabled={!currentAnswer.trim()}>
+              <Pressable testID="pass-guess-submit-answer" accessibilityRole="button" style={[styles.primaryBtn, !currentAnswer.trim() && { opacity: 0.5 }]} onPress={() => handleSubmitAnswer(false)} disabled={!currentAnswer.trim()}>
                 <Text style={styles.primaryBtnText}>Done & Pass</Text>
               </Pressable>
             </View>
@@ -435,6 +468,8 @@ export function PassGuessSession({ session }: Props) {
                           return (
                             <Pressable
                               key={p.id}
+                              testID={`pass-guess-chip-${ans.id}-${p.id}`}
+                              accessibilityRole="button"
                               style={[
                                 styles.compactChip,
                                 isSelected && {
@@ -459,6 +494,8 @@ export function PassGuessSession({ session }: Props) {
 
             <View style={styles.stickyBottom}>
               <Pressable
+                testID="pass-guess-submit-guesses"
+                accessibilityRole="button"
                 style={[styles.primaryBtn, { backgroundColor: '#AF52DE' }, !allCurrentAnswersAssigned && { opacity: 0.4 }]}
                 onPress={handleSubmitCurrentGuesses}
                 disabled={!allCurrentAnswersAssigned}
@@ -524,7 +561,7 @@ export function PassGuessSession({ session }: Props) {
             </ScrollView>
 
             <View style={styles.stickyBottom}>
-              <Pressable style={styles.primaryBtn} onPress={nextPhase}>
+              <Pressable testID="pass-guess-next-phase" accessibilityRole="button" style={styles.primaryBtn} onPress={nextPhase}>
                 <Text style={styles.primaryBtnText}>{roundNumber >= totalRounds ? "Finish Game" : "Next Round"}</Text>
               </Pressable>
             </View>
@@ -562,8 +599,8 @@ const HStack = ({ children, style }: { children: React.ReactNode; style?: any })
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16 },
-  scrollContent: { paddingBottom: 20, paddingTop: 16 },
-  stickyBottom: { paddingVertical: 12, paddingBottom: 24, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(0,0,0,0.4)' },
+  scrollContent: { paddingBottom: 20, paddingTop: 16, maxWidth: 600, width: '100%', alignSelf: 'center' },
+  stickyBottom: { paddingVertical: 12, paddingBottom: 24, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(0,0,0,0.4)', maxWidth: 600, width: '100%', alignSelf: 'center' },
   iconHeader: { alignItems: 'center', marginBottom: 16 },
   iconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255, 214, 10, 0.12)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255, 214, 10, 0.2)' },
   title: { color: 'white', fontSize: 24, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 6 },

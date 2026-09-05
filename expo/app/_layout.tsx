@@ -13,6 +13,7 @@ import {
   Fredoka_700Bold,
 } from '@expo-google-fonts/fredoka';
 
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
@@ -24,6 +25,8 @@ import { RootErrorBoundary } from '@/src/components/ErrorBoundary';
 import { setUserOnline, setUserOffline } from '@/src/lib/firebase';
 import { Observability } from '@/src/services/Observability';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
+import { isWeb } from '@/src/utils/platform';
+import { ResponsiveWebContainer } from '@/src/components/ResponsiveWebContainer';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -50,6 +53,7 @@ export default function RootLayout() {
     'Fredoka_500Medium': Fredoka_500Medium,
     'Fredoka_600SemiBold': Fredoka_600SemiBold,
     'Fredoka_700Bold': Fredoka_700Bold,
+    ...MaterialIcons.font,
   });
 
   // Preload sound effects
@@ -57,30 +61,40 @@ export default function RootLayout() {
 
   useEffect(() => {
     setIsMounted(true);
-    Observability.install();
+    if (!isWeb) {
+      Observability.install();
+    }
     initialize();
 
-    Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
-    }).catch(() => {});
+    if (!isWeb) {
+      Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      }).catch(() => {});
+    }
   }, [initialize]);
 
   // Bridge Firebase auth → economy listener + RevenueCat configure.
   // Both stores key off the current uid; detach when signing out.
   useEffect(() => {
+    if (isWeb) {
+      useEconomyStore.getState().attach('guest_local');
+      return;
+    }
+
     const uid = currentUser?.uid;
     if (!uid) {
       useEconomyStore.getState().detach();
+      usePaywallStore.getState().logOut().catch(() => {});
       return;
     }
     useEconomyStore.getState().attach(uid);
     usePaywallStore.getState().configure(uid);
   }, [currentUser?.uid]);
 
-  // Track app foreground/background for presence + room lifecycle.
+  // Track app foreground/background for presence + room lifecycle (Native only).
   //
   // CRITICAL: do NOT instantly leaveRoom() on background. A user briefly
   // checking notifications, opening the share sheet, or being interrupted by
@@ -89,6 +103,8 @@ export default function RootLayout() {
   // (heartbeat + onDisconnect) gets a chance to recover the session.
   const backgroundTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
+    if (isWeb) return;
+
     const BACKGROUND_GRACE_MS = 45_000;
     const subscription = AppState.addEventListener('change', (nextState) => {
       const uid = currentUser?.uid;
@@ -136,8 +152,8 @@ export default function RootLayout() {
     const inOnboarding = segments[0] === 'onboarding';
 
     const timer = setTimeout(() => {
-      // Show onboarding once if the user has not completed it yet.
-      if (!hasCompletedOnboarding && !inOnboarding && !onboardingShownThisSession.current) {
+      // Show onboarding once on mobile if the user has not completed it yet.
+      if (!isWeb && !hasCompletedOnboarding && !inOnboarding && !onboardingShownThisSession.current) {
         onboardingShownThisSession.current = true;
         router.replace('/onboarding');
         return;
@@ -148,7 +164,7 @@ export default function RootLayout() {
       }
 
       // Auto-create an anonymous session so the user can start playing
-      // offline immediately once they leave onboarding.
+      // offline immediately once they leave onboarding (or on web).
       if (!inOnboarding && !currentUser) {
         signInAnonymously().catch(() => {});
       }
@@ -157,26 +173,28 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, [currentUser, isInitialized, segments, navigationState?.key, isMounted, hasCompletedOnboarding]);
 
-  if (!fontsLoaded && !fontError) {
-    return <View style={{ flex: 1, backgroundColor: 'black' }} />;
-  }
-
   return (
     <RootErrorBoundary>
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="(tools)" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="purchase-detail" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="paywall" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="team-setup" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto" />
-      <ToastOverlay />
-    </ThemeProvider>
+      {!fontsLoaded && !fontError && !isWeb ? (
+        <View style={{ flex: 1, backgroundColor: 'black' }} />
+      ) : (
+        <ResponsiveWebContainer>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(tools)" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="purchase-detail" options={{ presentation: 'modal', headerShown: false }} />
+              <Stack.Screen name="paywall" options={{ presentation: 'modal', headerShown: false }} />
+              <Stack.Screen name="team-setup" options={{ headerShown: false }} />
+            </Stack>
+            <StatusBar style="auto" />
+            <ToastOverlay />
+          </ThemeProvider>
+        </ResponsiveWebContainer>
+      )}
     </RootErrorBoundary>
   );
 }

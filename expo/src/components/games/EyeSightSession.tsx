@@ -327,6 +327,8 @@ export function EyeSightSession({ session }: Props) {
               return (
                 <Pressable
                   key={def.id}
+                  testID={`eyesight-diff-${def.id}`}
+                  accessibilityRole="button"
                   onPress={() => onPickDifficulty(def)}
                   style={[
                     st.diffCard,
@@ -350,58 +352,28 @@ export function EyeSightSession({ session }: Props) {
 
   // ─── READY ───
   if (phase === 'ready') {
-    const isFirstPlayer = playerIdx === 0;
-
-    if (!isFirstPlayer) {
-      return (
-        <PhaseTransition phaseKey={phase} style={{ flex: 1 }}>
-          <GamePassPhoneView
-            playerName={player?.displayName || 'Player'}
-            title={`PLAYER ${playerIdx + 1} OF ${players.length}`}
-            subtitle={`Pass the phone to ${player?.displayName || 'the next player'}. Tap below to start.`}
-            accentColor={ACCENT}
-            onReady={() => startRound(round)}
-            onSkip={() => {
-              const isLast = playerIdx + 1 >= players.length;
-              if (isLast) {
-                AudioManager.play('gameOver');
-                setPhase('results');
-              } else {
-                setPlayerIdx(playerIdx + 1);
-                setRound(1);
-                setInput('');
-                setTarget('');
-                setPhase('ready');
-              }
-            }}
-          />
-        </PhaseTransition>
-      );
-    }
-
     return (
-      <PhaseTransition phaseKey={phase} style={st.container}>
-        <ScrollView contentContainerStyle={st.readyContent}>
-          <View style={[st.iconBox, { backgroundColor: ACCENT + '26' }]}>
-            <IconSymbol name="eye.fill" size={56} color={ACCENT} />
-          </View>
-          <Text style={st.eyebrow}>{isFirstPlayer ? `EYE SIGHT · ${difficulty.name.toUpperCase()}` : `PLAYER ${playerIdx + 1} OF ${players.length}`}</Text>
-          <Text style={st.nameTitle} numberOfLines={2}>{player?.displayName ?? 'Player'}</Text>
-          <View style={[st.pill, { backgroundColor: ACCENT + '26', borderColor: ACCENT + '4D' }]}>
-            <Text style={[st.pillTx, { color: ACCENT }]}>Are you ready?</Text>
-          </View>
-
-          <View style={st.rulesCard}>
-            <RuleRow num={1} color={ACCENT} text="A countdown of 3, 2, 1 prepares you for the next number." />
-            <RuleRow num={2} color={ACCENT} text="A number flashes for a brief moment — watch carefully!" />
-            <RuleRow num={3} color={ACCENT} text="Tap the number on the keypad and submit. One wrong answer ends your turn." />
-          </View>
-
-          <Pressable style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={() => startRound(round)}>
-            <IconSymbol name="play.fill" size={18} color="#fff" />
-            <Text style={st.startBtnTx}>I'm Ready</Text>
-          </Pressable>
-        </ScrollView>
+      <PhaseTransition phaseKey={`ready-${playerIdx}`} style={{ flex: 1 }}>
+        <GamePassPhoneView
+          playerName={player?.displayName || 'Player'}
+          title={players.length > 1 && playerIdx > 0 ? "Pass the phone to" : "Get ready"}
+          subtitle={`Eye Sight · ${difficulty.name} · Flash memory test`}
+          accentColor={ACCENT}
+          onReady={() => startRound(round)}
+          onSkip={() => {
+            const isLast = playerIdx + 1 >= players.length;
+            if (isLast) {
+              AudioManager.play('gameOver');
+              setPhase('results');
+            } else {
+              setPlayerIdx(playerIdx + 1);
+              setRound(1);
+              setInput('');
+              setTarget('');
+              setPhase('ready');
+            }
+          }}
+        />
       </PhaseTransition>
     );
   }
@@ -495,7 +467,7 @@ export function EyeSightSession({ session }: Props) {
           >
             {target}
           </Text>
-          <Pressable style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={continueAfterCorrect}>
+          <Pressable testID="eyesight-next-round-button" style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={continueAfterCorrect}>
             <Text style={st.startBtnTx}>Next Round</Text>
           </Pressable>
 
@@ -534,7 +506,7 @@ export function EyeSightSession({ session }: Props) {
             </View>
           </View>
 
-          <Pressable style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={() => setPhase('playerComplete')}>
+          <Pressable testID="eyesight-continue-button" style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={() => setPhase('playerComplete')}>
             <Text style={st.startBtnTx}>Continue</Text>
           </Pressable>
 
@@ -560,17 +532,20 @@ export function EyeSightSession({ session }: Props) {
   const entries: RankEntry[] = [...records]
     .map(r => {
       const p = players.find(pp => pp.id === r.playerId);
-      return { record: r, name: p?.displayName ?? 'Player' };
+      const isSkipped = r.bestRound === 0 && r.bestDigits === 0;
+      return { record: r, isSkipped, name: p?.displayName ?? 'Player' };
     })
     .sort((a, b) => {
+      if (a.isSkipped !== b.isSkipped) return a.isSkipped ? 1 : -1;
       if (a.record.bestRound !== b.record.bestRound) return b.record.bestRound - a.record.bestRound;
       return b.record.bestDigits - a.record.bestDigits;
     })
     .map((row): RankEntry => ({
       id: row.record.playerId,
       name: row.name,
-      primary: `Round ${row.record.bestRound}`,
-      secondary: `${row.record.bestDigits} digits`,
+      isSkipped: row.isSkipped,
+      primary: row.isSkipped ? 'Skipped' : `Round ${row.record.bestRound}`,
+      secondary: row.isSkipped ? 'Did not play' : `${row.record.bestDigits} digits`,
     }));
 
   return (
@@ -620,7 +595,7 @@ function NumberPad({ onDigit, onDelete, onSubmit, canSubmit }: NumberPadProps) {
           {row.map((cell) => {
             if (cell === 'del') {
               return (
-                <Pressable key="del" onPress={onDelete} style={[st.padKey, st.padKeyDim]}>
+                <Pressable key="del" testID="eyesight-key-del" accessibilityRole="button" onPress={onDelete} style={[st.padKey, st.padKeyDim]}>
                   <Delete size={26} color="#fff" strokeWidth={2.2} />
                 </Pressable>
               );
@@ -629,6 +604,8 @@ function NumberPad({ onDigit, onDelete, onSubmit, canSubmit }: NumberPadProps) {
               return (
                 <Pressable
                   key="submit"
+                  testID="eyesight-key-submit"
+                  accessibilityRole="button"
                   onPress={onSubmit}
                   disabled={!canSubmit}
                   style={[
@@ -643,7 +620,7 @@ function NumberPad({ onDigit, onDelete, onSubmit, canSubmit }: NumberPadProps) {
               );
             }
             return (
-              <Pressable key={cell} onPress={() => onDigit(cell)} style={st.padKey}>
+              <Pressable key={cell} testID={`eyesight-key-${cell}`} accessibilityRole="button" onPress={() => onDigit(cell)} style={st.padKey}>
                 <Text style={st.padKeyTx}>{cell}</Text>
               </Pressable>
             );
@@ -656,9 +633,9 @@ function NumberPad({ onDigit, onDelete, onSubmit, canSubmit }: NumberPadProps) {
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  readyContent: { padding: 20, paddingBottom: 60, alignItems: 'center', gap: 14 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
-  fullCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 20 },
+  readyContent: { padding: 20, paddingBottom: 60, alignItems: 'center', gap: 14, maxWidth: 540, width: '100%', alignSelf: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12, maxWidth: 540, width: '100%', alignSelf: 'center' },
+  fullCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 20, maxWidth: 540, width: '100%', alignSelf: 'center' },
   iconBox: {
     width: 100, height: 100, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center',
@@ -722,7 +699,7 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8,
     paddingVertical: 16, paddingHorizontal: 28,
-    borderRadius: 18, width: '100%',
+    borderRadius: 18, width: '100%', maxWidth: 540, alignSelf: 'center',
     marginTop: 18,
   },
   startBtnTx: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
@@ -747,7 +724,7 @@ const st = StyleSheet.create({
     paddingHorizontal: 8,
   },
 
-  diffList: { width: '100%', gap: 10, marginTop: 6 },
+  diffList: { width: '100%', gap: 10, marginTop: 6, maxWidth: 540, alignSelf: 'center' },
   diffCard: {
     width: '100%',
     flexDirection: 'row',
@@ -769,6 +746,9 @@ const st = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     flex: 1,
+    maxWidth: 540,
+    width: '100%',
+    alignSelf: 'center',
   },
   slotRow: {
     flexDirection: 'row',
@@ -798,6 +778,9 @@ const st = StyleSheet.create({
     paddingBottom: 16,
     paddingTop: 8,
     gap: 8,
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
   },
   padRow: {
     flexDirection: 'row',

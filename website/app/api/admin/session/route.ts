@@ -6,9 +6,11 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   const { idToken } = (await req.json().catch(() => ({}))) as { idToken?: string };
-  if (!idToken) return NextResponse.json({ error: "missing_id_token" }, { status: 400 });
+  if (!idToken || typeof idToken !== "string") {
+    return NextResponse.json({ error: "missing_id_token" }, { status: 400 });
+  }
 
-  const decoded = await adminAuth().verifyIdToken(idToken).catch(() => null);
+  const decoded = await adminAuth().verifyIdToken(idToken, true).catch(() => null);
   if (!decoded) return NextResponse.json({ error: "invalid_token" }, { status: 401 });
 
   const ok = decoded.admin === true || (await isAdminUid(decoded.uid).catch(() => false));
@@ -29,8 +31,24 @@ export async function POST(req: NextRequest) {
   return res;
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  const session = req.cookies.get(SESSION_COOKIE)?.value;
+  if (session) {
+    try {
+      const decoded = await adminAuth().verifySessionCookie(session, false).catch(() => null);
+      if (decoded?.uid) {
+        await adminAuth().revokeRefreshTokens(decoded.uid).catch(() => {});
+      }
+    } catch {}
+  }
+
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
+  res.cookies.set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
   return res;
 }

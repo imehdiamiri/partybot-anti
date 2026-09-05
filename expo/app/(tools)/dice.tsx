@@ -1,14 +1,12 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { useSharedValue, SharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, SharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AudioManager } from '@/src/services/AudioManager';
-
-const { width } = Dimensions.get('window');
 
 const getPipPositions = (value: number) => {
   const tl = { x: 0.22, y: 0.22 };
@@ -125,8 +123,6 @@ export default function DiceToolScreen() {
   };
 
   const total = values.reduce((a, b) => a + b, 0);
-
-  const columns = count > 2 ? 2 : count;
   const side = count === 1 ? 220 : (count === 2 ? 140 : 120);
 
   const mainAnimatedStyle = useAnimatedStyle(() => {
@@ -145,6 +141,8 @@ export default function DiceToolScreen() {
         {[1, 2, 3, 4].map((n) => (
           <TouchableOpacity
             key={n}
+            testID={`dice-count-btn-${n}`}
+            accessibilityRole="button"
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               AudioManager.play('buttonTap');
@@ -160,7 +158,7 @@ export default function DiceToolScreen() {
         ))}
       </View>
 
-      <View style={styles.middleArea}>
+      <View testID="dice-stage" style={styles.middleArea}>
         <Animated.View style={[mainAnimatedStyle, count === 4 && { width: 260 }]}>
           {values.map((v, i) => (
             <Die2DView key={i} index={i} value={v} size={side} shake={shakeAnim} />
@@ -171,10 +169,17 @@ export default function DiceToolScreen() {
       <View style={styles.bottomArea}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalLabel}>{count === 1 ? 'VALUE' : 'TOTAL'}</Text>
-          <Text style={[styles.totalValue, isRolling && { opacity: 0.35 }]}>{total}</Text>
+          <Text testID="dice-total-value" style={[styles.totalValue, isRolling && { opacity: 0.35 }]}>{total}</Text>
         </View>
 
-        <TouchableOpacity onPress={roll} disabled={isRolling} activeOpacity={0.8} style={{ width: '100%', paddingHorizontal: 20, paddingBottom: Math.max(28, insets.bottom + 12) }}>
+        <TouchableOpacity 
+          testID="dice-roll-btn"
+          accessibilityRole="button"
+          onPress={roll} 
+          disabled={isRolling} 
+          activeOpacity={0.8} 
+          style={{ width: '100%', paddingHorizontal: 20, paddingBottom: Math.max(28, insets.bottom + 12) }}
+        >
           <LinearGradient colors={[Colors.blue, Colors.cyan]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.rollButton}>
             <IconSymbol name="dice.fill" size={18} color="white" weight="heavy" />
             <Text style={styles.rollButtonText}>{isRolling ? 'Rolling...' : 'Roll'}</Text>
@@ -189,6 +194,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   countSelector: {
     flexDirection: 'row',
@@ -228,6 +236,7 @@ const styles = StyleSheet.create({
   },
   bottomArea: {
     alignItems: 'center',
+    width: '100%',
   },
   totalContainer: {
     alignItems: 'center',

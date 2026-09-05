@@ -103,6 +103,7 @@ export default function TeamSplitterToolScreen() {
         <View style={styles.inputContainer}>
           <TextInput
             ref={inputRef}
+            testID="teams-name-input"
             style={styles.input}
             placeholder="Add a name"
             placeholderTextColor="rgba(255,255,255,0.4)"
@@ -115,6 +116,8 @@ export default function TeamSplitterToolScreen() {
           />
         </View>
         <Pressable
+          testID="teams-add-name-btn"
+          accessibilityRole="button"
           onPress={addName}
           disabled={!draft.trim()}
           style={({ pressed }) => [
@@ -146,7 +149,7 @@ export default function TeamSplitterToolScreen() {
             contentContainerStyle={styles.chipsScroll}
           >
             {names.map((name, i) => (
-              <View key={i} style={styles.chip}>
+              <View key={i} testID={`teams-name-chip-${i}`} style={styles.chip}>
                 <Text style={styles.chipText}>{name}</Text>
                 <Pressable onPress={() => removeName(i)} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
                   <IconSymbol name="xmark" size={10} color="white" weight="black" />
@@ -166,6 +169,8 @@ export default function TeamSplitterToolScreen() {
             return (
               <Pressable
                 key={n}
+                testID={`teams-count-btn-${n}`}
+                accessibilityRole="button"
                 onPress={() => {
                   if (isShuffling) return;
                   playButtonTap();
@@ -191,6 +196,7 @@ export default function TeamSplitterToolScreen() {
 
       {/* Main Content */}
       <ScrollView 
+        testID="teams-stage"
         style={styles.mainScroll}
         keyboardDismissMode="on-drag"
         contentContainerStyle={teams.length === 0 ? styles.emptyStateContainer : styles.teamsGrid}
@@ -207,7 +213,7 @@ export default function TeamSplitterToolScreen() {
               const color = TEAM_COLORS[idx % TEAM_COLORS.length];
               const icon = TEAM_ICONS[idx % TEAM_ICONS.length];
               return (
-                <View key={idx} style={[styles.teamCard, { backgroundColor: `${color}1A`, borderColor: `${color}4D` }]}>
+                <View key={idx} testID={`teams-card-${idx}`} style={[styles.teamCard, { backgroundColor: `${color}1A`, borderColor: `${color}4D` }]}>
                   <View style={styles.teamHeader}>
                     <IconSymbol name={icon as any} size={12} color={color} weight="bold" />
                     <Text style={styles.teamName}>Team {idx + 1}</Text>
@@ -218,7 +224,7 @@ export default function TeamSplitterToolScreen() {
                     {members.map((name, i) => (
                       <View key={i} style={styles.memberRow}>
                         <View style={[styles.memberDot, { backgroundColor: `${color}B3` }]} />
-                        <Text style={styles.memberName} numberOfLines={1}>{name}</Text>
+                        <Text testID="teams-member-name" style={styles.memberName} numberOfLines={1}>{name}</Text>
                       </View>
                     ))}
                     {members.length === 0 && (
@@ -234,6 +240,8 @@ export default function TeamSplitterToolScreen() {
 
       {/* Split Button */}
       <Pressable
+        testID="teams-split-btn"
+        accessibilityRole="button"
         onPress={split}
         disabled={names.length < teamCount || isShuffling}
         style={({ pressed }) => [
@@ -264,6 +272,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 8,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   inputRow: {
     flexDirection: 'row',

@@ -1,4 +1,5 @@
 import { Colors } from '@/src/theme/Colors';
+import { Platform } from 'react-native';
 export enum GameMode {
   singleDevice = 'singleDevice',
   multiDevice = 'multiDevice',
@@ -65,7 +66,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 75,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/reverse-singing.png'),
+    heroImageLocal: require('@/assets/images/heroes/reverse-singing.webp'),
   },
   guessTheSeconds: {
     id: 'guess_the_seconds',
@@ -82,7 +83,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice, GameMode.multiDevice],
     roundDuration: 90,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/guess-the-seconds.png'),
+    heroImageLocal: require('@/assets/images/heroes/guess-the-seconds.webp'),
   },
   tenTangle: {
     id: 'ten_tangle',
@@ -98,7 +99,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/ten-tangle.png'),
+    heroImageLocal: require('@/assets/images/heroes/ten-tangle.webp'),
   },
   imposter: {
     id: 'imposter',
@@ -114,7 +115,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/imposter.png'),
+    heroImageLocal: require('@/assets/images/heroes/imposter.webp'),
   },
   memoryGrid: {
     id: 'memory_grid',
@@ -132,7 +133,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice, GameMode.multiDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/memory-grid.png'),
+    heroImageLocal: require('@/assets/images/heroes/memory-grid.webp'),
   },
   memoryPath: {
     id: 'memory_path',
@@ -149,7 +150,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/memory-path.png'),
+    heroImageLocal: require('@/assets/images/heroes/memory-path.webp'),
   },
   tapInOrder: {
     id: 'tap_in_order',
@@ -162,11 +163,10 @@ export const Games: Record<string, GameType> = {
     hasFreeTrial: false,
     isPremium: false,
     symbolName: 'number.square.fill', // SF: number.square.fill -> roughly 123
-    // Single-device only — multi-device sync not implemented for this game.
-    supportedModes: [GameMode.singleDevice],
-    roundDuration: 0,
+    supportedModes: [GameMode.singleDevice, GameMode.multiDevice],
+    roundDuration: 60,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/tap-in-order.png'),
+    heroImageLocal: require('@/assets/images/heroes/tap-in-order.webp'),
   },
   colorTrap: {
     id: 'color_trap',
@@ -183,7 +183,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/color-trap.png'),
+    heroImageLocal: require('@/assets/images/heroes/color-trap.webp'),
   },
   passGuess: {
     id: 'pass_guess',
@@ -199,7 +199,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/pass-guess.png'),
+    heroImageLocal: require('@/assets/images/heroes/pass-guess.webp'),
   },
   spinBottle: {
     id: 'spin_bottle',
@@ -215,7 +215,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/spin-bottle.png'),
+    heroImageLocal: require('@/assets/images/heroes/spin-bottle.webp'),
   },
   reactionTime: {
     id: 'reaction_time',
@@ -228,10 +228,10 @@ export const Games: Record<string, GameType> = {
     hasFreeTrial: false,
     isPremium: false,
     symbolName: 'bolt.fill',
-    supportedModes: [GameMode.singleDevice],
-    roundDuration: 0,
+    supportedModes: [GameMode.singleDevice, GameMode.multiDevice],
+    roundDuration: 40,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/reaction-time.png'),
+    heroImageLocal: require('@/assets/images/heroes/reaction-time.webp'),
   },
   eyeSight: {
     id: 'eye_sight',
@@ -247,7 +247,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/eye-sight.png'),
+    heroImageLocal: require('@/assets/images/heroes/eye-sight.webp'),
   },
   drawRush: {
     id: 'draw_rush',
@@ -265,7 +265,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 100,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/draw-rush.png'),
+    heroImageLocal: require('@/assets/images/heroes/draw-rush.webp'),
   },
   drumChallenge: {
     id: 'drum_challenge',
@@ -281,7 +281,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/drum-challenge.png'),
+    heroImageLocal: require('@/assets/images/heroes/drum-challenge.webp'),
   },
 
   colorMatch: {
@@ -298,7 +298,7 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/color-match.png'),
+    heroImageLocal: require('@/assets/images/heroes/color-match.webp'),
   },
   soundMatch: {
     id: 'sound_match',
@@ -314,11 +314,11 @@ export const Games: Record<string, GameType> = {
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
     heroImageURL: null,
-    heroImageLocal: require('@/assets/images/heroes/sound-match.png'),
+    heroImageLocal: require('@/assets/images/heroes/sound-match.webp'),
   },
 };
 
-export const GameLibrary: GameType[] = [
+const baseGameLibrary: GameType[] = [
   Games.reverseSinging,
   Games.guessTheSeconds,
   Games.imposter,
@@ -337,12 +337,14 @@ export const GameLibrary: GameType[] = [
   Games.soundMatch,
 ];
 
+export const GameLibrary: GameType[] = baseGameLibrary;
+
 export interface GameDefinition {
   id: GameType;
   accentName: string;
 }
 
-export const GamesDefinitions: GameDefinition[] = [
+const baseGamesDefinitions: GameDefinition[] = [
   // ── Free games first ──
   { id: Games.reverseSinging, accentName: 'pink' },
   { id: Games.guessTheSeconds, accentName: 'cyan' },
@@ -362,5 +364,7 @@ export const GamesDefinitions: GameDefinition[] = [
   { id: Games.drawRush, accentName: 'blue' },
   { id: Games.spinBottle, accentName: 'purple' },
 ];
+
+export const GamesDefinitions: GameDefinition[] = baseGamesDefinitions;
 
 export const getPlayerCountText = (min: number, max: number): string => `${min}–${max} players`;

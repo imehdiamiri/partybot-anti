@@ -1,18 +1,22 @@
 import React from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategoryInfo } from '@/src/models/CardModels';
 import { CardsDeckRenderer } from '@/src/components/tools/CardsDeckRenderer';
 
+export function generateStaticParams(): { categoryId: string }[] {
+  return Object.keys(CardCategoryInfo).map(categoryId => ({ categoryId }));
+}
+
 export default function CardsDeckScreen() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  const category = CardCategoryInfo[categoryId as keyof typeof CardCategoryInfo];
+  const category = categoryId ? CardCategoryInfo[categoryId as keyof typeof CardCategoryInfo] : undefined;
 
   if (!category) {
     return (
@@ -28,13 +32,21 @@ export default function CardsDeckScreen() {
       <AppBackgroundView />
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity 
+          testID="cards-back-btn"
+          accessibilityRole="button"
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: 8,
             paddingVertical: 6,
           }} 
-          onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}
+          onPress={() => { 
+            if (Platform.OS !== 'web' && router.canGoBack()) { 
+              router.back(); 
+            } else { 
+              router.replace('/tools' as any); 
+            } 
+          }}
         >
           <IconSymbol name="chevron.left" size={18} color={category.accentColor} />
           <Text style={{ color: category.accentColor, fontSize: 17, fontWeight: '400', marginLeft: 2 }}>Back</Text>
@@ -67,6 +79,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
     zIndex: 10,
+    width: '100%',
+    maxWidth: 680,
+    alignSelf: 'center',
   },
   headerTitleContainer: {
     flexDirection: 'row',

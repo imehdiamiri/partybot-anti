@@ -34,7 +34,7 @@ export default function ToolsScreen() {
             <Text style={styles.headerTitle}>Tools</Text>
           </View>
           <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={() => router.push('/profile')} activeOpacity={0.85}>
+          <TouchableOpacity testID="tools-profile-btn" accessibilityRole="button" onPress={() => router.push('/profile')} activeOpacity={0.85}>
             <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
               <IconSymbol name="person.crop.circle" size={22} color="white" />
             </LiquidGlass>
@@ -73,6 +73,8 @@ export default function ToolsScreen() {
               {CardCategoriesList.map((category) => (
                 <TouchableOpacity 
                   key={category.id} 
+                  testID={`cards-category-${category.id}`}
+                  accessibilityRole="button"
                   style={styles.rowContainer} 
                   activeOpacity={0.8}
                   onPress={() => router.push(`/cards/${category.id}` as any)}
@@ -121,6 +123,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',

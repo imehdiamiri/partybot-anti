@@ -335,7 +335,7 @@ export function DrawRushSession({ session }: Props) {
               </>
             )}
 
-            <Pressable style={st.btn} onPress={handleStartDrawing}>
+            <Pressable testID="draw-rush-start-drawing" accessibilityRole="button" style={st.btn} onPress={handleStartDrawing}>
               <Text style={st.btnTx}>Start Drawing</Text>
             </Pressable>
           </View>
@@ -348,53 +348,55 @@ export function DrawRushSession({ session }: Props) {
   if (phase === 'drawing') {
     return (
       <PhaseTransition phaseKey={phase} style={st.container}>
-        <View style={st.drawHeaderOverlay}>
-          <View style={st.timerPill}>
-            <IconSymbol name="timer" size={14} color={timeLeft <= 10 ? Colors.red : '#fff'} />
-            <Text style={[st.timerTx, timeLeft <= 10 && {color:Colors.red}]}>{timeLeft}s</Text>
-          </View>
-          {!isFreeMode && (
-            <View style={st.conceptPill}>
-              <Text style={st.conceptPillTx}>{concept}</Text>
+        <View testID="draw-rush-workspace" style={st.drawingWorkspace}>
+          <View style={st.drawHeaderOverlay}>
+            <View style={st.timerPill}>
+              <IconSymbol name="timer" size={14} color={timeLeft <= 10 ? Colors.red : '#fff'} />
+              <Text style={[st.timerTx, timeLeft <= 10 && {color:Colors.red}]}>{timeLeft}s</Text>
             </View>
-          )}
-        </View>
+            {!isFreeMode && (
+              <View style={st.conceptPill}>
+                <Text style={st.conceptPillTx}>{concept}</Text>
+              </View>
+            )}
+          </View>
 
-        {/* Fullscreen Canvas */}
-        <View style={st.canvasContainer}>
-          <View 
-            style={st.canvas}
-            {...panResponder.panHandlers}
-            onLayout={(e) => {
-              const { width, height } = e.nativeEvent.layout;
-              if (width > 0 && height > 0) setCanvasSize({ width, height });
-            }}
-          >
-            <Svg width="100%" height="100%">
-              {strokes.map((s,i) => s.points.length > 0 ? <Path key={i} d={strokeToPath(s)} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null)}
-              {currentStroke && currentStroke.points.length > 0 && <Path d={strokeToPath(currentStroke)} stroke={currentStroke.color} strokeWidth={currentStroke.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
-            </Svg>
+          {/* Canvas */}
+          <View style={st.canvasContainer}>
+            <View 
+              testID="draw-rush-canvas"
+              style={st.canvas}
+              {...panResponder.panHandlers}
+              onLayout={(e) => {
+                const { width, height } = e.nativeEvent.layout;
+                if (width > 0 && height > 0) setCanvasSize({ width, height });
+              }}
+            >
+              <Svg width="100%" height="100%">
+                {strokes.map((s,i) => s.points.length > 0 ? <Path key={i} d={strokeToPath(s)} stroke={s.color} strokeWidth={s.width} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null)}
+                {currentStroke && currentStroke.points.length > 0 && <Path d={strokeToPath(currentStroke)} stroke={currentStroke.color} strokeWidth={currentStroke.width} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
+              </Svg>
+            </View>
+          </View>
+
+          {/* Tools and Colors Overlay at Bottom */}
+          <View style={st.toolsWrapper}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.colorsScroll}>
+              {BRUSH_COLORS.map(c => (
+                <Pressable key={c.name} onPress={() => setBrushColor(c.hex)}
+                  style={[st.colorDot,{backgroundColor:c.hex},brushColor===c.hex&&st.colorDotSel]} />
+              ))}
+            </ScrollView>
+
+            <View style={st.toolsActions}>
+              <Pressable style={st.toolBtn} onPress={() => setStrokes(prev => prev.slice(0,-1))}><IconSymbol name="arrow.uturn.backward" size={18} color="#fff" /></Pressable>
+              <Pressable style={st.toolBtn} onPress={() => setStrokes([])}><IconSymbol name="trash" size={18} color={Colors.red} /></Pressable>
+              <Pressable testID="draw-rush-done-drawing" accessibilityRole="button" style={[st.actionBtn,{backgroundColor:'rgba(52,199,89,0.9)'}]} onPress={handleDoneDrawing}>
+                <Text style={[st.toolTx,{color:'#fff'}]}>Done ✓</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-
-        {/* Tools and Colors Overlay at Bottom */}
-        <View style={st.toolsWrapper}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.colorsScroll}>
-            {BRUSH_COLORS.map(c => (
-              <Pressable key={c.name} onPress={() => setBrushColor(c.hex)}
-                style={[st.colorDot,{backgroundColor:c.hex},brushColor===c.hex&&st.colorDotSel]} />
-            ))}
-          </ScrollView>
-
-          <View style={st.toolsActions}>
-            <Pressable style={st.toolBtn} onPress={() => setStrokes(prev => prev.slice(0,-1))}><IconSymbol name="arrow.uturn.backward" size={18} color="#fff" /></Pressable>
-            <Pressable style={st.toolBtn} onPress={() => setStrokes([])}><IconSymbol name="trash" size={18} color={Colors.red} /></Pressable>
-            <Pressable style={[st.actionBtn,{backgroundColor:'rgba(52,199,89,0.9)'}]} onPress={handleDoneDrawing}>
-              <Text style={[st.toolTx,{color:'#fff'}]}>Done ✓</Text>
-            </Pressable>
-          </View>
-        </View>
-
       </PhaseTransition>
     );
   }
@@ -407,7 +409,7 @@ export function DrawRushSession({ session }: Props) {
 
     return (
       <PhaseTransition phaseKey={`guessing-${round}`} style={st.container}>
-        <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}>
+        <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, maxWidth: 760, width: '100%', alignSelf: 'center' }}>
           <Text style={st.guessTitle}>Show to {guesserNames}!</Text>
           <Text style={st.guessSub}>
             {drawerName} drew this. Let {guesserNames} look and guess what it is.
@@ -423,11 +425,11 @@ export function DrawRushSession({ session }: Props) {
           <Text style={st.guessQuestion}>Did {guesserNames} guess correctly?</Text>
 
           <View style={st.guessButtons}>
-            <Pressable style={[st.guessBtn, { backgroundColor: 'rgba(52,199,89,0.15)', borderColor: 'rgba(52,199,89,0.4)' }]} onPress={handleGuessCorrect}>
+            <Pressable testID="draw-rush-guess-correct" accessibilityRole="button" style={[st.guessBtn, { backgroundColor: 'rgba(52,199,89,0.15)', borderColor: 'rgba(52,199,89,0.4)' }]} onPress={handleGuessCorrect}>
               <IconSymbol name="checkmark.circle.fill" size={28} color={Colors.green} />
               <Text style={[st.guessBtnTx, { color: Colors.green }]}>Yes!</Text>
             </Pressable>
-            <Pressable style={[st.guessBtn, { backgroundColor: 'rgba(255,59,48,0.15)', borderColor: 'rgba(255,59,48,0.4)' }]} onPress={handleGuessWrong}>
+            <Pressable testID="draw-rush-guess-wrong" accessibilityRole="button" style={[st.guessBtn, { backgroundColor: 'rgba(255,59,48,0.15)', borderColor: 'rgba(255,59,48,0.4)' }]} onPress={handleGuessWrong}>
               <IconSymbol name="xmark.circle.fill" size={28} color={Colors.red} />
               <Text style={[st.guessBtnTx, { color: Colors.red }]}>No</Text>
             </Pressable>
@@ -477,7 +479,7 @@ export function DrawRushSession({ session }: Props) {
             </Svg>
           </View>
 
-          <Pressable style={st.btn} onPress={handleNextRound}>
+          <Pressable testID="draw-rush-next-round" accessibilityRole="button" style={st.btn} onPress={handleNextRound}>
             <Text style={st.btnTx}>{isGameFinished ? 'View Final Results' : 'Next Turn'}</Text>
           </Pressable>
         </ScrollView>
@@ -487,13 +489,21 @@ export function DrawRushSession({ session }: Props) {
 
   // ─── FINAL RANKINGS ───
   if (phase === 'results') {
-    const resultsData = records.map(r => ({
-      playerId: r.playerId,
-      score: r.score,
-      stats: [
-        { label: 'Drawings Guessed', value: r.score, color: Colors.green }
-      ]
-    }));
+    const resultsData = players.map(p => {
+      const r = records.find(x => x.playerId === p.id);
+      const score = r?.score ?? 0;
+      const isSkipped = !r;
+      return {
+        playerId: p.id,
+        score,
+        isSkipped,
+        stats: isSkipped ? [
+          { label: 'Status', value: 'Skipped', color: Colors.orange }
+        ] : [
+          { label: 'Drawings Guessed', value: score, color: Colors.green }
+        ]
+      };
+    });
 
     return (
       <GameResultsScreen
@@ -513,7 +523,7 @@ const st = StyleSheet.create({
   center:{flex:1,justifyContent:'center',alignItems:'center',padding:24,backgroundColor:'#000'},
   title:{color:'#fff',fontSize: 28,fontFamily:'Viral-Black', marginTop: 16, textAlign: 'center'},
   sub:{color:'rgba(255,255,255,0.5)',fontSize:16,marginTop:12,textAlign:'center',lineHeight:22},
-  btn:{backgroundColor:'#007AFF',paddingVertical:18,borderRadius:20,width:'100%',alignItems:'center',marginTop:32},
+  btn:{backgroundColor:'#007AFF',paddingVertical:18,borderRadius:20,width:'100%',maxWidth:540,alignSelf:'center',alignItems:'center',marginTop:32},
   btnTx:{color:'#fff',fontSize: 18,fontWeight:'bold'},
   
   // Free draw ready screen
@@ -536,6 +546,8 @@ const st = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.12)',
     marginVertical: 24,
     width: '90%',
+    maxWidth: 540,
+    alignSelf: 'center',
     alignItems: 'center',
   },
   conceptRevealText: {
@@ -552,8 +564,16 @@ const st = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  canvasContainer: {flex: 1, backgroundColor: '#1C1C1E'},
-  canvas:{flex: 1},
+  drawingWorkspace: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  canvasContainer: { flex: 1, backgroundColor: '#1C1C1E', width: '100%' },
+  canvas: { flex: 1 },
   
   drawHeaderOverlay: {
     position: 'absolute',
@@ -585,18 +605,18 @@ const st = StyleSheet.create({
   colorDot:{width:48,height:48,borderRadius:24,borderWidth:2,borderColor:'transparent'},
   colorDotSel:{borderColor:'#fff',transform:[{scale:1.2}]},
   
-  toolsActions: {flexDirection:'row',gap:12,paddingHorizontal:16},
+  toolsActions: {flexDirection:'row',gap:12,paddingHorizontal:16,maxWidth:640,width:'100%',alignSelf:'center'},
   toolBtn:{alignItems:'center',justifyContent:'center',width:56,height:56,borderRadius:16,backgroundColor:'rgba(255,255,255,0.1)'},
   actionBtn:{flex:1,alignItems:'center',justifyContent:'center',height:56,borderRadius:16},
   toolTx:{fontSize:16,fontFamily:'Viral-Black'},
   
-  snapshotCanvas: { width: '100%', marginTop: 20, borderRadius: 24, overflow: 'hidden' },
+  snapshotCanvas: { width: '100%', maxWidth: 640, alignSelf: 'center', marginTop: 20, borderRadius: 24, overflow: 'hidden' },
 
   // Guessing phase
   guessTitle: { color: '#fff', fontSize: 26, fontFamily: 'Viral-Black', textAlign: 'center', marginBottom: 8 },
   guessSub: { color: 'rgba(255,255,255,0.5)', fontSize: 15, textAlign: 'center', lineHeight: 22, paddingHorizontal: 8 },
   guessQuestion: { color: '#fff', fontSize: 18, fontFamily: 'Viral-Black', marginTop: 20, textAlign: 'center' },
-  guessButtons: { flexDirection: 'row', gap: 14, marginTop: 16, width: '100%' },
+  guessButtons: { flexDirection: 'row', gap: 14, marginTop: 16, width: '100%', maxWidth: 640, alignSelf: 'center' },
   guessBtn: {
     flex: 1, paddingVertical: 18, borderRadius: 16,
     alignItems: 'center', justifyContent: 'center',
@@ -607,6 +627,8 @@ const st = StyleSheet.create({
   // Scoreboard inside result
   roundScoreboard: {
     width: '100%',
+    maxWidth: 540,
+    alignSelf: 'center',
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 20,
     borderWidth: 1,

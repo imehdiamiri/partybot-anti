@@ -2,7 +2,6 @@
  * Firebase Cloud Functions — PartyBot secure backend layer.
  *
  * Functions:
- *   - generateCard:    Proxy to Gemini for AI card generation.
  *   - claimDailyReward: Transactional once-per-day star reward.
  *   - syncRevenueCat:  Pulls authoritative entitlement from RC and mirrors it.
  *   - redeemInvite:    Server-authoritative invite redemption (+stars, idempotent).
@@ -13,8 +12,7 @@
  * Deploy:
  *   firebase deploy --only functions
  *
- * Set the Gemini key (one-time):
- *   firebase functions:secrets:set GEMINI_API_KEY
+ * Set secrets:
  *   firebase functions:secrets:set REVENUECAT_SECRET
  */
 
@@ -23,13 +21,12 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 
-admin.initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 const REVENUECAT_SECRET = defineSecret('REVENUECAT_SECRET');
 const BOOTSTRAP_ADMIN_TOKEN = defineSecret('BOOTSTRAP_ADMIN_TOKEN');
-const GEMINI_MODEL = 'gemini-2.0-flash';
-const FREE_DAILY_LIMIT = 5;
 const DAILY_REWARD = 5;
 const INVITER_REWARD = 30;
 const INVITEE_REWARD = 10;
@@ -84,93 +81,6 @@ const UNSAFE_PATTERNS = [
 ];
 
 const isSafe = (text) => !UNSAFE_PATTERNS.some((p) => p.test(text));
-
-// ──────────────────────── Rate Limit ────────────────────────
-
-async function bumpAndCheckUsage(uid, isPremium) {
-  if (isPremium) return;
-  const today = new Date().toISOString().split('T')[0];
-  const ref = admin.database().ref(`aiUsage/${uid}/${today}`);
-  const snap = await ref.transaction((v) => (v || 0) + 1);
-  const used = snap.snapshot.val() || 0;
-  if (used > FREE_DAILY_LIMIT) {
-    throw new HttpsError(
-      'resource-exhausted',
-      `Daily limit reached (${FREE_DAILY_LIMIT} cards). Upgrade to Premium for unlimited.`
-    );
-  }
-}
-
-// ──────────────────────── generateCard ────────────────────────
-
-exports.generateCard = onCall(
-  { secrets: [GEMINI_API_KEY], cors: true },
-  async (request) => {
-    const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
-    // Per-user burst protection separate from the daily AI quota: stops a
-    // misbehaving client (or compromised token) from spinning up Gemini calls.
-    await rateLimit(uid, 'generateCard', 30, 60 * 1000);
-
-    const { system, user } = request.data || {};
-    if (typeof system !== 'string' || typeof user !== 'string') {
-      throw new HttpsError('invalid-argument', 'system and user prompts are required.');
-    }
-    if (system.length > 4000 || user.length > 2000) {
-      throw new HttpsError('invalid-argument', 'Prompt too large.');
-    }
-    if (!isSafe(user)) {
-      throw new HttpsError('failed-precondition', 'Prompt failed moderation.');
-    }
-
-    const userSnap = await admin.database().ref(`users/${uid}`).once('value');
-    const isPremium = !!userSnap.val()?.isPremium;
-    await bumpAndCheckUsage(uid, isPremium);
-
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY.value()}`;
-    const resp = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [{ role: 'user', parts: [{ text: user }] }],
-        generationConfig: { temperature: 0.9, maxOutputTokens: 256 },
-      }),
-    });
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      console.error('Gemini error', resp.status, body);
-      throw new HttpsError('internal', `Gemini request failed (${resp.status})`);
-    }
-
-    const data = await resp.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new HttpsError('internal', 'Empty Gemini response');
-
-    const flagged = !isSafe(text);
-
-    // Moderation queue — every generated card lands here for admin review.
-    // Server-only writes (closed to clients via rules); admins page can paginate it.
-    try {
-      await admin.database().ref('aiModerationLog').push({
-        uid,
-        prompt: user.slice(0, 500),
-        text: text.slice(0, 1000),
-        flagged,
-        at: Date.now(),
-      });
-    } catch (e) {
-      console.warn('aiModerationLog write failed', e);
-    }
-
-    if (flagged) {
-      throw new HttpsError('failed-precondition', 'Generated content failed moderation.');
-    }
-
-    return { text };
-  }
-);
 
 // ──────────────────────── recordHostMigration ────────────────────────
 
@@ -251,22 +161,43 @@ exports.redeemInvite = onCall({ cors: true }, async (request) => {
     throw new HttpsError('failed-precondition', 'You already redeemed an invite code.');
   }
 
-  // Find inviter by indexed code.
-  const lookup = await admin
-    .database()
-    .ref('users')
-    .orderByChild('inviteCode')
-    .equalTo(raw)
-    .limitToFirst(1)
-    .once('value');
+  // 1. Check global registry first.
+  let inviterUid = null;
+  const registryRef = admin.database().ref(`inviteCodes/${raw}`);
+  const registrySnap = await registryRef.once('value');
+  if (registrySnap.exists()) {
+    inviterUid = registrySnap.val();
+  } else {
+    // 2. Fallback to legacy index search (for codes generated before the registry).
+    const lookup = await admin
+      .database()
+      .ref('users')
+      .orderByChild('inviteCode')
+      .equalTo(raw)
+      .limitToFirst(1)
+      .once('value');
 
-  if (!lookup.exists()) {
+    if (lookup.exists()) {
+      let legacyUid = null;
+      lookup.forEach((c) => { legacyUid = c.key; });
+      if (legacyUid) {
+        // Atomic migration: only write if still empty, preventing race overwrites
+        const migTxn = await registryRef.transaction((cur) => (cur ? undefined : legacyUid));
+        if (migTxn.committed) {
+          inviterUid = legacyUid;
+        } else {
+          // If a concurrent reservation/migration claimed this code, use the authoritative registry winner
+          inviterUid = migTxn.snapshot.val() || legacyUid;
+        }
+      }
+    }
+  }
+
+  if (!inviterUid) {
     throw new HttpsError('not-found', 'Invalid invite code.');
   }
 
-  let inviterUid = null;
-  lookup.forEach((c) => { inviterUid = c.key; });
-  if (!inviterUid || inviterUid === uid) {
+  if (inviterUid === uid) {
     throw new HttpsError('failed-precondition', 'You cannot redeem your own code.');
   }
 
@@ -322,11 +253,58 @@ exports.ensureInviteCode = onCall({ cors: true }, async (request) => {
   const snap = await ref.once('value');
   if (snap.exists()) return { code: snap.val() };
 
-  // 6-char base36 — collision odds are negligible at our scale; if we ever
-  // worry, retry on collision via transaction.
-  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-  await ref.set(code);
-  return { code };
+  let newCode = null;
+  for (let i = 0; i < 5; i++) {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const indexRef = admin.database().ref(`inviteCodes/${code}`);
+    const txn = await indexRef.transaction((cur) => (cur ? undefined : uid));
+    if (txn.committed) {
+      // Check if a legacy user already owned this code before the registry existed
+      const legacyLookup = await admin
+        .database()
+        .ref('users')
+        .orderByChild('inviteCode')
+        .equalTo(code)
+        .limitToFirst(1)
+        .once('value');
+
+      if (legacyLookup.exists()) {
+        let legacyUid = null;
+        legacyLookup.forEach((c) => { legacyUid = c.key; });
+        if (legacyUid && legacyUid !== uid) {
+          // This code belongs to a legacy user! Migrate it to the legacy owner so it's registered
+          await indexRef.transaction((cur) => (cur === uid ? legacyUid : cur));
+          // Retry generating a different code for the caller
+          continue;
+        }
+      }
+
+      newCode = code;
+      break;
+    }
+  }
+
+  if (!newCode) {
+    throw new HttpsError('internal', 'Failed to generate a unique invite code. Please try again.');
+  }
+
+  const userTxn = await ref.transaction((cur) => (cur ? undefined : newCode));
+  if (userTxn.committed) {
+    return { code: newCode };
+  } else {
+    const existingCode = userTxn.snapshot.val();
+    // If a concurrent call created a code first, release our orphaned reservation
+    if (newCode && existingCode !== newCode) {
+      try {
+        await admin.database().ref(`inviteCodes/${newCode}`).transaction((cur) => {
+          return cur === uid ? null : cur;
+        });
+      } catch (err) {
+        console.warn(`Failed to clean up orphaned invite code ${newCode}:`, err);
+      }
+    }
+    return { code: existingCode };
+  }
 });
 
 // ──────────────────────── syncRevenueCat ────────────────────────
@@ -370,39 +348,68 @@ exports.syncRevenueCat = onCall(
 
     const processedRef = admin.database().ref(`users/${uid}/processedTransactions`);
     const processedSnap = await processedRef.once('value');
-    const processed = processedSnap.val() || {};
+    const processedBefore = processedSnap.val() || {};
 
-    let credited = 0;
-    const updates = {};
+    let newlyCredited = 0;
     for (const [pid, items] of Object.entries(nonSubs)) {
       const stars = STAR_PACKS[pid];
       if (!stars || !Array.isArray(items)) continue;
       for (const item of items) {
         const txid = item.id || item.store_transaction_id;
-        if (!txid || processed[txid]) continue;
-        credited += stars;
-        updates[txid] = { productId: pid, stars, at: now };
+        if (!txid || processedBefore[txid]) continue;
+        newlyCredited += stars;
       }
     }
 
-    if (credited > 0) {
-      const walletRef = admin.database().ref(`users/${uid}/wallet`);
-      await walletRef.transaction((current) => {
-        const wallet = current || { balance: 0, updatedAt: 0 };
-        wallet.balance = (wallet.balance || 0) + credited;
-        wallet.updatedAt = now;
-        return wallet;
+    const userRef = admin.database().ref(`users/${uid}`);
+    let actualCredited = 0;
+
+    if (newlyCredited > 0) {
+      const userTxn = await userRef.transaction((user) => {
+        let u = user;
+        if (!u) u = { wallet: { balance: 0, updatedAt: 0 }, processedTransactions: {} };
+        
+        u.processedTransactions = u.processedTransactions || {};
+        u.wallet = u.wallet || { balance: 0, updatedAt: 0 };
+
+        let txnCredited = 0;
+        for (const [pid, items] of Object.entries(nonSubs)) {
+          const stars = STAR_PACKS[pid];
+          if (!stars || !Array.isArray(items)) continue;
+          for (const item of items) {
+            const txid = item.id || item.store_transaction_id;
+            if (!txid || u.processedTransactions[txid]) continue;
+
+            u.processedTransactions[txid] = { productId: pid, stars, at: now };
+            txnCredited += stars;
+          }
+        }
+
+        if (txnCredited > 0) {
+          u.wallet.balance += txnCredited;
+          u.wallet.updatedAt = now;
+        }
+        
+        u.isPremium = isPremium;
+        u.isLifetime = isLifetime;
+        u.entitlementUpdatedAt = now;
+
+        actualCredited = txnCredited; // Track exactly what this execution attempt credited
+        return u;
       });
-      await processedRef.update(updates);
+
+      if (!userTxn.committed) {
+        throw new HttpsError('internal', 'Transaction processing failed to commit. Please retry.');
+      }
+    } else {
+      await userRef.update({
+        isPremium,
+        isLifetime,
+        entitlementUpdatedAt: now,
+      });
     }
 
-    await admin.database().ref(`users/${uid}`).update({
-      isPremium,
-      isLifetime,
-      entitlementUpdatedAt: now,
-    });
-
-    return { isPremium, isLifetime, credited };
+    return { isPremium, isLifetime, credited: actualCredited };
   }
 );
 
@@ -448,19 +455,26 @@ exports.searchUsers = onCall({ cors: true }, async (request) => {
  * or another player promotes via host migration. The sweeper only deletes
  * rooms that have actually gone silent past their TTL.
  */
-exports.sweepStaleRooms = onSchedule('every 10 minutes', async () => {
-  const now = Date.now();
-  const roomsRef = admin.database().ref('rooms');
+async function sweepStaleRoomsLogic(db, now = Date.now()) {
+  const roomsRef = db.ref('rooms');
   const snap = await roomsRef.once('value');
-  if (!snap.exists()) return;
+  if (!snap.exists()) return { removed: 0 };
 
   const updates = {};
   let removed = 0;
   snap.forEach((child) => {
     const room = child.val() || {};
-    const last = room.lastActivityAt || room.createdAt || 0;
-    const status = room.status || 'waiting';
+    // Ensure we check all activity indicators: lastActivityAt, createdAt, and active turn updates
+    const last = Math.max(
+      typeof room.lastActivityAt === 'number' ? room.lastActivityAt : 0,
+      typeof room.createdAt === 'number' ? room.createdAt : 0,
+      typeof room.gameState?.lastUpdatedAt === 'number' ? room.gameState.lastUpdatedAt : 0
+    );
 
+    // If timestamp is completely absent or 0, do not delete prematurely unless explicitly marked closed
+    if (last <= 0 && room.status !== 'closed') return;
+
+    const status = room.status || 'waiting';
     let ttl = ROOM_TTL_WAITING_MS;
     if (status === 'playing') ttl = ROOM_TTL_PLAYING_MS;
     else if (status === 'closed') ttl = ROOM_TTL_CLOSED_MS;
@@ -471,12 +485,20 @@ exports.sweepStaleRooms = onSchedule('every 10 minutes', async () => {
     }
   });
 
-  if (Object.keys(updates).length > 0) {
-    await roomsRef.update(updates);
+  // Batch updates in chunks of 500 for scale safety
+  const updateKeys = Object.keys(updates);
+  if (updateKeys.length > 0) {
+    for (let i = 0; i < updateKeys.length; i += 500) {
+      const chunk = {};
+      for (const k of updateKeys.slice(i, i + 500)) {
+        chunk[k] = null;
+      }
+      await roomsRef.update(chunk);
+    }
   }
 
-  const day = new Date().toISOString().split('T')[0];
-  await admin.database().ref(`metrics/sweeper/${day}`).transaction((v) => {
+  const day = new Date(now).toISOString().split('T')[0];
+  await db.ref(`metrics/sweeper/${day}`).transaction((v) => {
     const m = v || { runs: 0, removed: 0, lastRunAt: 0 };
     m.runs = (m.runs || 0) + 1;
     m.removed = (m.removed || 0) + removed;
@@ -485,6 +507,12 @@ exports.sweepStaleRooms = onSchedule('every 10 minutes', async () => {
   });
 
   console.log(`sweepStaleRooms: removed ${removed} room(s).`);
+  return { removed };
+}
+
+exports.sweepStaleRoomsLogic = sweepStaleRoomsLogic;
+exports.sweepStaleRooms = onSchedule('every 10 minutes', async () => {
+  await sweepStaleRoomsLogic(admin.database(), Date.now());
 });
 
 // ──────────────────────── reportUser / blockUser / unblockUser ────────────────────────
@@ -620,15 +648,20 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
     }
   }
 
-  // 4. Wipe presence + AI usage history + invite ownership.
+  // 4. Wipe presence + invite ownership + user rate limits.
   friendUpdates[`presence/${uid}`] = null;
-  friendUpdates[`aiUsage/${uid}`] = null;
   friendUpdates[`crashLogs/${uid}`] = null;
   friendUpdates[`rateLimits/searchUsers/${uid}`] = null;
   friendUpdates[`rateLimits/redeemInvite/${uid}`] = null;
   friendUpdates[`rateLimits/reportUser/${uid}`] = null;
   friendUpdates[`rateLimits/blockUser/${uid}`] = null;
   friendUpdates[`rateLimits/deleteAccount/${uid}`] = null;
+  friendUpdates[`rateLimits/recordHostMigration/${uid}`] = null;
+  friendUpdates[`rateLimits/claimDailyReward/${uid}`] = null;
+  friendUpdates[`rateLimits/ensureInviteCode/${uid}`] = null;
+  friendUpdates[`rateLimits/syncRevenueCat/${uid}`] = null;
+  friendUpdates[`rateLimits/unblockUser/${uid}`] = null;
+  friendUpdates[`rateLimits/bootstrapFirstAdmin/${uid}`] = null;
 
   // 5. Drop hosted rooms — guests get bounced cleanly via the existing
   //    closed/sweeper flow.
@@ -646,13 +679,34 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
     }
   }
 
-  // 6. Delete the user node last so other paths can be enumerated first.
+  // 6. Clean up invite registry (ownership-safe: remove only if owned by this uid) and delete user node last.
+  const userSnap = await db.ref(`users/${uid}`).once('value');
+  const userData = userSnap.val() || {};
+  if (userData.inviteCode) {
+    try {
+      await db.ref(`inviteCodes/${userData.inviteCode}`).transaction((cur) => {
+        return cur === uid ? null : cur;
+      });
+    } catch (err) {
+      console.warn('Failed ownership-safe inviteCode cleanup in deleteAccount:', err);
+    }
+  }
   friendUpdates[`users/${uid}`] = null;
 
   await db.ref().update(friendUpdates);
 
   // 7. Firestore mirror.
-  try { await admin.firestore().collection('users').doc(uid).delete(); } catch {}
+  try {
+    const historySnap = await admin.firestore().collection(`users/${uid}/history`).get();
+    if (!historySnap.empty) {
+      const batch = admin.firestore().batch();
+      historySnap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    }
+    await admin.firestore().collection('users').doc(uid).delete(); 
+  } catch (e) {
+    console.error('Firestore deletion failed:', e);
+  }
 
   // 8. Revoke all sessions and delete the auth record.
   try { await admin.auth().revokeRefreshTokens(uid); } catch {}

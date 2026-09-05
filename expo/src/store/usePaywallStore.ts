@@ -1,7 +1,18 @@
 import { create } from 'zustand';
-import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchases';
+import type { PurchasesPackage, CustomerInfo } from 'react-native-purchases';
 import { Platform } from 'react-native';
 import { useEconomyStore } from './useEconomyStore';
+import { isWeb } from '../utils/platform';
+
+export type { PurchasesPackage, CustomerInfo };
+
+let Purchases: any = null;
+if (!isWeb) {
+  try {
+    const rc = require('react-native-purchases');
+    Purchases = rc.default || rc;
+  } catch {}
+}
 
 /**
  * usePaywallStore — RevenueCat surface for the storefront UI.
@@ -11,6 +22,8 @@ import { useEconomyStore } from './useEconomyStore';
  * `syncEntitlement()` which pulls the authoritative subscriber state from
  * RC server-side and mirrors it onto Firebase. The realtime listener in
  * useEconomyStore then propagates the new wallet/entitlement to the UI.
+ *
+ * On Web, RevenueCat is completely bypassed in favor of deliberate local-first play.
  */
 
 interface PaywallState {
@@ -21,6 +34,7 @@ interface PaywallState {
   isConfigured: boolean;
 
   configure: (uid: string) => Promise<void>;
+  logOut: () => Promise<void>;
   fetchOfferings: () => Promise<void>;
   purchasePackage: (pkg: PurchasesPackage) => Promise<boolean>;
   restorePurchases: () => Promise<boolean>;
@@ -35,10 +49,23 @@ interface PaywallState {
 const API_KEY_IOS = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS || '';
 const API_KEY_ANDROID = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID || '';
 
-let configuredForUid: string | null = null;
+let isSdkConfigured = false;
+let currentConfiguredUid: string | null = null;
+let activeGeneration = 0;
 let removeListener: (() => void) | null = null;
+let identityQueue: Promise<void> = Promise.resolve();
+
+function enqueueIdentityOp<T>(op: () => Promise<T>): Promise<T> {
+  const result = identityQueue.then(op, op);
+  identityQueue = result.then(
+    () => {},
+    () => {}
+  );
+  return result;
+}
 
 function hasApiKey(): boolean {
+  if (isWeb) return false;
   if (Platform.OS === 'ios') return !!API_KEY_IOS;
   if (Platform.OS === 'android') return !!API_KEY_ANDROID;
   return false;
@@ -58,37 +85,85 @@ export const usePaywallStore = create<PaywallState>((set, get) => ({
       set({ isConfigured: false });
       return;
     }
-    if (configuredForUid === uid) return;
+    if (currentConfiguredUid === uid) return;
 
+    const gen = ++activeGeneration;
     set({ isLoading: true, error: null });
+
     try {
       const apiKey = Platform.OS === 'ios' ? API_KEY_IOS : API_KEY_ANDROID;
-      try {
-        Purchases.configure({ apiKey, appUserID: uid });
-      } catch {
-        // Already configured — switch user instead.
-        try { await Purchases.logIn(uid); } catch {}
-      }
-      configuredForUid = uid;
+
+      await enqueueIdentityOp(async () => {
+        if (!isSdkConfigured) {
+          Purchases.configure({ apiKey, appUserID: uid });
+          isSdkConfigured = true;
+        } else {
+          // Already initialized in this process — transition identity cleanly via logIn.
+          await Purchases.logIn(uid);
+        }
+      });
+
+      if (gen !== activeGeneration) return;
+
+      currentConfiguredUid = uid;
 
       // Mirror any subsequent customer-info updates back to Firebase.
       removeListener?.();
       const handler = (_info: CustomerInfo) => {
-        useEconomyStore.getState().syncEntitlement();
+        if (gen === activeGeneration) {
+          useEconomyStore.getState().syncEntitlement();
+        }
       };
       Purchases.addCustomerInfoUpdateListener(handler);
       removeListener = () => {
         try { Purchases.removeCustomerInfoUpdateListener(handler); } catch {}
       };
 
-      // Pull authoritative state once at boot.
+      // Pull authoritative state once for this identity.
       await useEconomyStore.getState().syncEntitlement();
+      if (gen !== activeGeneration) return;
+
       await get().fetchOfferings();
+      if (gen !== activeGeneration) return;
+
       set({ isConfigured: true });
     } catch (e: any) {
-      set({ error: e?.message || 'Purchases unavailable.' });
+      if (gen === activeGeneration) {
+        set({ error: e?.message || 'Purchases unavailable.' });
+      }
     } finally {
-      set({ isLoading: false });
+      if (gen === activeGeneration) {
+        set({ isLoading: false });
+      }
+    }
+  },
+
+  logOut: async () => {
+    if (!hasApiKey()) return;
+    const gen = ++activeGeneration;
+
+    try {
+      removeListener?.();
+      removeListener = null;
+    } catch {}
+
+    try {
+      await enqueueIdentityOp(async () => {
+        if (isSdkConfigured) {
+          try {
+            await Purchases.logOut();
+          } catch (e: any) {
+            // Deliberate failure policy: log a non-sensitive diagnostic warning
+            // but safely proceed to clear local state so sign-out is never blocked.
+            console.warn('RevenueCat: Purchases.logOut failed', e?.message);
+          }
+        }
+      });
+    } catch {}
+
+    if (gen === activeGeneration) {
+      currentConfiguredUid = null;
+      set({ isConfigured: false, packages: [], error: null, isLoading: false, isPurchasing: false });
     }
   },
 
@@ -97,15 +172,20 @@ export const usePaywallStore = create<PaywallState>((set, get) => ({
       set({ packages: [] });
       return;
     }
+    const gen = activeGeneration;
     set({ isLoading: true, error: null });
     try {
       const offerings = await Purchases.getOfferings();
-      set({
-        packages: offerings.current?.availablePackages ?? [],
-        isLoading: false,
-      });
+      if (gen === activeGeneration) {
+        set({
+          packages: offerings.current?.availablePackages ?? [],
+          isLoading: false,
+        });
+      }
     } catch (e: any) {
-      set({ error: e?.message || 'Failed to load offerings.', isLoading: false });
+      if (gen === activeGeneration) {
+        set({ error: e?.message || 'Failed to load offerings.', isLoading: false });
+      }
     }
   },
 
