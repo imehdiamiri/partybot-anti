@@ -27,7 +27,22 @@
   Tests cover counts, IDs, new-text duplicates, filters, old favorites, whole-bank
   coverage, restarts, concurrent draws, topic changes and blocked/corrupt storage.
   Web bundle: `entry-942f76d7368d7e9aa7369cafee14065e.js`.
-- Publication and live verification details follow below.
+- Source release: `4682580`. Firebase Hosting deployment succeeded on partyplay-8;
+  https://partybot.games/cards/talk returns HTTP 200 with the expected new bundle.
+  Live browser checks: Talk shows 937 cards including new prompts; All topics shows
+  1,350 words, Animals shows 140; setup → local round → private word reveal works.
+  No console errors in the checked flows. Wheel spin completed with a result.
+- Expo Go SDK57 update published successfully on both platforms:
+  group `b8f162c8-86d3-43f8-87a0-adfd6fc7a491`,
+  Android `01a072d2-99cd-749f-9830-5155574250ef`,
+  iOS `01a072d2-99cd-700e-ba36-6227a713c04a`.
+  Branch/channel `expo-go-sdk57`, runtime `exposdk:57.0.0`, environment preview.
+  This update also includes the preceding tool/audio/Reverse Singing changes.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/b8f162c8-86d3-43f8-87a0-adfd6fc7a491
+- Final recovery tag: `checkpoint/content-tools-reverse-published`.
+  Full-history bundle: `playbot-content-tools-reverse-2026-09-05.bundle` in the
+  Codex audit workspace (outside the app repository). Remote Git push remains
+  intentionally pending destination confirmation. No persistent local server.
 
 ## 2026-09-05 — Tool effects / Wheel redesign / Reverse Singing handoff
 
