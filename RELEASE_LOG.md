@@ -6,6 +6,10 @@
 - Added five offline word-meaning dictionaries (Persian, Turkish, Spanish, German, French) and SVG flag/language controls for Imposter. Original English remains visible. Translation UI only mounts after a non-imposter's role reveal and resets between players. Cricket is disambiguated by category.
 - The plain app background release remains included. No native dependency or runtime changes.
 - Validation: 190 existing/UI tests across 23 suites plus four translation tests passed (194 total). Coverage asserts all 1,350 unique words have all five meanings (6,750 translations); includes language switching/reset, RTL, category disambiguation, and hidden translation UI for the imposter. Translations are authored gameplay meanings, not professionally certified terminology or an official localized film-title registry.
+- Source `fe28f74`; TypeScript/web export passed. Firebase Hosting succeeded; web entry `entry-dc2bf12d1c984db830966b805149e236.js`. Live Imposter checked at desktop and 390x844: handoff name restored with no top banner, active name green/enlarged, five language controls work, Persian readable, English preserved, translations clear on handoff and are absent for the imposter. Physical native devices not tested.
+- Live Drum Challenge ready screen shows the large player name with no banner. Guess the Seconds ready card names Player 1; running phase names them only in the active banner. No browser errors observed. Exhaustive manual playthrough of all 16 games was not repeated.
+- Expo Go SDK57 published to `expo-go-sdk57`: group `940dc4d3-bc1b-4c38-bc6b-6c1df7045cf1`, Android `01a07843-7f36-7382-a15a-f3cbba68afb9`, iOS `01a07843-7f36-71ff-8e2c-1f9ba1642e72`.
+- Release tag `checkpoint/handoff-translations-release-2026-09-06`; offline bundle `playbot-handoff-translations-2026-09-06.bundle` in the Codex audit workspace. No remote push; no persistent local server.
 
 
 ## 2026-09-06 — Remove decorative app backdrop
