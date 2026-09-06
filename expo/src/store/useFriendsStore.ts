@@ -5,6 +5,7 @@ import { rtdb as database, functions } from '../lib/firebase';
 import { ref, get as fbGet, set as fbSet, push, update as fbUpdate } from 'firebase/database';
 import { httpsCallable } from 'firebase/functions';
 import { showToast } from '../components/ToastOverlay';
+import { cleanFriendName, friendNameKey, newGameFriends } from '../utils/friendNames';
 
 /**
  * useFriendsStore — matches iOS AppViewModel+Friends + AppViewModel+Invite
@@ -63,6 +64,7 @@ interface FriendsState {
   
   // Actions — Offline
   addOfflineFriend: (name: string) => void;
+  rememberGamePlayers: (names: string[], self?: string) => Promise<void>;
   updateOfflineFriend: (id: string, name: string) => void;
   removeOfflineFriend: (id: string) => void;
   
@@ -278,15 +280,27 @@ export const useFriendsStore = create<FriendsState>()(
 
       // ─── Offline Friends ───
 
+      rememberGamePlayers: async (names, self = '') => {
+        // Load saved friends before merging, so cold-start hydration cannot overwrite them.
+        if (!useFriendsStore.persist.hasHydrated()) await useFriendsStore.persist.rehydrate();
+        set(state => {
+          const fresh = newGameFriends(names, state.offlineFriends.map(f => f.name), self);
+          const additions: Friend[] = fresh.map(name => ({
+            id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}-${encodeURIComponent(friendNameKey(name))}`,
+            name, isOnline: false, status: 'Offline player', kind: 'offline',
+          }));
+          return { offlineFriends: [...state.offlineFriends, ...additions].sort((a, b) => a.name.localeCompare(b.name)) };
+        });
+      },
+
       addOfflineFriend: (name: string) => {
-        const trimmed = name.trim();
+        const trimmed = cleanFriendName(name);
         if (!trimmed) return;
         const state = get();
-        if (state.offlineFriends.length >= 12) return;
-        if (state.offlineFriends.some(f => f.name.toLowerCase() === trimmed.toLowerCase())) return;
+        if (state.offlineFriends.some(f => friendNameKey(f.name) === friendNameKey(trimmed))) return;
         
         const newFriend: Friend = {
-          id: Date.now().toString(),
+          id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}-${encodeURIComponent(friendNameKey(trimmed))}`,
           name: trimmed,
           isOnline: false,
           status: 'Offline player',
@@ -300,8 +314,9 @@ export const useFriendsStore = create<FriendsState>()(
       },
 
       updateOfflineFriend: (id: string, name: string) => {
-        const trimmed = name.trim();
+        const trimmed = cleanFriendName(name);
         if (!trimmed) return;
+        if (get().offlineFriends.some(f => f.id !== id && friendNameKey(f.name) === friendNameKey(trimmed))) return;
         set(state => ({
           offlineFriends: state.offlineFriends
             .map(f => f.id === id ? { ...f, name: trimmed } : f)

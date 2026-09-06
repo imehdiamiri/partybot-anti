@@ -64,10 +64,6 @@ export default function FriendsScreen() {
       showToast.warning('Please enter a name');
       return;
     }
-    if (offlineFriends.length >= 12) {
-      showToast.warning('Maximum 12 players reached');
-      return;
-    }
     if (offlineFriends.some(f => f.name.toLowerCase() === trimmed.toLowerCase())) {
       showToast.warning('This name already exists!');
       return;

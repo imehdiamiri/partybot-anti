@@ -1,5 +1,28 @@
 # Release log
 
+## 2026-09-07 — Automatically remember new local game friends
+
+- Shared game Setup remembers active typed names only after successful session
+  creation and duplicate validation. Blank names, Player N placeholders, the user's
+  configured name, and existing local friends are excluded. No online friendship,
+  invitation, backend write or contact upload is performed.
+- Friends store hydrates before merging and persists through the existing local
+  storage. Name comparison normalizes spacing/case/Unicode and Persian keyboard
+  variants. Generated IDs remain independent of edits to names.
+- Removed the 12-local-friend limit. All saved friends are reachable in the
+  horizontally scrolling Quick Add list; already-selected names are excluded.
+- Checks: TypeScript passed; full Jest suite 29 suites / 230 tests passed.
+  Web export/sync passed and Firebase Hosting partyplay-8 confirmed deployment.
+  Web bundle: `entry-a9ba9b6d3a5c1be1bec6b1fc87d33873.js`.
+- Isolated headless Chrome on the live Reaction Time setup verified no save before
+  Start, save after Start, presence in Friends after page reload, and presence in
+  Quick Add after clearing the current player slot. No page errors. Test browser
+  storage was isolated from the user's friends. Physical native phone not tested.
+- Before checkpoint: `checkpoint/auto-friends-before-2026-09-07`.
+  Expo publication confirmation and final checkpoint recorded below.
+- Previous outstanding card translations/673-card expansion unchanged. No Git
+  remote push or persistent local server.
+
 ## 2026-09-07 — Larger tool tiles and standalone vector objects
 
 - Replaced all six circular tool badges with transparent SVG object illustrations:

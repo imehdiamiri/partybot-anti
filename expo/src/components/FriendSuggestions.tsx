@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useFriendsStore } from '@/src/store/useFriendsStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { friendNameKey } from '@/src/utils/friendNames';
 
 interface FriendSuggestionsProps {
   /** Names already in the player list — these will be hidden from suggestions */
   existingNames: string[];
   /** Callback when user taps a friend chip */
   onSelectFriend: (name: string) => void;
-  /** Maximum number of suggestions to show (default: 12) */
+  /** Optional limit; by default every saved friend is reachable by scrolling. */
   maxSuggestions?: number;
 }
 
@@ -20,18 +21,18 @@ interface FriendSuggestionsProps {
 export function FriendSuggestions({
   existingNames,
   onSelectFriend,
-  maxSuggestions = 12,
+  maxSuggestions = Infinity,
 }: FriendSuggestionsProps) {
   const offlineFriends = useFriendsStore(s => s.offlineFriends);
 
   // Normalise existing names for comparison
   const existingLower = new Set(
-    existingNames.map(n => n.trim().toLowerCase()).filter(Boolean)
+    existingNames.map(friendNameKey).filter(Boolean)
   );
 
   // Filter out friends who are already in the list
   const available = offlineFriends
-    .filter(f => !existingLower.has(f.name.trim().toLowerCase()))
+    .filter(f => !existingLower.has(friendNameKey(f.name)))
     .slice(0, maxSuggestions);
 
   if (available.length === 0) return null;

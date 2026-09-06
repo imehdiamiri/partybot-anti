@@ -10,6 +10,7 @@ import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Games, GameMode } from '@/src/models/AppModels';
 import { useGameStore } from '@/src/store/useGameStore';
+import { useFriendsStore } from '@/src/store/useFriendsStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { IMPOSTER_CATEGORY_LABELS, imposterWords } from '@/src/content/imposterWords';
 
@@ -248,6 +249,9 @@ export default function GameSetupScreen() {
     }
 
     startSingleDeviceSession(game!, finalNames, needsRounds ? roundCount : 1, config);
+    void useFriendsStore.getState().rememberGamePlayers(active, playerName).catch(() => {
+      console.warn('Could not save local players to Friends');
+    });
     saveGameConfig(id!, config, finalNames);
     router.push(`/game/${id}/session` as any);
   };
