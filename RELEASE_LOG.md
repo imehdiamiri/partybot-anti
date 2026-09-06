@@ -15,8 +15,14 @@
   horizontal overflow. Tools and Wheel screenshots visually inspected. Live wheel
   at 390px: pointer centered, no overflow, completed in 13174ms, winner Dare, no
   page errors. Native physical-device experience not tested.
-- Before tag: `checkpoint/refined-tools-before-2026-09-07`. Expo confirmation and
-  final recovery checkpoint recorded after publication. No remote Git push.
+- Before tag: `checkpoint/refined-tools-before-2026-09-07`; final tag:
+  `checkpoint/refined-tools-2026-09-07`. Full-history backup in Codex audit workspace:
+  `playbot-refined-tools-2026-09-07.bundle`. No remote Git push.
+- Source commit: `1113e3071e68284b1f467bfa9f5cb994b0424be7`. Expo confirmed
+  expo-go-sdk57 publication, runtime exposdk:57.0.0, group
+  `0cc0bb61-d557-4fba-ad3c-aa63b877e01b`, Android
+  `01a078ea-d07e-7cbb-97bb-5ef1127c6350`, iOS
+  `01a078ea-d07e-7b62-a4bf-85ab2e57673a`.
 - Prior card translation/673-card expansion remains outstanding and unchanged.
 
 ## 2026-09-07 — Automatically remember new local game friends
