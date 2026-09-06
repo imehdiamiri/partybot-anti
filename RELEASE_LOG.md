@@ -1,5 +1,12 @@
 # Release log
 
+## 2026-09-06 — Remove decorative app backdrop
+
+- Replaced the shared AppBackgroundView artwork with a plain #08080F surface for both legacy variants. Removed colored circles, sheen, vignette, gradients, and unnecessary viewport subscriptions. All existing screen consumers inherit the change; game artwork and control colors remain unchanged.
+- Three regression tests passed (default, explicit default, simple), TypeScript passed, web export passed. Original circle color definitions no longer occur in app source.
+- Recovery tag before change: `checkpoint/pre-flat-background-2026-09-06`.
+
+
 ## 2026-09-06 — Single current-player identity
 
 - Removed redundant current-player headings across game sessions and shared ready/handoff views when the activity banner identifies the same player. Preserved roster, voting, and scoreboard identities.
