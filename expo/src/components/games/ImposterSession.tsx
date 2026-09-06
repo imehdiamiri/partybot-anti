@@ -209,7 +209,7 @@ export function ImposterSession({ session }: Props) {
   };
 
   const currentPlayer = roundPlayers[activePlayerIndex];
-  useGameActivity(phase === 'discussion' || phase === 'ready' ? 'Everyone' : currentPlayer?.displayName, phase);
+  useGameActivity(phase === 'discussion' || phase === 'ready' ? 'Everyone' : currentPlayer?.displayName, phase === 'reveal' && !isRoleRevealed ? 'ready' : phase);
 
   if (phase === 'loading') {
     return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>

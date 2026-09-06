@@ -94,7 +94,7 @@ export function PassGuessSession({ session }: Props) {
   const [currentAnswer, setCurrentAnswer] = useState('');
 
   const currentPlayer = session.players[activePlayerIndex];
-  useGameActivity(currentPlayer?.displayName, guideOpen ? 'guide' : phase);
+  useGameActivity(currentPlayer?.displayName, guideOpen ? 'guide' : showPrivacyScreen ? 'ready' : phase);
   const activeQuestion = useCustom ? customQuestion : question;
 
   // Filter out the active guesser's own answer so they only see and guess on others
