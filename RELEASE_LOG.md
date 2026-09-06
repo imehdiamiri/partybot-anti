@@ -4,7 +4,10 @@
 
 - Removed redundant current-player headings across game sessions and shared ready/handoff views when the activity banner identifies the same player. Preserved roster, voting, and scoreboard identities.
 - Current-player banner name uses weight 800 and a gentle opacity pulse; reduced-motion preference is respected. Recording cards retain clear Original/Mimic role labels.
-- Validation: 181 tests passed across 22 suites; web export passed. Live verification and release identifiers follow below.
+- Validation: 181 tests passed across 22 suites; TypeScript and web export passed. Live Memory Path ready/active/skip-to-player-2 and Memory Grid ready/active showed one current-player label. Computed name weight 800 and changing opacity verified; no browser errors recorded. Physical-device testing and exhaustive manual testing of all game phases were not performed.
+- Source commit: `33bb98d`. Firebase Hosting published to `partyplay-8`; web entry `entry-af0baacf42d48d92b325bfd1469dcd14.js`. Pre-change tag: `checkpoint/pre-player-labels-2026-09-06`.
+- Expo Go: branch `expo-go-sdk57`, runtime `exposdk:57.0.0`, group `fddfb99c-b545-43e9-9895-e0e70f8c6f4c`; Android `01a07815-5e9d-7339-87b7-7cc292bbc618`, iOS `01a07815-5e9d-7809-ba94-44c2714b0a8d`.
+- Release checkpoint: `checkpoint/player-labels-release-2026-09-06`; offline bundle `playbot-player-labels-2026-09-06.bundle` in the Codex audit workspace. No Git remote push or persistent local server.
 
 
 ## 2026-09-06 — Mode-specific guides and shared turn language
