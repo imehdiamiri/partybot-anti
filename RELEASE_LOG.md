@@ -1,5 +1,27 @@
 # Release log
 
+## 2026-09-07 — Cards motion and randomized opening (partial request)
+
+- Recovery before editing: `checkpoint/cards-before-2026-09-07`.
+- Fixed the stack/front coordinate mismatch: all cards share the same centered
+  anchor, with stack offsets applied as transforms instead of absolute top.
+  Added a 420ms eased transition, reduced-motion support, synchronous double-tap
+  guard, cancellation on filter changes/unmount, and commit-time transform reset.
+- Opening a category/filter now uses a persisted last-opener exclusion and a
+  Fisher-Yates shuffle. Manual shuffle excludes the visible card. Saving a card
+  outside Favorites no longer recreates the deck.
+- Verification: TypeScript passed; 28 Jest suites / 227 tests passed; 91-route web
+  export and sync passed. Firebase Hosting partyplay-8 confirmed release complete.
+  Web bundle: `entry-3381b75b5f1aef5ff7594d812a6c5c17.js`.
+  Live URL: https://partybot.games/cards/talk . Headless Chrome verified first card
+  and Next change without page errors; in-app screenshot inspected during motion.
+- Still outstanding: five-language card translations/controls and 673 additional
+  cards (mostly Talk). The built-in total remains 2216, NOT 2889. No placeholder
+  translations, external translation service, or filler duplicates were added.
+- Expo Go SDK57 update publication in progress; exact confirmation recorded below.
+- No Git remote push and no persistent local server. Device playback/animation
+  experience has not been verified on a physical phone.
+
 ## 2026-09-07 — Turn summaries, setup difficulty and event sound refresh
 
 - Source commit: `3d436dd6791639bc561dec4c83396ad09f42f721`.

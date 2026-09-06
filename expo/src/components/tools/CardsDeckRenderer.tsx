@@ -1,12 +1,15 @@
 import { Colors } from '@/src/theme/Colors';
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, PanResponder, useWindowDimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, Animated, Easing, AccessibilityInfo, PanResponder, useWindowDimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard, CardSubtype } from '@/src/models/CardModels';
 import { useSavedCardsStore } from '@/src/store/useSavedCardsStore';
 import { useCustomCardsStore } from '@/src/store/useCustomCardsStore';
-import { shuffled } from '@/src/utils/shuffle';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CardDeckPicker } from '@/src/utils/cardDeck';
+
+const deckPicker = new CardDeckPicker(AsyncStorage);
 
 // One-time index by category so we don't scan all 800+ cards on every filter change.
 const CARDS_BY_CATEGORY: Record<string, PartyCard[]> = (() => {
@@ -23,7 +26,7 @@ if (Platform.OS === 'ios') {
   try { BlurView = require('expo-blur').BlurView; } catch {}
 }
 
-const SWIPE_OUT_DURATION = 240;
+const SWIPE_OUT_DURATION = 420;
 
 interface Props {
   categoryId: CardCategory;
@@ -34,7 +37,9 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const category = CardCategoryInfo[categoryId];
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const staticOne = useRef(new Animated.Value(1)).current;
+  const transitionRef = useRef(false);
+  const generationRef = useRef(0);
+  const reducedMotion = useRef(false);
   
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [newCardText, setNewCardText] = useState('');
@@ -42,6 +47,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const { savedCardIds, toggleCard, isCardSaved } = useSavedCardsStore();
   const { customCards, addCustomCard } = useCustomCardsStore();
 
+  // Saving a card outside Favorites must not reshuffle the active deck.
+  const favoriteIds = categoryId === CardCategory.Favorites ? savedCardIds : null;
   const categoryCards = useMemo(() => {
     // Combine built-in cards and custom cards for the category
     let allCategoryCards = [...(CARDS_BY_CATEGORY[categoryId] ?? [])];
@@ -52,13 +59,13 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
     if (categoryId === CardCategory.Favorites) {
       // Find all saved cards (both from ALL_CARDS and customCards)
-      const savedBuiltIn = ALL_CARDS.filter(c => savedCardIds.includes(c.id));
-      const savedCustom = customCards.filter(c => savedCardIds.includes(c.id));
+      const savedBuiltIn = ALL_CARDS.filter(c => favoriteIds?.includes(c.id));
+      const savedCustom = customCards.filter(c => favoriteIds?.includes(c.id));
       return [...savedCustom, ...savedBuiltIn];
     }
 
     return allCategoryCards;
-  }, [categoryId, customCards, savedCardIds]);
+  }, [categoryId, customCards, favoriteIds]);
 
   const availableSubtypes = useMemo(
     () => Array.from(new Set(categoryCards.map(c => c.subtype))),
@@ -68,25 +75,45 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const [deck, setDeck] = useState<PartyCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const deckLengthRef = useRef<number>(0);
+  const position = useRef(new Animated.ValueXY()).current;
+  const [shuffleVersion, setShuffleVersion] = useState(0);
+  const avoidRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then(value => { if (mounted) reducedMotion.current = value; });
+    const listener = AccessibilityInfo.addEventListener('reduceMotionChanged', value => { reducedMotion.current = value; });
+    return () => { mounted = false; listener.remove(); generationRef.current++; position.stopAnimation(); };
+  }, [position]);
+
+  useEffect(() => {
+    const generation = ++generationRef.current;
+    transitionRef.current = true;
+    setIsTransitioning(true);
+    position.stopAnimation();
+    position.setValue({ x: 0, y: 0 });
+    setDeck([]);
     let cards = categoryCards;
     if (selectedSubtype) cards = cards.filter(c => c.subtype === selectedSubtype);
-    const next = shuffled(cards);
-    setDeck(next);
-    deckLengthRef.current = next.length;
-    setCurrentIndex(0);
-  }, [categoryCards, selectedSubtype]);
+    const avoid = avoidRef.current;
+    avoidRef.current = undefined;
+    deckPicker.open(`${categoryId}:${selectedSubtype || 'all'}`, cards, avoid).then(next => {
+      if (generation !== generationRef.current) return;
+      setDeck(next);
+      deckLengthRef.current = next.length;
+      setCurrentIndex(0);
+      transitionRef.current = false;
+      setIsTransitioning(false);
+    });
+    return () => { generationRef.current++; position.stopAnimation(); };
+  }, [categoryCards, categoryId, selectedSubtype, shuffleVersion, position]);
 
-  const position = useRef(new Animated.ValueXY()).current;
-  const prevIndexRef = useRef(currentIndex);
-
-  // When filters change, we reset index to 0. We need to make sure position is reset too.
-  useEffect(() => {
-    if (currentIndex === 0) {
+  // Reset only after the next card has committed, before painting. No 16ms timer
+  // that can briefly apply the outgoing transform to the incoming card.
+  useLayoutEffect(() => {
       position.setValue({ x: 0, y: 0 });
-    }
-    prevIndexRef.current = currentIndex;
+      transitionRef.current = false;
+      setIsTransitioning(false);
   }, [currentIndex, position]);
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -110,10 +137,11 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_e, g) => !transitionRef.current && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderTerminationRequest: () => false,
       onPanResponderMove: (_event, gesture) => {
+        if (transitionRef.current) return;
         position.setValue({ x: gesture.dx, y: gesture.dy });
       },
       onPanResponderRelease: (_event, gesture) => {
@@ -133,28 +161,29 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   ).current;
 
   const forceSwipe = (direction: 'left' | 'right') => {
+    if (transitionRef.current || currentIndex >= deckLengthRef.current) return;
+    transitionRef.current = true;
+    setIsTransitioning(true);
+    const generation = generationRef.current;
     const distance = swipeOutDistanceRef.current;
     const x = direction === 'right' ? distance : -distance;
     Animated.timing(position, {
       toValue: { x, y: 0 },
-      duration: SWIPE_OUT_DURATION,
+      duration: reducedMotion.current ? 0 : SWIPE_OUT_DURATION,
+      easing: Easing.inOut(Easing.cubic),
       useNativeDriver: false,
-    }).start(() => onSwipeComplete(direction));
-  };
-
-  const onSwipeComplete = (direction: 'left' | 'right') => {
-    setIsTransitioning(true);
-    setTimeout(() => {
+    }).start(({ finished }) => {
+      if (!finished || generation !== generationRef.current) return;
       setCurrentIndex((prev) => Math.min(prev + 1, deckLengthRef.current));
-      position.setValue({ x: 0, y: 0 });
-      setIsTransitioning(false);
-    }, 16);
+    });
   };
 
   const resetPosition = () => {
-    Animated.spring(position, {
+    if (transitionRef.current) return;
+    Animated.timing(position, {
       toValue: { x: 0, y: 0 },
-      friction: 6,
+      duration: reducedMotion.current ? 0 : 240,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
   };
@@ -163,9 +192,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   resetPositionRef.current = resetPosition;
 
   const handleShuffle = () => {
-    setDeck([...deck].sort(() => Math.random() - 0.5));
-    setCurrentIndex(0);
-    position.setValue({ x: 0, y: 0 });
+    avoidRef.current = deck[currentIndex]?.id;
+    setShuffleVersion(value => value + 1);
   };
 
   const handleAddCard = () => {
@@ -257,6 +285,9 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   };
 
   const renderCards = () => {
+    if (!deck.length && isTransitioning) {
+      return <Text style={styles.emptyText}>Shuffling cards…</Text>;
+    }
     if (currentIndex >= deck.length) {
       return (
         <View style={[styles.emptyDeck, { width: cardWidth, height: cardHeight }]} testID="cards-empty-deck">
@@ -275,9 +306,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
     // Create an interpolated value representing the swipe progress from 0 to 1
     // Swiping right or left should animate the stack forward smoothly.
-    const swipeProgress = isTransitioning
-      ? staticOne
-      : position.x.interpolate({
+    const swipeProgress = position.x.interpolate({
           inputRange: [-swipeOutDistance, 0, swipeOutDistance],
           outputRange: [1, 0, 1],
           extrapolate: 'clamp',
@@ -366,9 +395,9 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             {
               width: cardWidth,
               height: cardHeight,
-              top,
               transform: [
                 { translateX },
+                { translateY: top },
                 { scale },
                 { rotate: cardRotate },
               ],
@@ -410,6 +439,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
           <Pressable 
             accessibilityRole="button"
             testID="deck-next-button"
+            disabled={isTransitioning}
             style={styles.nextButton} 
             onPress={() => forceSwipe('left')}
           >
