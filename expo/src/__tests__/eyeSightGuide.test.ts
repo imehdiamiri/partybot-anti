@@ -60,10 +60,9 @@ test('guide gates mounting and replay callbacks; new sessions show it again', as
   expect(button('game-start-guide')).toBeDefined();
 });
 
-test('difficulty precedes guide, no countdown behind it; wrong first answer is not skipped', async () => {
-  await act(async () => { screen = create(React.createElement(EyeSightSession, { session: { players: [{ id: '1', displayName: 'Mehdi' }] } as any })); });
-  expect(screen.root.findAllByProps({ testID: 'game-start-guide' })).toHaveLength(0);
-  await press('eyesight-diff-easy');
+test('setup difficulty is honored after entry guide, no second chooser; wrong first answer is not skipped', async () => {
+  await act(async () => { screen = create(React.createElement(GameIntroGate, {gameId:'eye_sight', children:React.createElement(EyeSightSession, { session: { gameConfig:{difficulty:'easy'}, players: [{ id: '1', displayName: 'Mehdi' }] } as any })})); });
+  expect(screen.root.findAllByProps({ testID: 'eyesight-diff-easy' })).toHaveLength(0);
   await act(async () => jest.advanceTimersByTime(60000));
   expect(button('game-start-guide')).toBeDefined();
   expect(screen.root.findAllByType('AnimatedText')).toHaveLength(0);
@@ -85,6 +84,6 @@ test('difficulty precedes guide, no countdown behind it; wrong first answer is n
   await act(async () => screen.root.findByType('Complete').props.onReady());
   expect(screen.root.findByType('Scoreboard').props.entries[0].isSkipped).toBe(false);
   await act(async () => screen.root.findByType('Scoreboard').props.onPlayAgain());
-  expect(button('eyesight-diff-easy')).toBeDefined();
-  await press('eyesight-diff-easy'); expect(button('game-start-guide')).toBeDefined();
+  expect(screen.root.findAllByProps({testID:'eyesight-diff-easy'})).toHaveLength(0);
+  expect(screen.root.findByType('Ready').props.subtitle).toContain('Easy');
 });

@@ -194,7 +194,7 @@ export const Games: Record<string, GameType> = {
   },
   spinBottle: {
     id: 'spin_bottle',
-    name: 'Truth & Dare',
+    name: 'Truth or Dare',
     shortDescription: 'Spin the bottle, get picked, and pick Truth or Dare. Classic party energy.',
     minPlayers: 3,
     maxPlayers: 12,

@@ -1,3 +1,4 @@
+import { AudioManager } from '@/src/services/AudioManager';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { GameStartGuide } from './GameStartGuide';
@@ -153,7 +154,7 @@ export function PassGuessSession({ session }: Props) {
   };
 
   const handlePrivacyReady = () => {
-    Haptics.selectionAsync();
+    Haptics.selectionAsync(); AudioManager.play('buttonTap', 0.5);
     setShowPrivacyScreen(false);
     clearTimer();
     setTimer(answerTime);
@@ -188,7 +189,7 @@ export function PassGuessSession({ session }: Props) {
   const handleSubmitAnswer = (autoSkip = false) => {
     clearTimer();
     if (!autoSkip && !currentAnswer.trim()) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('match', 0.6);
     const text = currentAnswer.trim() || '(no answer)';
     setAnswers(prev => [...prev, { id: Math.random().toString(), playerID: currentPlayer.id, text }]);
     setCurrentAnswer('');
@@ -196,13 +197,13 @@ export function PassGuessSession({ session }: Props) {
   };
 
   const handleGuessAssign = (answerId: string, playerId: string) => {
-    Haptics.selectionAsync();
+    Haptics.selectionAsync(); AudioManager.play('buttonTap', 0.5);
     setCurrentGuesses(prev => ({ ...prev, [answerId]: playerId }));
   };
 
   const handleSubmitCurrentGuesses = () => {
     if (!allCurrentAnswersAssigned) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('match', 0.6);
 
     const guesser = currentPlayer;
     const updatedAllGuesses = { ...allPlayerGuesses, [guesser.id]: currentGuesses };
@@ -273,7 +274,7 @@ export function PassGuessSession({ session }: Props) {
         }
         accentColor={color}
         onReady={() => {
-          Haptics.selectionAsync();
+          Haptics.selectionAsync(); AudioManager.play('buttonTap', 0.5);
           setShowPrivacyScreen(false);
           if (!isGuessingPhase) {
             clearTimer();

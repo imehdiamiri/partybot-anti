@@ -48,7 +48,7 @@ export function SpinBottleSession({ session }: Props) {
 
   const { width: sw, height: sh } = useWindowDimensions();
   const circleSize = Math.min(Math.min(sw - 64, 400), sh - 280);
-  const radius = circleSize / 2 - 48;
+  const radius = circleSize / 2 - 30;
 
   const anglePerPlayer = 360 / players.length;
 
@@ -232,7 +232,7 @@ export function SpinBottleSession({ session }: Props) {
 
         {/* Bottle */}
         <Animated.View style={[{ alignItems: 'center', justifyContent: 'center' }, bottleStyle]} accessible accessibilityLabel="Spinning bottle">
-          <BeerBottleView width={circleSize * 0.38} />
+          <BeerBottleView width={circleSize * 0.20} />
         </Animated.View>
 
         {/* Restart */}

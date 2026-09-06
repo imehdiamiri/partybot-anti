@@ -49,11 +49,13 @@ interface GameHandoffViewProps {
   onReady: () => void;
   onSkip?: () => void;
   rolePillText?: string;
+  previousResult?: { name?: string; summary?: string };
+  finalTurn?: boolean;
 }
 
 export function GameHandoffView({
   playerName, title = "Pass the phone to", subtitle, accentColor = Colors.blue,
-  buttonTitle, onReady, onSkip, rolePillText = "NEXT PLAYER",
+  buttonTitle, onReady, onSkip, rolePillText = "NEXT PLAYER", previousResult, finalTurn = false,
 }: GameHandoffViewProps) {
   const insets = useSafeAreaInsets();
   const registerHandoff = useRegisterHandoffSkip();
@@ -66,13 +68,18 @@ export function GameHandoffView({
   }, [canSkip, playerName, registerHandoff]);
   return <ScrollView style={{ flex: 1, backgroundColor: '#08080F' }}
     contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20, paddingBottom: Math.max(20, insets.bottom + 12) }}>
+    {previousResult && <View testID="previous-player-result" style={{ width: '100%', maxWidth: 480, padding: 22, marginBottom: 16, borderRadius: 22, backgroundColor: '#14251F', borderWidth: 1, borderColor: '#355E4F', gap: 10 }}>
+      <Text style={{ color: '#B6C2D5', fontSize: 12, fontWeight: '700', letterSpacing: 1 }}>TURN RESULT</Text>
+      {!!previousResult.name && <Text style={{ color: '#68E8A8', fontSize: 26, fontWeight: '800' }}>{previousResult.name}</Text>}
+      <Text style={{ color: '#F3F6FB', fontSize: 19, lineHeight: 28 }}>{previousResult.summary || 'Turn complete'}</Text>
+    </View>}
     <View testID="handoff-card" style={{ width: '100%', maxWidth: 480, alignItems: 'center', padding: 24, borderRadius: 28, backgroundColor: '#171B26', borderWidth: 1, borderColor: '#303748', gap: 20 }}>
       <Text style={{ color: accentColor, fontSize: 12, fontWeight: '700', letterSpacing: 1.5 }}>{rolePillText}</Text>
-      <PhoneHandoffIllustration color={accentColor} />
-      <View style={{ width: '100%', gap: 8, alignItems: 'center' }}>
+      {!finalTurn && <PhoneHandoffIllustration color={accentColor} />}
+      {!finalTurn && <View style={{ width: '100%', gap: 8, alignItems: 'center' }}>
         <Text style={{ color: '#DCE3F0', fontSize: 22, fontWeight: '600', textAlign: 'center' }}>{title}</Text>
         <Text testID="handoff-player-name" style={{ color: '#68E8A8', fontSize: 40, fontWeight: '800', textAlign: 'center', width: '100%' }}>{playerName}</Text>
-      </View>
+      </View>}
       {subtitle && <Text style={{ color: '#B8C2D4', fontSize: 15, lineHeight: 22, textAlign: 'center' }}>{subtitle}</Text>}
       <Pressable testID="game-ready-button" accessibilityRole="button" onPress={onReady}
         style={({ pressed }) => ({ width: '100%', minHeight: 58, padding: 14, borderRadius: 16, backgroundColor: accentColor, opacity: pressed ? 0.8 : 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}>
@@ -206,14 +213,14 @@ interface GameResultsScreenProps {
 }
 
 export function GameResultsScreen({ players, results, onPlayAgain, title, badgeLabel = 'STANDINGS' }: GameResultsScreenProps) {
-  const completed = results.filter(r => !r.isSkipped && r.score > 0).sort((a, b) => b.score - a.score);
-  const skipped = results.filter(r => r.isSkipped || r.score === 0);
+  const completed = results.filter(r => !r.isSkipped).sort((a, b) => b.score - a.score);
+  const skipped = results.filter(r => r.isSkipped);
   const entries = [...completed, ...skipped].map(r => ({
     id: r.playerId,
     name: players.find(p => p.id === r.playerId)?.displayName || 'Player',
-    primary: r.isSkipped || r.score === 0 ? 'Skipped' : `${r.score} pts`,
+    primary: r.isSkipped ? 'Skipped' : `${r.score} pts`,
     secondary: r.stats.map(s => `${s.label}: ${s.value}`).join(' · '),
-    isSkipped: r.isSkipped || r.score === 0,
+    isSkipped: !!r.isSkipped,
   }));
   return <ScrollView style={{ flex: 1, backgroundColor: '#08080F' }}
     contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
@@ -264,6 +271,8 @@ export function GameOutcomeCard({ icon, label, sublabel, accentColor = Colors.gr
 interface GamePlayerCompleteViewProps {
   /** Name of the NEXT player */
   nextPlayerName: string;
+  prevPlayerName?: string;
+  finalTurn?: boolean;
   /** Brief result line for the PREVIOUS player, e.g. "Score: 240 · 3 hits" */
   prevResultLine?: string;
   onReady: () => void;
@@ -271,17 +280,18 @@ interface GamePlayerCompleteViewProps {
 }
 
 export function GamePlayerCompleteView({
-  nextPlayerName, prevResultLine, onReady, accentColor = Colors.orange,
+  nextPlayerName, prevPlayerName, prevResultLine, onReady, accentColor = Colors.orange, finalTurn = false,
 }: GamePlayerCompleteViewProps) {
   return (
     <GameHandoffView
       playerName={nextPlayerName}
       title="Pass the phone to"
-      subtitle={prevResultLine}
+      previousResult={{ name: prevPlayerName, summary: prevResultLine }}
+      finalTurn={finalTurn}
       accentColor={accentColor}
-      buttonTitle="I'm Ready"
+      buttonTitle={finalTurn ? 'See Final Results' : "I'm Ready"}
       onReady={onReady}
-      rolePillText="NEXT TURN"
+      rolePillText={finalTurn ? 'ALL TURNS COMPLETE' : 'NEXT TURN'}
     />
   );
 }

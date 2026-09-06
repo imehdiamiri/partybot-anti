@@ -1,5 +1,35 @@
 # Release log
 
+## 2026-09-07 — Turn summaries, setup difficulty and event sound refresh
+
+- Recovery baseline: `checkpoint/results-handoff-2026-09-07` (80ad4ec).
+- Shared player-complete screen now retains the prior player's named result ABOVE
+  the animated next-player handoff. Applied to Memory Grid/Path, Tap in Order,
+  Reaction Time, Eyesight, Drum and Color Trap. Games with existing detailed
+  comparison/result steps retain those instead of replacing them with generic data.
+- Color Trap summary includes score, hits, misses and forbidden taps; final player
+  also gets a persistent personal summary before final rankings.
+- Eyesight difficulty lives in Setup, persists in gameConfig, defaults safely to
+  Medium, and enters the shared instruction gate before ready. Replay keeps level.
+- Reaction Time explicitly says to tap the screen when it turns green.
+- Truth or Dare display name corrected; bottle reduced and name ring moved outward.
+- Wheel lasts 11 seconds with quartic ease-out and synchronized motion ticks.
+- Bottle tick is now original synthesized glass-friction Foley, not a ringing beep.
+- Rebuilt 14 short game-event WAVs; same PCM synthesis runs on web. Fixed web
+  AudioManager no-op, added quiet flip/match/error cues to Memory Grid and event
+  feedback to Color Trap, memory/tapping/reaction/social games. Common effects
+  respect mute, throttle rapid duplicates, and stop when browser is hidden.
+  Core Sound Match tones, reverse recordings and Drum musical timing unchanged.
+- Checks: tsc passed; Jest 27 suites / 223 tests passed; 91-route export and sync
+  passed. Firebase Hosting-only publish confirmed, https://partybot.games.
+  Final bundle: entry-0d721a91c06ae3398a7d46b8cd5b317e.js (zero-score correction).
+- Live Eyesight smoke confirms Hard selected in Setup survives instruction gate,
+  with no in-session difficulty chooser. Color Trap's completed turn at 390x844
+  shows named result with hits/misses/mistakes above next-player handoff; no
+  captured console errors. Zero-point completed scores are no longer mislabeled
+  as skipped by the common result adapter. Physical-device audio not yet heard.
+- No new native dependencies, no Metro/LAN server, no remote Git push.
+
 ## 2026-09-07 — Animated handoff, unified results and drum feedback
 
 - Recovery baseline: `checkpoint/before-results-handoff-2026-09-06`.

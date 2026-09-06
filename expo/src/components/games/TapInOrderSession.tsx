@@ -1,3 +1,4 @@
+import { AudioManager } from '@/src/services/AudioManager';
 import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -241,7 +242,7 @@ export function TapInOrderSession({ session }: Props) {
   };
 
   const handleStart = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('match', 0.6);
     generateBoard();
     setPhase('preview');
   };
@@ -283,7 +284,7 @@ export function TapInOrderSession({ session }: Props) {
       }
     } else {
       // Wrong
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); AudioManager.play('wrong', 0.5);
       setMultiMissTaps(prev => prev + 1);
       setMultiWrongFlash(cellIndex);
       setTimeout(() => setMultiWrongFlash(null), 300);
@@ -330,7 +331,7 @@ export function TapInOrderSession({ session }: Props) {
       }
     } else {
       // Wrong
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); AudioManager.play('wrong', 0.5);
       setMissTaps(prev => prev + 1);
       setWrongFlash(cellIndex);
       setTimeout(() => setWrongFlash(null), 300);
@@ -661,6 +662,7 @@ export function TapInOrderSession({ session }: Props) {
     const lastResult = results[results.length - 1];
     return (
       <GamePlayerCompleteView
+        prevPlayerName={players[playerIndex]?.displayName}
         nextPlayerName={players[playerIndex + 1]?.displayName || 'Next Player'}
         prevResultLine={lastResult ? `${lastResult.correctCount}/${lastResult.totalTargets} correct · ${lastResult.missTaps} mistakes · ${(lastResult.timeMs / 1000).toFixed(1)}s` : undefined}
         onReady={() => { setPlayerIndex(i => i + 1); handleStart(); }}

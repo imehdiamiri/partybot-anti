@@ -558,6 +558,7 @@ export function DrumChallengeSession({ session }: Props) {
     const isLast = playerIdx + 1 >= players.length;
     return (
       <GamePlayerCompleteView
+        prevPlayerName={player?.displayName}
         nextPlayerName={isLast ? '' : (players[playerIdx + 1]?.displayName ?? 'Next Player')}
         prevResultLine={best != null ? `Best: ${best}ms · ${ATTEMPTS_PER_PLAYER} attempts` : `${ATTEMPTS_PER_PLAYER} attempts done`}
         onReady={goToNextPlayer}

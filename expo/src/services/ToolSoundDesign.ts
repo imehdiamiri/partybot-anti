@@ -27,7 +27,13 @@ export function synthesizeToolCue(kind: ToolKind, cue: ToolCue): Float32Array {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
     const noise = seed / 0xffffffff * 2 - 1;
     let value = 0;
-    if (cue === 'tick') {
+    if (kind === 'bottle' && cue === 'tick') {
+      // A textured glass-on-table scrape, not a pitched electronic beep.
+      const env = Math.min(1, t / 0.012) * Math.exp(-t / 0.045);
+      const friction = noise * (0.5 + 0.22 * Math.sin(2 * Math.PI * 53 * t));
+      const glass = Math.sin(2 * Math.PI * 1830 * t) * 0.10 + Math.sin(2 * Math.PI * 2940 * t) * 0.05;
+      value = env * (friction + glass);
+    } else if (cue === 'tick') {
       const envelope = Math.min(1, t / 0.002) * Math.exp(-t / voice.decay);
       const fundamental = Math.sin(2 * Math.PI * voice.hz * t);
       const partial = Math.sin(2 * Math.PI * voice.hz * voice.overtone * t);

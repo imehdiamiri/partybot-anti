@@ -1,5 +1,6 @@
 import { METRONOME_RHYTHMS, MetronomeRhythm } from '@/src/utils/metronomeChallenge';
 import { Colors } from '@/src/theme/Colors';
+import { DIFFICULTIES } from '@/src/constants/EyeSightDifficulty';
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -80,6 +81,7 @@ export default function GameSetupScreen() {
   );
   const [showDuplicateError, setShowDuplicateError] = useState(false);
   const [roundCount, setRoundCount] = useState(1);
+  const [eyeDifficulty, setEyeDifficulty] = useState('medium');
 
   // Games that have rounds (not grid/special games)
   const needsRounds = !['reverse_singing', 'memory_grid', 'memory_path', 'tap_in_order', 'ten_tangle', 'color_trap', 'spin_bottle', 'draw_rush', 'reaction_time', 'eye_sight', 'drum_challenge'].includes(id || '');
@@ -132,6 +134,7 @@ export default function GameSetupScreen() {
       setPlayerNames(namesToRestore);
     }
     if (!saved) return;
+    if (id === 'eye_sight' && DIFFICULTIES.some(d => d.id === saved.difficulty)) setEyeDifficulty(saved.difficulty);
     if (id === 'memory_grid' && saved.gridSize) setMgGridSize(saved.gridSize);
     if (id === 'memory_path') {
       if (saved.gameMode) setMpGameMode(saved.gameMode);
@@ -223,6 +226,8 @@ export default function GameSetupScreen() {
     // Build game-specific config
     let config: Record<string, any> = {};
     switch (id) {
+      case 'eye_sight':
+        config = { difficulty: eyeDifficulty }; break;
       case 'memory_grid':
         config = { gridSize: mgGridSize }; break;
       case 'memory_path':
@@ -577,6 +582,18 @@ export default function GameSetupScreen() {
           </View>
         )}
 
+        {id === 'eye_sight' && <View style={st.card}>
+          <Text style={[st.cardTitle, { color: '#5AC8FA' }]}>Difficulty</Text>
+          <View style={{ gap: 10, marginTop: 12 }}>
+            {DIFFICULTIES.map(d => <TouchableOpacity key={d.id} testID={`eyesight-diff-${d.id}`}
+              accessibilityRole="button" accessibilityState={{ selected: eyeDifficulty === d.id }}
+              onPress={() => setEyeDifficulty(d.id)}
+              style={[st.optionChip, { width: '100%', minHeight: 64 }, eyeDifficulty === d.id && { borderColor: '#5AC8FA', backgroundColor: '#17313F' }]}>
+              <Text style={st.optionChipTitle}>{d.name}</Text>
+              <Text style={st.optionChipSub}>{d.description}</Text>
+            </TouchableOpacity>)}
+          </View>
+        </View>}
         {/* ══════════ COLOR TRAP: Difficulty ══════════ */}
         {id === 'color_trap' && (
           <View style={st.card}>

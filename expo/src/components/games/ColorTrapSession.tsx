@@ -1,5 +1,6 @@
 import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
+import { AudioManager } from '@/src/services/AudioManager';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing, runOnJS } from 'react-native-reanimated';
@@ -283,8 +284,7 @@ export function ColorTrapSession({ session }: Props) {
     setResults(prev => [...prev, {
       playerId: players[turnIndex].id, hits: h, misses: mi, mistakes: mk, score,
     }]);
-    if (turnIndex + 1 >= players.length) setPhase('results');
-    else setPhase('playerComplete');
+    setPhase('playerComplete');
   }, [players]);
 
   const handleTap = (tileId: number) => {
@@ -297,11 +297,13 @@ export function ColorTrapSession({ session }: Props) {
       // Wrong! Tapped the forbidden color → mistake
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       mistakesRef.current++;
+      AudioManager.play('wrong');
       setMistakes(mistakesRef.current);
     } else {
       // Correct!
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       hitsRef.current++;
+      AudioManager.play('scoreUp', 0.6);
       setHits(hitsRef.current);
     }
 
@@ -324,8 +326,7 @@ export function ColorTrapSession({ session }: Props) {
         setResults(prev => [...prev, {
           playerId: player.id, hits: 0, misses: 0, mistakes: 0, score: 0,
         }]);
-        if (playerIdx + 1 >= players.length) setPhase('results');
-        else setPhase('playerComplete');
+        setPhase('playerComplete');
       }, player?.displayName);
     } else {
       registerSkip(null);
@@ -489,9 +490,11 @@ export function ColorTrapSession({ session }: Props) {
     const nextPlayer = players[playerIdx + 1];
     return (
       <GamePlayerCompleteView
+        prevPlayerName={player?.displayName}
         nextPlayerName={nextPlayer?.displayName || 'Next Player'}
-        prevResultLine={`Score: ${last?.score} · ${last?.hits} hits`}
-        onReady={() => startGame(playerIdx + 1, Math.floor(Math.random() * 5))}
+        prevResultLine={`${last?.score ?? 0} points\n${last?.hits ?? 0} correct hits · ${last?.misses ?? 0} missed\n${last?.mistakes ?? 0} forbidden-color taps`}
+        finalTurn={!nextPlayer}
+        onReady={() => nextPlayer ? startGame(playerIdx + 1, Math.floor(Math.random() * 5)) : setPhase('results')}
         accentColor={PALETTE[forbiddenIdx]}
       />
     );

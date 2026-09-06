@@ -1,3 +1,4 @@
+import { AudioManager } from '@/src/services/AudioManager';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { ImposterWordTranslation } from './ImposterWordTranslation';
 import { Colors } from '@/src/theme/Colors';
@@ -119,7 +120,7 @@ export function ImposterSession({ session }: Props) {
   };
 
   const handleGotIt = () => {
-    Haptics.selectionAsync();
+    Haptics.selectionAsync(); AudioManager.play('buttonTap', 0.5);
     setIsRoleRevealed(false);
     if (activePlayerIndex + 1 < roundPlayers.length) {
       setActivePlayerIndex(prev => prev + 1);
@@ -129,7 +130,7 @@ export function ImposterSession({ session }: Props) {
   };
 
   const handleStartDiscussion = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('match', 0.6);
     if (gameStyle === 'clue') {
       const clueOrder = [...roundPlayers];
       for (let i = clueOrder.length - 1; i > 0; i--) {
@@ -196,7 +197,7 @@ export function ImposterSession({ session }: Props) {
   };
 
   const nextPhase = () => {
-    Haptics.selectionAsync();
+    Haptics.selectionAsync(); AudioManager.play('buttonTap', 0.5);
     if (phase === 'results') {
       setPhase('leaderboard');
     } else if (phase === 'leaderboard') {

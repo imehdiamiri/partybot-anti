@@ -1,5 +1,6 @@
 import { SecondaryPlayerLabel, useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
+import { AudioManager } from '@/src/services/AudioManager';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Extrapolation } from 'react-native-reanimated';
@@ -257,6 +258,7 @@ function MemoryGridMultiplayerSession({ session }: Props) {
     }
 
     Haptics.selectionAsync();
+    AudioManager.play('tileFlip', 0.65);
 
     const newTiles = [...multiTiles];
     newTiles[index] = { ...newTiles[index], isFlipped: true };
@@ -269,6 +271,7 @@ function MemoryGridMultiplayerSession({ session }: Props) {
       if (newTiles[multiFirstFlippedIndex].pairId === newTiles[index].pairId) {
         // Match!
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AudioManager.play('match', 0.65);
         const matched = [...newTiles];
         matched[multiFirstFlippedIndex] = { ...matched[multiFirstFlippedIndex], isMatched: true };
         matched[index] = { ...matched[index], isMatched: true };
@@ -285,6 +288,7 @@ function MemoryGridMultiplayerSession({ session }: Props) {
             mismatchTimeoutRef.current = null;
           }
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AudioManager.play('match', 0.65);
           const now = getServerNow();
           const rawElapsedMs = Math.max(1, Math.round(now - compRound.roundState.scheduledStartAt));
           compRound.submitResult({
@@ -307,6 +311,7 @@ function MemoryGridMultiplayerSession({ session }: Props) {
         setMultiFirstFlippedIndex(null);
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    AudioManager.play('wrong', 0.45);
         mismatchTimeoutRef.current = setTimeout(() => {
           setMultiTiles(prev => {
             const t = [...prev];
@@ -631,6 +636,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
   const handleStart = (targetPlayerIdx?: number) => {
     if (mismatchTimer.current) clearTimeout(mismatchTimer.current);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AudioManager.play('match', 0.65);
     const board = generateSingleDeviceBoard();
     const nextIdx = targetPlayerIdx !== undefined ? targetPlayerIdx : boardState.currentPlayerIndex;
 
@@ -652,6 +658,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
     if (tiles[index].isFlipped || tiles[index].isMatched) return;
 
     Haptics.selectionAsync();
+    AudioManager.play('tileFlip', 0.65);
 
     const newTiles = [...tiles];
     newTiles[index] = { ...newTiles[index], isFlipped: true };
@@ -663,6 +670,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
 
       if (newTiles[firstFlippedIndex].pairId === newTiles[index].pairId) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AudioManager.play('match', 0.65);
         const matched = [...newTiles];
         matched[firstFlippedIndex] = { ...matched[firstFlippedIndex], isMatched: true };
         matched[index] = { ...matched[index], isMatched: true };
@@ -692,6 +700,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
         }));
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    AudioManager.play('wrong', 0.45);
         mismatchTimer.current = setTimeout(() => {
           setBoardState(prev => {
             const t = [...prev.tiles];
@@ -709,6 +718,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
   const handlePlayerComplete = (finalMoveCount: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AudioManager.play('match', 0.65);
 
     setPlayerTimes(prev => [...prev, {
       playerId: currentPlayer.id,
@@ -858,6 +868,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
     const lastResult = playerTimes[playerTimes.length - 1];
     return (
       <GamePlayerCompleteView
+        prevPlayerName={players[currentPlayerIndex]?.displayName}
         nextPlayerName={players[currentPlayerIndex + 1]?.displayName || 'Next Player'}
         prevResultLine={lastResult && !lastResult.isSkipped && lastResult.elapsedSeconds > 0 ? `${formatTime(lastResult.elapsedSeconds)} · ${lastResult.moveCount} moves` : 'Skipped turn'}
         onReady={handleNextPlayer}

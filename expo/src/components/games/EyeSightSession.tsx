@@ -1,7 +1,6 @@
 import { useGameActivity, GAME_UI } from './GameActivity';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions, Platform } from 'react-native';
-import { GameStartGuide } from './GameStartGuide';
 import { compareEyeSightDigits, EyeSightAttempt } from '@/src/utils/eyeSightFeedback';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { Colors, Typography } from '@/src/theme/Colors';
@@ -18,8 +17,6 @@ import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 interface Props { session: GameSession; }
 
 type Phase =
-  | 'difficulty'
-  | 'guide'
   | 'ready'
   | 'countdown'
   | 'flash'
@@ -40,75 +37,7 @@ interface PlayerRecord {
 const ACCENT = '#5AC8FA';
 const NUMBER_FONT = Platform.OS === 'ios' ? 'Menlo' : Platform.OS === 'android' ? 'monospace' : 'ui-monospace, SFMono-Regular, Consolas, monospace';
 
-type DifficultyId = 'easy' | 'medium' | 'hard' | 'expert';
-
-interface DifficultyDef {
-  id: DifficultyId;
-  name: string;
-  emoji: string;
-  description: string;
-  baseDigits: number;
-  baseMs: number;
-  /** Step (digits added every X rounds). Higher = faster ramp. */
-  digitsPerStep: number;
-  /** Ms shaved off per round. */
-  msStep: number;
-  /** Floor for display ms. */
-  minMs: number;
-  /** Cap for digit count. */
-  maxDigits: number;
-}
-
-const DIFFICULTIES: DifficultyDef[] = [
-  {
-    id: 'easy',
-    name: 'Easy',
-    emoji: '🌱',
-    description: '3 digits · 1.4s flash · gentle ramp',
-    baseDigits: 3,
-    baseMs: 1400,
-    digitsPerStep: 3,
-    msStep: 60,
-    minMs: 700,
-    maxDigits: 7,
-  },
-  {
-    id: 'medium',
-    name: 'Medium',
-    emoji: '⚡',
-    description: '3 digits · 1.0s flash · steady ramp',
-    baseDigits: 3,
-    baseMs: 1000,
-    digitsPerStep: 2,
-    msStep: 70,
-    minMs: 500,
-    maxDigits: 8,
-  },
-  {
-    id: 'hard',
-    name: 'Hard',
-    emoji: '🔥',
-    description: '4 digits · 0.7s flash · fast ramp',
-    baseDigits: 4,
-    baseMs: 700,
-    digitsPerStep: 2,
-    msStep: 60,
-    minMs: 350,
-    maxDigits: 9,
-  },
-  {
-    id: 'expert',
-    name: 'Expert',
-    emoji: '👁️',
-    description: '5 digits · 0.45s flash · brutal',
-    baseDigits: 5,
-    baseMs: 450,
-    digitsPerStep: 2,
-    msStep: 50,
-    minMs: 220,
-    maxDigits: 10,
-  },
-];
+import { DIFFICULTIES, DifficultyDef } from '@/src/constants/EyeSightDifficulty';
 
 function roundConfig(def: DifficultyDef, round: number): { digits: number; ms: number } {
   const digits = Math.min(def.maxDigits, def.baseDigits + Math.floor((round - 1) / def.digitsPerStep));
@@ -129,8 +58,8 @@ export function EyeSightSession({ session }: Props) {
   const players = session.players;
   const registerSkip = useRegisterSkip();
   const { width: screenWidth } = useWindowDimensions();
-  const [phase, setPhase] = useState<Phase>('difficulty');
-  const [difficulty, setDifficulty] = useState<DifficultyDef>(DIFFICULTIES[1]!);
+  const [phase, setPhase] = useState<Phase>('ready');
+  const difficulty = DIFFICULTIES.find(d => d.id === session.gameConfig?.difficulty) || DIFFICULTIES[1]!;
   const [playerIdx, setPlayerIdx] = useState<number>(0);
   useGameActivity(players[playerIdx]?.displayName, phase);
   const [round, setRound] = useState<number>(1);
@@ -294,14 +223,7 @@ export function EyeSightSession({ session }: Props) {
     setRound(1);
     setInput('');
     setTarget('');
-    setPhase('difficulty');
-  };
-
-  const onPickDifficulty = (def: DifficultyDef) => {
-    Haptics.selectionAsync();
-    AudioManager.play('buttonTap');
-    setDifficulty(def);
-    setPhase('guide');
+    setPhase('ready');
   };
 
   const handlePadPress = useCallback((digit: string) => {
@@ -320,49 +242,6 @@ export function EyeSightSession({ session }: Props) {
     opacity: flashOpacity.value,
     transform: [{ scale: flashScale.value }],
   }));
-
-  // ─── DIFFICULTY ───
-  if (phase === 'difficulty') {
-    return (
-      <PhaseTransition phaseKey={phase} style={st.container}>
-        <ScrollView contentContainerStyle={st.readyContent}>
-          <View style={[st.iconBox, { backgroundColor: ACCENT + '26' }]}>
-            <IconSymbol name="eye.fill" size={56} color={ACCENT} />
-          </View>
-          <Text style={st.eyebrow}>EYE SIGHT</Text>
-          <Text style={st.title}>Choose your difficulty</Text>
-          <Text style={st.sub}>Higher levels show numbers for less time and ramp up faster.</Text>
-
-          <View style={st.diffList}>
-            {DIFFICULTIES.map((def) => {
-              const selected = def.id === difficulty.id;
-              return (
-                <Pressable
-                  key={def.id}
-                  testID={`eyesight-diff-${def.id}`}
-                  accessibilityRole="button"
-                  onPress={() => onPickDifficulty(def)}
-                  style={[
-                    st.diffCard,
-                    selected && { borderColor: ACCENT, backgroundColor: ACCENT + '14' },
-                  ]}
-                >
-                  <Text style={st.diffEmoji}>{def.emoji}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={st.diffName}>{def.name}</Text>
-                    <Text style={st.diffDesc}>{def.description}</Text>
-                  </View>
-                  <IconSymbol name="chevron.right" size={18} color="rgba(255,255,255,0.5)" />
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
-      </PhaseTransition>
-    );
-  }
-
-  if (phase === 'guide') return <GameStartGuide gameId="eye_sight" onStart={() => setPhase('ready')} />;
 
   // ─── READY ───
   if (phase === 'ready') {
@@ -512,6 +391,7 @@ export function EyeSightSession({ session }: Props) {
     const isLast = playerIdx + 1 >= players.length;
     return (
       <GamePlayerCompleteView
+        prevPlayerName={player?.displayName}
         nextPlayerName={isLast ? '' : (players[playerIdx + 1]?.displayName ?? 'Next Player')}
         prevResultLine={`Best round: ${rec?.bestRound ?? 0} · Top digits: ${rec?.bestDigits ?? 0}`}
         onReady={goToNextPlayer}

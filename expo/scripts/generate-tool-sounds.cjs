@@ -24,3 +24,12 @@ for (const kind of TOOL_KINDS) for (const cue of ['tick', 'end']) {
   fs.writeFileSync(path.join(outputDir, `${kind}-${cue}.wav`), pcm16ToWav([pcm], TOOL_SAMPLE_RATE, 1));
 }
 console.log('Generated 12 original tool effects.');
+const { GAME_SOUND_FILES, GAME_SAMPLE_RATE, synthesizeGameCue } = loadTs('../src/services/GameSoundDesign.ts');
+for (const [id, filename] of Object.entries(GAME_SOUND_FILES)) {
+  const samples = synthesizeGameCue(id);
+  const pcm = new Uint8Array(samples.length * 2);
+  const view = new DataView(pcm.buffer);
+  samples.forEach((sample, index) => view.setInt16(index * 2, Math.round(sample * 32767), true));
+  fs.writeFileSync(path.join(outputDir, '..', filename + '.wav'), pcm16ToWav([pcm], GAME_SAMPLE_RATE, 1));
+}
+console.log('Generated 14 original game event effects.');

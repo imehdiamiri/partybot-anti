@@ -71,7 +71,7 @@ export const GAME_HINTS: Record<string, { icon: string; title: string; tip: stri
   },
   spin_bottle: {
     icon: 'arrow.trianglehead.2.counterclockwise.rotate.90',
-    title: 'Truth & Dare',
+    title: 'Truth or Dare',
     tip: 'Spin the bottle to select a player. | Choose Truth or Dare and read the prompt. | Complete it, or use an available reroll, then spin again.',
     accent: '#FF2D55',
   },

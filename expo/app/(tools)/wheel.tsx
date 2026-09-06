@@ -172,12 +172,12 @@ export default function WheelToolScreen() {
     setWinner(null);
     setIsSpinning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    toolAudio.begin(6200);
+    toolAudio.begin(11000);
 
     cancelAnimation(rotation);
 
     // One easing curve drives both rotation and the actual pointer-detent ticks.
-    const totalDuration = 6200;
+    const totalDuration = 11000;
     const totalTurns = 8 + Math.random() * 3; // 8..11 full rotations across the spin
     const extraAngle = Math.random() * 360; // random landing offset
     const finalTarget = rotation.value + totalTurns * 360 + extraAngle;
@@ -187,7 +187,7 @@ export default function WheelToolScreen() {
       finalTarget,
       {
         duration: totalDuration,
-        easing: Easing.out(Easing.cubic),
+        easing: Easing.out(Easing.poly(4)),
       },
       (finished) => {
         if (finished) {

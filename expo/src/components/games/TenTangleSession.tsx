@@ -1,3 +1,4 @@
+import { AudioManager } from '@/src/services/AudioManager';
 import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useCallback, useRef } from 'react';
@@ -129,7 +130,7 @@ export function TenTangleSession({ session }: Props) {
   };
 
   const handleSubmitGuesses = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('match', 0.6);
     let pts = 0;
     nonGuessers.forEach(p => { if (guesses[p.id] === assignedNumbers[p.id]) pts++; });
     setScores(prev => ({ ...prev, [guesser.id]: (prev[guesser.id] || 0) + pts }));
@@ -251,7 +252,7 @@ export function TenTangleSession({ session }: Props) {
                         key={n} 
                         testID={`ten-tangle-num-${p.id}-${n}`}
                         accessibilityRole="button"
-                        onPress={() => { Haptics.selectionAsync(); setGuesses(prev => ({ ...prev, [p.id]: n })); }}
+                        onPress={() => { Haptics.selectionAsync(); AudioManager.play('buttonTap', 0.5); setGuesses(prev => ({ ...prev, [p.id]: n })); }}
                         style={[st.numBtn, sel && { backgroundColor: Colors.orange, borderColor: Colors.orange }]}>
                         <Text style={[st.numBtnTx, sel && { color: '#fff' }]}>{n}</Text>
                       </Pressable>

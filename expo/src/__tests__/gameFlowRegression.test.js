@@ -8,6 +8,7 @@ jest.mock('@/src/components/games/PhaseTransition',()=>({PhaseTransition:'Phase'
 jest.mock('@/src/components/games/SharedGameComponents',()=>({GamePassPhoneView:'Ready',GamePlayerCompleteView:'Complete',GameResultsScreen:'Results',playSharedSound:()=>{}}));
 jest.mock('@/src/contexts/GameSkipContext',()=>({useRegisterSkip:()=>()=>{}}));
 jest.mock('@/src/utils/safeHaptics',()=>({notificationAsync:()=>{},impactAsync:()=>{},selectionAsync:()=>{},NotificationFeedbackType:{},ImpactFeedbackStyle:{}}));
+jest.mock('@/src/services/AudioManager',()=>({AudioManager:{play:jest.fn()}}));
 const {ColorTrapSession}=require('@/src/components/games/ColorTrapSession');
 jest.mock('@/src/services/GameAudio',()=>({Audio:{}}));
 jest.mock('@/src/components/games/ResultsScoreboard',()=>({ResultsScoreboard:'Scoreboard'}));
@@ -85,6 +86,10 @@ test('Color Trap completes both players and shows final results',async()=>{
  expect(screen.root.findByType('Complete').props.nextPlayerName).toBe('Bob');
  await act(async()=>screen.root.findByType('Complete').props.onReady());
  await act(async()=>jest.advanceTimersByTime(21000));
+ expect(screen.root.findByType('Complete').props.finalTurn).toBe(true);
+ expect(screen.root.findByType('Complete').props.prevPlayerName).toBe('Bob');
+ expect(screen.root.findByType('Complete').props.prevResultLine).toContain('forbidden-color taps');
+ await act(async()=>screen.root.findByType('Complete').props.onReady());
  expect(screen.root.findAllByType('Complete')).toHaveLength(0);
  expect(screen.root.findAllByType('Results')).toHaveLength(1);
  await act(async()=>screen.unmount());

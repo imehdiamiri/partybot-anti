@@ -1,3 +1,4 @@
+import { AudioManager } from '@/src/services/AudioManager';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
@@ -164,7 +165,7 @@ export function ReactionTimeSession({ session }: Props) {
 
     if (now < goAtTimestamp) {
       // Foul — tapped before green
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); AudioManager.play('wrong', 0.5);
       setMultiRecordedMs(null);
       setMultiSubPhase('foul');
       compRound.submitResult({
@@ -178,7 +179,7 @@ export function ReactionTimeSession({ session }: Props) {
 
     // Valid tap on green
     const reactionMs = Math.max(1, Math.round(now - goAtTimestamp));
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('match', 0.6);
     setMultiRecordedMs(reactionMs);
     setMultiSubPhase('tapped');
     compRound.submitResult({
@@ -198,7 +199,7 @@ export function ReactionTimeSession({ session }: Props) {
       if (timerRef.current) clearTimeout(timerRef.current);
       cancelAnimation(pulse);
       pulse.value = withTiming(1, { duration: 100 });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); AudioManager.play('wrong', 0.5);
       recordAttempt(null);
       setLastMs(null);
       setPhase('foul');
@@ -206,7 +207,7 @@ export function ReactionTimeSession({ session }: Props) {
     }
     if (phase === 'go') {
       const ms = Math.round(performance.now() - goAtRef.current);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('match', 0.6);
       recordAttempt(ms);
       setLastMs(ms);
       setPhase('tapped');
@@ -292,7 +293,7 @@ export function ReactionTimeSession({ session }: Props) {
         return (
           <Pressable style={[st.fullPress, { backgroundColor: Colors.red }]} onPress={handleMultiScreenPress}>
             <Animated.View style={[st.fullCenter, pulseStyle]} pointerEvents="none">
-              <Text style={st.waitText}>Wait for green</Text>
+              <Text style={st.waitText}>Tap the screen when it turns green</Text>
             </Animated.View>
             <View style={st.attemptBadge}>
               <Text style={st.attemptBadgeTx}>Multiplayer · 1 Attempt</Text>
@@ -416,7 +417,7 @@ export function ReactionTimeSession({ session }: Props) {
     return (
       <Pressable testID="reaction-time-press" style={[st.fullPress, { backgroundColor: Colors.red }]} onPress={handleScreenPress}>
         <Animated.View style={[st.fullCenter, pulseStyle]} pointerEvents="none">
-          <Text style={st.waitText}>Wait for green</Text>
+          <Text style={st.waitText}>Tap the screen when it turns green</Text>
         </Animated.View>
         <View style={st.attemptBadge}>
           <Text style={st.attemptBadgeTx}>Attempt {attemptIdx + 1} / {ATTEMPTS_PER_PLAYER}</Text>
@@ -485,6 +486,7 @@ export function ReactionTimeSession({ session }: Props) {
     const isLast = playerIdx + 1 >= players.length;
     return (
       <GamePlayerCompleteView
+        prevPlayerName={player?.displayName}
         nextPlayerName={isLast ? '' : (players[playerIdx + 1]?.displayName ?? 'Next Player')}
         prevResultLine={best != null ? `Best: ${best}ms · ${ATTEMPTS_PER_PLAYER} attempts` : `${ATTEMPTS_PER_PLAYER} attempts done`}
         onReady={goToNextPlayer}

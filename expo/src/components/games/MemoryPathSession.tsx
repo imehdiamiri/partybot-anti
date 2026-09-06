@@ -1,3 +1,4 @@
+import { AudioManager } from '@/src/services/AudioManager';
 import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef } from 'react';
@@ -198,7 +199,7 @@ export function MemoryPathSession({ session }: Props) {
     cancelPending();
     finishing.current = false;
     setIsAnimating(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('scoreUp', 0.6);
     initBoard();
     setPhase('countdown');
     later(() => setPhase('playing'), 1500);
@@ -245,7 +246,7 @@ export function MemoryPathSession({ session }: Props) {
         registerSkip(null);
         // Complete!
         if (timerRef.current) clearInterval(timerRef.current);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); AudioManager.play('scoreUp', 0.6);
         
         setIsAnimating(true);
         // Keep path tiles visible (correct state), blink each one-by-one
@@ -277,7 +278,7 @@ export function MemoryPathSession({ session }: Props) {
       }
     } else {
       // Wrong
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); AudioManager.play('wrong', 0.5);
       setAttempts(prev => prev + 1);
       setWrongTile(`${row},${col}`);
       const newStates = tileStates.map(r => [...r]);
@@ -433,6 +434,7 @@ export function MemoryPathSession({ session }: Props) {
   if (phase === 'playerComplete') {
     return (
       <GamePlayerCompleteView
+        prevPlayerName={players[playerIndex]?.displayName}
         nextPlayerName={players[playerIndex + 1]?.displayName || 'Next Player'}
         prevResultLine={`Completed in ${formatTime(elapsed)}`}
         onReady={() => { setPlayerIndex(i => i+1); handleStart(); }}
