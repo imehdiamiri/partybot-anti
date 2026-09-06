@@ -763,7 +763,7 @@ export function ReverseSingingSession({ session }: Props) {
             <Text style={styles.cardSubtitle} numberOfLines={1}>Copy the reversed sound</Text>
           </View>
           <View style={[styles.statusPill, p2Recording ? styles.statusRecording : p2Uri ? styles.statusDone : styles.statusActive]}>
-            <Text style={styles.statusText}>{p2Recording ? 'Recording' : p2Uri ? 'Done' : p2Ready ? 'Your turn' : 'Waiting'}</Text>
+            <Text style={styles.statusText}>{p2Recording ? 'Recording' : p2Uri ? 'Done' : p2Ready ? 'Ready to record' : 'Waiting'}</Text>
           </View>
         </View>
 

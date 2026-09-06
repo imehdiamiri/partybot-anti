@@ -30,8 +30,8 @@ export function SecondaryPlayerLabel({ name, children }: { name?: string; childr
 
 export function activityLabel(phase: string): string | null {
   if (['intro', 'difficulty', 'guide', 'loading', 'results', 'finalResults', 'finished', 'leaderboard', 'scoreboard', 'idle', 'spinning'].includes(phase)) return null;
-  if (['ready', 'passToPlayer', 'guesserAnnounce', 'countdown'].includes(phase)) return 'UP NEXT';
-  if (['roundResult', 'roundReveal', 'playerComplete', 'result', 'outcome', 'correct', 'wrong', 'tapped', 'foul', 'complete'].includes(phase)) return 'TURN RESULT';
+  if (['ready', 'passToPlayer', 'guesserAnnounce', 'countdown', 'handoff'].includes(phase)) return null;
+  if (['roundResult', 'roundReveal', 'playerComplete', 'result', 'outcome', 'correct', 'wrong', 'tapped', 'foul', 'complete'].includes(phase)) return null;
   if (phase === 'discussion') return 'DISCUSSING';
   if (phase === 'voting') return 'VOTING';
   return 'NOW PLAYING';
@@ -42,7 +42,7 @@ export function GameActivityBanner() {
   const [opacity] = useState(() => new Animated.Value(1));
   const [reduceMotion, setReduceMotion] = useState(true);
   const label = activity ? activityLabel(activity.phase) : null;
-  const active = !!label && !['UP NEXT', 'TURN RESULT'].includes(label);
+  const active = !!label;
   useEffect(() => {
     let mounted = true;
     AccessibilityInfo.isReduceMotionEnabled().then(value => { if (mounted) setReduceMotion(value); });
@@ -60,7 +60,7 @@ export function GameActivityBanner() {
     return () => animation.stop();
   }, [active, reduceMotion, opacity]);
   if (!activity || !label) return null;
-  const color = active ? '#68E8A8' : label === 'UP NEXT' ? '#FFD38A' : '#BAC5D6';
+  const color = '#68E8A8';
   return <View testID="game-active-player" accessibilityLiveRegion="polite" style={s.banner}>
     <Animated.View style={[s.dot, { opacity, backgroundColor: color }]} />
     <Text style={[s.label, { color }]}>{label}</Text>
@@ -76,5 +76,5 @@ const s = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 36, paddingHorizontal: 12, marginTop: 6, borderRadius: 12, backgroundColor: '#10261F', borderWidth: 1, borderColor: '#244638' },
   dot: { width: 7, height: 7, borderRadius: 4 },
   label: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
-  name: { flex: 1, color: '#F1FFF7', fontSize: 15, fontWeight: '800' },
+  name: { flex: 1, color: '#68E8A8', fontSize: 20, fontWeight: '800' },
 });

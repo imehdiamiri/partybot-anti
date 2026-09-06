@@ -1,4 +1,4 @@
-import { useGameActivity, GAME_UI } from './GameActivity';
+import { SecondaryPlayerLabel, useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { GameStartGuide } from './GameStartGuide';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -331,11 +331,11 @@ export function GuessTheSecondsSession({ session }: Props) {
             {isFinished ? 'All rounds complete' : `Round ${currentRoundNumber} / ${roundsPerPlayer}`}
           </Text>
           {currentPlayer && !isFinished && (
-            <PhaseTransition phaseKey={currentPlayer.id} type="scale">
+            <SecondaryPlayerLabel name={currentPlayer.displayName}><PhaseTransition phaseKey={currentPlayer.id} type="scale">
               <View style={styles.nowPlayingBadge}>
-                <Text style={styles.nowPlayingText}>Your turn</Text>
+                <Text style={[styles.nowPlayingText, { fontSize: 22, color: '#68E8A8' }]}>{currentPlayer.displayName}</Text>
               </View>
-            </PhaseTransition>
+            </PhaseTransition></SecondaryPlayerLabel>
           )}
           <View style={{flex: 1}}/>
           <Text style={[styles.statusLabel, {

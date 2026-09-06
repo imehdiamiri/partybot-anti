@@ -58,7 +58,6 @@ export function GameHandoffView({
   onSkip,
   rolePillText = "NEXT PLAYER"
 }: GameHandoffViewProps) {
-  const nameInHeader = useNameInActivityBanner(playerName);
   const insets = useSafeAreaInsets();
   
   // Phone slide animation — loops left to right
@@ -156,14 +155,14 @@ export function GameHandoffView({
         }}>{title}</Animated.Text>
 
         {/* Player name */}
-        {!nameInHeader && <Animated.Text entering={FadeInDown.duration(400).delay(200)} numberOfLines={1} adjustsFontSizeToFit style={{
+        <Animated.Text testID="handoff-player-name" entering={FadeInDown.duration(400).delay(200)} numberOfLines={1} adjustsFontSizeToFit style={{
           fontSize: 42,
           fontFamily: 'Viral-Black',
           color: 'white',
           letterSpacing: -0.5,
           textAlign: 'center',
           paddingHorizontal: 24,
-        }}>{playerName}</Animated.Text>}
+        }}>{playerName}</Animated.Text>
 
         {/* Role pill */}
         <Animated.View entering={FadeIn.duration(400).delay(300)} style={{
@@ -588,7 +587,7 @@ export function GameReadyScreen({
       {playerName && !nameInHeader && (
         <Animated.View entering={ZoomIn.delay(250).springify().damping(14)}
           style={{ backgroundColor: 'rgba(52,199,89,0.15)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 24, marginTop: 16, borderWidth: 1, borderColor: 'rgba(52,199,89,0.3)' }}>
-          <Text style={{ color: Colors.green, fontSize: 15, fontFamily: 'Viral-Black' }}>Now · {playerName}</Text>
+          <Text style={{ color: Colors.green, fontSize: 24, fontWeight: '800' }}>{playerName}</Text>
         </Animated.View>
       )}
 

@@ -2,19 +2,19 @@ import React from 'react';
 import { act, create } from 'react-test-renderer';
 import { activityLabel, GameActivityProvider, useGameActivity, SecondaryPlayerLabel } from '../components/games/GameActivity';
 
-test.each(['results', 'guide', 'difficulty', 'intro', 'spinning', 'leaderboard'])('hides active label during %s', phase => {
+test.each(['results', 'guide', 'difficulty', 'intro', 'spinning', 'leaderboard', 'ready', 'passToPlayer', 'guesserAnnounce', 'countdown', 'result', 'playerComplete'])('hides active label during %s', phase => {
   expect(activityLabel(phase)).toBeNull();
 });
 test('distinguishes handoff, gameplay, group activity and result', () => {
-  expect(activityLabel('ready')).toBe('UP NEXT');
+  expect(activityLabel('ready')).toBeNull();
   expect(activityLabel('playing')).toBe('NOW PLAYING');
-  expect(activityLabel('result')).toBe('TURN RESULT');
+  expect(activityLabel('result')).toBeNull();
   expect(activityLabel('discussion')).toBe('DISCUSSING');
 });
 function Player({ name, phase }: { name: string; phase: string }) { useGameActivity(name, phase); return <>{name}</>; }
 test.each([
   ['Alice', 'playing', 'Alice', null],
-  ['Alice', 'ready', 'Alice', null],
+  ['Alice', 'ready', 'Alice', 'Alice'],
   ['Alice', 'playing', 'Bob', 'Bob'],
   ['Alice', 'results', 'Alice', 'Alice'],
 ])('secondary label preserves necessary identity: %s / %s / %s', async (owner, phase, label, expected) => {

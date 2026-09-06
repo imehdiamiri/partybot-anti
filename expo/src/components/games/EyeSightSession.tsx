@@ -472,6 +472,7 @@ export function EyeSightSession({ session }: Props) {
     return (
       <ScrollView style={st.container} contentContainerStyle={st.feedbackContent}>
         <Text style={st.eyebrow}>ROUND {round}</Text>
+        <Text style={[st.sub, { color: '#68E8A8', fontSize: 22, fontWeight: '800' }]}>{player?.displayName}</Text>
         <Text style={st.title}>{isCorrect ? 'Correct!' : 'Turn complete'}</Text>
         <Text style={st.sub}>{attempts.length} attempts · {correctCount} correct · {attempts.length - correctCount} wrong</Text>
         <View style={st.comparisonCard}>

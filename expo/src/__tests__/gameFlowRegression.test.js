@@ -58,6 +58,7 @@ test('Color Trap completes both players and shows final results',async()=>{
 jest.mock('@/src/components/games/ResultsScoreboard',()=>({ResultsScoreboard:'Scoreboard'}));
 jest.mock('@/src/components/LiquidGlass',()=>({LiquidGlass:'Glass'}));
 jest.mock('@/src/services/ImposterWords',()=>({imposterWordPicker:{draw:async()=> 'Apple'}}));
+jest.mock('@/src/components/games/ImposterWordTranslation',()=>({ImposterWordTranslation:'Translation'}));
 const {ImposterSession}=require('@/src/components/games/ImposterSession');
 test('Imposter awards points to the last correct voter',async()=>{
  const random=jest.spyOn(Math,'random').mockReturnValue(0.999).mockReturnValueOnce(0);
@@ -65,7 +66,9 @@ test('Imposter awards points to the last correct voter',async()=>{
  const press=async id=>act(async()=>screen.root.findByProps({testID:id}).props.onPress());
  await act(async()=>{screen=create(React.createElement(ImposterSession,{session:{players:['p1','p2','p3','p4'].map(id=>({id,displayName:id})),maxRounds:1}}));});
  for(let i=0;i<4;i++){
+  expect(screen.root.findAllByType('Translation')).toHaveLength(0);
   await act(async()=>screen.root.findByType('Ready').props.onReady());
+  expect(screen.root.findAllByType('Translation')).toHaveLength(i===0?0:1);
   await press('imposter-got-it-button');
  }
  await press('imposter-start-discussion-button');

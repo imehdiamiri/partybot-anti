@@ -1,5 +1,13 @@
 # Release log
 
+## 2026-09-06 — Restore handoff names and offline Imposter meanings
+
+- Restored the large player name on shared handoff screens. The activity banner now stays hidden during ready, countdown, handoff and result phases; active gameplay uses a larger green pulsing name. Guess the Seconds displays the actual name when ready instead of "Your turn". Result cards retain explicit ownership where needed.
+- Added five offline word-meaning dictionaries (Persian, Turkish, Spanish, German, French) and SVG flag/language controls for Imposter. Original English remains visible. Translation UI only mounts after a non-imposter's role reveal and resets between players. Cricket is disambiguated by category.
+- The plain app background release remains included. No native dependency or runtime changes.
+- Validation: 190 existing/UI tests across 23 suites plus four translation tests passed (194 total). Coverage asserts all 1,350 unique words have all five meanings (6,750 translations); includes language switching/reset, RTL, category disambiguation, and hidden translation UI for the imposter. Translations are authored gameplay meanings, not professionally certified terminology or an official localized film-title registry.
+
+
 ## 2026-09-06 — Remove decorative app backdrop
 
 - Replaced the shared AppBackgroundView artwork with a plain #08080F surface for both legacy variants. Removed colored circles, sheen, vignette, gradients, and unnecessary viewport subscriptions. All existing screen consumers inherit the change; game artwork and control colors remain unchanged.

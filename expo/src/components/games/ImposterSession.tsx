@@ -1,4 +1,5 @@
 import { useGameActivity, GAME_UI } from './GameActivity';
+import { ImposterWordTranslation } from './ImposterWordTranslation';
 import { Colors } from '@/src/theme/Colors';
 import { getImposterOutcome } from '@/src/utils/imposterOutcome';
 import React, { useState, useEffect, useRef } from 'react';
@@ -240,6 +241,7 @@ export function ImposterSession({ session }: Props) {
             />
           ) : (
             <ScrollView contentContainerStyle={styles.centerContent}>
+              {currentPlayer?.id !== imposterId && <ImposterWordTranslation key={`${roundNumber}-${currentPlayer?.id}`} word={secretWord} category={category} />}
               <LiquidGlass radius={24} style={styles.card}>
                 <View style={styles.centerItems}>
                   {currentPlayer?.id === imposterId ? (
