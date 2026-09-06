@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Share, Platform } from 'react
 import { Colors } from '@/src/theme/Colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useReplayGuide } from './GameStartGuide';
 import Animated, { FadeInUp, FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 /**
@@ -59,6 +60,7 @@ export function ResultsScoreboard({
   playAgainIcon = 'arrow.clockwise',
   badgeLabel = 'STANDINGS',
 }: Props) {
+  const showReplayGuide = useReplayGuide();
   const handleShare = async () => {
     if (!shareGameName) return;
     try {
@@ -222,7 +224,7 @@ export function ResultsScoreboard({
       {(onPlayAgain || shareGameName) && (
         <Animated.View entering={FadeInUp.delay(300 + entries.length * 60).springify().damping(14)} style={styles.ctas}>
           {onPlayAgain && (
-            <TouchableOpacity style={styles.playAgainBtn} onPress={onPlayAgain} accessibilityRole="button" activeOpacity={0.85}>
+            <TouchableOpacity style={styles.playAgainBtn} onPress={() => showReplayGuide(onPlayAgain)} accessibilityRole="button" activeOpacity={0.85}>
               <LinearGradient 
                 colors={['#3B82F6', '#2563EB', '#1D4ED8']} 
                 start={{x: 0, y: 0}} end={{x: 1, y: 1}}

@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions, Platform } from 'react-native';
+import { GameStartGuide } from './GameStartGuide';
+import { compareEyeSightDigits, EyeSightAttempt } from '@/src/utils/eyeSightFeedback';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { Colors, Typography } from '@/src/theme/Colors';
 import { GameSession } from '@/src/store/useGameStore';
@@ -16,6 +18,7 @@ interface Props { session: GameSession; }
 
 type Phase =
   | 'difficulty'
+  | 'guide'
   | 'ready'
   | 'countdown'
   | 'flash'
@@ -29,9 +32,12 @@ interface PlayerRecord {
   playerId: string;
   bestRound: number;
   bestDigits: number;
+  attempts: EyeSightAttempt[];
+  skipped?: boolean;
 }
 
 const ACCENT = '#5AC8FA';
+const NUMBER_FONT = Platform.OS === 'ios' ? 'Menlo' : Platform.OS === 'android' ? 'monospace' : 'ui-monospace, SFMono-Regular, Consolas, monospace';
 
 type DifficultyId = 'easy' | 'medium' | 'hard' | 'expert';
 
@@ -132,7 +138,7 @@ export function EyeSightSession({ session }: Props) {
   const [input, setInput] = useState<string>('');
   const [countdown, setCountdown] = useState<number>(3);
   const [records, setRecords] = useState<PlayerRecord[]>(() =>
-    players.map(p => ({ playerId: p.id, bestRound: 0, bestDigits: 0 }))
+    players.map(p => ({ playerId: p.id, bestRound: 0, bestDigits: 0, attempts: [] }))
   );
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,6 +159,7 @@ export function EyeSightSession({ session }: Props) {
     if (phase === 'countdown' || phase === 'flash' || phase === 'input' || phase === 'correct' || phase === 'wrong') {
       registerSkip(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
+        setRecords(prev => prev.map((rec, index) => index === playerIdx ? { ...rec, skipped: true } : rec));
         const isLast = playerIdx + 1 >= players.length;
         if (isLast) {
           AudioManager.play('gameOver');
@@ -173,14 +180,14 @@ export function EyeSightSession({ session }: Props) {
 
   /** Auto-shrink flash font so the number stays on a single line at any digit count. */
   const flashFontSize = useMemo(() => {
-    const usable = screenWidth - 40;
+    const usable = Math.min(screenWidth, 540) - 64 - config.digits * 2;
     // Approx character width factor for bold tabular digits + letterSpacing.
     const perCharFactor = 0.62;
     const ideal = Math.floor(usable / (config.digits * perCharFactor));
-    return Math.max(40, Math.min(110, ideal));
+    return Math.max(22, Math.min(100, ideal));
   }, [config.digits, screenWidth]);
 
-  const flashLetterSpacing = useMemo(() => (config.digits >= 7 ? 2 : config.digits >= 5 ? 4 : 6), [config.digits]);
+  const flashLetterSpacing = 2;
 
   const inputFontSize = useMemo(() => {
     const usable = screenWidth - 80;
@@ -243,7 +250,10 @@ export function EyeSightSession({ session }: Props) {
   }, [difficulty, flashOpacity, flashScale]);
 
   const submitAnswer = useCallback(() => {
-    if (input.length === 0) return;
+    if (phase !== 'input' || input.length !== target.length) return;
+    setRecords(prev => prev.map((rec, index) => index === playerIdx
+      ? { ...rec, attempts: [...rec.attempts, { round, target, answer: input, correct: input === target }] }
+      : rec));
     if (input === target) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       AudioManager.play('success');
@@ -254,7 +264,7 @@ export function EyeSightSession({ session }: Props) {
       AudioManager.play('wrong');
       setPhase('wrong');
     }
-  }, [input, target, playerIdx, round, config.digits, updateBest]);
+  }, [phase, input, target, playerIdx, round, config.digits, updateBest]);
 
   const continueAfterCorrect = () => {
     startRound(round + 1);
@@ -277,7 +287,7 @@ export function EyeSightSession({ session }: Props) {
 
   const playAgain = () => {
     AudioManager.play('buttonTap');
-    setRecords(players.map(p => ({ playerId: p.id, bestRound: 0, bestDigits: 0 })));
+    setRecords(players.map(p => ({ playerId: p.id, bestRound: 0, bestDigits: 0, attempts: [] })));
     setPlayerIdx(0);
     setRound(1);
     setInput('');
@@ -289,7 +299,7 @@ export function EyeSightSession({ session }: Props) {
     Haptics.selectionAsync();
     AudioManager.play('buttonTap');
     setDifficulty(def);
-    setPhase('ready');
+    setPhase('guide');
   };
 
   const handlePadPress = useCallback((digit: string) => {
@@ -349,6 +359,8 @@ export function EyeSightSession({ session }: Props) {
       </PhaseTransition>
     );
   }
+
+  if (phase === 'guide') return <GameStartGuide gameId="eye_sight" onStart={() => setPhase('ready')} />;
 
   // ─── READY ───
   if (phase === 'ready') {
@@ -427,7 +439,7 @@ export function EyeSightSession({ session }: Props) {
                   style={[
                     st.slot,
                     {
-                      width: Math.max(28, Math.min(56, (screenWidth - 40 - (config.digits - 1) * 8) / config.digits)),
+                      width: Math.max(18, Math.min(56, (Math.min(screenWidth, 540) - 40 - (config.digits - 1) * 4) / config.digits)),
                       borderColor: filled ? ACCENT : 'rgba(255,255,255,0.18)',
                       backgroundColor: filled ? ACCENT + '1A' : 'rgba(255,255,255,0.04)',
                     },
@@ -451,67 +463,44 @@ export function EyeSightSession({ session }: Props) {
     );
   }
 
-  if (phase === 'correct') {
+  if (phase === 'correct' || phase === 'wrong') {
+    const attempts = records[playerIdx]?.attempts ?? [];
+    const correctCount = attempts.filter(attempt => attempt.correct).length;
+    const isCorrect = phase === 'correct';
     return (
-      <PhaseTransition phaseKey={phase} style={st.container}>
-        <View style={st.center}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(52,199,89,0.15)' }]}>
-            <IconSymbol name="checkmark.circle.fill" size={56} color={Colors.green} />
+      <ScrollView style={st.container} contentContainerStyle={st.feedbackContent}>
+        <Text style={st.eyebrow}>{player?.displayName} · ROUND {round}</Text>
+        <Text style={st.title}>{isCorrect ? 'Correct!' : 'Turn complete'}</Text>
+        <Text style={st.sub}>{attempts.length} attempts · {correctCount} correct · {attempts.length - correctCount} wrong</Text>
+        <View style={st.comparisonCard}>
+          <Text style={st.comparisonLabel}>Original number</Text>
+          <Text testID="eyesight-original" adjustsFontSizeToFit numberOfLines={1} style={st.originalNumber}>{target}</Text>
+          <Text style={st.comparisonLabel}>Your answer</Text>
+          <View style={st.digitComparison}>
+            {compareEyeSightDigits(target, input).map((digit, index) => <View key={index} style={st.comparisonDigit}>
+              <Text testID={`eyesight-answer-digit-${index}`} accessibilityLabel={`Digit ${index + 1}: ${digit.entered}, ${digit.correct ? 'correct' : 'wrong, expected ' + digit.expected}`}
+                style={[st.answerDigit, { color: digit.correct ? '#72e3a1' : '#ff7676' }]}>{digit.entered}</Text>
+              <Text style={{ color: digit.correct ? '#72e3a1' : '#ff7676', fontSize: 14 }}>{digit.correct ? '✓' : '×'}</Text>
+            </View>)}
           </View>
-          <Text style={st.title}>Correct!</Text>
-          <Text style={st.sub}>Round {round} cleared · {config.digits} digits</Text>
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            style={[st.title, { color: Colors.green, fontSize: 36, marginTop: 4 }]}
-          >
-            {target}
-          </Text>
-          <Pressable testID="eyesight-next-round-button" style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={continueAfterCorrect}>
-            <Text style={st.startBtnTx}>Next Round</Text>
-          </Pressable>
-
+          <Text style={st.sub}>{isCorrect ? 'Every digit matches. Ready for a harder round?' : 'Red × marks a wrong digit. One wrong answer ends your turn.'}</Text>
         </View>
-      </PhaseTransition>
-    );
-  }
-
-  if (phase === 'wrong') {
-    const rec = records[playerIdx];
-    return (
-      <PhaseTransition phaseKey={phase} style={st.container}>
-        <View style={st.center}>
-          <View style={[st.iconBox, { backgroundColor: 'rgba(255,59,48,0.18)' }]}>
-            <IconSymbol name="xmark.octagon.fill" size={56} color={Colors.red} />
-          </View>
-          <Text style={st.title}>Not quite!</Text>
-          <Text style={st.sub}>The number was</Text>
-          <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            style={[st.title, { color: Colors.red, fontSize: 36, marginTop: 2 }]}
-          >
-            {target}
-          </Text>
-          <Text style={[st.sub, { marginTop: 6 }]}>You typed {input || '—'}</Text>
-
-          <View style={st.attemptList}>
-            <View style={st.attemptRow}>
-              <Text style={st.attemptIdx}>Best round</Text>
-              <Text style={st.attemptVal}>{rec?.bestRound ?? 0}</Text>
+        <Pressable testID={isCorrect ? 'eyesight-next-round-button' : 'eyesight-continue-button'} style={[st.startBtn, { backgroundColor: ACCENT }]}
+          onPress={isCorrect ? continueAfterCorrect : () => setPhase('playerComplete')}>
+          <Text style={st.startBtnTx}>{isCorrect ? 'Next Round' : 'Continue'}</Text>
+        </Pressable>
+        <View style={st.attemptList}>
+          <Text style={st.comparisonLabel}>Round history · original → your answer</Text>
+          {[...attempts].reverse().map(attempt => <View key={attempt.round} style={st.historyRow}>
+            <Text style={st.historyLabel}>R{attempt.round} {attempt.correct ? '✓' : '×'}</Text>
+            <View style={st.historyNumbers}>
+              <Text style={st.historyNumber}>{attempt.target} → </Text>
+              <Text style={st.historyNumber}>{compareEyeSightDigits(attempt.target, attempt.answer).map((digit, index) =>
+                <Text key={index} style={{ color: digit.correct ? '#72e3a1' : '#ff7676' }}>{digit.entered}</Text>)}</Text>
             </View>
-            <View style={st.attemptRow}>
-              <Text style={st.attemptIdx}>Top digits</Text>
-              <Text style={st.attemptVal}>{rec?.bestDigits ?? 0}</Text>
-            </View>
-          </View>
-
-          <Pressable testID="eyesight-continue-button" style={[st.startBtn, { backgroundColor: ACCENT }]} onPress={() => setPhase('playerComplete')}>
-            <Text style={st.startBtnTx}>Continue</Text>
-          </Pressable>
-
+          </View>)}
         </View>
-      </PhaseTransition>
+      </ScrollView>
     );
   }
 
@@ -532,7 +521,7 @@ export function EyeSightSession({ session }: Props) {
   const entries: RankEntry[] = [...records]
     .map(r => {
       const p = players.find(pp => pp.id === r.playerId);
-      const isSkipped = r.bestRound === 0 && r.bestDigits === 0;
+      const isSkipped = !!r.skipped || r.attempts.length === 0;
       return { record: r, isSkipped, name: p?.displayName ?? 'Player' };
     })
     .sort((a, b) => {
@@ -545,7 +534,7 @@ export function EyeSightSession({ session }: Props) {
       name: row.name,
       isSkipped: row.isSkipped,
       primary: row.isSkipped ? 'Skipped' : `Round ${row.record.bestRound}`,
-      secondary: row.isSkipped ? 'Did not play' : `${row.record.bestDigits} digits`,
+      secondary: row.isSkipped ? 'Skipped turn' : `${row.record.attempts.length} attempts · ${row.record.bestDigits} digits`,
     }));
 
   return (
@@ -715,11 +704,9 @@ const st = StyleSheet.create({
   },
   flashNumber: {
     color: '#fff',
-    fontFamily: 'Viral-Black',
+    fontFamily: NUMBER_FONT,
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
-    textShadowColor: 'rgba(90,200,250,0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 32,
     textAlign: 'center',
     paddingHorizontal: 8,
   },
@@ -752,7 +739,7 @@ const st = StyleSheet.create({
   },
   slotRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 4,
     marginTop: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -768,7 +755,8 @@ const st = StyleSheet.create({
   },
   slotTx: {
     color: '#fff',
-    fontFamily: 'Viral-Black',
+    fontFamily: NUMBER_FONT,
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
 
@@ -803,10 +791,22 @@ const st = StyleSheet.create({
   padKeyTx: {
     color: '#fff',
     fontSize: 28,
-    fontFamily: 'Viral-Black',
+    fontFamily: NUMBER_FONT,
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
 
+  feedbackContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20, gap: 12, width: '100%', maxWidth: 540, alignSelf: 'center' },
+  comparisonCard: { width: '100%', padding: 16, gap: 14, borderRadius: 20, backgroundColor: '#151923', alignItems: 'center' },
+  comparisonLabel: { color: '#dce3f2', fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  originalNumber: { fontFamily: NUMBER_FONT, fontWeight: '500', color: '#fff', fontSize: 34, textAlign: 'center', width: '100%' },
+  digitComparison: { flexDirection: 'row', width: '100%', justifyContent: 'center' },
+  comparisonDigit: { flex: 1, maxWidth: 44, alignItems: 'center', gap: 4 },
+  answerDigit: { fontFamily: NUMBER_FONT, fontWeight: '500', fontSize: 26 },
+  historyRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
+  historyLabel: { color: '#aeb8cb', fontSize: 13, width: 42 },
+  historyNumbers: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
+  historyNumber: { color: '#fff', fontSize: 16, fontFamily: NUMBER_FONT },
   attemptList: {
     width: '100%',
     backgroundColor: 'rgba(255,255,255,0.04)',

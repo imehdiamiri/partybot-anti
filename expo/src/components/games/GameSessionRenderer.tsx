@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { GameType } from '@/src/models/AppModels';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { FirstTimeHintOverlay } from './FirstTimeHintOverlay';
+import { GameIntroGate } from './GameStartGuide';
 import { GAME_HINTS } from '@/src/constants/GameHints';
 import { ReverseSingingSession } from './ReverseSingingSession';
 import { GuessTheSecondsSession } from './GuessTheSecondsSession';
@@ -28,15 +28,11 @@ interface Props {
   game: GameType;
 }
 
-/** Renders the hint overlay (once per game) + the game session */
+/** These games finish configuring inside their session and gate their own start. */
 function withHint(gameId: string, child: React.ReactNode) {
   const hint = GAME_HINTS[gameId];
-  return (
-    <>
-      {hint && <FirstTimeHintOverlay storageKey={`game_${gameId}`} icon={hint.icon} title={hint.title} tip={hint.tip} accent={hint.accent} />}
-      {child}
-    </>
-  );
+  if (['eye_sight', 'pass_guess', 'guess_the_seconds'].includes(gameId)) return child;
+  return hint ? <GameIntroGate gameId={gameId}>{child}</GameIntroGate> : child;
 }
 
 export function GameSessionRenderer({ session, game }: Props) {

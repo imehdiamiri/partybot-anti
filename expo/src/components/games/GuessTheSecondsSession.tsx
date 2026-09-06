@@ -1,4 +1,5 @@
 import { Colors } from '@/src/theme/Colors';
+import { GameStartGuide } from './GameStartGuide';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
@@ -69,6 +70,7 @@ export function GuessTheSecondsSession({ session }: Props) {
 
   const [sync, setSync] = useState<SyncState>(initialSync);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // Authoritative reducer — runs on host only (or single-device).
   const apply = useCallback((type: string, data: any, prev: SyncState): SyncState => {
@@ -313,6 +315,7 @@ export function GuessTheSecondsSession({ session }: Props) {
     ? `Waiting for ${currentPlayer.displayName}…`
     : null;
 
+  if (guideOpen && sync.turnPhase === 'ready') return <GameStartGuide gameId="guess_the_seconds" onStart={() => { setGuideOpen(false); startTurn(); }} />;
   return (
     <ScrollView contentContainerStyle={styles.container}>
 
@@ -444,7 +447,7 @@ export function GuessTheSecondsSession({ session }: Props) {
                   testID="guess-seconds-start-button"
                   accessibilityRole="button"
                   style={[styles.primaryButton, styles.giantButton, { backgroundColor: Colors.blue }, !isLocalActive && { opacity: 0.5 }]}
-                  onPress={startTurn}
+                  onPress={() => setGuideOpen(true)}
                   disabled={!isLocalActive}
                 >
                   <IconSymbol name="play.fill" size={48} color="white" />

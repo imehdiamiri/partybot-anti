@@ -118,7 +118,7 @@ export default function GameSessionScreen() {
           onExit={handleExit}
         />
 
-        <GameSessionRenderer session={activeSession} game={activeSession.game} />
+        <GameSessionRenderer key={activeSession.id} session={activeSession} game={activeSession.game} />
       </View>
     </GameSkipProvider>
   );
