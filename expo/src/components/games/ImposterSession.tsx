@@ -324,7 +324,7 @@ export function ImposterSession({ session }: Props) {
           <LiquidGlass radius={24} style={styles.card}>
             <View style={styles.centerItems}>
               <IconSymbol name="magnifyingglass.circle.fill" size={48} color="#AF52DE" />
-              <Text style={styles.title}>{currentPlayer?.displayName}&apos;s Clue</Text>
+              <Text style={styles.title}>Your clue</Text>
               <Text style={styles.subtitle}>Give a one-word clue about the secret word</Text>
             </View>
 
@@ -377,7 +377,7 @@ export function ImposterSession({ session }: Props) {
           <LiquidGlass radius={24} style={styles.card}>
             <View style={styles.centerItems}>
               <IconSymbol name="hand.raised.fill" size={48} color="#FF2D55" />
-              <Text style={styles.title}>{currentPlayer?.displayName}&apos;s Vote</Text>
+              <Text style={styles.title}>Your vote</Text>
               <Text style={styles.subtitle}>Who do you think is the Imposter?</Text>
             </View>
             

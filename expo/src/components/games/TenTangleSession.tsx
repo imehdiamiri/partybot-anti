@@ -1,4 +1,4 @@
-import { useGameActivity } from './GameActivity';
+import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
@@ -156,7 +156,7 @@ export function TenTangleSession({ session }: Props) {
       <PhaseTransition phaseKey={phase} type="scale" style={st.container}><View style={st.center}>
         <View style={st.iconBox}><IconSymbol name="eye.fill" size={52} color={Colors.orange} /></View>
         <Text style={st.roundLabel}>Round {round} of {totalRounds}</Text>
-        <Text style={[st.title, { color: Colors.orange, fontSize: 34 }]}>{guesser.displayName}</Text>
+        <SecondaryPlayerLabel name={guesser.displayName}><Text style={[st.title, { color: Colors.orange, fontSize: 34 }]}>{guesser.displayName}</Text></SecondaryPlayerLabel>
         <Text style={st.sub}>You are the Guesser this round!</Text>
         <Text style={st.hint}>Everyone else will get a secret number. Watch them act and guess their numbers.</Text>
         <Pressable testID="ten-tangle-announce-continue" accessibilityRole="button" style={st.btn} onPress={handleProceedToPass}><Text style={st.btnTx}>Continue</Text></Pressable>
@@ -170,7 +170,7 @@ export function TenTangleSession({ session }: Props) {
     return (
       <GamePassPhoneView
         playerName={p?.displayName || 'Player'}
-        title={`Pass to ${p?.displayName}`}
+        title="Pass the phone"
         subtitle={`Tap below to see your secret number.\n${guesser.displayName} should look away!`}
         accentColor="#5AC8FA"
         buttonTitle="Show My Number"
@@ -197,7 +197,7 @@ export function TenTangleSession({ session }: Props) {
       <PhaseTransition phaseKey={`${phase}-${passIdx}`} type="scale" style={st.container}><View style={st.center}>
         <Text style={[st.bigNumber, { color: col }]}>{num}</Text>
         {lbl ? <Text style={[st.numLabel, { color: col }]}>{lbl}</Text> : null}
-        <Text style={[st.sub, { fontSize: 22 }]}>Remember this number, {p?.displayName}!</Text>
+        <Text style={[st.sub, { fontSize: 22 }]}>Remember your secret number!</Text>
         <Text style={[st.hint, { marginTop: 20 }]}>1 = Disaster 😬 · {maxNumber} = Perfect 😍</Text>
         <Pressable testID="ten-tangle-got-it" accessibilityRole="button" style={st.btn} onPress={handleGotIt}><Text style={st.btnTx}>Got it!</Text></Pressable>
       </View></PhaseTransition>
@@ -237,7 +237,7 @@ export function TenTangleSession({ session }: Props) {
     return (
       <PhaseTransition phaseKey={phase} type="slideUp" style={st.container}>
         <ScrollView contentContainerStyle={st.scrollPad}>
-          <Text style={[st.title, { textAlign: 'center', fontSize: 28 }]}>{guesser.displayName}&apos;s Guesses</Text>
+          <Text style={[st.title, { textAlign: 'center', fontSize: 28 }]}>Your guesses</Text>
           <Text style={[st.sub, { textAlign: 'center', marginBottom: 20 }]}>Assign each player their number</Text>
           {nonGuessers.map(p => (
             <View key={p.id} style={st.guessRow}>
@@ -292,7 +292,7 @@ export function TenTangleSession({ session }: Props) {
               </View>
             );
           })}
-          <Text style={[st.sub, { textAlign: 'center', marginTop: 16, fontSize: 20 }]}>{guesser.displayName} got {correct}/{nonGuessers.length} correct!</Text>
+          <Text style={[st.sub, { textAlign: 'center', marginTop: 16, fontSize: 20 }]}>{correct}/{nonGuessers.length} correct!</Text>
           <Pressable testID="ten-tangle-show-scoreboard" accessibilityRole="button" style={st.btn} onPress={handleShowScoreboard}><Text style={st.btnTx}>Scoreboard</Text></Pressable>
         </ScrollView>
       </PhaseTransition>

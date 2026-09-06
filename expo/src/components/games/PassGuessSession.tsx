@@ -386,7 +386,7 @@ export function PassGuessSession({ session }: Props) {
             <View style={styles.card}>
               <HStack>
                 <View style={styles.turnPill}>
-                  <Text style={styles.turnPillText}>Now: {currentPlayer.displayName}</Text>
+                  <Text style={styles.turnPillText}>Write privately</Text>
                 </View>
                 <Text style={styles.progressText}>{answers.length}/{session.players.length} answered</Text>
               </HStack>
@@ -424,7 +424,7 @@ export function PassGuessSession({ session }: Props) {
                 <HStack>
                   <View style={[styles.turnPill, { backgroundColor: '#AF52DE' }]}>
                     <IconSymbol name="person.fill.questionmark" size={12} color="white" />
-                    <Text style={styles.turnPillText}>{currentPlayer.displayName}'s Turn</Text>
+                    <Text style={styles.turnPillText}>Match the answers</Text>
                   </View>
                   <Text style={styles.progressText}>
                     Guesser {activePlayerIndex + 1} of {session.players.length}

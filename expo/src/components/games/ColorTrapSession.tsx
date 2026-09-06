@@ -1,4 +1,4 @@
-import { useGameActivity } from './GameActivity';
+import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
@@ -345,7 +345,7 @@ export function ColorTrapSession({ session }: Props) {
             <Text style={st.readyTitle}>
               {players.length > 1 && playerIdx > 0 ? 'Pass the phone to' : 'GET READY'}
             </Text>
-            <Text style={st.readyPlayerName}>{player.displayName}</Text>
+            <SecondaryPlayerLabel name={player.displayName}><Text style={st.readyPlayerName}>{player.displayName}</Text></SecondaryPlayerLabel>
           </View>
 
           <View style={st.readyCenter}>

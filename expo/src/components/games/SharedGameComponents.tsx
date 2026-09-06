@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/src/theme/Colors';
+import { useNameInActivityBanner } from './GameActivity';
 import { useActionConfirmation } from '../ActionConfirmation';
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, Alert } from 'react-native';
@@ -57,6 +58,7 @@ export function GameHandoffView({
   onSkip,
   rolePillText = "NEXT PLAYER"
 }: GameHandoffViewProps) {
+  const nameInHeader = useNameInActivityBanner(playerName);
   const insets = useSafeAreaInsets();
   
   // Phone slide animation — loops left to right
@@ -154,14 +156,14 @@ export function GameHandoffView({
         }}>{title}</Animated.Text>
 
         {/* Player name */}
-        <Animated.Text entering={FadeInDown.duration(400).delay(200)} numberOfLines={1} adjustsFontSizeToFit style={{
+        {!nameInHeader && <Animated.Text entering={FadeInDown.duration(400).delay(200)} numberOfLines={1} adjustsFontSizeToFit style={{
           fontSize: 42,
           fontFamily: 'Viral-Black',
           color: 'white',
           letterSpacing: -0.5,
           textAlign: 'center',
           paddingHorizontal: 24,
-        }}>{playerName}</Animated.Text>
+        }}>{playerName}</Animated.Text>}
 
         {/* Role pill */}
         <Animated.View entering={FadeIn.duration(400).delay(300)} style={{
@@ -567,6 +569,7 @@ interface GameReadyScreenProps {
 export function GameReadyScreen({
   icon, iconColor, title, subtitle, playerName, stats, buttonTitle = 'Start', onStart, onSkip,
 }: GameReadyScreenProps) {
+  const nameInHeader = useNameInActivityBanner(playerName);
   return (
     <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
       <Animated.View entering={ZoomIn.duration(500).springify().damping(12)}
@@ -582,7 +585,7 @@ export function GameReadyScreen({
         {subtitle}
       </Animated.Text>
 
-      {playerName && (
+      {playerName && !nameInHeader && (
         <Animated.View entering={ZoomIn.delay(250).springify().damping(14)}
           style={{ backgroundColor: 'rgba(52,199,89,0.15)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 24, marginTop: 16, borderWidth: 1, borderColor: 'rgba(52,199,89,0.3)' }}>
           <Text style={{ color: Colors.green, fontSize: 15, fontFamily: 'Viral-Black' }}>Now · {playerName}</Text>

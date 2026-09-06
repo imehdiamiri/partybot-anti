@@ -1,4 +1,4 @@
-import { useGameActivity, GAME_UI } from './GameActivity';
+import { SecondaryPlayerLabel, useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
@@ -443,7 +443,7 @@ function MemoryGridMultiplayerSession({ session }: Props) {
         {/* Header */}
         <View style={styles.gameHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>{localPlayer?.displayName || 'Player'}</Text>
+            <SecondaryPlayerLabel name={localPlayer?.displayName}><Text style={styles.headerTitle}>{localPlayer?.displayName || 'Player'}</Text></SecondaryPlayerLabel>
             <Text style={styles.headerSubtitle}>{multiMatchedPairs}/{PAIR_COUNT} pairs</Text>
           </View>
 
@@ -796,9 +796,9 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
         <View style={styles.gameHeader}>
           <View style={{ flex: 1 }}>
             {players.length > 1 ? (
-              <View style={styles.turnPill}>
+              <SecondaryPlayerLabel name={currentPlayer.displayName}><View style={styles.turnPill}>
                 <Text style={styles.turnPillText}>Now · {currentPlayer.displayName}</Text>
-              </View>
+              </View></SecondaryPlayerLabel>
             ) : (
               <Text style={styles.headerTitle}>Memory Grid</Text>
             )}

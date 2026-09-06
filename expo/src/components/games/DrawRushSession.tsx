@@ -321,7 +321,7 @@ export function DrawRushSession({ session }: Props) {
             <View style={st.freeIconWrap}>
               <IconSymbol name="pencil.and.scribble" size={56} color={Colors.orange} />
             </View>
-            <Text style={st.freeTitle}>{currentPlayerName}'s Turn</Text>
+            <Text style={st.freeTitle}>Get ready to draw</Text>
             
             {isFreeMode ? (
               <>

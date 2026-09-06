@@ -1,5 +1,12 @@
 # Release log
 
+## 2026-09-06 — Single current-player identity
+
+- Removed redundant current-player headings across game sessions and shared ready/handoff views when the activity banner identifies the same player. Preserved roster, voting, and scoreboard identities.
+- Current-player banner name uses weight 800 and a gentle opacity pulse; reduced-motion preference is respected. Recording cards retain clear Original/Mimic role labels.
+- Validation: 181 tests passed across 22 suites; web export passed. Live verification and release identifiers follow below.
+
+
 ## 2026-09-06 — Mode-specific guides and shared turn language
 
 - Ten mode-specific guides across Pass & Guess (Classic Q&A / Who Said It),

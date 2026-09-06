@@ -471,7 +471,7 @@ export function EyeSightSession({ session }: Props) {
     const isCorrect = phase === 'correct';
     return (
       <ScrollView style={st.container} contentContainerStyle={st.feedbackContent}>
-        <Text style={st.eyebrow}>{player?.displayName} · ROUND {round}</Text>
+        <Text style={st.eyebrow}>ROUND {round}</Text>
         <Text style={st.title}>{isCorrect ? 'Correct!' : 'Turn complete'}</Text>
         <Text style={st.sub}>{attempts.length} attempts · {correctCount} correct · {attempts.length - correctCount} wrong</Text>
         <View style={st.comparisonCard}>

@@ -1,4 +1,4 @@
-import { useGameActivity, GAME_UI } from './GameActivity';
+import { SecondaryPlayerLabel, useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
@@ -139,7 +139,7 @@ export function SpinBottleSession({ session }: Props) {
             <IconSymbol name={choice === 'truth' ? 'bubble.left.and.bubble.right.fill' as any : 'flame.fill'} size={14} color="#fff" />
             <Text style={st.choicePillTx}>{choice.toUpperCase()}</Text>
           </View>
-          <Text style={st.promptPlayer}>{selectedPlayer?.displayName}</Text>
+          <SecondaryPlayerLabel name={selectedPlayer?.displayName}><Text style={st.promptPlayer}>{selectedPlayer?.displayName}</Text></SecondaryPlayerLabel>
 
           <LiquidGlass
             radius={28}
@@ -179,7 +179,7 @@ export function SpinBottleSession({ session }: Props) {
         <View>
           <Text style={st.headerTitle}>
             {phase === 'idle' ? 'Truth or Dare' : phase === 'spinning' ? 'Spinning...' :
-             phase === 'landed' ? `It's ${selectedPlayer?.displayName}!` : `${selectedPlayer?.displayName}'s turn`}
+             phase === 'landed' ? 'Player selected' : 'Choose Truth or Dare'}
           </Text>
           <Text style={st.headerSub}>
             {phase === 'idle' ? 'Tap Spin to start' : phase === 'spinning' ? 'Where will it land?' :
@@ -195,7 +195,7 @@ export function SpinBottleSession({ session }: Props) {
       {/* Player banner when landed/choosing */}
       <View style={{ position: 'absolute', top: 80, left: 0, right: 0, zIndex: 20 }}>
         {(phase === 'landed' || phase === 'choosing') && selectedPlayer && (
-          <View style={[st.banner, { borderColor: accentColor + '73' }]}>
+          <SecondaryPlayerLabel name={selectedPlayer.displayName}><View style={[st.banner, { borderColor: accentColor + '73' }]}>
             <View style={[st.avatar, { backgroundColor: accentColor }]}>
               <Text style={st.avatarTx}>{selectedPlayer.displayName.slice(0, 2).toUpperCase()}</Text>
             </View>
@@ -204,7 +204,7 @@ export function SpinBottleSession({ session }: Props) {
               <Text style={st.bannerName}>{selectedPlayer.displayName}</Text>
             </View>
             <IconSymbol name="sparkles" size={16} color={accentColor} />
-          </View>
+          </View></SecondaryPlayerLabel>
         )}
       </View>
 

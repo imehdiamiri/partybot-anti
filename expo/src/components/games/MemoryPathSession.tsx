@@ -1,4 +1,4 @@
-import { useGameActivity } from './GameActivity';
+import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
@@ -379,7 +379,7 @@ export function MemoryPathSession({ session }: Props) {
       <View style={s.container}>
         <View style={s.topBar}>
           <View style={{ flex: 1 }}>
-            <Text style={s.hName}>{player.displayName}</Text>
+            <SecondaryPlayerLabel name={player.displayName}><Text style={s.hName}>{player.displayName}</Text></SecondaryPlayerLabel>
             <Text style={s.hSub}>{stepsFound}/{stepsToFind} steps{gameMode === 'turnBased' ? ` · ${turnAttempts} tries left` : ''}</Text>
           </View>
           <View style={s.timerPill}>
@@ -434,7 +434,7 @@ export function MemoryPathSession({ session }: Props) {
     return (
       <GamePlayerCompleteView
         nextPlayerName={players[playerIndex + 1]?.displayName || 'Next Player'}
-        prevResultLine={`${player.displayName} — ${formatTime(elapsed)}`}
+        prevResultLine={`Completed in ${formatTime(elapsed)}`}
         onReady={() => { setPlayerIndex(i => i+1); handleStart(); }}
         accentColor="#00C7BE"
       />

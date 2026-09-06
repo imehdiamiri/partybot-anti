@@ -1,4 +1,4 @@
-import { useGameActivity } from './GameActivity';
+import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions, Animated, ActivityIndicator } from 'react-native';
@@ -458,7 +458,7 @@ export function TapInOrderSession({ session }: Props) {
           {/* Header */}
           <View style={st.topBar}>
             <View style={{ flex: 1 }}>
-              <Text style={st.hName}>{localPlayer?.displayName || 'Player'}</Text>
+              <SecondaryPlayerLabel name={localPlayer?.displayName}><Text style={st.hName}>{localPlayer?.displayName || 'Player'}</Text></SecondaryPlayerLabel>
               <Text style={st.hSub}>
                 {isMultiPreview ? 'Memorize the numbers...' : `Next: ${multiNextExpected} · ${multiMissTaps} mistakes`}
               </Text>
@@ -679,7 +679,7 @@ export function TapInOrderSession({ session }: Props) {
         {/* Header */}
         <View style={st.topBar}>
           <View style={{ flex: 1 }}>
-            <Text style={st.hName}>{player.displayName}</Text>
+            <SecondaryPlayerLabel name={player.displayName}><Text style={st.hName}>{player.displayName}</Text></SecondaryPlayerLabel>
             <Text style={st.hSub}>
               {isPreview ? 'Memorize the numbers...' : `Next: ${nextExpected} · ${missTaps} mistakes`}
             </Text>

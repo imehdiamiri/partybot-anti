@@ -677,7 +677,7 @@ export function ReverseSingingSession({ session }: Props) {
       <LiquidGlass radius={20} style={[styles.card, !p1Locked ? styles.cardActive : styles.cardLocked]}>
         <View style={styles.cardHeader}>
           <View style={styles.playerHeading}>
-            <Text style={styles.cardTitle} numberOfLines={1}>{p1Name}</Text>
+            <Text style={styles.cardTitle} numberOfLines={1}>Original recording</Text>
             <Text style={styles.cardSubtitle} numberOfLines={1}>Record anything you want</Text>
           </View>
           <View style={[styles.statusPill, p1Recording ? styles.statusRecording : p1Uri ? styles.statusDone : styles.statusActive]}>
@@ -706,7 +706,7 @@ export function ReverseSingingSession({ session }: Props) {
               onPress={() => p1Recording ? stopRecording(1) : startRecording(1)}
             >
               <IconSymbol name={p1Recording ? "stop.fill" : p1Locked ? "lock.fill" : "record.circle.fill"} size={28} color="white" />
-              <Text style={styles.btnText}>{p1Recording ? `Stop (${p1Name}) · ${p1Duration}s` : p1Locked ? `Recorded (${p1Name})` : `Record (${p1Name})`}</Text>
+              <Text style={styles.btnText}>{p1Recording ? `Stop · ${p1Duration}s` : p1Locked ? 'Original recorded' : 'Record original'}</Text>
             </Pressable>
 
             {p1Locked && (
@@ -759,7 +759,7 @@ export function ReverseSingingSession({ session }: Props) {
       <LiquidGlass radius={24} style={[styles.card, styles.cardActive]}>
         <View style={styles.cardHeader}>
           <View style={styles.playerHeading}>
-            <Text style={styles.cardTitle} numberOfLines={1}>{p2Name}</Text>
+            <Text style={styles.cardTitle} numberOfLines={1}>Mimic recording</Text>
             <Text style={styles.cardSubtitle} numberOfLines={1}>Copy the reversed sound</Text>
           </View>
           <View style={[styles.statusPill, p2Recording ? styles.statusRecording : p2Uri ? styles.statusDone : styles.statusActive]}>
@@ -788,7 +788,7 @@ export function ReverseSingingSession({ session }: Props) {
               onPress={() => p2Recording ? stopRecording(2) : startRecording(2)}
             >
               <IconSymbol name={p2Recording ? "stop.fill" : "record.circle.fill"} size={28} color="white" />
-              <Text style={styles.btnText}>{p2Recording ? `Stop (${p2Name}) · ${p2Duration}s` : `Record Mimic (${p2Name})`}</Text>
+              <Text style={styles.btnText}>{p2Recording ? `Stop · ${p2Duration}s` : 'Record mimic'}</Text>
             </Pressable>
 
             <Pressable 

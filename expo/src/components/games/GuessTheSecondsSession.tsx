@@ -317,7 +317,7 @@ export function GuessTheSecondsSession({ session }: Props) {
 
   // Whose-turn label suffix used in multi-device to remind non-active players to watch.
   const turnHint = isMultiplayer && !isLocalActive && currentPlayer
-    ? `Waiting for ${currentPlayer.displayName}…`
+    ? 'Waiting for the current player…'
     : null;
 
   if (guideOpen && sync.turnPhase === 'ready') return <GameStartGuide gameId="guess_the_seconds" onStart={() => { setGuideOpen(false); startTurn(); }} />;
@@ -333,7 +333,7 @@ export function GuessTheSecondsSession({ session }: Props) {
           {currentPlayer && !isFinished && (
             <PhaseTransition phaseKey={currentPlayer.id} type="scale">
               <View style={styles.nowPlayingBadge}>
-                <Text style={styles.nowPlayingText}>{currentPlayer.displayName}'s Turn</Text>
+                <Text style={styles.nowPlayingText}>Your turn</Text>
               </View>
             </PhaseTransition>
           )}
@@ -356,7 +356,7 @@ export function GuessTheSecondsSession({ session }: Props) {
         <LiquidGlass radius={24} style={[styles.card, { borderColor: getAccuracyBand(sync.lastResult.difference).color + '55' }]}>
           <View style={styles.resultHeader}>
             <IconSymbol name="flag.checkered" size={20} color={getAccuracyBand(sync.lastResult.difference).color} />
-            <Text style={styles.resultTitle}>{sync.lastResult.playerName} • Round {sync.lastResult.round}</Text>
+            <Text style={styles.resultTitle}>Round {sync.lastResult.round} result</Text>
             <View style={{flex: 1}}/>
             <View style={[styles.badge, { backgroundColor: getAccuracyBand(sync.lastResult.difference).color + '33' }]}>
               <Text style={[styles.badgeText, { color: getAccuracyBand(sync.lastResult.difference).color }]}>

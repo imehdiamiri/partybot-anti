@@ -895,7 +895,7 @@ export function SoundMatchSession({ session }: Props) {
     return (
       <MatchStudio kind="sound" step={2} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.roundResultCard}>
-          <Text style={st.roundResultPlayer}>{activePlayer.displayName}'s Result</Text>
+          <Text style={st.roundResultPlayer}>Your match result</Text>
           
           <View style={st.scoreBubbleContainer}>
             <View style={[st.scoreBubble, { borderColor: isGoodScore ? Colors.green : Colors.orange }]}>

@@ -18,6 +18,16 @@ export function useGameActivity(name: string | undefined, phase: string) {
   }, [name, phase, setActivity]);
 }
 
+export function useNameInActivityBanner(name?: string) {
+  const { activity } = useContext(ActivityContext);
+  return !!name && !!activity && activity.name === name && !!activityLabel(activity.phase);
+}
+
+/** Keep standalone views usable, but do not repeat the header's turn owner. */
+export function SecondaryPlayerLabel({ name, children }: { name?: string; children: React.ReactNode }) {
+  return useNameInActivityBanner(name) ? null : <>{children}</>;
+}
+
 export function activityLabel(phase: string): string | null {
   if (['intro', 'difficulty', 'guide', 'loading', 'results', 'finalResults', 'finished', 'leaderboard', 'scoreboard', 'idle', 'spinning'].includes(phase)) return null;
   if (['ready', 'passToPlayer', 'guesserAnnounce', 'countdown'].includes(phase)) return 'UP NEXT';
@@ -54,7 +64,7 @@ export function GameActivityBanner() {
   return <View testID="game-active-player" accessibilityLiveRegion="polite" style={s.banner}>
     <Animated.View style={[s.dot, { opacity, backgroundColor: color }]} />
     <Text style={[s.label, { color }]}>{label}</Text>
-    <Text style={s.name} numberOfLines={1}>{activity.name}</Text>
+    <Animated.Text testID="game-active-player-name" style={[s.name, { opacity: opacity.interpolate({ inputRange: [0.35, 1], outputRange: [0.72, 1] }) }]} numberOfLines={1}>{activity.name}</Animated.Text>
   </View>;
 }
 
@@ -66,5 +76,5 @@ const s = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 36, paddingHorizontal: 12, marginTop: 6, borderRadius: 12, backgroundColor: '#10261F', borderWidth: 1, borderColor: '#244638' },
   dot: { width: 7, height: 7, borderRadius: 4 },
   label: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
-  name: { flex: 1, color: '#F1FFF7', fontSize: 14, fontWeight: '600' },
+  name: { flex: 1, color: '#F1FFF7', fontSize: 15, fontWeight: '800' },
 });
