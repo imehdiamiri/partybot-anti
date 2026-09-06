@@ -1,5 +1,33 @@
 # Release log
 
+## 2026-09-06 — Stable home refresh / 16 new game heroes
+
+- Source: `263045fcd6512dd1c93d7c8b9caffed8e71d8647`.
+- Pre-change tag: `checkpoint/before-hero-refresh-2026-09-06`.
+- Web CSS grid replaces hydration-sensitive measured card widths; icon placeholders
+  reserve space. Reproduced 172px -> 279px bug is fixed on production: 279.99px
+  before/after navigation at desktop width, 165.73px before/after at 390px mobile.
+- All 16 game hero WebPs replaced, 1672x941 each, 748,784 bytes combined, built-in
+  image generation. Natural-ratio SSR frames retain rounded, borderless images.
+  Exact prompts/paths: `docs/hero-prompts-2026-09-06.json`; gallery and QA report:
+  `docs/hero-gallery-2026-09-06.html`, `docs/HERO_REFRESH_2026-09-06.md`.
+- Typecheck passed; 149 tests / 18 suites passed; 91 routes exported. Production
+  mobile/tablet/desktop checks passed; no console errors in tested flows. All 16
+  hero URLs returned HTTP 200 and matching SHA-256 hashes.
+- Firebase Hosting deployment succeeded to `partyplay-8`: https://partybot.games
+  uses `entry-8ad1933042a76d63df291fba54c2afde.js`. Generated web output/assets were
+  replaced; previous versions remain recoverable through Git. No local server.
+- Expo Go SDK57 update succeeded, preview environment, branch `expo-go-sdk57`,
+  runtime `exposdk:57.0.0`, group `a7175aa9-b997-4eae-8a13-b2c844eb4b55`.
+  Android: `01a076a7-6142-78d5-b37b-5035c019542a`;
+  iOS: `01a076a7-6142-70bb-8b13-5ad0abfad520`. 16 new assets uploaded.
+- Physical-device receipt is not claimed. Existing test-renderer deprecation and
+  Expo dynamic-import warning remain; no native dependency/runtime changed.
+- Recovery tag: `checkpoint/hero-refresh-2026-09-06`. Local backup bundle:
+  `C:/Users/Mehdi/Documents/Codex/2026-08-14/playbot-antigravity-ios-android-audit/playbot-hero-refresh-2026-09-06.bundle`.
+  Git remote push remains pending explicit destination confirmation; cloud rollback
+  requires republishing a recovered version, not just reverting Git.
+
 ## 2026-09-06 — Eye Sight feedback / all-game start guides
 
 - Source: `5a5b89a42145642a470208dee587ec706ab5b0f0`.
