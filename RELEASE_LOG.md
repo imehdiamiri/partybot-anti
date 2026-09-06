@@ -1,5 +1,34 @@
 # Release log
 
+## 2026-09-06 — Reverse Singing large controls / independent playback
+
+- Recovery: `checkpoint/before-reverse-playback-fix` at `ce24ca4`.
+- Restored all original record/play/reverse/result/share controls to 100px height,
+  with 100px circular secondary controls, larger icons and 15px button labels.
+  Compact inline player headings remain. Retry is a separate adjacent button in
+  the source recording row; it remains usable when source Record is locked.
+  Source status now says Saved, not a misleading whole-card Locked.
+- Only source Record remains persistently locked after capture. Existing audio
+  remains playable during reversal of the mimic. Playback is briefly blocked
+  while the microphone is live or a capture/reset operation is starting.
+- Web playback now retains each take's decoded PCM buffer and plays it through
+  Web Audio, resuming from the Play gesture. Starting the mimic cannot replace
+  the source buffer. Repeated playback replaces its source node; Retry/unmount
+  cancels pending resume/decode and clears cached buffers and recording URLs.
+  Removed silent HTMLAudioElement failure handling; errors now appear inline.
+- Native playback uses a ref-owned player with generation guards instead of a
+  state-owned cleanup effect. Explicit speaker routing is restored on playback.
+  Removed an unnecessary 400ms delay after the WAV writer has already completed.
+- Verification: TypeScript passed; 143 tests / 16 suites passed, including actual
+  component button flows with synthetic/mocked audio: record → reverse/slow play
+  → mimic → Result → replay → Retry → new source; native WAV reversal byte order;
+  pending playback cancellation; visible errors; source playback during processing.
+  These do not certify physical microphone/speaker behavior on a user's device.
+- Added react-test-renderer 19.2.3 as a development-only dependency for interaction
+  regressions; no native/runtime dependency changed. Its deprecation warning is
+  expected in the test runner and is not a production app error.
+- Publication and live layout evidence follow after verification.
+
 ## 2026-09-06 — Owner-requested Firebase / EAS republish
 
 - Clean checkout at `913cd3a`; no source changes pending. Current live web and
