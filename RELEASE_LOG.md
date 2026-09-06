@@ -1,5 +1,24 @@
 # Release log
 
+## 2026-09-07 — Refined silver tool icons and longer Wheel
+
+- Replaced colorful object illustrations with a consistent silver outline SVG
+  family. Retained transparent canvases, large tool tiles and responsive columns.
+- Wheel duration/audio lifecycle increased from 11000 to 13000ms with the same
+  smooth quartic deceleration and angle-driven ticks. Removed only the center-hub
+  rotation glyph; the Spin button remains. Pointer enlarged from 24x23 to 40x36,
+  retaining exact center alignment and existing winner selection logic.
+- TypeScript passed; 29 Jest suites / 230 tests passed. Web export (91 routes), sync
+  and Firebase Hosting partyplay-8 deployment succeeded.
+  Bundle: `entry-c3abed2ee141f63b6597d7fbbf01508a.js`.
+- Live https://partybot.games/tools verified at 390 and 1280px: six icons, no
+  horizontal overflow. Tools and Wheel screenshots visually inspected. Live wheel
+  at 390px: pointer centered, no overflow, completed in 13174ms, winner Dare, no
+  page errors. Native physical-device experience not tested.
+- Before tag: `checkpoint/refined-tools-before-2026-09-07`. Expo confirmation and
+  final recovery checkpoint recorded after publication. No remote Git push.
+- Prior card translation/673-card expansion remains outstanding and unchanged.
+
 ## 2026-09-07 — Automatically remember new local game friends
 
 - Shared game Setup remembers active typed names only after successful session

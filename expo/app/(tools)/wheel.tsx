@@ -172,12 +172,12 @@ export default function WheelToolScreen() {
     setWinner(null);
     setIsSpinning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    toolAudio.begin(11000);
+    toolAudio.begin(13000);
 
     cancelAnimation(rotation);
 
     // One easing curve drives both rotation and the actual pointer-detent ticks.
-    const totalDuration = 11000;
+    const totalDuration = 13000;
     const totalTurns = 8 + Math.random() * 3; // 8..11 full rotations across the spin
     const extraAngle = Math.random() * 360; // random landing offset
     const finalTarget = rotation.value + totalTurns * 360 + extraAngle;
@@ -342,12 +342,11 @@ export default function WheelToolScreen() {
                 end={{ x: 0.8, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
-              <IconSymbol name="arrow.triangle.2.circlepath" size={23} color="#DCD1FF" weight="black" />
             </View>
           </View>
 
           {/* Pointer — marker pin: rounded body up top, sharp triangle tip pointing down into the wheel */}
-          <View style={[styles.pointerWrap, { left: radius - 12 }]} pointerEvents="none">
+          <View testID="wheel-pointer" style={[styles.pointerWrap, { left: radius - 20 }]} pointerEvents="none">
             <View style={styles.pointerTip} />
           </View>
         </View>
@@ -551,7 +550,7 @@ const styles = StyleSheet.create({
   pointerWrap: {
     position: 'absolute',
     top: -5,
-    width: 24,
+    width: 40,
     alignItems: 'center',
     ...Platform.select({
       ios: {
@@ -568,9 +567,9 @@ const styles = StyleSheet.create({
     marginTop: -2,
     width: 0,
     height: 0,
-    borderLeftWidth: 12,
-    borderRightWidth: 12,
-    borderTopWidth: 23,
+    borderLeftWidth: 20,
+    borderRightWidth: 20,
+    borderTopWidth: 36,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: 'white',
