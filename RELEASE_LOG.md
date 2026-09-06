@@ -19,7 +19,13 @@
   Quick Add after clearing the current player slot. No page errors. Test browser
   storage was isolated from the user's friends. Physical native phone not tested.
 - Before checkpoint: `checkpoint/auto-friends-before-2026-09-07`.
-  Expo publication confirmation and final checkpoint recorded below.
+  Final tag: `checkpoint/auto-friends-2026-09-07`. Offline full-history backup:
+  `playbot-auto-friends-2026-09-07.bundle` in the Codex audit workspace.
+- Source commit: `6e09429be0ca907d51f2c7464f19a943a77bfab2`.
+  Expo confirmed publication to expo-go-sdk57, runtime exposdk:57.0.0:
+  group `5b5f14ac-38fb-4700-8138-67a9109ed490`, Android
+  `01a078ba-4186-7d54-8ab8-9b9e73cf1370`, iOS
+  `01a078ba-4186-7e44-ae4c-4cb6fe23fdf6`.
 - Previous outstanding card translations/673-card expansion unchanged. No Git
   remote push or persistent local server.
 
