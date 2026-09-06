@@ -21,7 +21,10 @@
   header skip confirms correct name and advances; Guess the Seconds reaches new
   final scoreboard; home drum SVG present. No captured console errors. Temporary
   tab closed and viewport restored. Physical-device audio not independently heard.
-- Expo Go SDK57 publication and final checkpoint recorded below after confirmation.
+- Expo Go SDK57 published successfully: group `7f312057-a0c0-4ae7-815f-4d08707339ed`,
+  Android `01a07891-2837-7603-88a2-57f5e48fa653`, iOS `01a07891-2837-79fe-9505-733cae1114c9`.
+  Source commit `b59c1157adcec222030f840f41297b607ce81951`; runtime exposdk:57.0.0.
+  Physical receipt not verified. Next requested batch starts from this checkpoint.
 - No persistent local server; no remote Git push (destination confirmation pending).
 
 ## 2026-09-06 — Handoff redesign, stable player banner and symbol audit
