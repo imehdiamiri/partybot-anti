@@ -19,6 +19,29 @@ jest.mock('@/src/utils/browserRecordingPlayback',()=>({BrowserRecordingPlayback:
   constructor(){ globalThis.drumAudioMock=this; }
 }}));
 const {DrumChallengeSession}=require('@/src/components/games/DrumChallengeSession');
+test.each(['4/4','3/4','6/8','8/8'])('Metronome %s waits through listening and scores one tap after four silent bars', async rhythm => {
+ jest.useFakeTimers(); let screen;
+ const {metronomePlan}=require('@/src/utils/metronomeChallenge');
+ const plan=metronomePlan(rhythm);
+ await act(async()=>{screen=create(React.createElement(DrumChallengeSession,{session:{players:[{id:'a',displayName:'Alice'}],gameConfig:{drumMode:'metronome',metronomeRhythm:rhythm}}}));});
+ await act(async()=>screen.root.findByType('Ready').props.onReady());
+ const button=()=>screen.root.findByProps({testID:'drum-challenge-tap-btn'});
+ expect(button().props.disabled).toBe(true);
+ await act(async()=>button().props.onPress());
+ expect(screen.root.findAllByProps({testID:'drum-challenge-next-attempt'})).toHaveLength(0);
+ await act(async()=>jest.advanceTimersByTime(plan.audibleMs));
+ expect(button().props.disabled).toBe(false);
+ await act(async()=>jest.advanceTimersByTime(plan.targetMs-plan.audibleMs+125));
+ const tap=button().props.onPress;
+ await act(async()=>{tap();tap();});
+ expect(JSON.stringify(screen.toJSON())).toContain('125 ms late');
+ await act(async()=>jest.advanceTimersByTime(5000));
+ expect(screen.root.findAllByProps({testID:'drum-challenge-next-attempt'})).toHaveLength(1);
+ await act(async()=>screen.unmount());
+ jest.runAllTicks(); // React schedules microtasks that are not game timers.
+ expect(jest.getTimerCount()).toBe(0);
+ jest.useRealTimers();
+});
 test('Drum plays the web track and credits three auto-finished attempts per player',async()=>{
  jest.useFakeTimers(); let screen; globalThis.drumPlayCalls=0;
  const press=async id=>act(async()=>screen.root.findByProps({testID:id}).props.onPress());

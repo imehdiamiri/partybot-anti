@@ -32,7 +32,7 @@ interface Props {
 function withHint(session: GameSession, child: React.ReactNode) {
   const gameId = session.game.id;
   const hint = GAME_HINTS[gameId];
-  if (['eye_sight', 'pass_guess', 'guess_the_seconds'].includes(gameId)) return child;
+  if (['eye_sight', 'pass_guess'].includes(gameId)) return child;
   return hint ? <GameIntroGate gameId={gameId} config={session.gameConfig}>{child}</GameIntroGate> : child;
 }
 

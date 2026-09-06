@@ -1,6 +1,5 @@
 import { SecondaryPlayerLabel, useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
-import { GameStartGuide } from './GameStartGuide';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
@@ -72,7 +71,6 @@ export function GuessTheSecondsSession({ session }: Props) {
 
   const [sync, setSync] = useState<SyncState>(initialSync);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [guideOpen, setGuideOpen] = useState(false);
 
   // Authoritative reducer — runs on host only (or single-device).
   const apply = useCallback((type: string, data: any, prev: SyncState): SyncState => {
@@ -223,7 +221,7 @@ export function GuessTheSecondsSession({ session }: Props) {
   const currentTurn = !isFinished ? turnOrder[sync.activeTurnIndex] : null;
   const currentRoundNumber = currentTurn ? currentTurn.round : roundsPerPlayer;
   const currentPlayer = currentTurn ? players[currentTurn.playerIndex] : null;
-  useGameActivity(currentPlayer?.displayName, guideOpen ? 'guide' : isFinished ? 'results' : sync.turnPhase === 'reveal' ? 'result' : sync.turnPhase);
+  useGameActivity(currentPlayer?.displayName, isFinished ? 'results' : sync.turnPhase === 'reveal' ? 'result' : sync.turnPhase);
   const isFirstPlayerOfCurrentRound = currentTurn ? currentTurn.playerIndex === 0 : false;
   const currentRoundTargetLocked = sync.roundTargets[currentRoundNumber] !== undefined;
   const displayedTargetTime = sync.roundTargets[currentRoundNumber] ?? sync.selectedTime;
@@ -320,7 +318,6 @@ export function GuessTheSecondsSession({ session }: Props) {
     ? 'Waiting for the current player…'
     : null;
 
-  if (guideOpen && sync.turnPhase === 'ready') return <GameStartGuide gameId="guess_the_seconds" onStart={() => { setGuideOpen(false); startTurn(); }} />;
   return (
     <ScrollView contentContainerStyle={styles.container}>
 
@@ -452,7 +449,7 @@ export function GuessTheSecondsSession({ session }: Props) {
                   testID="guess-seconds-start-button"
                   accessibilityRole="button"
                   style={[styles.primaryButton, styles.giantButton, { backgroundColor: Colors.blue }, !isLocalActive && { opacity: 0.5 }]}
-                  onPress={() => setGuideOpen(true)}
+                  onPress={startTurn}
                   disabled={!isLocalActive}
                 >
                   <IconSymbol name="play.fill" size={48} color="white" />

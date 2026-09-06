@@ -63,7 +63,7 @@ export function GameActivityBanner() {
   const color = '#68E8A8';
   return <View testID="game-active-player" accessibilityLiveRegion="polite" style={s.banner}>
     <Animated.View style={[s.dot, { opacity, backgroundColor: color }]} />
-    <Text style={[s.label, { color }]}>{label}</Text>
+    <Text style={[s.label, { color: '#B6BDCA' }]}>{label}</Text>
     <Animated.Text testID="game-active-player-name" style={[s.name, { opacity: opacity.interpolate({ inputRange: [0.35, 1], outputRange: [0.72, 1] }) }]} numberOfLines={1}>{activity.name}</Animated.Text>
   </View>;
 }
@@ -73,7 +73,7 @@ export const GAME_UI = StyleSheet.create({
   buttonText: { fontSize: 16, fontWeight: '700' },
 });
 const s = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 36, paddingHorizontal: 12, marginTop: 6, borderRadius: 12, backgroundColor: '#10261F', borderWidth: 1, borderColor: '#244638' },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 36, paddingHorizontal: 12, marginTop: 6, borderRadius: 12, backgroundColor: '#191D27', borderWidth: 1, borderColor: '#303642' },
   dot: { width: 7, height: 7, borderRadius: 4 },
   label: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
   name: { flex: 1, color: '#68E8A8', fontSize: 20, fontWeight: '800' },

@@ -19,6 +19,7 @@ import { isWeb } from '@/src/utils/platform';
 import { playWebTick, playWebDrumHit } from '@/src/utils/browserMediaAdapter';
 import { BrowserRecordingPlayback } from '@/src/utils/browserRecordingPlayback';
 import { Asset } from 'expo-asset';
+import { metronomePlan, metronomeError } from '@/src/utils/metronomeChallenge';
 
 interface Props { session: GameSession; }
 
@@ -54,7 +55,6 @@ export function DrumChallengeSession({ session }: Props) {
   const registerSkip = useRegisterSkip();
   const modeKey: DrumMode = (session.gameConfig?.drumMode === 'metronome') ? 'metronome' : 'whitney';
   const modeConfig = MODES[modeKey];
-  const metronomeCycles = session.gameConfig?.metronomeCycles || 4;
   const metronomeRhythm = session.gameConfig?.metronomeRhythm || '4/4';
 
   const [phase, setPhase] = useState<Phase>('ready');
@@ -63,7 +63,8 @@ export function DrumChallengeSession({ session }: Props) {
   const [attemptIdx, setAttemptIdx] = useState(0);
   const [lastDiff, setLastDiff] = useState<number | null>(null);
   const [tapped, setTapped] = useState(false);
-  const [metronomeTaps, setMetronomeTaps] = useState<number[]>([]);
+  const [silent, setSilent] = useState(false);
+  const plan = metronomePlan(metronomeRhythm);
   const [records, setRecords] = useState<PlayerRecord[]>(() =>
     players.map(p => ({ playerId: p.id, attempts: [] }))
   );
@@ -213,7 +214,7 @@ export function DrumChallengeSession({ session }: Props) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setPhase('listening');
     setTapped(false);
-    setMetronomeTaps([]);
+    setSilent(false);
     setLastDiff(null);
     diffRef.current = null;
 
@@ -223,112 +224,55 @@ export function DrumChallengeSession({ session }: Props) {
     drumScale.value = 1;
 
     if (modeKey === 'metronome') {
-      if (isWeb) {
-        metronomeTimersRef.current.forEach(t => clearTimeout(t));
-        metronomeTimersRef.current = [];
-
-        const bpm = metronomeRhythm === 'fast' ? 160 : metronomeRhythm === '3/4' ? 100 : 120;
-        const beatsPerCycle = metronomeRhythm === '3/4' ? 3 : 4;
-        const msPerBeat = 60000 / bpm;
-        
-        const playCycles = metronomeCycles;
-        const silentCycles = metronomeCycles;
-        const totalBeatsToPlay = playCycles * beatsPerCycle;
-        const totalSilentBeats = silentCycles * beatsPerCycle;
-        const targetTimeMs = (totalBeatsToPlay + totalSilentBeats) * msPerBeat;
-        modeConfig.beatTime = targetTimeMs;
-
-        playStartRef.current = performance.now();
-        for (let i = 0; i < totalBeatsToPlay; i++) {
-          const delay = i * msPerBeat;
-          const isDownbeat = i % beatsPerCycle === 0;
-          const timer = setTimeout(() => {
-            if (phaseRef.current !== 'listening') return;
-            playWebTick(isDownbeat);
-          }, delay);
-          metronomeTimersRef.current.push(timer);
-        }
-
-        const finishDelay = targetTimeMs + 2000;
-        const finishTimer = setTimeout(() => {
-          if (phaseRef.current === 'listening') {
-            finishCurrentAttempt(diffRef.current);
-          }
-        }, finishDelay);
-        metronomeTimersRef.current.push(finishTimer);
-        return;
-      }
-
-      // Clean up any previous tick pool
-      tickPoolRef.current.forEach(s => s.unloadAsync().catch(() => {}));
-      tickPoolRef.current = [];
-      metronomeTimersRef.current.forEach(t => clearTimeout(t));
+      const schedule = metronomePlan(metronomeRhythm);
+      metronomeTimersRef.current.forEach(clearTimeout);
       metronomeTimersRef.current = [];
-
-      const bpm = metronomeRhythm === 'fast' ? 160 : metronomeRhythm === '3/4' ? 100 : 120;
-      const beatsPerCycle = metronomeRhythm === '3/4' ? 3 : 4;
-      const msPerBeat = 60000 / bpm;
-      
-      const playCycles = metronomeCycles; // play selected cycles out loud
-      const silentCycles = metronomeCycles; // then silence for same cycles
-      
-      const totalBeatsToPlay = playCycles * beatsPerCycle;
-      const totalSilentBeats = silentCycles * beatsPerCycle;
-      
-      const targetTimeMs = (totalBeatsToPlay + totalSilentBeats) * msPerBeat;
-      modeConfig.beatTime = targetTimeMs; // dynamically update
-      
-      // Pre-create all tick sounds (one per beat) for reliable playback
-      const preloadTicks = async () => {
-        const pool: Audio.Sound[] = [];
-        for (let i = 0; i < totalBeatsToPlay; i++) {
-          try {
-            const isDownbeat = i % beatsPerCycle === 0;
-            const { sound } = await Audio.Sound.createAsync(
-              METRONOME_TICK_AUDIO,
-              { shouldPlay: false, volume: isDownbeat ? 1.0 : 0.5 }
-            );
-            
-            if (isDownbeat) {
-              await sound.setRateAsync(1.5, false);
-            }
-            
-            pool.push(sound);
-          } catch (e) {
-            console.warn('Failed to preload tick', i, e);
+      tickPoolRef.current.forEach(sound => sound.unloadAsync().catch(() => {}));
+      tickPoolRef.current = [];
+      try {
+        if (!isWeb) {
+          // Preload before starting the clock; missing ticks must never silently count as a trial.
+          for (const tick of schedule.ticks) {
+            const { sound } = await Audio.Sound.createAsync(METRONOME_TICK_AUDIO, { shouldPlay: false, volume: tick.accent ? 1 : 0.45 });
+            if (generation !== attemptGeneration.current) { await sound.unloadAsync(); return; }
+            tickPoolRef.current.push(sound);
+            if (tick.accent) await sound.setRateAsync(1.5, false);
           }
         }
-        if (generation !== attemptGeneration.current) {
-          pool.forEach(s => s.unloadAsync().catch(() => {}));
-          return;
-        }
-        tickPoolRef.current = pool;
-
-        // Schedule all beats with precise timing
+        if (generation !== attemptGeneration.current) return;
+        const failAudio = () => {
+          if (generation !== attemptGeneration.current) return;
+          attemptGeneration.current++;
+          metronomeTimersRef.current.forEach(clearTimeout);
+          tickPoolRef.current.forEach(sound => sound.stopAsync().catch(() => {}));
+          setAudioError('Sound could not start. Tap Start Listening to retry.');
+          phaseRef.current = 'ready';
+          setPhase('ready');
+        };
         playStartRef.current = performance.now();
-        
-        for (let i = 0; i < totalBeatsToPlay; i++) {
-          const delay = i * msPerBeat;
-          const timer = setTimeout(() => {
-            if (phaseRef.current !== 'listening') return;
-            try {
-              pool[i]?.playAsync();
-            } catch (e) {}
-          }, delay);
-          metronomeTimersRef.current.push(timer);
-        }
-
-        // After audible cycles end, set a timeout for auto-finish
-        const finishDelay = targetTimeMs + 2000;
-        const finishTimer = setTimeout(() => {
-          if (phaseRef.current === 'listening') {
-            finishCurrentAttempt(diffRef.current);
-          }
-        }, finishDelay);
-        metronomeTimersRef.current.push(finishTimer);
-      };
-
-      preloadTicks();
+        schedule.ticks.forEach((tick, index) => {
+          const play = () => {
+            if (generation !== attemptGeneration.current || phaseRef.current !== 'listening') return;
+            if (isWeb) playWebTick(tick.accent);
+            else tickPoolRef.current[index]?.playAsync().catch(failAudio);
+          };
+          if (index === 0) play();
+          else metronomeTimersRef.current.push(setTimeout(play, tick.atMs));
+        });
+        metronomeTimersRef.current.push(setTimeout(() => {
+          if (generation !== attemptGeneration.current) return;
+          cancelAnimation(waveAnim);
+          setSilent(true);
+        }, schedule.audibleMs));
+        metronomeTimersRef.current.push(setTimeout(() => finishCurrentAttempt(null), schedule.targetMs + 2000));
+      } catch {
+        if (generation !== attemptGeneration.current) return;
+        tickPoolRef.current.forEach(sound => sound.unloadAsync().catch(() => {}));
+        tickPoolRef.current = [];
+        setAudioError('Sound could not load. Tap Start Listening to retry.');
+        phaseRef.current = 'ready';
+        setPhase('ready');
+      }
     } else {
       try {
         if (soundRef.current) { await soundRef.current.unloadAsync(); soundRef.current = null; }
@@ -384,7 +328,7 @@ export function DrumChallengeSession({ session }: Props) {
         setPhase('ready');
       }
     }
-  }, [modeKey, modeConfig, metronomeCycles, metronomeRhythm, finishAttempt, waveAnim, drumScale]);
+  }, [modeKey, modeConfig, metronomeRhythm, finishAttempt, waveAnim, drumScale]);
 
   const handleDrumTap = useCallback(async () => {
     if (phase !== 'listening' || tapped || !Number.isFinite(playStartRef.current)) return;
@@ -394,43 +338,16 @@ export function DrumChallengeSession({ session }: Props) {
 
     if (modeKey === 'metronome') {
       const elapsed = tapTime - playStartRef.current;
-      const bpm = metronomeRhythm === 'fast' ? 160 : metronomeRhythm === '3/4' ? 100 : 120;
-      const beatsPerCycle = metronomeRhythm === '3/4' ? 3 : 4;
-      const msPerBeat = 60000 / bpm;
-      
-      const expectedTime = (metronomeCycles + metronomeTaps.length) * beatsPerCycle * msPerBeat;
-      diff = Math.round(elapsed - (expectedTime + 50));
-      
-      const newTaps = [...metronomeTaps, diff];
-      setMetronomeTaps(newTaps);
-      setLastDiff(diff);
-      diffRef.current = diff;
-      
-      if (isWeb) {
-        playWebDrumHit();
-      } else {
-        try {
-          if (drumRef.current) {
-            await drumRef.current.setPositionAsync(0);
-            await drumRef.current.playAsync();
-          }
-        } catch {}
-      }
-
-      cancelAnimation(drumScale);
-      drumScale.value = withSequence(
-        withSpring(1.3, { damping: 4, stiffness: 300 }),
-        withSpring(1.0, { damping: 8 }),
-      );
-      drumGlow.value = withSequence(
-        withTiming(1, { duration: 100 }),
-        withTiming(0, { duration: 300 })
-      );
-
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
-      // Metronome mode: only need 1 tap
+      const schedule = metronomePlan(metronomeRhythm);
+      if (phaseRef.current !== 'listening' || elapsed < schedule.audibleMs) return;
+      diff = metronomeError(elapsed, schedule);
+      // Finish synchronously before any awaited audio: double taps cannot submit twice.
+      setTapped(true);
       finishAttempt(diff);
+      if (isWeb) playWebDrumHit();
+      else if (drumRef.current) {
+        try { await drumRef.current.setPositionAsync(0); await drumRef.current.playAsync(); } catch {}
+      }
       return;
     }
 
@@ -479,7 +396,7 @@ export function DrumChallengeSession({ session }: Props) {
     );
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  }, [phase, tapped, modeConfig.beatTime, drumScale, drumGlow, modeKey, metronomeRhythm, metronomeCycles, metronomeTaps, finishAttempt]);
+  }, [phase, tapped, modeConfig.beatTime, drumScale, drumGlow, modeKey, metronomeRhythm, finishAttempt]);
 
   const continueAfterAttempt = () => {
     const done = currentRecord?.attempts.length ?? 0;
@@ -542,10 +459,10 @@ export function DrumChallengeSession({ session }: Props) {
           <Text style={st.attemptBadgeTx}>Attempt {attemptIdx + 1} / {ATTEMPTS_PER_PLAYER}</Text>
         </View>
 
-        <Text style={st.listenTitle}>Listen…</Text>
-        <Text style={st.listenSub}>{modeConfig.title}</Text>
+        <Text style={st.listenTitle}>{modeKey === 'metronome' && silent ? 'Keep counting…' : 'Listen…'}</Text>
+        <Text style={st.listenSub}>{modeKey === 'metronome' ? plan.rhythm.title : modeConfig.title}</Text>
 
-        <Pressable testID="drum-challenge-tap-btn" accessibilityRole="button" onPress={handleDrumTap} disabled={tapped}>
+        <Pressable testID="drum-challenge-tap-btn" accessibilityRole="button" onPress={handleDrumTap} disabled={tapped || (modeKey === 'metronome' && !silent)}>
           <Animated.View style={[st.drumOuter, drumAnimStyle]}>
             <Animated.View style={[st.drumGlow, glowStyle]} />
             <View style={st.drumInner}>
@@ -555,8 +472,8 @@ export function DrumChallengeSession({ session }: Props) {
         </Pressable>
 
         <Text style={st.listenHint}>
-          {modeKey === 'metronome' && metronomeTaps.length > 0
-            ? `Hit ${metronomeTaps.length}/${metronomeCycles}: ${Math.abs(lastDiff!)}ms ${lastDiff! < 0 ? 'early' : lastDiff! > 0 ? 'late' : 'perfect'}`
+          {modeKey === 'metronome'
+            ? (silent ? 'Count 4 silent bars, then tap once' : 'Listen to 4 bars')
             : tapped && lastDiff != null 
               ? `🎯 ${Math.abs(lastDiff)}ms ${lastDiff < 0 ? 'early' : lastDiff > 0 ? 'late' : 'perfect'}!` 
               : 'Wait for it...'}
@@ -573,11 +490,11 @@ export function DrumChallengeSession({ session }: Props) {
           </View>
         )}
 
-        <View style={st.waveRow}>
+        {!(modeKey === 'metronome' && silent) && <View style={st.waveRow}>
           {Array.from({ length: 20 }).map((_, i) => (
             <WaveBar key={i} index={i} anim={waveAnim} />
           ))}
-        </View>
+        </View>}
 
       </PhaseTransition>
     );
@@ -604,7 +521,7 @@ export function DrumChallengeSession({ session }: Props) {
             <>
               <Text style={st.resultBig}>{absDiff} ms</Text>
               <Text style={[st.resultDir, { color: getAccuracyColor(absDiff!) }]}>
-                {modeKey === 'metronome' ? `📊 Average absolute error` : direction === 'perfect' ? '🎯 PERFECT!' : direction === 'early' ? `⏪ ${Math.abs(lastDiff!)} ms early` : `⏩ ${Math.abs(lastDiff!)} ms late`}
+                {direction === 'perfect' ? '🎯 PERFECT!' : direction === 'early' ? `⏪ ${Math.abs(lastDiff!)} ms early` : `⏩ ${Math.abs(lastDiff!)} ms late`}
               </Text>
               <Text style={st.sub}>{describeAccuracy(absDiff!)}</Text>
             </>

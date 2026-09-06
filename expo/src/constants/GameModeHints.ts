@@ -15,7 +15,7 @@ const MODE_HINTS: Record<string, Record<string, { title: string; tip: string }>>
   },
   drum_challenge: {
     whitney: { title: 'Drum Challenge · Music Drop', tip: 'Listen to the music build-up. | Tap the drum once at the exact moment the drum hit should land. | Your result shows how early or late you tapped. Smaller error is better.' },
-    metronome: { title: 'Drum Challenge · Metronome', tip: 'Listen to the selected rhythm and memorize the beat. | When the clicks stop, keep the same rhythm in your head. | Tap once on the next expected downbeat. Your timing error determines your result.' },
+    metronome: { title: 'Drum Challenge · Metronome', tip: 'Listen to four bars of your chosen rhythm. The accented click marks each group. | When the sound stops, count four more complete bars in your head. There is no visual countdown. | Tap once on the first beat AFTER those four silent bars. Your result shows milliseconds early or late; smaller error wins.' },
   },
   draw_rush: {
     preset: { title: 'Draw & Rush · Prompt', tip: 'Read the provided drawing prompt privately. | Draw the prompt before the timer ends; the other players guess aloud. | Mark whether they guessed correctly and pass to the next artist.' },

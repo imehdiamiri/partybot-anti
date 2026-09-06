@@ -1,5 +1,16 @@
 # Release log
 
+## 2026-09-06 — Setup guide timing and metronome challenge
+
+- Guess the Seconds now uses the shared pre-game guide immediately after Setup. Its timer Start starts the timer directly; the session does not mount beneath the initial guide.
+- Active-player banner has a neutral background and muted label; only the player name and pulsing dot remain green.
+- Metronome: four audible bars, four silent bars, then one tap on the next downbeat. Listening-phase taps are ignored; synchronous completion prevents double submission. Signed timing errors replace the incorrect average label and old first-silent-bar target. No visual beat countdown during silence.
+- Presets: 4/4 (quarter=120), 3/4 (quarter=100), 6/8 (dotted quarter=80, 3+3), 8/8 (eighth=240, 3+3+2). Old unsupported presets fall back to 4/4; trials always use four bars per stage.
+- Validation: TypeScript clean; 203 tests passed in 25 suites, including four-meter timing, accents, early/late signs, premature/double taps, and timer cleanup. Web export succeeded.
+- Firebase Hosting deployed to partyplay-8, bundle entry-d9c04c9b9a81b49f00377bf16b127d87.js. Live UI verified Setup → guide → idle timer → direct Start; neutral banner; 6/8 guide/handoff/listening/silence/late result and timeout result. No browser errors. Physical-device audio latency and actual speaker output were not certified.
+- Rollback baseline: checkpoint/before-metronome-flow-2026-09-06. No remote Git push or persistent development server.
+
+
 ## 2026-09-06 — Restore handoff names and offline Imposter meanings
 
 - Restored the large player name on shared handoff screens. The activity banner now stays hidden during ready, countdown, handoff and result phases; active gameplay uses a larger green pulsing name. Guess the Seconds displays the actual name when ready instead of "Your turn". Result cards retain explicit ownership where needed.

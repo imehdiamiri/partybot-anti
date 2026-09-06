@@ -1,3 +1,4 @@
+import { METRONOME_RHYTHMS, MetronomeRhythm } from '@/src/utils/metronomeChallenge';
 import { Colors } from '@/src/theme/Colors';
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
@@ -106,8 +107,8 @@ export default function GameSetupScreen() {
 
   // ─── Drum Challenge state ───
   const [drumMode, setDrumMode] = useState<'whitney'|'metronome'>('whitney');
-  const [metronomeCycles, setMetronomeCycles] = useState(4);
-  const [metronomeRhythm, setMetronomeRhythm] = useState<'4/4'|'3/4'|'fast'>('4/4');
+  const metronomeCycles = 4;
+  const [metronomeRhythm, setMetronomeRhythm] = useState<MetronomeRhythm>('4/4');
 
   // ─── Imposter state ───
   const [imposterStyle, setImposterStyle] = useState<'discussion'|'clue'>('discussion');
@@ -146,8 +147,7 @@ export default function GameSetupScreen() {
     if (id === 'draw_rush' && saved.conceptMode) setDrConceptMode(saved.conceptMode);
     if (id === 'drum_challenge') {
       if (saved.drumMode) setDrumMode(saved.drumMode);
-      if (saved.metronomeCycles) setMetronomeCycles(saved.metronomeCycles);
-      if (saved.metronomeRhythm) setMetronomeRhythm(saved.metronomeRhythm);
+      if (METRONOME_RHYTHMS.some(r => r.id === saved.metronomeRhythm)) setMetronomeRhythm(saved.metronomeRhythm);
     }
     if (id === 'imposter' && saved.gameStyle) setImposterStyle(saved.gameStyle);
     if (id === 'imposter' && Object.hasOwn(IMPOSTER_CATEGORY_LABELS, saved.category)) setImposterCategory(saved.category);
@@ -655,32 +655,12 @@ export default function GameSetupScreen() {
 
               {drumMode === 'metronome' && (
                 <View style={{ marginTop: 16, gap: 16 }}>
-                  <View>
-                    <Text style={{ color: 'white', fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Cycles to Memorize</Text>
-                    <View style={st.stepperRow}>
-                      <TouchableOpacity style={st.stepperCircle} disabled={metronomeCycles <= 2}
-                        onPress={() => setMetronomeCycles(c => Math.max(2, c - 1))}>
-                        <IconSymbol name="minus" size={14} color={metronomeCycles <= 2 ? 'rgba(255,255,255,0.2)' : '#fff'} />
-                      </TouchableOpacity>
-                      <View style={{ alignItems: 'center', flex: 1 }}>
-                        <Text style={st.stepperValue}>{metronomeCycles}</Text>
-                        <Text style={st.stepperLabel}>cycles</Text>
-                      </View>
-                      <TouchableOpacity style={st.stepperCircle} disabled={metronomeCycles >= 10}
-                        onPress={() => setMetronomeCycles(c => Math.min(10, c + 1))}>
-                        <IconSymbol name="plus" size={14} color={metronomeCycles >= 10 ? 'rgba(255,255,255,0.2)' : '#fff'} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                  <Text style={{ color: '#B6BDCA', lineHeight: 22 }}>4 bars aloud → 4 bars in silence → tap the next downbeat.</Text>
 
                   <View>
                     <Text style={{ color: 'white', fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Rhythm</Text>
-                    <View style={{ flexDirection: 'row', gap: 8 }}>
-                      {([
-                        { id: '4/4', title: '4/4 Time', sub: 'Standard 120BPM' },
-                        { id: '3/4', title: '3/4 Time', sub: 'Waltz 100BPM' },
-                        { id: 'fast', title: 'Fast 4/4', sub: 'Speed 160BPM' }
-                      ] as const).map(r => {
+                    <View style={{ gap: 8 }}>
+                      {METRONOME_RHYTHMS.map(r => {
                         const sel = metronomeRhythm === r.id;
                         return (
                           <TouchableOpacity key={r.id} onPress={() => setMetronomeRhythm(r.id)}
