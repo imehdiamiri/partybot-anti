@@ -18,7 +18,13 @@
 - Still outstanding: five-language card translations/controls and 673 additional
   cards (mostly Talk). The built-in total remains 2216, NOT 2889. No placeholder
   translations, external translation service, or filler duplicates were added.
-- Expo Go SDK57 update publication in progress; exact confirmation recorded below.
+- Source commit: `a86de86bcee27d2628c66267a8ed4c967a7755e2`.
+- Expo confirmed publication to expo-go-sdk57, runtime exposdk:57.0.0:
+  group `43bf5d44-fd0a-4c2c-bdab-305a1aae1961`, Android
+  `01a078ac-ccf9-74c6-8b94-eb4e6eb80d11`, iOS
+  `01a078ac-ccf9-7680-b216-826fa1e65750`.
+- Final recovery tag: `checkpoint/cards-motion-2026-09-07`; full-history offline
+  backup: `playbot-cards-motion-2026-09-07.bundle` in the Codex audit workspace.
 - No Git remote push and no persistent local server. Device playback/animation
   experience has not been verified on a physical phone.
 
