@@ -64,6 +64,7 @@ export function DrumChallengeSession({ session }: Props) {
   const [attemptIdx, setAttemptIdx] = useState(0);
   const [lastDiff, setLastDiff] = useState<number | null>(null);
   const [tapped, setTapped] = useState(false);
+  const tapAccepted = useRef(false);
   const [silent, setSilent] = useState(false);
   const plan = metronomePlan(metronomeRhythm);
   const [records, setRecords] = useState<PlayerRecord[]>(() =>
@@ -215,6 +216,7 @@ export function DrumChallengeSession({ session }: Props) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setPhase('listening');
     setTapped(false);
+    tapAccepted.current = false;
     setSilent(false);
     setLastDiff(null);
     diffRef.current = null;
@@ -332,7 +334,7 @@ export function DrumChallengeSession({ session }: Props) {
   }, [modeKey, modeConfig, metronomeRhythm, finishAttempt, waveAnim, drumScale]);
 
   const handleDrumTap = useCallback(async () => {
-    if (phase !== 'listening' || tapped || !Number.isFinite(playStartRef.current)) return;
+    if (phase !== 'listening' || tapped || tapAccepted.current || !Number.isFinite(playStartRef.current)) return;
 
     const tapTime = performance.now();
     let diff = 0;
@@ -342,6 +344,7 @@ export function DrumChallengeSession({ session }: Props) {
       const schedule = metronomePlan(metronomeRhythm);
       if (phaseRef.current !== 'listening' || elapsed < schedule.audibleMs) return;
       diff = metronomeError(elapsed, schedule);
+      tapAccepted.current = true;
       // Finish synchronously before any awaited audio: double taps cannot submit twice.
       setTapped(true);
       finishAttempt(diff);
@@ -353,6 +356,10 @@ export function DrumChallengeSession({ session }: Props) {
     }
 
     setTapped(true);
+
+    tapAccepted.current = true;
+    // Web does not load the native drumRef. Play inside the tap gesture.
+    if (isWeb) playWebDrumHit();
 
     if (soundRef.current) {
       try {
@@ -477,7 +484,7 @@ export function DrumChallengeSession({ session }: Props) {
             ? (silent ? 'Count 4 silent bars, then tap once' : 'Listen to 4 bars')
             : tapped && lastDiff != null 
               ? `🎯 ${Math.abs(lastDiff)}ms ${lastDiff < 0 ? 'early' : lastDiff > 0 ? 'late' : 'perfect'}!` 
-              : 'Wait for it...'}
+              : 'Tap the drum when the beat lands'}
         </Text>
 
         {tapped && (

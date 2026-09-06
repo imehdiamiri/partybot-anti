@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Animated, AccessibilityInfo, View } from 'react-native';
 import Svg, { Rect, Circle, Ellipse, Path, Line } from 'react-native-svg';
 
 /** Code-native illustrations: fixed viewBox, no emoji/font metrics or bitmap stretch. */
-export function DrumIllustration() {
-  return <Svg testID="drum-illustration" width={200} height={200} viewBox="0 0 200 200">
+export function DrumIllustration({ size = 200 }: { size?: number }) {
+  return <Svg testID="drum-illustration" width={size} height={size} viewBox="0 0 200 200">
     <Ellipse cx="100" cy="174" rx="68" ry="10" fill="#000" opacity={0.25} />
     <Path d="M40 92H160V143C160 179 40 179 40 143Z" fill="#CB246D" />
     <Path d="M48 106L69 157L94 112L119 158L151 105" fill="none" stroke="#FFBE78" strokeWidth="5" strokeLinejoin="round" />
@@ -17,18 +18,47 @@ export function DrumIllustration() {
 }
 
 export function PhoneHandoffIllustration({ color }: { color: string }) {
-  return <Svg testID="phone-handoff-illustration" width="100%" height={156} viewBox="0 0 272 156" preserveAspectRatio="xMidYMid meet">
-    <Circle cx="44" cy="78" r="30" fill="#2A3040" />
-    <Circle cx="44" cy="71" r="9" fill="#AAB4C8" />
-    <Path d="M27 94C27 77 61 77 61 94" fill="#AAB4C8" />
-    <Rect x="95" y="18" width="68" height="120" rx="17" fill="#202838" stroke="#E5EBF5" strokeWidth="3" />
-    <Rect x="103" y="35" width="52" height="78" rx="8" fill={color} opacity={0.2} />
-    <Line x1="119" y1="26" x2="139" y2="26" stroke="#E5EBF5" strokeWidth="3" strokeLinecap="round" />
-    <Circle cx="129" cy="124" r="4" fill="#E5EBF5" />
-    <Path d="M116 75H143M134 66L143 75L134 84" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M174 78H195M187 70L195 78L187 86" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-    <Circle cx="230" cy="78" r="30" fill={color} opacity={0.18} />
-    <Circle cx="230" cy="71" r="9" fill={color} />
-    <Path d="M213 94C213 77 247 77 247 94" fill={color} />
-  </Svg>;
+  const movement = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let alive = true;
+    let loop: Animated.CompositeAnimation | undefined;
+    const configure = (reduced: boolean) => {
+      if (!alive) return;
+      loop?.stop();
+      movement.setValue(reduced ? 0.5 : 0);
+      if (!reduced) {
+        loop = Animated.loop(Animated.sequence([
+          Animated.timing(movement, { toValue: 1, duration: 1400, useNativeDriver: true }),
+          Animated.delay(600),
+          Animated.timing(movement, { toValue: 0, duration: 0, useNativeDriver: true }),
+          Animated.delay(300),
+        ]));
+        loop.start();
+      }
+    };
+    AccessibilityInfo.isReduceMotionEnabled().then(configure).catch(() => configure(true));
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', configure);
+    return () => { alive = false; loop?.stop(); subscription.remove(); };
+  }, [movement]);
+  return <View testID="phone-handoff-illustration" accessibilityLabel="Pass the phone from your hand to the next player's hand"
+    style={{ width: 224, maxWidth: '100%', height: 156 }}>
+    <Svg width="100%" height={156} viewBox="0 0 224 156">
+      <Path d="M2 142V108L25 78Q33 70 39 77L29 97L58 81Q67 78 69 86L55 113Q50 125 31 132V150"
+        fill="#30394D" stroke="#AAB4C8" strokeWidth="2" strokeLinejoin="round" />
+      <Path d="M222 142V108L199 78Q191 70 185 77L195 97L166 81Q157 78 155 86L169 113Q174 125 193 132V150"
+        fill={color} fillOpacity={0.18} stroke={color} strokeWidth="2" strokeLinejoin="round" />
+      <Path d="M91 137H133M124 130L133 137L124 144" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" />
+    </Svg>
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 45, top: 12,
+      transform: [{ translateX: movement.interpolate({ inputRange: [0, 1], outputRange: [0, 70] }) },
+        { rotate: movement.interpolate({ inputRange: [0, 1], outputRange: ['-10deg', '10deg'] }) }] }}>
+      <Svg width={64} height={108} viewBox="0 0 64 108">
+        <Rect x="3" y="3" width="58" height="102" rx="14" fill="#202838" stroke="#E5EBF5" strokeWidth="3" />
+        <Rect x="10" y="19" width="44" height="65" rx="7" fill={color} opacity={0.22} />
+        <Line x1="25" y1="11" x2="39" y2="11" stroke="#E5EBF5" strokeWidth="3" strokeLinecap="round" />
+        <Circle cx="32" cy="94" r="3" fill="#E5EBF5" />
+        <Path d="M20 51H44M35 42L44 51L35 60" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" />
+      </Svg>
+    </Animated.View>
+  </View>;
 }

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useCallback, useRef } from 
 import { GameActivityProvider } from '@/src/components/games/GameActivity';
 
 interface GameSkipContextValue {
+  registerHandoff: (handler: (() => void) | null, playerName?: string) => void;
+  handoff: { handler: () => void; name?: string } | null;
   /** Register a skip handler (call with null to unregister) */
   registerSkip: (handler: (() => void) | null, playerName?: string) => void;
   /** Current skip handler (null if no skip available) */
@@ -11,12 +13,18 @@ interface GameSkipContextValue {
 }
 
 const GameSkipContext = createContext<GameSkipContextValue>({
+  registerHandoff: () => {},
+  handoff: null,
   registerSkip: () => {},
   skipHandler: null,
   skipPlayerName: undefined,
 });
 
 export function GameSkipProvider({ children }: { children: React.ReactNode }) {
+  const [handoff, setHandoff] = useState<{ handler: () => void; name?: string } | null>(null);
+  const registerHandoff = useCallback((handler: (() => void) | null, name?: string) => {
+    setHandoff(handler ? { handler, name } : null);
+  }, []);
   const [skipHandler, setSkipHandler] = useState<(() => void) | null>(null);
   const [skipPlayerName, setSkipPlayerName] = useState<string | undefined>(undefined);
 
@@ -27,7 +35,7 @@ export function GameSkipProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <GameSkipContext.Provider value={{ registerSkip, skipHandler, skipPlayerName }}>
+    <GameSkipContext.Provider value={{ registerSkip, skipHandler, skipPlayerName, registerHandoff, handoff }}>
       <GameActivityProvider>{children}</GameActivityProvider>
     </GameSkipContext.Provider>
   );
@@ -41,6 +49,8 @@ export function useRegisterSkip() {
 
 /** Hook for the session header to read skip state */
 export function useSkipState() {
-  const { skipHandler, skipPlayerName } = useContext(GameSkipContext);
-  return { skipHandler, skipPlayerName };
+  const { skipHandler, skipPlayerName, handoff } = useContext(GameSkipContext);
+  return { skipHandler: handoff?.handler ?? skipHandler, skipPlayerName: handoff?.name ?? skipPlayerName, skipLabel: handoff ? 'Skip this player' : 'Skip' };
 }
+
+export function useRegisterHandoffSkip() { return useContext(GameSkipContext).registerHandoff; }

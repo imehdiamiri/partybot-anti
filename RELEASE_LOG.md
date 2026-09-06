@@ -1,5 +1,29 @@
 # Release log
 
+## 2026-09-07 — Animated handoff, unified results and drum feedback
+
+- Recovery baseline: `checkpoint/before-results-handoff-2026-09-06`.
+- Home Drum Challenge cards now render a code-native drum SVG on web/iOS/Android.
+- Shared handoff: large green player name, animated phone moving between vector
+  hands (reduced-motion safe), header-only Skip this player with current-player
+  confirmation. Separate handoff registration avoids parent phase effects clearing it.
+- Unified both ranked-results components into a neutral/mint scoreboard with a
+  geometric podium, no crown emojis, explicit skipped/empty states and preserved
+  caller ordering, metrics, sharing and replay. Reverse Singing's non-ranked audio
+  comparison remains distinct. Existing game-specific scoring rules are unchanged.
+- Fixed Whitney web taps calling only the native sound reference; accepted web
+  taps now play drum feedback. Added immediate duplicate-tap guard and clear hit
+  instruction. Metronome feedback retained and covered alongside Whitney.
+- Checks: TypeScript passed; Jest 26 suites / 208 tests passed; web export and
+  sync succeeded. Firebase Hosting-only deployment to partyplay-8 confirmed.
+  Live: https://partybot.games; bundle entry-8bacbe7d43cfa08812a9877a71b48748.js.
+- Live 390x844 smoke: Imposter handoff fits, green name/animated hand graphic,
+  header skip confirms correct name and advances; Guess the Seconds reaches new
+  final scoreboard; home drum SVG present. No captured console errors. Temporary
+  tab closed and viewport restored. Physical-device audio not independently heard.
+- Expo Go SDK57 publication and final checkpoint recorded below after confirmation.
+- No persistent local server; no remote Git push (destination confirmation pending).
+
 ## 2026-09-06 — Handoff redesign, stable player banner and symbol audit
 
 - Replaced the platform-dependent drum emoji with a fixed-viewBox SVG drum. Shared handoffs now use a responsive centered card, phone-transfer SVG, readable instruction, prominent player name and accessible-sized Ready/Skip actions. Existing callbacks and private reveal boundaries preserved.

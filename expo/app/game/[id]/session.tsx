@@ -111,7 +111,7 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
   paddingTop: number;
   onExit: () => void;
 }) {
-  const { skipHandler, skipPlayerName } = useSkipState();
+  const { skipHandler, skipPlayerName, skipLabel } = useSkipState();
 
   const { ask, dismiss, dialog } = useActionConfirmation();
   const pendingSkip = useRef<(() => void) | null>(null);
@@ -159,7 +159,7 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
             accessibilityRole="button"
             style={styles.headerSideButton}
           >
-            <Text style={[styles.headerSideText, { color: '#CFD5E3' }]}>Skip</Text>
+            <Text style={[styles.headerSideText, { color: '#CFD5E3', fontSize: skipLabel === 'Skip' ? 17 : 12 }]}>{skipLabel}</Text>
             <IconSymbol name="forward.fill" size={18} color="#CFD5E3" />
           </TouchableOpacity>
         ) : (
@@ -208,6 +208,8 @@ const styles = StyleSheet.create({
     height: 40,
   },
   headerTitle: {
+    flex: 1,
+    textAlign: 'center',
     fontFamily: 'Viral-Black',
     color: 'white',
     fontSize: 17,

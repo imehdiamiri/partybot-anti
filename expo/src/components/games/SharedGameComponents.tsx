@@ -1,7 +1,9 @@
 import { Colors, Typography } from '@/src/theme/Colors';
 import { useNameInActivityBanner } from './GameActivity';
 import { useActionConfirmation } from '../ActionConfirmation';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useRegisterHandoffSkip } from '@/src/contexts/GameSkipContext';
+import { ResultsScoreboard } from './ResultsScoreboard';
 import { View, Text, StyleSheet, Pressable, Platform, Alert, ScrollView } from 'react-native';
 import { PhoneHandoffIllustration } from './GameIllustrations';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -54,6 +56,14 @@ export function GameHandoffView({
   buttonTitle, onReady, onSkip, rolePillText = "NEXT PLAYER",
 }: GameHandoffViewProps) {
   const insets = useSafeAreaInsets();
+  const registerHandoff = useRegisterHandoffSkip();
+  const skipRef = useRef(onSkip);
+  skipRef.current = onSkip;
+  const canSkip = !!onSkip;
+  useEffect(() => {
+    registerHandoff(canSkip ? () => skipRef.current?.() : null, playerName);
+    return () => registerHandoff(null);
+  }, [canSkip, playerName, registerHandoff]);
   return <ScrollView style={{ flex: 1, backgroundColor: '#08080F' }}
     contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20, paddingBottom: Math.max(20, insets.bottom + 12) }}>
     <View testID="handoff-card" style={{ width: '100%', maxWidth: 480, alignItems: 'center', padding: 24, borderRadius: 28, backgroundColor: '#171B26', borderWidth: 1, borderColor: '#303748', gap: 20 }}>
@@ -61,7 +71,7 @@ export function GameHandoffView({
       <PhoneHandoffIllustration color={accentColor} />
       <View style={{ width: '100%', gap: 8, alignItems: 'center' }}>
         <Text style={{ color: '#DCE3F0', fontSize: 22, fontWeight: '600', textAlign: 'center' }}>{title}</Text>
-        <Text testID="handoff-player-name" style={{ color: '#FFFFFF', fontSize: 38, fontWeight: '800', textAlign: 'center', width: '100%' }}>{playerName}</Text>
+        <Text testID="handoff-player-name" style={{ color: '#68E8A8', fontSize: 40, fontWeight: '800', textAlign: 'center', width: '100%' }}>{playerName}</Text>
       </View>
       {subtitle && <Text style={{ color: '#B8C2D4', fontSize: 15, lineHeight: 22, textAlign: 'center' }}>{subtitle}</Text>}
       <Pressable testID="game-ready-button" accessibilityRole="button" onPress={onReady}
@@ -69,9 +79,6 @@ export function GameHandoffView({
         <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '700', flexShrink: 1, textAlign: 'center' }}>{buttonTitle || "I'm Ready"}</Text>
         <IconSymbol name="arrow.right" size={20} color="#FFFFFF" />
       </Pressable>
-      {onSkip && <Pressable accessibilityRole="button" onPress={onSkip} style={{ minHeight: 44, padding: 12, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#B8C2D4', fontSize: 14, fontWeight: '600' }}>Skip this player</Text>
-      </Pressable>}
     </View>
   </ScrollView>;
 }
@@ -199,119 +206,20 @@ interface GameResultsScreenProps {
 }
 
 export function GameResultsScreen({ players, results, onPlayAgain, title, badgeLabel = 'STANDINGS' }: GameResultsScreenProps) {
-  useEffect(() => {
-    playSharedSound('success');
-  }, []);
-
-  const validCompleted = results.filter(r => !r.isSkipped && r.score > 0);
-  const skippedList = results.filter(r => r.isSkipped || r.score === 0);
-
-  const sortedCompleted = [...validCompleted].sort((a, b) => b.score - a.score);
-
-  return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
-      <Animated.ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, maxWidth: 680, width: '100%', alignSelf: 'center' }} showsVerticalScrollIndicator={false}>
-        {/* Modern Header without trophy icon */}
-        <Animated.View entering={FadeInDown.duration(500).springify().damping(15)} style={{ alignItems: 'center', gap: 6, marginVertical: 20 }}>
-          <View style={{ paddingHorizontal: 14, paddingVertical: 4, borderRadius: 20, backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.12)', marginBottom: 4 }}>
-            <Text style={{ color: '#A855F7', fontSize: 11, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' }}>{badgeLabel}</Text>
-          </View>
-          <Text style={{ color: '#fff', fontSize: 28, fontFamily: 'Viral-Black', letterSpacing: 0.2 }}>{title || (players.length > 1 ? 'Final Rankings' : 'Complete!')}</Text>
-        </Animated.View>
-
-        <View style={{ gap: 12 }}>
-          {sortedCompleted.map((r, i) => {
-            const p = players.find(x => x.id === r.playerId);
-            const isFirst = i === 0;
-            return (
-              <Animated.View key={r.playerId} entering={FadeInUp.delay(i * 120).springify().damping(14)} 
-                style={[{ 
-                  flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14, 
-                  backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 20, 
-                  borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', overflow: 'hidden' 
-                }, isFirst && { backgroundColor: 'rgba(255,204,0,0.08)', borderColor: 'rgba(255,204,0,0.3)' }]}>
-                
-                {isFirst && <LinearGradient colors={['rgba(255,204,0,0.15)', 'transparent']} style={StyleSheet.absoluteFill} start={{x:0, y:0}} end={{x:1, y:1}} />}
-                
-                <View style={[{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' }, isFirst && { backgroundColor: 'rgba(255,204,0,0.2)' }]}>
-                  <Text style={[{ color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: 'Viral-Black' }, isFirst && { color: '#FFD700' }]}>{i+1}</Text>
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 16, fontFamily: 'Viral-Black', marginBottom: 6 }}>{p?.displayName}</Text>
-                  
-                  <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
-                    {r.stats.map((stat, idx) => (
-                      <View key={idx} style={{ minWidth: 50 }}>
-                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>{stat.label}</Text>
-                        <Text style={{ color: stat.color || '#fff', fontSize: 18, fontFamily: 'Viral-Black' }}>{stat.value}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>Score</Text>
-                  <Text style={{ color: isFirst ? '#FFD700' : Colors.orange, fontSize: 30, fontFamily: 'Viral-Black', letterSpacing: -0.5 }}>{r.score}</Text>
-                </View>
-
-              </Animated.View>
-            );
-          })}
-
-          {/* Skipped / Incomplete players */}
-          {skippedList.length > 0 && (
-            <View style={{ marginTop: 8, gap: 8 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 6 }}>
-                <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-                <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 }}>Did Not Play / Skipped</Text>
-                <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-              </View>
-
-              {skippedList.map((r, idx) => {
-                const p = players.find(x => x.id === r.playerId);
-                return (
-                  <Animated.View key={r.playerId} entering={FadeInUp.delay(200 + idx * 50).springify().damping(14)}
-                    style={{
-                      flexDirection: 'row', alignItems: 'center', gap: 12,
-                      paddingVertical: 12, paddingHorizontal: 16, borderRadius: 16,
-                      backgroundColor: 'rgba(255,255,255,0.02)',
-                      borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
-                      opacity: 0.75,
-                    }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.04)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 'bold' }}>—</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: '600' }}>{p?.displayName || 'Player'}</Text>
-                      <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 1 }}>Skipped turn</Text>
-                    </View>
-                    <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.25)' }}>
-                      <Text style={{ color: '#F87171', fontSize: 11, fontWeight: '700' }}>Skipped</Text>
-                    </View>
-                  </Animated.View>
-                );
-              })}
-            </View>
-          )}
-        </View>
-
-        <Animated.View entering={FadeInUp.delay((sortedCompleted.length + skippedList.length) * 100 + 200).springify()} style={{ marginTop: 24, maxWidth: 540, width: '100%', alignSelf: 'center' }}>
-          <Pressable 
-            style={({ pressed }) => [{ 
-              paddingVertical: 16, borderRadius: 18, 
-              alignItems: 'center', marginTop: 32, shadowColor: '#3B82F6', 
-              shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 6,
-              overflow: 'hidden'
-            }, pressed && { opacity: 0.85 }]} 
-            onPress={onPlayAgain}>
-            <LinearGradient colors={['#3B82F6', '#2563EB', '#1D4ED8']} style={[StyleSheet.absoluteFill, { borderRadius: 18 }]} />
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.3 }}>Play Again</Text>
-          </Pressable>
-        </Animated.View>
-      </Animated.ScrollView>
-    </View>
-  );
+  const completed = results.filter(r => !r.isSkipped && r.score > 0).sort((a, b) => b.score - a.score);
+  const skipped = results.filter(r => r.isSkipped || r.score === 0);
+  const entries = [...completed, ...skipped].map(r => ({
+    id: r.playerId,
+    name: players.find(p => p.id === r.playerId)?.displayName || 'Player',
+    primary: r.isSkipped || r.score === 0 ? 'Skipped' : `${r.score} pts`,
+    secondary: r.stats.map(s => `${s.label}: ${s.value}`).join(' · '),
+    isSkipped: r.isSkipped || r.score === 0,
+  }));
+  return <ScrollView style={{ flex: 1, backgroundColor: '#08080F' }}
+    contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+    <ResultsScoreboard entries={entries} title={title || (players.length > 1 ? 'Final Rankings' : 'Complete!')}
+      badgeLabel={badgeLabel} onPlayAgain={onPlayAgain} />
+  </ScrollView>;
 }
 
 // ─── Game Outcome Card ───────────────────────────────────────────────────────

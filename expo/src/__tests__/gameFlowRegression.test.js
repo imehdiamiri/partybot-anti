@@ -13,13 +13,24 @@ jest.mock('@/src/services/GameAudio',()=>({Audio:{}}));
 jest.mock('@/src/components/games/ResultsScoreboard',()=>({ResultsScoreboard:'Scoreboard'}));
 jest.mock('expo-asset',()=>({Asset:{fromModule:()=>({uri:'/whitney.wav'})}}));
 jest.mock('@/src/utils/platform',()=>({isWeb:true}));
-jest.mock('@/src/utils/browserMediaAdapter',()=>({playWebTick:()=>{},playWebDrumHit:()=>{}}));
+jest.mock('@/src/utils/browserMediaAdapter',()=>({playWebTick:()=>{},playWebDrumHit:jest.fn()}));
 jest.mock('@/src/utils/browserRecordingPlayback',()=>({BrowserRecordingPlayback: class {
   play=jest.fn(async()=>{globalThis.drumPlayCalls=(globalThis.drumPlayCalls||0)+1;return true;}); stop=jest.fn(); clear=jest.fn();
   constructor(){ globalThis.drumAudioMock=this; }
 }}));
 jest.mock('@/src/components/games/GameIllustrations',()=>({DrumIllustration:'DrumVector'}));
 const {DrumChallengeSession}=require('@/src/components/games/DrumChallengeSession');
+test.each(['whitney','metronome'])('Drum %s plays one web hit for an accepted tap, not two rapid taps', async drumMode => {
+ jest.useFakeTimers(); let screen;
+ const {playWebDrumHit}=require('@/src/utils/browserMediaAdapter'); playWebDrumHit.mockClear();
+ await act(async()=>{screen=create(React.createElement(DrumChallengeSession,{session:{players:[{id:'a',displayName:'Alice'}],gameConfig:{drumMode}}}));});
+ await act(async()=>screen.root.findByType('Ready').props.onReady());
+ if(drumMode==='metronome') await act(async()=>jest.advanceTimersByTime(require('@/src/utils/metronomeChallenge').metronomePlan('4/4').audibleMs));
+ const tap=screen.root.findByProps({testID:'drum-challenge-tap-btn'}).props.onPress;
+ await act(async()=>{tap();tap();});
+ expect(playWebDrumHit).toHaveBeenCalledTimes(1);
+ await act(async()=>screen.unmount()); jest.useRealTimers();
+});
 test.each(['4/4','3/4','6/8','8/8'])('Metronome %s waits through listening and scores one tap after four silent bars', async rhythm => {
  jest.useFakeTimers(); let screen;
  const {metronomePlan}=require('@/src/utils/metronomeChallenge');
