@@ -25,8 +25,8 @@ export function MatchStudio({ kind, step, player, round, children }: {
 }
 const s = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: '#0B0E16' },
-  content: { flexGrow: 1, padding: 16, justifyContent: 'center', paddingBottom: 28 },
-  shell: { width: '100%', maxWidth: 600, alignSelf: 'center' },
+  content: { flexGrow: 1, padding: 16, justifyContent: 'flex-start', paddingBottom: 28 },
+  shell: { width: '100%', maxWidth: 720, alignSelf: 'center' },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 18 },
   eyebrow: { fontSize: 11, letterSpacing: 2, fontWeight: '700', marginBottom: 5 },
   player: { fontSize: 22, fontWeight: '600', color: '#F4F6FA' },

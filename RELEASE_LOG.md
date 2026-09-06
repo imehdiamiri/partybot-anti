@@ -1,5 +1,21 @@
 # Release log
 
+## 2026-09-06 — Expanded Color Lab / Sound Studio controls
+
+- Checkpoint before edits: `checkpoint/pre-sound-layout-2026-09-06`.
+- Shared studio is top-aligned, bounded at 720px; no large empty area above play.
+- Sound tuner grows with viewport height (220–620px track), wider track and touch
+  controls, explicit 56px Play tone button below Hz, larger target Play control.
+- Explicit target/guess/result playback now lasts 3 seconds; short slider previews
+  remain short. Existing score/turn logic is unchanged.
+- Color preview grows with viewport height (170–360px); target preview at least
+  260px. Thicker color tracks, larger thumbs and parameter values; white Submit retained.
+- TypeScript and web export passed; 156 tests / 20 suites passed.
+- Firebase Hosting published; mobile-sized live Sound Match checks passed for
+  target Play, +1Hz, new Play tone, Submit and result. Physical audio-device
+  listening is not verified by browser UI checks.
+- Expo update and final release checkpoint recorded after publishing completes.
+
 ## 2026-09-06 — Reliable shared Exit / Skip controls
 
 - Pre-change tag: `checkpoint/pre-session-controls-2026-09-06`.

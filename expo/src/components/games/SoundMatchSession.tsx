@@ -198,7 +198,7 @@ export function SoundMatchSession({ session }: Props) {
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // Derive vertical slider height responsively from usable viewport height
-  const sliderHeight = Math.min(Math.max(windowHeight * 0.26, 160), 250);
+  const sliderHeight = Math.min(Math.max(windowHeight - 530, 220), 620);
 
   const freqToPosition = useCallback((freq: number) => {
     const pct = (freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
@@ -657,7 +657,7 @@ export function SoundMatchSession({ session }: Props) {
           <View style={st.visualizerContainer}>
             <Animated.View style={[st.pulseRing, pulseAnimatedStyle]} />
             <TouchableOpacity
-              onPress={() => playFrequency(activeTargetFreq, 1.8, true)}
+              onPress={() => playFrequency(activeTargetFreq, 3, true)}
               style={[st.playBigButton, isPlayingTarget && st.playBigButtonActive]}
               activeOpacity={0.85}
               accessibilityRole="button"
@@ -723,13 +723,13 @@ export function SoundMatchSession({ session }: Props) {
         <View style={st.recreateStage} testID="sound-match-recreate-stage">
           <View style={st.recreateHeader}>
             <Text style={st.sectionTitle}>Find that frequency</Text>
-            <Text style={st.instructionsText}>Slide to tune. Tap the number to listen.</Text>
+            <Text style={st.tuneInstructions}>Slide to tune · arrows adjust by 1 Hz</Text>
           </View>
 
           {/* Main area: vertical slider + frequency display inside centered bounded stage */}
           <View style={st.recreateBody}>
             {/* Left side: vertical slider */}
-            <View style={[st.vSliderArea, { height: sliderHeight + 80 }]}>
+            <View style={[st.vSliderArea, { height: sliderHeight + 112 }]}>
               {/* Scale labels */}
               <View style={[st.scaleLabels, { height: sliderHeight }]}>
                 <Text style={st.scaleLabelText}>1000</Text>
@@ -740,13 +740,14 @@ export function SoundMatchSession({ session }: Props) {
               </View>
 
               {/* Vertical slider wrapper (Up button, slider, Down button) */}
-              <View style={[st.vSliderTrackWrapper, { height: sliderHeight + 80 }]}>
+              <View style={[st.vSliderTrackWrapper, { height: sliderHeight + 112 }]}>
                 {/* Up button to increase frequency by 1 Hz */}
                 <TouchableOpacity
                   onPress={() => adjustFreq(1)}
                   style={st.fineTuneBtn}
                   activeOpacity={0.7}
                   accessibilityRole="button"
+                  accessibilityLabel="Increase frequency by 1 Hz"
                   testID="sound-match-freq-up-button"
                 >
                   <IconSymbol name="chevron.up" size={20} color="rgba(255,255,255,0.7)" />
@@ -762,6 +763,11 @@ export function SoundMatchSession({ session }: Props) {
                   onResponderRelease={handleSliderRelease}
                   onResponderTerminate={handleSliderRelease}
                   testID="sound-match-slider-track"
+                  accessibilityRole="adjustable"
+                  accessibilityLabel="Frequency"
+                  accessibilityValue={{ min: FREQ_MIN, max: FREQ_MAX, now: Math.round(currentGuessFreq) }}
+                  accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+                  onAccessibilityAction={e => adjustFreq(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
                 >
                   {/* Gradient track background */}
                   <LinearGradient
@@ -796,6 +802,7 @@ export function SoundMatchSession({ session }: Props) {
                   style={st.fineTuneBtn}
                   activeOpacity={0.7}
                   accessibilityRole="button"
+                  accessibilityLabel="Decrease frequency by 1 Hz"
                   testID="sound-match-freq-down-button"
                 >
                   <IconSymbol name="chevron.down" size={20} color="rgba(255,255,255,0.7)" />
@@ -809,10 +816,11 @@ export function SoundMatchSession({ session }: Props) {
             {/* Right side: frequency display + play button */}
             <View style={st.freqDisplayArea}>
               <TouchableOpacity
-                onPress={() => playFrequency(currentGuessFreq, 1.2, false)}
+                onPress={() => playFrequency(currentGuessFreq, 3, false)}
                 activeOpacity={0.8}
                 style={[st.freqCircle, { borderColor: glowColor, shadowColor: glowColor }]}
                 accessibilityRole="button"
+                accessibilityLabel={`Play ${Math.round(currentGuessFreq)} Hz for 3 seconds`}
                 testID="sound-match-freq-circle"
               >
                 <Animated.View style={[st.freqPulseRing, pulseAnimatedStyle, { borderColor: glowColor, backgroundColor: `hsla(${Math.round(hue)}, 85%, 55%, 0.12)` }]} />
@@ -827,9 +835,18 @@ export function SoundMatchSession({ session }: Props) {
                 )}
               </TouchableOpacity>
 
-              <Text style={st.dragHint}>
-                {isDragging ? 'Release to hear tone' : 'Drag or tap circle to hear'}
-              </Text>
+              <TouchableOpacity
+                style={st.previewButton}
+                onPress={() => playFrequency(currentGuessFreq, 3, false)}
+                accessibilityRole="button"
+                accessibilityLabel="Play your tone for 3 seconds"
+                testID="sound-match-play-guess-button"
+                activeOpacity={0.8}
+              >
+                <IconSymbol name={isPlayingGuess ? 'waveform' : 'play.fill'} size={24} color="#0B2426" />
+                <Text style={st.previewButtonText}>{isPlayingGuess ? 'Playing…' : 'Play tone'}</Text>
+              </TouchableOpacity>
+              <Text style={st.dragHint}>{isDragging ? 'Release to preview' : '3-second preview'}</Text>
 
               {/* Symmetrical dynamic wave visualizer in recreate phase */}
               <View style={st.visualizerWaveContainerSmall}>
@@ -900,7 +917,7 @@ export function SoundMatchSession({ session }: Props) {
                 <Text style={st.comparisonLabel}>Target</Text>
               </View>
               <TouchableOpacity
-                onPress={() => playFrequency(activeTargetFreq, 1.5, true)}
+                onPress={() => playFrequency(activeTargetFreq, 3, true)}
                 style={[st.comparisonBar, { backgroundColor: targetColor + '15', borderColor: targetColor }]}
                 activeOpacity={0.8}
               >
@@ -922,7 +939,7 @@ export function SoundMatchSession({ session }: Props) {
                 <Text style={st.comparisonLabel}>Yours</Text>
               </View>
               <TouchableOpacity
-                onPress={() => playFrequency(lastResult.guessFrequency, 1.5, false)}
+                onPress={() => playFrequency(lastResult.guessFrequency, 3, false)}
                 style={[st.comparisonBar, { backgroundColor: guessColor + '15', borderColor: guessColor }]}
                 activeOpacity={0.8}
               >
@@ -1030,8 +1047,8 @@ const st = StyleSheet.create({
     marginBottom: 12,
   },
   visualizerContainer: {
-    width: 160,
-    height: 160,
+    width: 200,
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -1047,8 +1064,8 @@ const st = StyleSheet.create({
     borderColor: '#FF2D55',
   },
   playBigButton: {
-    width: 120,
-    height: 120,
+    width: 156,
+    height: 156,
     borderRadius: 26,
     backgroundColor: '#FF2D55',
     justifyContent: 'center',
@@ -1115,6 +1132,9 @@ const st = StyleSheet.create({
     gap: 4,
     marginBottom: 10,
   },
+  tuneInstructions: { fontSize: 13, color: '#BCC6D7', textAlign: 'center', marginBottom: 8 },
+  previewButton: { minHeight: 56, width: '100%', maxWidth: 220, borderRadius: 18, backgroundColor: '#7DE4D5', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12 },
+  previewButtonText: { fontSize: 16, fontWeight: '700', color: '#0B2426' },
   recreateRound: {
     fontSize: 13,
     fontWeight: '600',
@@ -1150,8 +1170,8 @@ const st = StyleSheet.create({
     alignItems: 'center',
   },
   fineTuneBtn: {
-    width: 44,
-    height: 44,
+    width: 52,
+    height: 48,
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
@@ -1172,13 +1192,13 @@ const st = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   vSliderTrackContainer: {
-    width: 48,
+    width: 60,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   vSliderTrack: {
-    width: 14,
+    width: 22,
     height: '100%',
     borderRadius: 7,
   },
@@ -1224,11 +1244,12 @@ const st = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
+    gap: 10,
   },
   freqCircle: {
-    width: 146,
-    height: 146,
+    width: '100%',
+    maxWidth: 240,
+    height: 172,
     borderRadius: 24,
     borderWidth: 1,
     backgroundColor: 'rgba(255,255,255,0.03)',
@@ -1249,7 +1270,7 @@ const st = StyleSheet.create({
     borderWidth: 2,
   },
   freqBigNumber: {
-    fontSize: 42,
+    fontSize: 48,
     fontFamily: 'System',
     textAlign: 'center',
     fontWeight: '500',
@@ -1267,7 +1288,7 @@ const st = StyleSheet.create({
   dragHint: {
     fontSize: 13,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.35)',
+    color: '#A3B1C5',
     textAlign: 'center',
   },
   visualizerWaveContainerSmall: {

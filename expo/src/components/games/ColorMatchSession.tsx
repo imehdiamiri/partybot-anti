@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/src/theme/Colors';
 import { MatchStudio } from './MatchStudio';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, TouchableOpacity, GestureResponderEvent, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, TouchableOpacity, GestureResponderEvent, ScrollView, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft, useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from 'react-native-reanimated';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -29,6 +29,8 @@ import { hsvToHsl, calculateColorMatchScore } from '@/src/utils/colorMatchMath';
 const calculateScore = calculateColorMatchScore;
 
 export function ColorMatchSession({ session }: Props) {
+  const { height: viewportHeight } = useWindowDimensions();
+  const swatchHeight = Math.min(360, Math.max(170, viewportHeight - 570));
   const players = session.players;
   const registerSkip = useRegisterSkip();
 
@@ -289,7 +291,7 @@ export function ColorMatchSession({ session }: Props) {
           <Text style={st.sectionTitle}>Memorize this Color</Text>
           <Text style={st.countdownLabel}>Closing in {memorizeTimeLeft}s...</Text>
           
-          <View style={[st.colorSwatch, { backgroundColor: targetHsl, shadowColor: targetHsl }]} />
+          <View style={[st.colorSwatch, { height: Math.max(260, swatchHeight), backgroundColor: targetHsl, shadowColor: targetHsl }]} />
           
           <View style={st.progressTrack}>
             <Animated.View style={[st.progressBar, timerAnimatedStyle, { backgroundColor: targetHsl }]} />
@@ -310,7 +312,7 @@ export function ColorMatchSession({ session }: Props) {
         </View>
 
         <View style={st.singleSwatchContainer}>
-          <View style={[st.colorSwatchLarge, { backgroundColor: guessHsl, shadowColor: guessHsl }]} />
+          <View testID="color-match-guess-swatch" style={[st.colorSwatchLarge, { height: swatchHeight, backgroundColor: guessHsl, shadowColor: guessHsl }]} />
           <Text style={st.swatchLabel}>Your Guess</Text>
         </View>
 
@@ -688,7 +690,7 @@ const st = StyleSheet.create({
     color: '#ffffff',
   },
   sliderValueText: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: 'bold',
     color: 'rgba(255,255,255,0.6)',
   },
@@ -699,8 +701,8 @@ const st = StyleSheet.create({
     position: 'relative',
   },
   sliderTrack: {
-    height: 12,
-    borderRadius: 6,
+    height: 20,
+    borderRadius: 10,
     width: '100%',
     alignSelf: 'center',
   },
@@ -712,14 +714,14 @@ const st = StyleSheet.create({
   },
   sliderThumb: {
     position: 'absolute',
-    top: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    top: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'white',
     borderWidth: 2,
     borderColor: '#ffffff',
-    marginLeft: -14, // Centered on left position
+    marginLeft: -18, // Centered on left position
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
