@@ -19,8 +19,26 @@
 - Checks: 153 tests / 19 suites passed; TypeScript passed; 91-route web export
   succeeded. Includes actual component regressions for Color Trap, final Imposter
   vote and six Drum automatic attempts across two players, plus explicit tie tests.
-- Firebase/Expo publication and live visual verification: pending, recorded below
-  after service confirmation. Native speaker/microphone output is not certified.
+- Source commits: `01316874de28811513548a933eed9975acef5287` and UI polish
+  `8fec54e0d6f71652bdf1e74a960deab2433743a5`.
+- Firebase Hosting confirmed both deployments to `partyplay-8`; final live web
+  entry is `entry-93902bcc36544a300c7ba421c632f6be.js`, site https://partybot.games.
+- Live browser at 390x844: Color Match mix/result inspected; Sound Match
+  listen/tune/result inspected, 440->441 Hz control and submit exercised. Corrected
+  a flex-basis collapse found during this verification and republished. No captured
+  console errors (existing web native-driver fallback warning remains).
+- Drum live web: Start Listening, successful decoded-playback-dependent tap,
+  258ms result and Next Attempt observed. Physical speaker output was not measured.
+- Final Expo Go branch `expo-go-sdk57`, runtime `exposdk:57.0.0`, published for both
+  platforms. Group `a9e24fc0-e5a2-4b27-a653-17ac153e13df` supersedes the initial
+  group `ab681bea-c77b-4e6e-ae4a-f8540ece5de9`.
+  Android `01a0774b-7a27-7bc3-915f-8ba73e82ab26`;
+  iOS `01a0774b-7a27-7e69-91c5-17656e53d81c`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/a9e24fc0-e5a2-4b27-a653-17ac153e13df
+- Native custom runtime remains isolated; actual phone receipt/audio and complete
+  desktop/device matrices are not certified. No persistent local server was used.
+- Final rollback tag: `checkpoint/game-flow-studios-release-2026-09-06`.
+  Git bundle backup: Codex audit workspace `playbot-flow-studios-2026-09-06.bundle`.
 - Remaining audit follow-up: Truth & Dare visual angle alignment and broader
   physical-device/race testing; these checks do not prove every game permutation.
 
