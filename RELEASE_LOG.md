@@ -1,5 +1,24 @@
 # Release log
 
+## 2026-09-06 — Reliable shared Exit / Skip controls
+
+- Pre-change tag: `checkpoint/pre-session-controls-2026-09-06`.
+- Session header for all games uses an in-app confirmation modal instead of
+  browser `window.confirm` or native-only alerts. Cancel does not invoke actions;
+  async confirmation is guarded against duplicate taps and exposes retry errors.
+- Pending Skip is invalidated when the registered turn handler changes, so an
+  expiring turn cannot accidentally skip the next player. Exit remains available
+  even in games/phases where Skip is intentionally not registered.
+- Added missing `forward.fill` -> `fast-forward` Material icon mapping, larger
+  44px header touch targets, and restored white Color Match Submit Match button.
+- Legacy floating Skip uses the same confirmation component. Tool Back and profile
+  Back/Done routes were inspected; they already have navigation fallbacks.
+- Checks: 156 tests / 20 suites passed, TypeScript passed, web export passed.
+  This is shared-control coverage, not a claim to have exercised every app action,
+  destructive account action or all game/timing combinations on real devices.
+- Publishing and live confirmation verification recorded after service completion.
+
+
 ## 2026-09-06 — Game-flow repairs / Match Studio / Drum web playback
 
 - Pre-change checkpoint: `checkpoint/pre-flow-fixes-2026-09-06`.

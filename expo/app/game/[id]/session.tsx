@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useActionConfirmation } from '@/src/components/ActionConfirmation';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useGameStore, MatchPhase } from '@/src/store/useGameStore';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
@@ -78,30 +79,10 @@ export default function GameSessionScreen() {
   }
 
   const handleExit = () => {
-    const doExit = () => {
-      isExitingRef.current = true;
-      exitActiveSession();
-      router.replace('/(tabs)');
-    };
-
-    if (Platform.OS === 'web') {
-      if (window.confirm('Leave Game?\nYour current progress will be lost.')) {
-        doExit();
-      }
-      return;
-    }
-    Alert.alert(
-      'Leave Game?',
-      'Your current progress will be lost.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Leave Game', 
-          style: 'destructive',
-          onPress: doExit
-        }
-      ]
-    );
+    if (isExitingRef.current) return;
+    isExitingRef.current = true;
+    exitActiveSession();
+    router.replace('/(tabs)');
   };
 
   return (
@@ -131,32 +112,35 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
 }) {
   const { skipHandler, skipPlayerName } = useSkipState();
 
+  const { ask, dismiss, dialog } = useActionConfirmation();
+  const pendingSkip = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (pendingSkip.current && pendingSkip.current !== skipHandler) {
+      pendingSkip.current = null;
+      dismiss();
+    }
+  }, [skipHandler]);
   const handleSkip = () => {
     if (!skipHandler) return;
-    const msg = skipPlayerName
-      ? `Skip ${skipPlayerName}'s turn? They'll get a score of 0.`
-      : "Skip this player's turn? They'll get a score of 0.";
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Skip Turn?\n${msg}`)) {
-        skipHandler();
-      }
-      return;
-    }
-    Alert.alert(
-      'Skip Turn?',
-      msg,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Skip', style: 'destructive', onPress: skipHandler },
-      ]
-    );
+    const handler = skipHandler;
+    pendingSkip.current = handler;
+    ask({ title: 'Skip turn?', message: `Skip ${skipPlayerName || 'this player'}'s current turn? This follows the game's skip rules.`, label: 'Skip turn', run: () => {
+      if (pendingSkip.current !== handler) return;
+      pendingSkip.current = null;
+      return handler();
+    }});
+  };
+  const confirmExit = () => {
+    pendingSkip.current = null;
+    ask({title: 'Leave game?', message: 'Your current game progress will be lost.', label: 'Leave game', run: onExit});
   };
 
   return (
     <View style={[styles.header, { paddingTop }]}>
+      {dialog}
       <View style={styles.headerInner}>
         <TouchableOpacity 
-          onPress={onExit} 
+          onPress={confirmExit}
           testID="session-exit-button"
           accessibilityRole="button"
           style={styles.headerSideButton}
@@ -174,8 +158,8 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
             accessibilityRole="button"
             style={styles.headerSideButton}
           >
-            <Text style={[styles.headerSideText, { color: 'rgba(255,255,255,0.5)' }]}>Skip</Text>
-            <IconSymbol name="forward.fill" size={12} color="rgba(255,255,255,0.5)" />
+            <Text style={[styles.headerSideText, { color: '#CFD5E3' }]}>Skip</Text>
+            <IconSymbol name="forward.fill" size={18} color="#CFD5E3" />
           </TouchableOpacity>
         ) : (
           <View style={styles.headerSpacer} />
@@ -209,7 +193,8 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    minWidth: 50,
+    minWidth: 64,
+    minHeight: 44,
   },
   headerSideText: {
     color: '#007AFF',

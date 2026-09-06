@@ -45,6 +45,7 @@ const MAPPING = {
 
   // ─── Games ───
   'backward.fill': 'fast-rewind',
+  'forward.fill': 'fast-forward',
   'stopwatch.fill': 'timer',
   'theatermasks.fill': 'theater-comedy',
   'eye.fill': 'visibility',

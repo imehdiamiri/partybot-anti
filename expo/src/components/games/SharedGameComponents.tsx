@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/src/theme/Colors';
+import { useActionConfirmation } from '../ActionConfirmation';
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, Alert } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -668,20 +669,12 @@ interface InGameSkipButtonProps {
 }
 
 export function InGameSkipButton({ onSkip, playerName }: InGameSkipButtonProps) {
+  const { ask, dialog } = useActionConfirmation();
   return (
+    <>
+    {dialog}
     <Pressable
-      onPress={() => {
-        Alert.alert(
-          'Skip Turn?',
-          playerName
-            ? `Skip ${playerName}'s turn? They'll get a score of 0.`
-            : "Skip this player's turn? They'll get a score of 0.",
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Skip', style: 'destructive', onPress: onSkip },
-          ]
-        );
-      }}
+      onPress={() => ask({ title: 'Skip turn?', message: `Skip ${playerName || 'this player'}'s current turn?`, label: 'Skip turn', run: onSkip })}
       style={({ pressed }) => [{
         position: 'absolute',
         top: 6,
@@ -706,5 +699,6 @@ export function InGameSkipButton({ onSkip, playerName }: InGameSkipButtonProps) 
         fontWeight: '600',
       }}>Skip</Text>
     </Pressable>
+    </>
   );
 }

@@ -743,7 +743,7 @@ const st = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     overflow: 'hidden',
-    backgroundColor: '#B9A3FF',
+    backgroundColor: '#FFFFFF',
   },
   submitButtonText: {
     color: '#121212',
