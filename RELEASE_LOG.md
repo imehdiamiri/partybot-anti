@@ -1,5 +1,39 @@
 # Release log
 
+## 2026-09-06 — Eye Sight feedback / all-game start guides
+
+- Source: `5a5b89a42145642a470208dee587ec706ab5b0f0`.
+- Pre-change recovery: `checkpoint/before-eyesight-intros-2026-09-06`.
+- Eye Sight numbers now use readable medium-weight monospace without glow.
+  Feedback includes attempts, correct/wrong counts, original number, positional
+  red/green answer digits with crosses/checks, and round history. First-round
+  failures are no longer incorrectly classified as skipped.
+- All 16 games have three short action steps and a vector icon. The former
+  once-ever asynchronous overlay is no longer used. Game mounting is gated;
+  Eye Sight, Pass & Guess and Guess the Seconds defer guides until their internal
+  settings have been selected. Shared scoreboard replay callbacks are gated too.
+- `npm run typecheck`: passed. `npm test -- --runInBand`: 147 tests / 17 suites
+  passed. One-off web export: 91 routes. No persistent development server.
+- Firebase Hosting deployment to `partyplay-8`: succeeded; https://partybot.games
+  returned HTTP 200 referencing `entry-3cd2e74c25de8e1e9a0b10aad52cef54.js`.
+  Generated web output replaced from the export; tracked previous versions remain
+  recoverable in Git. Handwritten assets/legal pages preserved.
+- Live browser: 390x844 Eye Sight difficulty -> guide -> ready -> countdown ->
+  input -> feedback verified. Actual target 523 / answer 123 marked only digit 1
+  red and 2/3 green. Feedback and guide fit mobile. Desktop numeric content stayed
+  bounded (468px inner text at 1440px viewport). Memory Grid, Guess the Seconds,
+  and Pass & Guess guide sequencing verified on production; no console errors.
+- Expo Go SDK57 publication succeeded, branch `expo-go-sdk57`, environment preview,
+  runtime `exposdk:57.0.0`, group `3fd8d0c6-1811-409b-885d-4b2da1188f68`.
+  Android `01a0767e-f1a3-7074-b73c-0aa342f674d2`;
+  iOS `01a0767e-f1a3-78a3-a575-d7810737f5c0`.
+- No physical-device receipt or two-device room gameplay certification. Existing
+  test-renderer deprecation and optional dynamic-import build warnings persist.
+  No native dependencies/config, backend targets or account settings changed.
+- Final recovery tag: `checkpoint/eyesight-guides-2026-09-06`; full Git bundle:
+  `playbot-eyesight-guides-2026-09-06.bundle` in the Codex audit workspace.
+  Remote Git push remains pending destination confirmation.
+
 ## 2026-09-06 — Reverse Singing large controls / independent playback
 
 - Recovery: `checkpoint/before-reverse-playback-fix` at `ce24ca4`.
