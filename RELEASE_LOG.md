@@ -9,6 +9,8 @@
 - Validation: TypeScript clean; 203 tests passed in 25 suites, including four-meter timing, accents, early/late signs, premature/double taps, and timer cleanup. Web export succeeded.
 - Firebase Hosting deployed to partyplay-8, bundle entry-d9c04c9b9a81b49f00377bf16b127d87.js. Live UI verified Setup → guide → idle timer → direct Start; neutral banner; 6/8 guide/handoff/listening/silence/late result and timeout result. No browser errors. Physical-device audio latency and actual speaker output were not certified.
 - Rollback baseline: checkpoint/before-metronome-flow-2026-09-06. No remote Git push or persistent development server.
+- Expo Go SDK57 published for Android/iOS on expo-go-sdk57: group a2cd075a-2a6b-4b21-9395-5f21d216cc10; source 85efaa92e83d292b10f9d5b8607270ab6591a426.
+- Final tag: checkpoint/metronome-flow-release-2026-09-06. Full-history offline backup: playbot-metronome-flow-2026-09-06.bundle in the Codex audit workspace.
 
 
 ## 2026-09-06 — Restore handoff names and offline Imposter meanings
