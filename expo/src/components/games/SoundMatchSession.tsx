@@ -1106,7 +1106,8 @@ const st = StyleSheet.create({
     maxWidth: 720,
     alignSelf: 'center',
     alignItems: 'center',
-    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
     justifyContent: 'center',
   },
   recreateHeader: {
@@ -1134,7 +1135,8 @@ const st = StyleSheet.create({
     gap: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
   },
 
   // ─── Vertical Slider ────────────────────

@@ -520,7 +520,7 @@ function ColorSlider({
         onResponderMove={handleTouch}
         style={st.sliderTrackContainer}
       >
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center' }]} pointerEvents="none">
           {renderTrack()}
         </View>
         <View
