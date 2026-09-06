@@ -29,46 +29,47 @@ interface Props {
 }
 
 /** These games finish configuring inside their session and gate their own start. */
-function withHint(gameId: string, child: React.ReactNode) {
+function withHint(session: GameSession, child: React.ReactNode) {
+  const gameId = session.game.id;
   const hint = GAME_HINTS[gameId];
   if (['eye_sight', 'pass_guess', 'guess_the_seconds'].includes(gameId)) return child;
-  return hint ? <GameIntroGate gameId={gameId}>{child}</GameIntroGate> : child;
+  return hint ? <GameIntroGate gameId={gameId} config={session.gameConfig}>{child}</GameIntroGate> : child;
 }
 
 export function GameSessionRenderer({ session, game }: Props) {
   switch (game.id) {
     case 'reverse_singing':
-      return withHint(game.id, <ReverseSingingSession session={session} />);
+      return withHint(session, <ReverseSingingSession session={session} />);
     case 'guess_the_seconds':
-      return withHint(game.id, <GuessTheSecondsSession session={session} />);
+      return withHint(session, <GuessTheSecondsSession session={session} />);
     case 'imposter':
-      return withHint(game.id, <ImposterSession session={session} />);
+      return withHint(session, <ImposterSession session={session} />);
     case 'pass_guess':
-      return withHint(game.id, <PassGuessSession session={session} />);
+      return withHint(session, <PassGuessSession session={session} />);
     case 'memory_grid':
-      return withHint(game.id, <MemoryGridSession session={session} />);
+      return withHint(session, <MemoryGridSession session={session} />);
     case 'memory_path':
-      return withHint(game.id, <MemoryPathSession session={session} />);
+      return withHint(session, <MemoryPathSession session={session} />);
     case 'tap_in_order':
-      return withHint(game.id, <TapInOrderSession session={session} />);
+      return withHint(session, <TapInOrderSession session={session} />);
     case 'ten_tangle':
-      return withHint(game.id, <TenTangleSession session={session} />);
+      return withHint(session, <TenTangleSession session={session} />);
     case 'color_trap':
-      return withHint(game.id, <ColorTrapSession session={session} />);
+      return withHint(session, <ColorTrapSession session={session} />);
     case 'spin_bottle':
-      return withHint(game.id, <SpinBottleSession session={session} />);
+      return withHint(session, <SpinBottleSession session={session} />);
     case 'draw_rush':
-      return withHint(game.id, <DrawRushSession session={session} />);
+      return withHint(session, <DrawRushSession session={session} />);
     case 'reaction_time':
-      return withHint(game.id, <ReactionTimeSession session={session} />);
+      return withHint(session, <ReactionTimeSession session={session} />);
     case 'eye_sight':
-      return withHint(game.id, <EyeSightSession session={session} />);
+      return withHint(session, <EyeSightSession session={session} />);
     case 'drum_challenge':
-      return withHint(game.id, <DrumChallengeSession session={session} />);
+      return withHint(session, <DrumChallengeSession session={session} />);
     case 'color_match':
-      return withHint(game.id, <ColorMatchSession session={session} />);
+      return withHint(session, <ColorMatchSession session={session} />);
     case 'sound_match':
-      return withHint(game.id, <SoundMatchSession session={session} />);
+      return withHint(session, <SoundMatchSession session={session} />);
     default:
       return <GenericPlaceholder session={session} game={game} />;
   }

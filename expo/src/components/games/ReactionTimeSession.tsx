@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, Easing, cancelAnimation } from 'react-native-reanimated';
@@ -55,6 +56,7 @@ export function ReactionTimeSession({ session }: Props) {
   // Single-device state
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIdx, setPlayerIdx] = useState<number>(0);
+  useGameActivity(isMultiplayer ? localPlayer?.displayName : players[playerIdx]?.displayName, isMultiplayer ? (compRound.isLocallyCompleted ? 'complete' : compRound.phase) : phase);
   const [attemptIdx, setAttemptIdx] = useState<number>(0);
   const [lastMs, setLastMs] = useState<number | null>(null);
   const [records, setRecords] = useState<PlayerRecord[]>(() =>
@@ -649,9 +651,8 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8,
     paddingVertical: 18, paddingHorizontal: 32,
-    borderRadius: 16, width: '100%', maxWidth: 540, alignSelf: 'center',
-    marginTop: 18,
-  },
+     width: '100%', maxWidth: 540, alignSelf: 'center',
+    marginTop: 18, minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   startBtnTx: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
 
   fullPress: { flex: 1 },

@@ -1,5 +1,28 @@
 # Release log
 
+## 2026-09-06 — Mode-specific guides and shared turn language
+
+- Ten mode-specific guides across Pass & Guess (Classic Q&A / Who Said It),
+  Imposter (Discussion / Clue), Memory Path (Time Race / Turn Based),
+  Drum Challenge (Music Drop / Metronome), Draw & Rush (Prompt / Free Draw).
+  Setup config selects the guide; Pass & Guess passes its in-session selected mode.
+  Guides gate the game start, so clocks do not start underneath the guide.
+- All 16 game sessions register actual turn ownership in a shared activity context,
+  independent of Skip availability. Header shows UP NEXT, NOW PLAYING, VOTING,
+  DISCUSSING or TURN RESULT; final standings/configuration hide the indicator.
+  Group phases show Everyone, not a misleading individual. No role is exposed.
+- Slow green dot pulse only during active phases; reduced-motion preference disables
+  pulsing. Names remain static/readable. Header stays width-bounded at 720px.
+- Standardized 14 primary action styles to shared 56px minimum height / 16px radius,
+  and shared handoff/guide appearance. Game-specific play surfaces retain their
+  specialized size/shape (drum pad, reaction area, recording buttons, drawing tools).
+- Studio player names use the shared header instead of repeating the same name.
+  Color mobile preview balanced to keep controls usable; Sound has a taller tuner,
+  explicit Play and three-second deliberate previews.
+- Checks: TypeScript and 176 tests / 22 suites pass. Web/live and final update IDs
+  recorded below after completion. Not every game phase has been manually exercised
+  on physical iOS/Android hardware.
+
 ## 2026-09-06 — Expanded Color Lab / Sound Studio controls
 
 - Checkpoint before edits: `checkpoint/pre-sound-layout-2026-09-06`.
@@ -8,13 +31,14 @@
   controls, explicit 56px Play tone button below Hz, larger target Play control.
 - Explicit target/guess/result playback now lasts 3 seconds; short slider previews
   remain short. Existing score/turn logic is unchanged.
-- Color preview grows with viewport height (170–360px); target preview at least
+- Color preview grows with viewport height (160–360px); target preview at least
   260px. Thicker color tracks, larger thumbs and parameter values; white Submit retained.
 - TypeScript and web export passed; 156 tests / 20 suites passed.
 - Firebase Hosting published; mobile-sized live Sound Match checks passed for
   target Play, +1Hz, new Play tone, Submit and result. Physical audio-device
   listening is not verified by browser UI checks.
-- Expo update and final release checkpoint recorded after publishing completes.
+- Initial Expo Go update group: `7bd0a599-5b88-4856-bfac-d6ebde5dfb64`, runtime
+  `exposdk:57.0.0`; superseded by the combined mode-guide / activity-header release.
 
 ## 2026-09-06 — Reliable shared Exit / Skip controls
 

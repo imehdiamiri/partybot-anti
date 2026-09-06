@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { getImposterOutcome } from '@/src/utils/imposterOutcome';
 import React, { useState, useEffect, useRef } from 'react';
@@ -208,6 +209,7 @@ export function ImposterSession({ session }: Props) {
   };
 
   const currentPlayer = roundPlayers[activePlayerIndex];
+  useGameActivity(phase === 'discussion' || phase === 'ready' ? 'Everyone' : currentPlayer?.displayName, phase);
 
   if (phase === 'loading') {
     return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
@@ -548,7 +550,7 @@ const styles = StyleSheet.create({
   cardTitle: { color: 'white', fontSize: 18, fontFamily: 'Viral-Black', marginBottom: 4 },
   cardSubtitle: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600', marginBottom: 16 },
   
-  primaryBtn: { backgroundColor: '#007AFF', paddingVertical: 18, borderRadius: 20, alignItems: 'center', width: '100%' },
+  primaryBtn: { backgroundColor: '#007AFF', paddingVertical: 18,  alignItems: 'center', width: '100%', minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   primaryBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   secondaryBtn: { backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 18, borderRadius: 20, alignItems: 'center', width: '100%', marginTop: 10 },
   secondaryBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },

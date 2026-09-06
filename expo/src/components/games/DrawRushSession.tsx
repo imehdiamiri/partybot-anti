@@ -1,3 +1,4 @@
+import { useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, PanResponder, PanResponderInstance } from 'react-native';
@@ -100,6 +101,7 @@ export function DrawRushSession({ session }: Props) {
 
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIdx, setPlayerIdx] = useState(0);
+  useGameActivity(phase === 'guessing' ? 'Everyone · guessing' : players[playerIdx]?.displayName, phase);
   const [concept, setConcept] = useState('');
   const [usedConcepts, setUsedConcepts] = useState<Set<string>>(new Set());
   const [strokes, setStrokes] = useState<Stroke[]>([]);

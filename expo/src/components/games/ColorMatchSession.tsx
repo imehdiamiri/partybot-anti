@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
 import { MatchStudio } from './MatchStudio';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -30,7 +31,7 @@ const calculateScore = calculateColorMatchScore;
 
 export function ColorMatchSession({ session }: Props) {
   const { height: viewportHeight } = useWindowDimensions();
-  const swatchHeight = Math.min(360, Math.max(170, viewportHeight - 570));
+  const swatchHeight = Math.min(360, Math.max(160, viewportHeight - 710));
   const players = session.players;
   const registerSkip = useRegisterSkip();
 
@@ -113,6 +114,7 @@ export function ColorMatchSession({ session }: Props) {
   });
 
   const activePlayer = players[playerIdx];
+  useGameActivity(activePlayer?.displayName, phase);
   const activeTargetColor = targetColors[roundIdx];
 
   // Memorize timer progress bar style
@@ -740,13 +742,11 @@ const st = StyleSheet.create({
     maxWidth: 540,
     alignSelf: 'center',
     height: 56,
-    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-  },
+    backgroundColor: '#FFFFFF', minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   submitButtonText: {
     color: '#121212',
     fontSize: 18,
@@ -826,10 +826,8 @@ const st = StyleSheet.create({
     maxWidth: 540,
     alignSelf: 'center',
     height: 54,
-    borderRadius: 20,
     marginTop: 16,
-    overflow: 'hidden',
-  },
+    overflow: 'hidden', minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   continueButtonText: {
     color: 'white',
     fontSize: 16,

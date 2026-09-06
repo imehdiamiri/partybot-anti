@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { GameStartGuide } from './GameStartGuide';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -222,6 +223,7 @@ export function GuessTheSecondsSession({ session }: Props) {
   const currentTurn = !isFinished ? turnOrder[sync.activeTurnIndex] : null;
   const currentRoundNumber = currentTurn ? currentTurn.round : roundsPerPlayer;
   const currentPlayer = currentTurn ? players[currentTurn.playerIndex] : null;
+  useGameActivity(currentPlayer?.displayName, guideOpen ? 'guide' : isFinished ? 'results' : sync.turnPhase === 'reveal' ? 'result' : sync.turnPhase);
   const isFirstPlayerOfCurrentRound = currentTurn ? currentTurn.playerIndex === 0 : false;
   const currentRoundTargetLocked = sync.roundTargets[currentRoundNumber] !== undefined;
   const displayedTargetTime = sync.roundTargets[currentRoundNumber] ?? sync.selectedTime;
@@ -611,8 +613,7 @@ const styles = StyleSheet.create({
   controlButtons: { gap: 14 },
   primaryButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    paddingVertical: 18, borderRadius: 20, overflow: 'hidden',
-  },
+    paddingVertical: 18,  overflow: 'hidden', minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   primaryButtonText: { color: 'white', fontSize: 16, fontFamily: 'Viral-Black' },
   giantButton: { paddingVertical: 40, borderRadius: 28 },
   giantButtonText: { color: 'white', fontSize: 22, fontFamily: 'Viral-Black' },

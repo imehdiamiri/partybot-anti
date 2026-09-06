@@ -1,3 +1,4 @@
+import { useGameActivity } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
@@ -134,6 +135,7 @@ export function ColorTrapSession({ session }: Props) {
   const players = session.players;
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIdx, setPlayerIdx] = useState(0);
+  useGameActivity(session.players[playerIdx]?.displayName, phase);
   const [difficulty, setDifficulty] = useState<Difficulty>(() => {
     const d = session.gameConfig?.difficulty;
     if (d === 'easy' || d === 'medium' || d === 'hard' || d === 'extreme') return d;

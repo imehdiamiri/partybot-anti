@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import Animated, {
@@ -58,6 +59,7 @@ export function DrumChallengeSession({ session }: Props) {
 
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIdx, setPlayerIdx] = useState(0);
+  useGameActivity(session.players[playerIdx]?.displayName, phase);
   const [attemptIdx, setAttemptIdx] = useState(0);
   const [lastDiff, setLastDiff] = useState<number | null>(null);
   const [tapped, setTapped] = useState(false);
@@ -768,8 +770,7 @@ const st = StyleSheet.create({
   startBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 18, paddingHorizontal: 28,
-    borderRadius: 16, width: '100%', maxWidth: 540, alignSelf: 'center', marginTop: 18,
-  },
+     width: '100%', maxWidth: 540, alignSelf: 'center', marginTop: 18, minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   startBtnTx: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 
   // Listening phase

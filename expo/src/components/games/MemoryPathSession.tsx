@@ -1,3 +1,4 @@
+import { useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
@@ -124,6 +125,7 @@ export function MemoryPathSession({ session }: Props) {
 
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIndex, setPlayerIndex] = useState(0);
+  useGameActivity(session.players[playerIndex]?.displayName, phase);
   const [path, setPath] = useState<PathCoord[]>([]);
   const [tileStates, setTileStates] = useState<TileState[][]>([]);
   const [progress, setProgress] = useState(1); // starts at 1 (start tile already known)

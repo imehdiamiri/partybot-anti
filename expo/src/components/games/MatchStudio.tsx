@@ -11,7 +11,6 @@ export function MatchStudio({ kind, step, player, round, children }: {
       <View style={s.heading}>
         <View style={{ flex: 1 }}>
           <Text style={[s.eyebrow, { color: accent }]}>{kind === 'color' ? 'COLOR LAB' : 'SOUND STUDIO'}</Text>
-          <Text style={s.player} numberOfLines={1}>{player}</Text>
         </View>
         <Text style={s.round}>Round {round}</Text>
       </View>

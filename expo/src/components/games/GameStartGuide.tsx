@@ -2,13 +2,15 @@ import React, { createContext, useContext, useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { GAME_HINTS } from '@/src/constants/GameHints';
+import { getGameHint } from '@/src/constants/GameModeHints';
+import { GAME_UI } from './GameActivity';
 
 const ReplayGuide = createContext<(start: () => void) => void>(start => start());
 export const useReplayGuide = () => useContext(ReplayGuide);
 
 /** A start screen, not an overlay: no game mounts or starts its clock underneath. */
-export function GameStartGuide({ gameId, onStart }: { gameId: string; onStart: () => void }) {
-  const hint = GAME_HINTS[gameId];
+export function GameStartGuide({ gameId, onStart, config, mode }: { gameId: string; onStart: () => void; config?: Record<string, any>; mode?: string }) {
+  const hint = getGameHint(gameId, config, mode);
   const started = useRef(false);
   return <ScrollView style={s.screen} contentContainerStyle={s.content}>
     <View style={s.card} testID="game-start-guide">
@@ -19,7 +21,7 @@ export function GameStartGuide({ gameId, onStart }: { gameId: string; onStart: (
         <View style={s.badge}><Text style={s.number}>{index + 1}</Text></View>
         <Text style={s.copy}>{step}</Text>
       </View>)}
-      <Pressable testID="game-guide-start" accessibilityRole="button" style={[s.button, { backgroundColor: hint.accent }]}
+      <Pressable testID="game-guide-start" accessibilityRole="button" style={[s.button, GAME_UI.primaryButton, { backgroundColor: hint.accent }]}
         onPress={() => { if (!started.current) { started.current = true; onStart(); } }}>
         <Text style={s.buttonText}>Got it — let’s play</Text>
       </Pressable>
@@ -27,14 +29,14 @@ export function GameStartGuide({ gameId, onStart }: { gameId: string; onStart: (
   </ScrollView>;
 }
 
-export function GameIntroGate({ gameId, children }: { gameId: string; children: React.ReactNode }) {
+export function GameIntroGate({ gameId, children, config }: { gameId: string; children: React.ReactNode; config?: Record<string, any> }) {
   const [ready, setReady] = useState(false);
   const [pending, setPending] = useState<(() => void) | null>(null);
   return <ReplayGuide.Provider value={start => setPending(() => start)}>
-    {!ready ? <GameStartGuide gameId={gameId} onStart={() => setReady(true)} /> :
+    {!ready ? <GameStartGuide gameId={gameId} config={config} onStart={() => setReady(true)} /> :
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1, display: pending ? 'none' : 'flex' }}>{children}</View>
-        {pending && <GameStartGuide gameId={gameId} onStart={() => { const start = pending; setPending(null); start(); }} />}
+        {pending && <GameStartGuide gameId={gameId} config={config} onStart={() => { const start = pending; setPending(null); start(); }} />}
       </View>}
   </ReplayGuide.Provider>;
 }

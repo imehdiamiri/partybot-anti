@@ -205,7 +205,7 @@ export function GameHandoffView({
           testID="game-ready-button"
           style={({ pressed }) => [{
             height: 56,
-            borderRadius: 28,
+            borderRadius: 16,
             alignItems: 'center',
             justifyContent: 'center',
             flexDirection: 'row',

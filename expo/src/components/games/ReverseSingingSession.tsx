@@ -1,3 +1,4 @@
+import { useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform, Alert, AppState, AppStateStatus } from 'react-native';
@@ -278,6 +279,7 @@ export function ReverseSingingSession({ session }: Props) {
 
   const p1Locked = !!p1Uri;
   const p2Ready = !!p1ReversedUri && !p1Recording && !p1Reversing;
+  useGameActivity(p2Uri ? `${p1Name} & ${p2Name}` : p1Locked ? p2Name : p1Name, p2Uri ? 'result' : 'playing');
   const recordingNow = !!p1Recording || !!p2Recording;
   const controlsBusy = captureBusy || recordingNow || p1Reversing || p2Reversing;
   // Persistent source lock applies ONLY to Record. Already-created audio remains

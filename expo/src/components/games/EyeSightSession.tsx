@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions, Platform } from 'react-native';
 import { GameStartGuide } from './GameStartGuide';
@@ -131,6 +132,7 @@ export function EyeSightSession({ session }: Props) {
   const [phase, setPhase] = useState<Phase>('difficulty');
   const [difficulty, setDifficulty] = useState<DifficultyDef>(DIFFICULTIES[1]!);
   const [playerIdx, setPlayerIdx] = useState<number>(0);
+  useGameActivity(players[playerIdx]?.displayName, phase);
   const [round, setRound] = useState<number>(1);
   const [digits, setDigits] = useState<number>(3);
   const [ms, setMs] = useState<number>(1000);
@@ -688,9 +690,8 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8,
     paddingVertical: 16, paddingHorizontal: 28,
-    borderRadius: 18, width: '100%', maxWidth: 540, alignSelf: 'center',
-    marginTop: 18,
-  },
+     width: '100%', maxWidth: 540, alignSelf: 'center',
+    marginTop: 18, minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   startBtnTx: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 
   countdownTx: {

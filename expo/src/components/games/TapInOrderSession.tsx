@@ -1,3 +1,4 @@
+import { useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions, Animated, ActivityIndicator } from 'react-native';
@@ -65,6 +66,7 @@ export function TapInOrderSession({ session }: Props) {
   // Single-device state
   const [phase, setPhase] = useState<Phase>('ready');
   const [playerIndex, setPlayerIndex] = useState(0);
+  useGameActivity(isMultiplayer ? localPlayer?.displayName : players[playerIndex]?.displayName, isMultiplayer ? (compRound.isLocallyCompleted ? 'complete' : compRound.phase) : phase);
 
   // Board state for single-device
   const [selectedCells, setSelectedCells] = useState<number[]>([]);

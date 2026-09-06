@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
@@ -125,6 +126,7 @@ export function SpinBottleSession({ session }: Props) {
   };
 
   const selectedPlayer = players[selectedIdx];
+  useGameActivity(selectedPlayer?.displayName, phase);
   const accentColor = PLAYER_COLORS[selectedIdx % PLAYER_COLORS.length];
 
   // ═══ PROMPT SCREEN ═══
@@ -302,7 +304,7 @@ const st = StyleSheet.create({
   playerNodeTx: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: 'Viral-Black', maxWidth: 90 },
   restartBtn: { position: 'absolute', top: 8, right: 8, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
   actionArea: { paddingHorizontal: 20, paddingBottom: 24, marginTop: 'auto', maxWidth: 540, width: '100%', alignSelf: 'center' },
-  spinBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16 },
+  spinBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16,  minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   spinBtnTx: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   spinningTx: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 16 },
   choiceBtn: { alignItems: 'center', gap: 6, paddingVertical: 18, borderRadius: 18 },
@@ -317,6 +319,6 @@ const st = StyleSheet.create({
   promptTx: { color: '#fff', fontSize: 20, fontFamily: 'Viral-Black', textAlign: 'center', lineHeight: 34 },
   rerollBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
   rerollTx: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  doneBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16, width: '100%', paddingHorizontal: 40 },
+  doneBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16,  width: '100%', paddingHorizontal: 40, minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   doneBtnTx: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
 });

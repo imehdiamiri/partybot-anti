@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { GameActivityProvider } from '@/src/components/games/GameActivity';
 
 interface GameSkipContextValue {
   /** Register a skip handler (call with null to unregister) */
@@ -27,7 +28,7 @@ export function GameSkipProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <GameSkipContext.Provider value={{ registerSkip, skipHandler, skipPlayerName }}>
-      {children}
+      <GameActivityProvider>{children}</GameActivityProvider>
     </GameSkipContext.Provider>
   );
 }

@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
@@ -164,6 +165,7 @@ function MemoryGridMultiplayerSession({ session }: Props) {
   });
 
   // Frozen authoritative grid dimensions from host snapshot
+  useGameActivity(players.find(p => p.id === compRound.localPlayerId)?.displayName, compRound.isLocallyCompleted ? 'complete' : compRound.phase);
   const { cols, rows } = getAuthoritativeGridDims(compRound.roundState, rawDims.cols, rawDims.rows);
   const PAIR_COUNT = Math.floor((cols * rows) / 2);
 
@@ -562,6 +564,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
   useEffect(() => () => { if (mismatchTimer.current) clearTimeout(mismatchTimer.current); }, []);
 
   const currentPlayer = players[currentPlayerIndex];
+  useGameActivity(currentPlayer?.displayName, phase);
 
   // Timer for single-device pass-and-play
   useEffect(() => {
@@ -960,9 +963,8 @@ const styles = StyleSheet.create({
   statBubbleLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 18, fontWeight: '600', marginTop: 2 },
 
   primaryBtn: {
-    backgroundColor: '#007AFF', paddingVertical: 18, borderRadius: 20,
-    width: '100%', maxWidth: 540, alignSelf: 'center', alignItems: 'center', marginTop: 32,
-  },
+    backgroundColor: '#007AFF', paddingVertical: 18,
+    width: '100%', maxWidth: 540, alignSelf: 'center', alignItems: 'center', marginTop: 32, minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   primaryBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
 
   // Game header

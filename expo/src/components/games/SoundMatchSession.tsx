@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { MatchStudio } from './MatchStudio';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -198,7 +199,7 @@ export function SoundMatchSession({ session }: Props) {
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // Derive vertical slider height responsively from usable viewport height
-  const sliderHeight = Math.min(Math.max(windowHeight - 530, 220), 620);
+  const sliderHeight = Math.min(Math.max(windowHeight - 550, 220), 620);
 
   const freqToPosition = useCallback((freq: number) => {
     const pct = (freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
@@ -235,6 +236,7 @@ export function SoundMatchSession({ session }: Props) {
   const livePlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPlayedFreqRef = useRef<number>(0);
   const activePlayer = players[playerIdx];
+  useGameActivity(activePlayer?.displayName, phase);
   const activeTargetFreq = targetFrequencies[roundIdx];
 
   const pulseScale = useSharedValue(1);
@@ -1104,12 +1106,10 @@ const st = StyleSheet.create({
     backgroundColor: Colors.blue,
     paddingHorizontal: 28,
     height: 52,
-    borderRadius: 20,
     width: '100%',
     maxWidth: 440,
     alignSelf: 'center',
-    overflow: 'hidden',
-  },
+    overflow: 'hidden', minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   readyMatchButtonText: {
     color: 'white',
     fontSize: 16,
@@ -1322,12 +1322,10 @@ const st = StyleSheet.create({
     maxWidth: 440,
     alignSelf: 'center',
     height: 56,
-    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 12,
-    overflow: 'hidden',
-  },
+    overflow: 'hidden', minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   submitButtonText: {
     color: 'white',
     fontSize: 18,
@@ -1476,10 +1474,8 @@ const st = StyleSheet.create({
     maxWidth: 540,
     alignSelf: 'center',
     height: 54,
-    borderRadius: 20,
     marginTop: 8,
-    overflow: 'hidden',
-  },
+    overflow: 'hidden', minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   continueButtonText: {
     color: 'white',
     fontSize: 16,

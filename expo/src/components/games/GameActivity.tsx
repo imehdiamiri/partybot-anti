@@ -1,0 +1,70 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { AccessibilityInfo, Animated, StyleSheet, Text, View } from 'react-native';
+
+type Activity = { name: string; phase: string } | null;
+const ActivityContext = createContext<{ activity: Activity; setActivity: (value: Activity) => void }>({ activity: null, setActivity: () => {} });
+
+export function GameActivityProvider({ children }: { children: React.ReactNode }) {
+  const [activity, setActivity] = useState<Activity>(null);
+  return <ActivityContext.Provider value={{ activity, setActivity }}>{children}</ActivityContext.Provider>;
+}
+
+/** Explicit per-game turn ownership, independent of whether Skip is enabled. */
+export function useGameActivity(name: string | undefined, phase: string) {
+  const { setActivity } = useContext(ActivityContext);
+  useEffect(() => {
+    setActivity(name ? { name, phase } : null);
+    return () => setActivity(null);
+  }, [name, phase, setActivity]);
+}
+
+export function activityLabel(phase: string): string | null {
+  if (['intro', 'difficulty', 'guide', 'loading', 'results', 'finalResults', 'finished', 'leaderboard', 'scoreboard', 'idle', 'spinning'].includes(phase)) return null;
+  if (['ready', 'passToPlayer', 'guesserAnnounce', 'countdown'].includes(phase)) return 'UP NEXT';
+  if (['roundResult', 'roundReveal', 'playerComplete', 'result', 'outcome', 'correct', 'wrong', 'tapped', 'foul', 'complete'].includes(phase)) return 'TURN RESULT';
+  if (phase === 'discussion') return 'DISCUSSING';
+  if (phase === 'voting') return 'VOTING';
+  return 'NOW PLAYING';
+}
+
+export function GameActivityBanner() {
+  const { activity } = useContext(ActivityContext);
+  const [opacity] = useState(() => new Animated.Value(1));
+  const [reduceMotion, setReduceMotion] = useState(true);
+  const label = activity ? activityLabel(activity.phase) : null;
+  const active = !!label && !['UP NEXT', 'TURN RESULT'].includes(label);
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then(value => { if (mounted) setReduceMotion(value); });
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => { mounted = false; subscription.remove(); };
+  }, []);
+  useEffect(() => {
+    opacity.setValue(1);
+    if (!active || reduceMotion) return;
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(opacity, { toValue: 0.35, duration: 950, useNativeDriver: false }),
+      Animated.timing(opacity, { toValue: 1, duration: 950, useNativeDriver: false }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [active, reduceMotion, opacity]);
+  if (!activity || !label) return null;
+  const color = active ? '#68E8A8' : label === 'UP NEXT' ? '#FFD38A' : '#BAC5D6';
+  return <View testID="game-active-player" accessibilityLiveRegion="polite" style={s.banner}>
+    <Animated.View style={[s.dot, { opacity, backgroundColor: color }]} />
+    <Text style={[s.label, { color }]}>{label}</Text>
+    <Text style={s.name} numberOfLines={1}>{activity.name}</Text>
+  </View>;
+}
+
+export const GAME_UI = StyleSheet.create({
+  primaryButton: { minHeight: 56, borderRadius: 16, paddingHorizontal: 20, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  buttonText: { fontSize: 16, fontWeight: '700' },
+});
+const s = StyleSheet.create({
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 36, paddingHorizontal: 12, marginTop: 6, borderRadius: 12, backgroundColor: '#10261F', borderWidth: 1, borderColor: '#244638' },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  label: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
+  name: { flex: 1, color: '#F1FFF7', fontSize: 14, fontWeight: '600' },
+});

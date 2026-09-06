@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useActionConfirmation } from '@/src/components/ActionConfirmation';
+import { GameActivityBanner } from '@/src/components/games/GameActivity';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useGameStore, MatchPhase } from '@/src/store/useGameStore';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
@@ -165,6 +166,7 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
           <View style={styles.headerSpacer} />
         )}
       </View>
+      <GameActivityBanner />
     </View>
   );
 }

@@ -1,3 +1,4 @@
+import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { GameStartGuide } from './GameStartGuide';
 import React, { useState, useEffect, useRef } from 'react';
@@ -93,6 +94,7 @@ export function PassGuessSession({ session }: Props) {
   const [currentAnswer, setCurrentAnswer] = useState('');
 
   const currentPlayer = session.players[activePlayerIndex];
+  useGameActivity(currentPlayer?.displayName, guideOpen ? 'guide' : phase);
   const activeQuestion = useCustom ? customQuestion : question;
 
   // Filter out the active guesser's own answer so they only see and guess on others
@@ -258,7 +260,7 @@ export function PassGuessSession({ session }: Props) {
     return { correct, wrong };
   };
 
-  if (guideOpen) return <GameStartGuide gameId="pass_guess" onStart={() => { setGuideOpen(false); handleStartRound(); }} />;
+  if (guideOpen) return <GameStartGuide gameId="pass_guess" mode={playMode} onStart={() => { setGuideOpen(false); handleStartRound(); }} />;
   if (showPrivacyScreen) {
     const color = getPlayerColor(activePlayerIndex);
     const isGuessingPhase = phase === 'hostGuessing';
@@ -637,7 +639,7 @@ const styles = StyleSheet.create({
   questionText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, flex: 1, lineHeight: 21 },
   input: { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 14, padding: 16, color: 'white', fontSize: 16, minHeight: 100, textAlignVertical: 'top', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
   charCount: { color: 'rgba(255,255,255,0.35)', fontSize: 12, textAlign: 'right', marginTop: 6, marginBottom: 14 },
-  primaryBtn: { backgroundColor: '#007AFF', paddingVertical: 16, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  primaryBtn: { backgroundColor: '#007AFF', paddingVertical: 16,  alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, minHeight: GAME_UI.primaryButton.minHeight, borderRadius: GAME_UI.primaryButton.borderRadius },
   primaryBtnText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   badgeRow: { flexDirection: 'row', marginBottom: 14 },
   badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, gap: 6 },

@@ -1,3 +1,4 @@
+import { useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
@@ -79,6 +80,7 @@ export function TenTangleSession({ session }: Props) {
 
   const guesser = players[guesserIdx];
   const nonGuessers = players.filter((_, i) => i !== guesserIdx);
+  useGameActivity(['passToPlayer', 'showNumber'].includes(phase) ? nonGuessers[passIdx]?.displayName : ['acting', 'scenarioReveal'].includes(phase) ? 'Everyone · acting' : guesser?.displayName, phase);
   const maxNumber = nonGuessers.length;
 
   const usedScenariosRef = useRef<Set<number>>(new Set());
