@@ -16,7 +16,21 @@
 - Checks: 156 tests / 20 suites passed, TypeScript passed, web export passed.
   This is shared-control coverage, not a claim to have exercised every app action,
   destructive account action or all game/timing combinations on real devices.
-- Publishing and live confirmation verification recorded after service completion.
+- Source commit: `754f0c69454ef1963b8ab36cc9318c7692480200`.
+- Firebase Hosting deployment succeeded; live partybot.games loads
+  `entry-44d1c9e5c0cb30e8562431fc1c3526df.js`.
+- Live checks: Color Match Skip cancel preserves Player 1; confirmed Skip advances
+  to Player 2; skipping the last player shows both skipped entries with no winner.
+  Exit cancel preserves results, confirmed Exit returns home. Memory Grid Skip
+  advances to Player 2 and Exit returns home. Profile Done returns home.
+  Skip fast-forward icon is visible; no browser error logs in this smoke test.
+- Expo Go published for iOS/Android on `expo-go-sdk57`, runtime `exposdk:57.0.0`.
+  Update group: `cdb1d544-f7ea-4aee-bb53-61e989b0b330`.
+  Android: `01a0776b-960d-722c-81c1-0448da43ea3f`.
+  iOS: `01a0776b-960d-75d4-9206-b95e1499fd0e`.
+  Physical-device validation remains unperformed.
+- Release checkpoint: `checkpoint/session-controls-release-2026-09-06`.
+  Offline backup: audit workspace `playbot-session-controls-2026-09-06.bundle`.
 
 
 ## 2026-09-06 — Game-flow repairs / Match Studio / Drum web playback
