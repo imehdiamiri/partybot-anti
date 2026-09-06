@@ -1,5 +1,30 @@
 # Release log
 
+## 2026-09-06 — Game-flow repairs / Match Studio / Drum web playback
+
+- Pre-change checkpoint: `checkpoint/pre-flow-fixes-2026-09-06`.
+- Color Trap now captures explicit turn identity/color; Imposter includes the last
+  vote with one shared outcome calculator (ties explicitly let the imposter escape).
+- Drum next-player startup is separated from the old callback; web Whitney mode
+  now actually plays its bundled track via Web Audio instead of running silently.
+  Playback failure returns a retry message without recording a missed attempt.
+- Memory Path pending timers are cancelled on Skip/start/unmount and finishing
+  disables Skip. Memory Grid mismatch timers are cancelled and final move count
+  is retained. Tap in Order retains its final correct count.
+- Finalized names are validated; Guess the Seconds results use player IDs.
+  Color/Sound Match retain explicit skipped status; Sound Match transitions guard
+  duplicate input during asynchronous sound teardown.
+- Color Lab and Sound Studio add bounded, scroll-safe panels, visible three-step
+  progress, clearer comparison swatches and readable frequency controls.
+- Checks: 153 tests / 19 suites passed; TypeScript passed; 91-route web export
+  succeeded. Includes actual component regressions for Color Trap, final Imposter
+  vote and six Drum automatic attempts across two players, plus explicit tie tests.
+- Firebase/Expo publication and live visual verification: pending, recorded below
+  after service confirmation. Native speaker/microphone output is not certified.
+- Remaining audit follow-up: Truth & Dare visual angle alignment and broader
+  physical-device/race testing; these checks do not prove every game permutation.
+
+
 ## 2026-09-06 — Stable home refresh / 16 new game heroes
 
 - Source: `263045fcd6512dd1c93d7c8b9caffed8e71d8647`.

@@ -173,7 +173,10 @@ export function ColorTrapSession({ session }: Props) {
   const stageWidth = Math.min(sw, 560);
   const tileSize = stageWidth * 0.20;
 
-  const startGame = () => {
+  const startGame = (turnIndex = playerIdx, turnForbidden = forbiddenIdx) => {
+    if (gameActiveRef.current || !players[turnIndex]) return;
+    setPlayerIdx(turnIndex);
+    setForbiddenIdx(turnForbidden);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const seed = Date.now();
     const sp = generateSpawns(diff, seed);
@@ -242,7 +245,7 @@ export function ColorTrapSession({ session }: Props) {
 
       // Non-forbidden expired = miss (player failed to tap)
       for (const tile of expiring) {
-        if (tile.colorIndex !== forbiddenIdx) {
+        if (tile.colorIndex !== turnForbidden) {
           missesRef.current++;
           setMisses(missesRef.current);
         }
@@ -259,14 +262,15 @@ export function ColorTrapSession({ session }: Props) {
 
       // Check game duration
       if (elapsedRef.current >= diff.totalDuration) {
-        finishGame();
+        finishGame(turnIndex);
       }
     }, 100);
 
     setPhase('playing');
   };
 
-  const finishGame = useCallback(() => {
+  const finishGame = useCallback((turnIndex: number) => {
+    if (!gameActiveRef.current || !players[turnIndex]) return;
     gameActiveRef.current = false;
     if (tickRef.current) clearInterval(tickRef.current);
     timerProgress.value = 0;
@@ -275,11 +279,11 @@ export function ColorTrapSession({ session }: Props) {
     const mk = mistakesRef.current;
     const score = Math.max(0, h * 10 - mi * 5 - mk * 15);
     setResults(prev => [...prev, {
-      playerId: player.id, hits: h, misses: mi, mistakes: mk, score,
+      playerId: players[turnIndex].id, hits: h, misses: mi, mistakes: mk, score,
     }]);
-    if (playerIdx + 1 >= players.length) setPhase('results');
+    if (turnIndex + 1 >= players.length) setPhase('results');
     else setPhase('playerComplete');
-  }, [player, playerIdx, players.length]);
+  }, [players]);
 
   const handleTap = (tileId: number) => {
     if (!gameActiveRef.current) return;
@@ -311,6 +315,7 @@ export function ColorTrapSession({ session }: Props) {
   useEffect(() => {
     if (phase === 'playing') {
       registerSkip(() => {
+        if (!gameActiveRef.current) return;
         gameActiveRef.current = false;
         if (tickRef.current) clearInterval(tickRef.current);
         timerProgress.value = 0;
@@ -380,7 +385,7 @@ export function ColorTrapSession({ session }: Props) {
             </View>
           </View>
 
-          <Pressable testID="color-trap-ready-button" style={[st.readyBtn, { backgroundColor: forbiddenColor }]} onPress={startGame} accessibilityRole="button">
+          <Pressable testID="color-trap-ready-button" style={[st.readyBtn, { backgroundColor: forbiddenColor }]} onPress={() => startGame()} accessibilityRole="button">
             <Text style={st.readyBtnText}>I'm Ready</Text>
             <IconSymbol name="arrow.right" size={18} color="white" weight="bold" />
           </Pressable>
@@ -484,7 +489,7 @@ export function ColorTrapSession({ session }: Props) {
       <GamePlayerCompleteView
         nextPlayerName={nextPlayer?.displayName || 'Next Player'}
         prevResultLine={`Score: ${last?.score} · ${last?.hits} hits`}
-        onReady={() => { setPlayerIdx(i => i+1); setForbiddenIdx(Math.floor(Math.random() * 5)); startGame(); }}
+        onReady={() => startGame(playerIdx + 1, Math.floor(Math.random() * 5))}
         accentColor={PALETTE[forbiddenIdx]}
       />
     );
@@ -620,4 +625,3 @@ const st = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 }, elevation: 5,
   },
 });
-

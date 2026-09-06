@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/src/theme/Colors';
+import { MatchStudio } from './MatchStudio';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, TouchableOpacity, GestureResponderEvent, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft, useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from 'react-native-reanimated';
@@ -15,6 +16,7 @@ interface Props { session: GameSession; }
 type Phase = 'ready' | 'memorize' | 'recreate' | 'roundResult' | 'results';
 
 interface PlayerRoundResult {
+  skipped?: boolean;
   playerId: string;
   roundIndex: number;
   guess: { h: number; s: number; b: number };
@@ -131,6 +133,7 @@ export function ColorMatchSession({ session }: Props) {
           guess: { h: 0, s: 0, b: 0 },
           target: activeTargetColor,
           score: 0,
+          skipped: true,
         };
 
         setGuesses(prev => [...prev, newResult]);
@@ -250,7 +253,7 @@ export function ColorMatchSession({ session }: Props) {
   // Compile final scoreboard rankings
   const scoreboardEntries = useMemo<RankEntry[]>(() => {
     return players.map(p => {
-      const playerGuesses = guesses.filter(g => g.playerId === p.id);
+      const playerGuesses = guesses.filter(g => g.playerId === p.id && !g.skipped);
       const isSkipped = playerGuesses.length === 0;
       const totalScore = playerGuesses.reduce((sum, g) => sum + g.score, 0);
       return {
@@ -281,7 +284,7 @@ export function ColorMatchSession({ session }: Props) {
   if (phase === 'memorize') {
     const targetHsl = hsvToHsl(activeTargetColor.h, activeTargetColor.s, activeTargetColor.b);
     return (
-      <Animated.View entering={FadeIn} exiting={FadeOut} style={st.container}>
+      <MatchStudio kind="color" step={0} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.card}>
           <Text style={st.sectionTitle}>Memorize this Color</Text>
           <Text style={st.countdownLabel}>Closing in {memorizeTimeLeft}s...</Text>
@@ -292,7 +295,7 @@ export function ColorMatchSession({ session }: Props) {
             <Animated.View style={[st.progressBar, timerAnimatedStyle, { backgroundColor: targetHsl }]} />
           </View>
         </View>
-      </Animated.View>
+      </MatchStudio>
     );
   }
 
@@ -300,10 +303,10 @@ export function ColorMatchSession({ session }: Props) {
     const guessHsl = hsvToHsl(currentGuess.h, currentGuess.s, currentGuess.b);
 
     return (
-      <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={st.container}>
+      <MatchStudio kind="color" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.recreateHeader}>
-          <Text style={st.recreateRound}>Round {roundIdx + 1} of {maxRounds}</Text>
-          <Text style={st.recreatePlayer}>{activePlayer.displayName}</Text>
+          <Text style={st.sectionTitle}>Mix it from memory</Text>
+          <Text style={st.swatchLabel}>Adjust hue, saturation and brightness.</Text>
         </View>
 
         <View style={st.singleSwatchContainer}>
@@ -376,7 +379,7 @@ export function ColorMatchSession({ session }: Props) {
         <TouchableOpacity testID="color-match-submit-button" style={st.submitButton} onPress={handleSubmitGuess} activeOpacity={0.85} accessibilityRole="button">
           <Text style={st.submitButtonText}>Submit Match</Text>
         </TouchableOpacity>
-      </Animated.View>
+      </MatchStudio>
     );
   }
 
@@ -387,7 +390,7 @@ export function ColorMatchSession({ session }: Props) {
     const isGoodScore = lastResult.score >= 7.5;
 
     return (
-      <Animated.View entering={FadeIn} exiting={FadeOut} style={st.container}>
+      <MatchStudio kind="color" step={2} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.roundResultCard}>
           <Text style={st.roundResultPlayer}>{activePlayer.displayName}'s Result</Text>
           
@@ -409,7 +412,7 @@ export function ColorMatchSession({ session }: Props) {
           <View style={st.overlappingSwatchesContainer}>
             <View style={st.overlappingSwatchesRow}>
               <View style={[st.colorSwatchMedium, { backgroundColor: targetHsl, shadowColor: targetHsl, zIndex: 1 }]} />
-              <View style={[st.colorSwatchMedium, { backgroundColor: guessHsl, shadowColor: guessHsl, marginLeft: -60, zIndex: 2 }]} />
+              <View style={[st.colorSwatchMedium, { backgroundColor: guessHsl, shadowColor: guessHsl, marginLeft: 12, zIndex: 2 }]} />
             </View>
             
             <View style={st.overlapLabelsRow}>
@@ -439,7 +442,7 @@ export function ColorMatchSession({ session }: Props) {
             </View>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+      </MatchStudio>
     );
   }
 
@@ -553,43 +556,44 @@ const st = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
     borderRadius: 28,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 24,
+    padding: 4,
     alignItems: 'center',
     width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0,
     shadowRadius: 20,
-    elevation: 8,
+    elevation: 0,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontFamily: 'Viral-Black',
+    fontSize: 21,
+    fontFamily: 'System',
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: 4,
+    fontWeight: '600',
   },
   countdownLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.4)',
-    marginBottom: 24,
+    color: '#B1BDCF',
+    marginBottom: 16,
   },
   colorSwatch: {
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    marginBottom: 32,
-    borderWidth: 4,
+    width: '100%',
+    height: 190,
+    borderRadius: 18,
+    marginBottom: 20,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0,
     shadowRadius: 20,
-    elevation: 12,
+    elevation: 0,
   },
   progressTrack: {
     width: '100%',
@@ -632,7 +636,7 @@ const st = StyleSheet.create({
   swatchLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    color: '#BCC6D7',
   },
   colorSwatchSmall: {
     width: 120,
@@ -657,8 +661,8 @@ const st = StyleSheet.create({
     elevation: 0,
   },
   colorValCode: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.3)',
+    fontSize: 10,
+    color: '#ADB8CA',
     fontWeight: '500',
     marginTop: 4,
   },
@@ -666,8 +670,8 @@ const st = StyleSheet.create({
     width: '100%',
     maxWidth: 540,
     alignSelf: 'center',
-    gap: 20,
-    marginVertical: 12,
+    gap: 10,
+    marginVertical: 8,
   },
   sliderContainer: {
     width: '100%',
@@ -689,7 +693,7 @@ const st = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
   sliderTrackContainer: {
-    height: 32,
+    height: 44,
     width: '100%',
     justifyContent: 'center',
     position: 'relative',
@@ -708,7 +712,7 @@ const st = StyleSheet.create({
   },
   sliderThumb: {
     position: 'absolute',
-    top: 2, // Centered inside track container height of 32 (thumb size is 28)
+    top: 8,
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -734,12 +738,12 @@ const st = StyleSheet.create({
     maxWidth: 540,
     alignSelf: 'center',
     height: 56,
-    borderRadius: 20,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
     overflow: 'hidden',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#B9A3FF',
   },
   submitButtonText: {
     color: '#121212',
@@ -762,11 +766,11 @@ const st = StyleSheet.create({
     letterSpacing: 0.5,
   },
   roundResultCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
     borderRadius: 28,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 24,
+    padding: 4,
     alignItems: 'center',
     width: '100%',
     maxWidth: 540,
@@ -794,9 +798,10 @@ const st = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   scoreValue: {
-    fontSize: 32,
-    fontFamily: 'Viral-Black',
+    fontSize: 40,
+    fontFamily: 'System',
     color: 'white',
+    fontWeight: '600',
   },
   scoreMax: {
     fontSize: 16,
@@ -830,34 +835,35 @@ const st = StyleSheet.create({
     zIndex: 1,
   },
   colorSwatchMedium: {
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    borderWidth: 3,
+    width: 110,
+    height: 110,
+    borderRadius: 16,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0,
     shadowRadius: 10,
-    elevation: 8,
+    elevation: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
   colorSwatchLarge: {
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    borderWidth: 4,
+    width: '100%',
+    height: 120,
+    borderRadius: 18,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0,
     shadowRadius: 16,
-    elevation: 10,
-    marginBottom: 12,
+    elevation: 0,
+    marginBottom: 8,
   },
   singleSwatchContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 16,
+    marginVertical: 8,
+    width: '100%',
   },
   overlappingSwatchesContainer: {
     alignItems: 'center',
@@ -873,7 +879,7 @@ const st = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     marginTop: 8,
   },
   overlapLabelCol: {

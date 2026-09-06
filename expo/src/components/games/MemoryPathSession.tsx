@@ -137,6 +137,17 @@ export function MemoryPathSession({ session }: Props) {
   const shakeAnim = useSharedValue(0);
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeAnim.value }] }));
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pendingTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const finishing = useRef(false);
+  const later = (callback: () => void, delay: number) => {
+    const timer = setTimeout(() => { pendingTimers.current.delete(timer); callback(); }, delay);
+    pendingTimers.current.add(timer);
+  };
+  const cancelPending = () => {
+    pendingTimers.current.forEach(clearTimeout);
+    pendingTimers.current.clear();
+  };
+  useEffect(() => () => cancelPending(), []);
 
   const players = session.players;
   const player = players[playerIndex];
@@ -153,6 +164,9 @@ export function MemoryPathSession({ session }: Props) {
   useEffect(() => {
     if (phase === 'playing') {
       registerSkip(() => {
+        if (finishing.current) return;
+        finishing.current = true;
+        cancelPending();
         if (timerRef.current) clearInterval(timerRef.current);
         setResults(prev => [...prev, { playerId: player.id, timeMs: 0, attempts: 0, finished: false, progress: 0 }]);
         if (playerIndex + 1 >= players.length) setPhase('results');
@@ -179,10 +193,13 @@ export function MemoryPathSession({ session }: Props) {
   };
 
   const handleStart = () => {
+    cancelPending();
+    finishing.current = false;
+    setIsAnimating(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     initBoard();
     setPhase('countdown');
-    setTimeout(() => setPhase('playing'), 1500);
+    later(() => setPhase('playing'), 1500);
   };
 
   const resetBoard = (currentPath: PathCoord[], prog: number) => {
@@ -208,7 +225,7 @@ export function MemoryPathSession({ session }: Props) {
   };
 
   const handleTap = (row: number, col: number) => {
-    if (phase !== 'playing' || wrongTile || isAnimating) return;
+    if (phase !== 'playing' || wrongTile || isAnimating || finishing.current) return;
     const expected = path[progress];
     if (!expected) return;
 
@@ -222,6 +239,8 @@ export function MemoryPathSession({ session }: Props) {
       setTileStates(newStates);
 
       if (newProg >= path.length) {
+        finishing.current = true;
+        registerSkip(null);
         // Complete!
         if (timerRef.current) clearInterval(timerRef.current);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -236,22 +255,23 @@ export function MemoryPathSession({ session }: Props) {
         setTileStates(litStates);
 
         let step = 0;
-        const animInterval = setInterval(() => {
+        const animateStep = () => {
           if (step < path.length) {
             setHighlightIndex(step);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             step++;
+            later(animateStep, 120);
           } else {
-            clearInterval(animInterval);
             setHighlightIndex(null);
-            setTimeout(() => {
+            later(() => {
               setIsAnimating(false);
               setResults(prev => [...prev, { playerId: player.id, timeMs: elapsed * 1000, attempts, finished: true, progress: newProg }]);
               if (playerIndex + 1 >= players.length) setPhase('results');
               else setPhase('playerComplete');
             }, 400);
           }
-        }, 120);
+        };
+        later(animateStep, 120);
       }
     } else {
       // Wrong
@@ -267,8 +287,10 @@ export function MemoryPathSession({ session }: Props) {
         const remaining = turnAttempts - 1;
         setTurnAttempts(remaining);
         if (remaining <= 0) {
+          finishing.current = true;
+          registerSkip(null);
           // Out of attempts — fail this player
-          setTimeout(() => {
+          later(() => {
             setWrongTile(null);
             if (timerRef.current) clearInterval(timerRef.current);
             setResults(prev => [...prev, { playerId: player.id, timeMs: elapsed * 1000, attempts: attempts + 1, finished: false, progress }]);
@@ -279,7 +301,7 @@ export function MemoryPathSession({ session }: Props) {
         }
       }
 
-      setTimeout(() => {
+      later(() => {
         setWrongTile(null);
         setProgress(1);
         resetBoard(path, 1);

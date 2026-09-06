@@ -1,4 +1,5 @@
 import { Colors } from '@/src/theme/Colors';
+import { MatchStudio } from './MatchStudio';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, useWindowDimensions, TouchableOpacity, GestureResponderEvent, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft, useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, Easing } from 'react-native-reanimated';
@@ -39,6 +40,7 @@ interface Props { session: GameSession; }
 type Phase = 'ready' | 'memorize' | 'recreate' | 'roundResult' | 'results';
 
 interface PlayerRoundResult {
+  skipped?: boolean;
   playerId: string;
   roundIndex: number;
   guessFrequency: number;
@@ -196,7 +198,7 @@ export function SoundMatchSession({ session }: Props) {
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // Derive vertical slider height responsively from usable viewport height
-  const sliderHeight = Math.min(Math.max(windowHeight * 0.44, 260), 400);
+  const sliderHeight = Math.min(Math.max(windowHeight * 0.26, 160), 250);
 
   const freqToPosition = useCallback((freq: number) => {
     const pct = (freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
@@ -359,6 +361,10 @@ export function SoundMatchSession({ session }: Props) {
     setIsPlayingTarget(false);
     setIsPlayingGuess(false);
   };
+  const transitionBusy = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => { transitionBusy.current = false; }, [phase, playerIdx, roundIdx]);
 
   const playFrequency = async (freq: number, duration: number, isTarget: boolean) => {
     await stopActiveSound();
@@ -436,7 +442,10 @@ export function SoundMatchSession({ session }: Props) {
   useEffect(() => {
     if (phase === 'memorize' || phase === 'recreate') {
       registerSkip(async () => {
+        if (transitionBusy.current) return;
+        transitionBusy.current = true;
         await stopActiveSound();
+        if (!mounted.current) return;
 
         const newResult: PlayerRoundResult = {
           playerId: activePlayer.id,
@@ -444,6 +453,7 @@ export function SoundMatchSession({ session }: Props) {
           guessFrequency: 200,
           targetFrequency: activeTargetFreq,
           score: 0,
+          skipped: true,
         };
 
         setGuesses(prev => [...prev, newResult]);
@@ -482,14 +492,20 @@ export function SoundMatchSession({ session }: Props) {
   }, []);
 
   const handleStartMatch = async () => {
+    if (transitionBusy.current) return;
+    transitionBusy.current = true;
     await stopActiveSound();
+    if (!mounted.current) return;
     setPhase('recreate');
     setCurrentGuessFreq(440);
     lastPlayedFreqRef.current = 0;
   };
 
   const handleSubmitGuess = async () => {
+    if (transitionBusy.current) return;
+    transitionBusy.current = true;
     await stopActiveSound();
+    if (!mounted.current) return;
     if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
 
     const score = calculateAuditoryScore(activeTargetFreq, currentGuessFreq);
@@ -524,7 +540,10 @@ export function SoundMatchSession({ session }: Props) {
   };
 
   const handleContinueFromRoundResult = async () => {
+    if (transitionBusy.current) return;
+    transitionBusy.current = true;
     await stopActiveSound();
+    if (!mounted.current) return;
     
     const isLastPlayer = playerIdx + 1 >= players.length;
     if (isLastPlayer) {
@@ -546,7 +565,7 @@ export function SoundMatchSession({ session }: Props) {
   // Compile final standings list
   const scoreboardEntries = useMemo<RankEntry[]>(() => {
     return players.map(p => {
-      const playerGuesses = guesses.filter(g => g.playerId === p.id);
+      const playerGuesses = guesses.filter(g => g.playerId === p.id && !g.skipped);
       const isSkipped = playerGuesses.length === 0;
       const totalScore = playerGuesses.reduce((sum, g) => sum + g.score, 0);
       return {
@@ -630,7 +649,7 @@ export function SoundMatchSession({ session }: Props) {
 
   if (phase === 'memorize') {
     return (
-      <Animated.View entering={FadeIn} exiting={FadeOut} style={st.container}>
+      <MatchStudio kind="sound" step={0} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.card} testID="sound-match-target-card">
           <Text style={st.sectionTitle}>Target Tone</Text>
           <Text style={st.countdownLabel}>Listen and memorize the pitch</Text>
@@ -688,7 +707,7 @@ export function SoundMatchSession({ session }: Props) {
             </View>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+      </MatchStudio>
     );
   }
 
@@ -700,11 +719,11 @@ export function SoundMatchSession({ session }: Props) {
     const glowColor = `hsl(${Math.round(hue)}, 85%, 55%)`;
 
     return (
-      <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={st.container}>
+      <MatchStudio kind="sound" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.recreateStage} testID="sound-match-recreate-stage">
           <View style={st.recreateHeader}>
-            <Text style={st.recreateRound}>Round {roundIdx + 1} of {maxRounds}</Text>
-            <Text style={st.recreatePlayer}>{activePlayer.displayName}</Text>
+            <Text style={st.sectionTitle}>Find that frequency</Text>
+            <Text style={st.instructionsText}>Slide to tune. Tap the number to listen.</Text>
           </View>
 
           {/* Main area: vertical slider + frequency display inside centered bounded stage */}
@@ -756,7 +775,7 @@ export function SoundMatchSession({ session }: Props) {
                   {/* Filled portion glow */}
                   <View 
                     pointerEvents="none"
-                    style={[st.vSliderFill, { top: thumbY, backgroundColor: glowColor + '25' }]} 
+                    style={[st.vSliderFill, { top: thumbY, backgroundColor: `hsla(${Math.round(hue)}, 85%, 55%, 0.15)` }]}
                   />
 
                   {/* Thumb */}
@@ -796,7 +815,7 @@ export function SoundMatchSession({ session }: Props) {
                 accessibilityRole="button"
                 testID="sound-match-freq-circle"
               >
-                <Animated.View style={[st.freqPulseRing, pulseAnimatedStyle, { borderColor: glowColor, backgroundColor: glowColor + '20' }]} />
+                <Animated.View style={[st.freqPulseRing, pulseAnimatedStyle, { borderColor: glowColor, backgroundColor: `hsla(${Math.round(hue)}, 85%, 55%, 0.12)` }]} />
                 <Text style={[st.freqBigNumber, { color: glowColor }]}>
                   {Math.round(currentGuessFreq)}
                 </Text>
@@ -839,7 +858,7 @@ export function SoundMatchSession({ session }: Props) {
             <Text style={st.submitButtonText}>Submit Match</Text>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+      </MatchStudio>
     );
   }
 
@@ -855,7 +874,7 @@ export function SoundMatchSession({ session }: Props) {
     const guessColor = `hsl(${Math.round(guessHue)}, 85%, 55%)`;
 
     return (
-      <Animated.View entering={FadeIn} exiting={FadeOut} style={st.container}>
+      <MatchStudio kind="sound" step={2} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.roundResultCard}>
           <Text style={st.roundResultPlayer}>{activePlayer.displayName}'s Result</Text>
           
@@ -943,7 +962,7 @@ export function SoundMatchSession({ session }: Props) {
             </View>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+      </MatchStudio>
     );
   }
 
@@ -981,40 +1000,41 @@ const st = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
     borderRadius: 28,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 24,
+    padding: 4,
     alignItems: 'center',
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0,
     shadowRadius: 20,
-    elevation: 8,
+    elevation: 0,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontFamily: 'Viral-Black',
+    fontSize: 21,
+    fontFamily: 'System',
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: 4,
+    fontWeight: '600',
   },
   countdownLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.4)',
-    marginBottom: 24,
+    color: '#B1BDCF',
+    marginBottom: 12,
   },
   visualizerContainer: {
-    width: 200,
-    height: 200,
+    width: 160,
+    height: 160,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 8,
     position: 'relative',
   },
   pulseRing: {
@@ -1029,7 +1049,7 @@ const st = StyleSheet.create({
   playBigButton: {
     width: 120,
     height: 120,
-    borderRadius: 60,
+    borderRadius: 26,
     backgroundColor: '#FF2D55',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1048,15 +1068,15 @@ const st = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 70,
-    marginVertical: 12,
+    height: 44,
+    marginVertical: 8,
     width: '100%',
   },
   instructionsText: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.5)',
-    marginBottom: 32,
+    color: '#BCC6D7',
+    marginBottom: 18,
     textAlign: 'center',
   },
   readyMatchButton: {
@@ -1086,13 +1106,13 @@ const st = StyleSheet.create({
     maxWidth: 720,
     alignSelf: 'center',
     alignItems: 'center',
-    flex: 1,
+    flex: 0,
     justifyContent: 'center',
   },
   recreateHeader: {
     alignItems: 'center',
     gap: 4,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   recreateRound: {
     fontSize: 13,
@@ -1111,10 +1131,10 @@ const st = StyleSheet.create({
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',
-    gap: 28,
+    gap: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    flex: 0,
   },
 
   // ─── Vertical Slider ────────────────────
@@ -1128,9 +1148,9 @@ const st = StyleSheet.create({
     alignItems: 'center',
   },
   fineTuneBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
@@ -1146,7 +1166,7 @@ const st = StyleSheet.create({
   scaleLabelText: {
     fontSize: 10,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.25)',
+    color: '#A3B1C5',
     fontVariant: ['tabular-nums'],
   },
   vSliderTrackContainer: {
@@ -1205,10 +1225,10 @@ const st = StyleSheet.create({
     gap: 16,
   },
   freqCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 3,
+    width: 146,
+    height: 146,
+    borderRadius: 24,
+    borderWidth: 1,
     backgroundColor: 'rgba(255,255,255,0.03)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1221,15 +1241,16 @@ const st = StyleSheet.create({
   },
   freqPulseRing: {
     position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 146,
+    height: 146,
+    borderRadius: 24,
     borderWidth: 2,
   },
   freqBigNumber: {
-    fontSize: 44,
-    fontFamily: 'Viral-Black',
+    fontSize: 42,
+    fontFamily: 'System',
     textAlign: 'center',
+    fontWeight: '500',
   },
   freqUnit: {
     fontSize: 15,
@@ -1307,11 +1328,11 @@ const st = StyleSheet.create({
 
   // ─── Round Result ───────────────────────
   roundResultCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
     borderRadius: 28,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 24,
+    padding: 4,
     alignItems: 'center',
     width: '100%',
     maxWidth: 540,
@@ -1339,9 +1360,10 @@ const st = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   scoreValue: {
-    fontSize: 32,
-    fontFamily: 'Viral-Black',
+    fontSize: 40,
+    fontFamily: 'System',
     color: 'white',
+    fontWeight: '600',
   },
   scoreMax: {
     fontSize: 16,

@@ -16,6 +16,8 @@ import { GamePassPhoneView, GamePlayerCompleteView } from './SharedGameComponent
 import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 import { isWeb } from '@/src/utils/platform';
 import { playWebTick, playWebDrumHit } from '@/src/utils/browserMediaAdapter';
+import { BrowserRecordingPlayback } from '@/src/utils/browserRecordingPlayback';
+import { Asset } from 'expo-asset';
 
 interface Props { session: GameSession; }
 
@@ -73,6 +75,9 @@ export function DrumChallengeSession({ session }: Props) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const metronomeTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const phaseRef = useRef<Phase>('ready');
+  const webPlayback = useRef(new BrowserRecordingPlayback());
+  const attemptGeneration = useRef(0);
+  const [audioError, setAudioError] = useState<string | null>(null);
   
   useEffect(() => { phaseRef.current = phase; }, [phase]);
 
@@ -106,6 +111,8 @@ export function DrumChallengeSession({ session }: Props) {
       })();
     }
     return () => {
+      attemptGeneration.current++;
+      webPlayback.current.clear();
       if (!isWeb) {
         soundRef.current?.unloadAsync();
         drumRef.current?.unloadAsync();
@@ -124,6 +131,9 @@ export function DrumChallengeSession({ session }: Props) {
   useEffect(() => {
     if (phase === 'listening' || phase === 'result') {
       registerSkip(() => {
+        attemptGeneration.current++;
+        webPlayback.current.stop();
+        phaseRef.current = 'ready';
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         metronomeTimersRef.current.forEach(t => clearTimeout(t));
         metronomeTimersRef.current = [];
@@ -152,6 +162,10 @@ export function DrumChallengeSession({ session }: Props) {
   }, [phase, playerIdx]);
 
   const finishAttempt = useCallback((diff: number | null) => {
+    if (phaseRef.current !== 'listening') return;
+    phaseRef.current = 'result';
+    attemptGeneration.current++;
+    webPlayback.current.stop();
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     metronomeTimersRef.current.forEach(t => clearTimeout(t));
     metronomeTimersRef.current = [];
@@ -186,6 +200,15 @@ export function DrumChallengeSession({ session }: Props) {
   }, [playerIdx, drumScale, waveAnim]);
 
   const startListening = useCallback(async () => {
+    const generation = ++attemptGeneration.current;
+    const finishCurrentAttempt = (diff: number | null) => {
+      if (generation === attemptGeneration.current) finishAttempt(diff);
+    };
+    webPlayback.current.stop();
+    setAudioError(null);
+    playStartRef.current = Number.POSITIVE_INFINITY;
+    phaseRef.current = 'listening';
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setPhase('listening');
     setTapped(false);
     setMetronomeTaps([]);
@@ -227,7 +250,7 @@ export function DrumChallengeSession({ session }: Props) {
         const finishDelay = targetTimeMs + 2000;
         const finishTimer = setTimeout(() => {
           if (phaseRef.current === 'listening') {
-            finishAttempt(diffRef.current);
+            finishCurrentAttempt(diffRef.current);
           }
         }, finishDelay);
         metronomeTimersRef.current.push(finishTimer);
@@ -273,6 +296,10 @@ export function DrumChallengeSession({ session }: Props) {
             console.warn('Failed to preload tick', i, e);
           }
         }
+        if (generation !== attemptGeneration.current) {
+          pool.forEach(s => s.unloadAsync().catch(() => {}));
+          return;
+        }
         tickPoolRef.current = pool;
 
         // Schedule all beats with precise timing
@@ -293,7 +320,7 @@ export function DrumChallengeSession({ session }: Props) {
         const finishDelay = targetTimeMs + 2000;
         const finishTimer = setTimeout(() => {
           if (phaseRef.current === 'listening') {
-            finishAttempt(diffRef.current);
+            finishCurrentAttempt(diffRef.current);
           }
         }, finishDelay);
         metronomeTimersRef.current.push(finishTimer);
@@ -305,9 +332,12 @@ export function DrumChallengeSession({ session }: Props) {
         if (soundRef.current) { await soundRef.current.unloadAsync(); soundRef.current = null; }
 
         if (isWeb) {
+          const uri = Asset.fromModule(modeConfig.audio!).uri;
+          const started = await webPlayback.current.play(uri, 1, () => finishCurrentAttempt(diffRef.current));
+          if (!started || generation !== attemptGeneration.current) return;
           playStartRef.current = performance.now();
           timeoutRef.current = setTimeout(() => {
-            finishAttempt(diffRef.current);
+            finishCurrentAttempt(diffRef.current);
           }, 28000);
           return;
         }
@@ -325,31 +355,37 @@ export function DrumChallengeSession({ session }: Props) {
           shouldPlay: false,
           volume: 1.0,
         });
+        if (generation !== attemptGeneration.current) { await sound.unloadAsync(); return; }
         soundRef.current = sound;
 
         sound.setOnPlaybackStatusUpdate((status) => {
           if (status.isLoaded && status.didJustFinish) {
-            finishAttempt(diffRef.current);
+            finishCurrentAttempt(diffRef.current);
           }
         });
 
         // Start playback and record the precise start time
         await sound.playAsync();
+        if (generation !== attemptGeneration.current) return;
         playStartRef.current = performance.now();
 
         // Fallback timeout in case audio fails to fire completion
         timeoutRef.current = setTimeout(() => {
-          finishAttempt(diffRef.current);
+          finishCurrentAttempt(diffRef.current);
         }, 28000);
       } catch (e) {
         console.warn('DrumChallenge: audio playback failed', e);
-        finishAttempt(null);
+        if (generation !== attemptGeneration.current) return;
+        webPlayback.current.stop();
+        setAudioError('Sound could not start. Check your volume, then tap Ready to retry.');
+        phaseRef.current = 'ready';
+        setPhase('ready');
       }
     }
   }, [modeKey, modeConfig, metronomeCycles, metronomeRhythm, finishAttempt, waveAnim, drumScale]);
 
   const handleDrumTap = useCallback(async () => {
-    if (phase !== 'listening' || tapped) return;
+    if (phase !== 'listening' || tapped || !Number.isFinite(playStartRef.current)) return;
 
     const tapTime = performance.now();
     let diff = 0;
@@ -460,7 +496,7 @@ export function DrumChallengeSession({ session }: Props) {
 
   const goToNextPlayer = () => {
     if (playerIdx + 1 >= players.length) setPhase('results');
-    else { setPlayerIdx(playerIdx + 1); setAttemptIdx(0); startListening(); }
+    else { setPlayerIdx(playerIdx + 1); setAttemptIdx(0); setPhase('ready'); }
   };
 
   const playAgain = () => {
@@ -477,7 +513,7 @@ export function DrumChallengeSession({ session }: Props) {
         <GamePassPhoneView
           playerName={player?.displayName ?? 'Player'}
           title={players.length > 1 && playerIdx > 0 ? "Pass the phone to" : "Get ready"}
-          subtitle={`Drum Challenge · Mode: ${modeConfig.title} · ${ATTEMPTS_PER_PLAYER} attempts`}
+          subtitle={audioError || `Drum Challenge · Mode: ${modeConfig.title} · ${ATTEMPTS_PER_PLAYER} attempts`}
           accentColor="#FF2E93"
           buttonTitle="Start Listening"
           onReady={startListening}

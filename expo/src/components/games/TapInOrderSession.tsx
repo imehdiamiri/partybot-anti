@@ -317,7 +317,7 @@ export function TapInOrderSession({ session }: Props) {
       setCorrectCount(newCorrect);
 
       if (newCorrect >= totalTargets) {
-        handleComplete(true);
+        handleComplete(true, newCorrect);
       } else {
         // Smooth animate progress for playing phase
         Animated.timing(progressAnim, {
@@ -341,13 +341,13 @@ export function TapInOrderSession({ session }: Props) {
     handleComplete(false);
   };
 
-  const handleComplete = (didWin: boolean) => {
+  const handleComplete = (didWin: boolean, finalCorrectCount = correctCount) => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (previewRef.current) clearInterval(previewRef.current);
 
     setResults(prev => [...prev, {
       playerId: player.id, missTaps, timeMs: elapsed * 1000,
-      correctCount, totalTargets, didFinish: didWin,
+      correctCount: finalCorrectCount, totalTargets, didFinish: didWin,
     }]);
 
     setPhase('outcome');

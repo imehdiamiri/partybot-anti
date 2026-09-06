@@ -558,6 +558,8 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [playerTimes, setPlayerTimes] = useState<PlayerTime[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mismatchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (mismatchTimer.current) clearTimeout(mismatchTimer.current); }, []);
 
   const currentPlayer = players[currentPlayerIndex];
 
@@ -603,6 +605,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
     if (phase === 'playing') {
       registerSkip(() => {
         if (timerRef.current) clearInterval(timerRef.current);
+        if (mismatchTimer.current) clearTimeout(mismatchTimer.current);
         setPlayerTimes(prev => [...prev, {
           playerId: currentPlayer.id,
           elapsedSeconds: 0,
@@ -623,6 +626,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
   }, [phase, currentPlayerIndex, currentPlayer, players.length, registerSkip]);
 
   const handleStart = (targetPlayerIdx?: number) => {
+    if (mismatchTimer.current) clearTimeout(mismatchTimer.current);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const board = generateSingleDeviceBoard();
     const nextIdx = targetPlayerIdx !== undefined ? targetPlayerIdx : boardState.currentPlayerIndex;
@@ -670,7 +674,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
         }));
 
         if (newMatchedPairs >= PAIR_COUNT) {
-          handlePlayerComplete();
+          handlePlayerComplete(newMoveCount);
         }
       } else {
         const capturedFirst = firstFlippedIndex;
@@ -685,7 +689,7 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
         }));
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setTimeout(() => {
+        mismatchTimer.current = setTimeout(() => {
           setBoardState(prev => {
             const t = [...prev.tiles];
             t[capturedFirst] = { ...t[capturedFirst], isFlipped: false };
@@ -699,14 +703,14 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
     }
   };
 
-  const handlePlayerComplete = () => {
+  const handlePlayerComplete = (finalMoveCount: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     setPlayerTimes(prev => [...prev, {
       playerId: currentPlayer.id,
       elapsedSeconds,
-      moveCount,
+      moveCount: finalMoveCount,
     }]);
 
     const nextIndex = currentPlayerIndex + 1;

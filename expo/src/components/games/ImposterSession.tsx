@@ -1,4 +1,5 @@
 import { Colors } from '@/src/theme/Colors';
+import { getImposterOutcome } from '@/src/utils/imposterOutcome';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
@@ -169,48 +170,25 @@ export function ImposterSession({ session }: Props) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
     const currentPlayerId = roundPlayers[activePlayerIndex].id;
-    setVotes(prev => ({ ...prev, [currentPlayerId]: selectedSuspect }));
+    const nextVotes = { ...votes, [currentPlayerId]: selectedSuspect };
+    setVotes(nextVotes);
     setSelectedSuspect(null);
 
     if (activePlayerIndex + 1 < roundPlayers.length) {
       setActivePlayerIndex(prev => prev + 1);
     } else {
-      calculateScores();
+      calculateScores(nextVotes);
       setPhase('results');
     }
   };
 
-  const calculateScores = () => {
-    // Count votes for each suspect
-    const voteCounts: Record<string, number> = {};
-    Object.values(votes).forEach(suspectId => {
-      voteCounts[suspectId] = (voteCounts[suspectId] || 0) + 1;
-    });
-
-    // Find the suspect with the most votes
-    let maxVotes = 0;
-    let topSuspectId = '';
-    Object.entries(voteCounts).forEach(([suspectId, count]) => {
-      if (count > maxVotes) {
-        maxVotes = count;
-        topSuspectId = suspectId;
-      }
-    });
-
-    const imposterCaught = topSuspectId === imposterId;
-
-    // Use functional update to avoid stale closure
+  const calculateScores = (finalVotes: Record<string, string>) => {
+    const { points } = getImposterOutcome(finalVotes, imposterId);
     setScores(prev => {
       const newScores = { ...prev };
-      if (imposterCaught) {
-        Object.entries(votes).forEach(([voterId, suspectId]) => {
-          if (suspectId === imposterId && voterId !== imposterId) {
-            newScores[voterId] = (newScores[voterId] || 0) + 100;
-          }
-        });
-      } else {
-        newScores[imposterId] = (newScores[imposterId] || 0) + 150;
-      }
+      Object.entries(points).forEach(([id, amount]) => {
+        newScores[id] = (newScores[id] || 0) + amount;
+      });
       return newScores;
     });
   };
@@ -452,13 +430,7 @@ export function ImposterSession({ session }: Props) {
         <PhaseTransition phaseKey="results" type="scale" style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {(() => {
-            const voteCounts: Record<string, number> = {};
-            Object.values(votes).forEach(sid => voteCounts[sid] = (voteCounts[sid] || 0) + 1);
-            let maxVotes = 0; let topSuspectId = '';
-            Object.entries(voteCounts).forEach(([sid, count]) => {
-              if (count > maxVotes) { maxVotes = count; topSuspectId = sid; }
-            });
-            const imposterCaught = topSuspectId === imposterId;
+            const { voteCounts, imposterCaught, tied } = getImposterOutcome(votes, imposterId);
             const imposterName = session.players.find(p => p.id === imposterId)?.displayName;
 
             return (
@@ -467,7 +439,7 @@ export function ImposterSession({ session }: Props) {
                   <View style={styles.centerItems}>
                     <IconSymbol name={imposterCaught ? "checkmark.circle.fill" : "xmark.circle.fill"} size={64} color={imposterCaught ? Colors.green : "#FF2D55"} />
                     <Text style={[styles.title, { color: imposterCaught ? Colors.green : "#FF2D55" }]}>
-                      {imposterCaught ? "Imposter Caught!" : "Imposter Wins!"}
+                      {imposterCaught ? "Imposter Caught!" : tied ? "Vote tied — Imposter escapes!" : "Imposter Wins!"}
                     </Text>
 
                     <Text style={[styles.subtitle, { marginTop: 16 }]}>The Imposter was</Text>

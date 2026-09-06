@@ -21,6 +21,7 @@ interface Props {
 }
 
 interface TurnResult {
+  playerId: string;
   playerName: string;
   round: number;
   targetTime: number;
@@ -102,6 +103,7 @@ export function GuessTheSecondsSession({ session }: Props) {
         const targetTime = prev.roundTargets[turn.round] ?? Math.round(prev.selectedTime * 100) / 100;
         const difference = Math.round(Math.abs(targetTime - actualTime) * 100) / 100;
         const result: TurnResult = {
+          playerId: player.id,
           playerName: player.displayName,
           round: turn.round,
           targetTime,
@@ -123,6 +125,7 @@ export function GuessTheSecondsSession({ session }: Props) {
         if (!player) return prev;
         const targetTime = prev.roundTargets[turn.round] ?? Math.round(prev.selectedTime * 100) / 100;
         const result: TurnResult = {
+          playerId: player.id,
           playerName: player.displayName,
           round: turn.round,
           targetTime,
@@ -251,7 +254,7 @@ export function GuessTheSecondsSession({ session }: Props) {
   const playerScores = useMemo(() => {
     if (players.length === 0) return [];
     return players.map(p => {
-      const pResults = sync.results.filter(r => r.playerName === p.displayName);
+      const pResults = sync.results.filter(r => r.playerId === p.id);
       const isSkipped = pResults.length === 0;
       const total = pResults.reduce((sum, r) => sum + r.difference, 0);
       const avg = pResults.length > 0 ? total / pResults.length : 0;
@@ -490,7 +493,7 @@ export function GuessTheSecondsSession({ session }: Props) {
             </View>
 
             {players.map((p) => {
-              const pResults = sync.results.filter(r => r.playerName === p.displayName);
+              const pResults = sync.results.filter(r => r.playerId === p.id);
               const total = pResults.reduce((sum, r) => sum + r.difference, 0);
               return (
                 <View

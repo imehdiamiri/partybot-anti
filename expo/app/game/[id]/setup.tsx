@@ -186,7 +186,7 @@ export default function GameSetupScreen() {
 
   const hasDuplicateNames = () => {
     const active = playerNames.slice(0, playerCount);
-    const trimmed = active.map(n => n.trim().toLowerCase()).filter(n => n.length > 0);
+    const trimmed = active.map((n, i) => (n.trim() || `Player ${i + 1}`).toLowerCase());
     return new Set(trimmed).size !== trimmed.length;
   };
 
