@@ -1,5 +1,25 @@
 # Release log
 
+## 2026-09-06 — Owner-requested Firebase / EAS republish
+
+- Clean checkout at `913cd3a`; no source changes pending. Current live web and
+  both Expo manifests matched the verified 2026-09-05 content release.
+- Republished the unchanged checked-in web output with Firebase Hosting only:
+  `firebase-tools deploy --only hosting --project partyplay-8 --non-interactive`.
+  Service confirmed release complete. https://partybot.games returns HTTP 200,
+  bundle `entry-942f76d7368d7e9aa7369cafee14065e.js`.
+- Republished verified EAS group `b8f162c8-86d3-43f8-87a0-adfd6fc7a491` to the
+  same `expo-go-sdk57` branch on both platforms, without rebuilding identical code.
+  New group: `5ab3d875-f482-4355-aa1c-59ffef6207d7`.
+  iOS: `01a0743c-a1a5-7669-a765-720a29e299cd`.
+  Android: `01a0743c-a1a5-76a6-8da6-aa905894b60d`.
+  Both channel manifests independently verified HTTP 200 and these new IDs,
+  runtime `exposdk:57.0.0`. No custom-binary or production channel was changed.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/5ab3d875-f482-4355-aa1c-59ffef6207d7
+- Existing source backup `playbot-content-tools-reverse-2026-09-05.bundle` remains
+  valid; deployment-record checkpoint `checkpoint/republished-2026-09-06`.
+  No app code changed, no repeated test suite, no persistent local server.
+
 ## 2026-09-05 — Ready-to-use content expansion / Imposter replay variety
 
 - Recovery: `checkpoint/before-content-expansion` at `7034910`.
