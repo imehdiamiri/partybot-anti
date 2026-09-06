@@ -1,5 +1,24 @@
 # Release log
 
+## 2026-09-07 — Larger tool tiles and standalone vector objects
+
+- Replaced all six circular tool badges with transparent SVG object illustrations:
+  one die, bottle, hourglass, coin, team split, and wheel. Uses existing SVG support;
+  no new native dependency, image download, emoji or icon-font dependency.
+- Tool illustrations are 84px (previous glyphs 22px). Enlarged tiles with 16px
+  titles, two columns on narrow screens, three on wide screens, and a 900px
+  maximum Tools page width. Preserved every tool route and behavior.
+- Checks: TypeScript passed, 28 suites / 227 tests passed, web export (91 routes)
+  and sync passed. Firebase partyplay-8 confirmed Hosting deployment complete.
+  Bundle: `entry-767c0779d76e12fefdd9dd7b4b0d45d1.js`.
+- Live https://partybot.games/tools checked in headless Chrome at 390 and 1280px:
+  six SVGs, no horizontal overflow or page errors, tiles 172x183 and 280x183px.
+  Both screenshots visually reviewed. Physical native device not tested.
+- Before tag: `checkpoint/tools-icons-before-2026-09-07`. Final checkpoint and
+  Expo SDK57 publication confirmation recorded after completion.
+- Prior outstanding card translations and 673-card expansion are unchanged.
+  No remote Git push or persistent development server.
+
 ## 2026-09-07 — Cards motion and randomized opening (partial request)
 
 - Recovery before editing: `checkpoint/cards-before-2026-09-07`.

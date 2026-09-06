@@ -1,7 +1,7 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent, useWindowDimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ToolIllustration } from './ToolIllustration';
 import { useRouter } from 'expo-router';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -41,7 +41,8 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
   const [containerWidth, setContainerWidth] = useState<number>(0);
   
   const effectiveWidth = containerWidth > 0 ? containerWidth : (windowWidth > 0 ? Math.min(windowWidth - 32, 720) : 358);
-  const columnWidth = Math.max(90, Math.floor((effectiveWidth - 20) / 3)); // 2 gaps of 10 = 20
+  const columns = effectiveWidth < 540 ? 2 : 3;
+  const columnWidth = Math.floor((effectiveWidth - 14 * (columns - 1)) / columns);
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
@@ -50,15 +51,10 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
   const renderCardInner = (tool: PartyTool) => (
     <>
       <View style={styles.iconContainer}>
-        <LinearGradient
-          colors={[`${tool.tint}59`, `${tool.tint}1A`]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={[styles.iconRing, { borderColor: `${tool.tint}59` }]} />
-        <IconSymbol name={tool.icon} size={22} color="white" weight="bold" />
+        <ToolIllustration tool={tool.id} color={tool.tint} size={84} />
       </View>
-      <Text style={styles.title} numberOfLines={1}>{tool.title}</Text>
-      <Text style={styles.subtitle} numberOfLines={1}>{tool.subtitle}</Text>
+      <Text style={styles.title}>{tool.title}</Text>
+      <Text style={styles.subtitle}>{tool.subtitle}</Text>
     </>
   );
 
@@ -77,6 +73,7 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
             key={tool.id} 
             testID={`tool-card-${tool.id}`}
             accessibilityRole="button"
+            accessibilityLabel={`${tool.title}, ${tool.subtitle}`}
             style={[{ width: columnWidth }, styles.cardContainer]} 
             onPress={() => handlePress(tool.id)}
           >
@@ -115,7 +112,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 14,
   },
   cardContainer: {
     borderRadius: 18,
@@ -128,35 +125,33 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingVertical: 14,
+    paddingVertical: 20,
+    paddingHorizontal: 8,
+    minHeight: 174,
+    height: '100%',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',
     borderRadius: 18,
   },
   iconContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 88,
+    height: 88,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
-    overflow: 'hidden',
-    // We would use shadow here but RN shadows are finicky with overflow: hidden
-  },
-  iconRing: {
-    ...StyleSheet.absoluteFill,
-    borderWidth: 1,
-    borderRadius: 27,
+    marginBottom: 12,
   },
   title: {
     color: 'white',
-    fontSize: 13,
+    fontSize: 16,
+    textAlign: 'center',
     fontWeight: '900',
   },
   subtitle: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
     fontWeight: '600',
   },
 });

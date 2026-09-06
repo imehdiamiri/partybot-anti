@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    maxWidth: 720,
+    maxWidth: 900,
     width: '100%',
     alignSelf: 'center',
   },
