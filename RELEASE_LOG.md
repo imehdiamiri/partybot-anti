@@ -2,6 +2,14 @@
 
 ## 2026-09-07 — Turn summaries, setup difficulty and event sound refresh
 
+- Source commit: `3d436dd6791639bc561dec4c83396ad09f42f721`.
+- EAS confirmed Android/iOS publication on expo-go-sdk57, runtime exposdk:57.0.0:
+  group `451ec208-9eac-438c-8897-f6e506c3dac2`, Android
+  `01a078a1-4608-790e-9953-bff90aef056a`, iOS `01a078a1-4608-701a-916a-d7f14ec7c969`.
+  Device receipt remains unverified. No custom-binary channel was changed.
+- Final checkpoint: `checkpoint/turn-sound-release-2026-09-07`.
+  Offline Git bundle: audit workspace `playbot-turn-sound-2026-09-07.bundle`.
+
 - Recovery baseline: `checkpoint/results-handoff-2026-09-07` (80ad4ec).
 - Shared player-complete screen now retains the prior player's named result ABOVE
   the animated next-player handoff. Applied to Memory Grid/Path, Tap in Order,
