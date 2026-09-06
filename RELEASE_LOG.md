@@ -14,8 +14,14 @@
 - Live https://partybot.games/tools checked in headless Chrome at 390 and 1280px:
   six SVGs, no horizontal overflow or page errors, tiles 172x183 and 280x183px.
   Both screenshots visually reviewed. Physical native device not tested.
-- Before tag: `checkpoint/tools-icons-before-2026-09-07`. Final checkpoint and
-  Expo SDK57 publication confirmation recorded after completion.
+- Source commit: `641c67033b94e43cefb2bd5d23cfc1d8b4a87470`.
+- Expo confirmed Android/iOS publication on expo-go-sdk57, runtime exposdk:57.0.0:
+  group `022cba20-d9ea-4408-9280-a73790754672`, Android
+  `01a078b3-743e-7aa4-80e2-59cc2221becd`, iOS
+  `01a078b3-743e-7495-b8e6-24a501d42932`.
+- Before tag: `checkpoint/tools-icons-before-2026-09-07`; final tag:
+  `checkpoint/tools-icons-2026-09-07`. Full-history backup in Codex audit workspace:
+  `playbot-tools-icons-2026-09-07.bundle`.
 - Prior outstanding card translations and 673-card expansion are unchanged.
   No remote Git push or persistent development server.
 
