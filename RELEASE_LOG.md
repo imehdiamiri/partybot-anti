@@ -1,5 +1,16 @@
 # Release log
 
+## 2026-09-06 — Handoff redesign, stable player banner and symbol audit
+
+- Replaced the platform-dependent drum emoji with a fixed-viewBox SVG drum. Shared handoffs now use a responsive centered card, phone-transfer SVG, readable instruction, prominent player name and accessible-sized Ready/Skip actions. Existing callbacks and private reveal boundaries preserved.
+- Removed the unnecessary shield/question-mark decoration above the Imposter secret word.
+- Guess the Seconds registers its ready gameplay phase in the standard active-player banner. No duplicate name beside Round before Start; handoff screens in other games remain banner-free.
+- Completed missing Material glyph mappings for symbol literals and configured icons, including Rounds/repeat, miss/cancel, metronome, target, search and checkmark. Legitimate question marks for hidden cards/help remain intentional. Added source coverage checks and retained actual-glyph validation.
+- Validation: TypeScript clean; 204 tests pass. Final expanded icon scan passes. Web export and Firebase Hosting succeeded; bundle entry-564da6e86a554ff7e21e43237795306f.js.
+- Live mobile-width (390x844) checks: shared handoff fits, Imposter reveal has no extra icon, drum vector retains proportions, miss shows a red cross, Rounds shows repeat, Guess the Seconds banner stays in place before/after Start. No browser errors. Physical iOS/Android devices not tested.
+- Pre-change checkpoint: checkpoint/before-handoff-icons-2026-09-06. No remote Git push; no persistent local server.
+
+
 ## 2026-09-06 — Setup guide timing and metronome challenge
 
 - Guess the Seconds now uses the shared pre-game guide immediately after Setup. Its timer Start starts the timer directly; the session does not mount beneath the initial guide.

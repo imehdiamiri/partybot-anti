@@ -19,6 +19,7 @@ import { isWeb } from '@/src/utils/platform';
 import { playWebTick, playWebDrumHit } from '@/src/utils/browserMediaAdapter';
 import { BrowserRecordingPlayback } from '@/src/utils/browserRecordingPlayback';
 import { Asset } from 'expo-asset';
+import { DrumIllustration } from './GameIllustrations';
 import { metronomePlan, metronomeError } from '@/src/utils/metronomeChallenge';
 
 interface Props { session: GameSession; }
@@ -466,7 +467,7 @@ export function DrumChallengeSession({ session }: Props) {
           <Animated.View style={[st.drumOuter, drumAnimStyle]}>
             <Animated.View style={[st.drumGlow, glowStyle]} />
             <View style={st.drumInner}>
-              <Text style={{ fontSize: 130 }}>🥁</Text>
+              <DrumIllustration />
             </View>
           </Animated.View>
         </Pressable>

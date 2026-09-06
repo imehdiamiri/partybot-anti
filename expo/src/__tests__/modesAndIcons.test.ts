@@ -43,3 +43,24 @@ test('font placeholders remain stable during nested web hydration', () => {
   expect(icon).toContain('width: size, height: size, flexShrink: 0');
   expect(icon.indexOf('if (!hydrated) return <Text style=')).toBeLessThan(icon.indexOf('return <MaterialIcons'));
 });
+
+test('app symbol literals do not silently fall back to a question mark', () => {
+  const icon = source('components/ui/icon-symbol.tsx');
+  const scan = (dir: string) => {
+    for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+      const file = path.join(dir, item.name);
+      if (item.isDirectory() && item.name !== '__tests__') scan(file);
+      else if (item.isFile() && /\.tsx?$/.test(file)) {
+        const text = fs.readFileSync(file, 'utf8');
+        const literals = [...text.matchAll(/["']([a-z0-9]+(?:\.[a-z0-9]+)*\.fill)["']/g)];
+        const names = [...text.matchAll(/<IconSymbol[^>]*?\bname="([a-z0-9.]+)"/gs)];
+        const configured = [...text.matchAll(/\bicon:\s*["']([a-z0-9.]+)["']/g)];
+        for (const [, name] of [...literals, ...names, ...configured]) {
+          expect(icon).toContain(`'${name}':`);
+        }
+      }
+    }
+  };
+  scan(path.join(__dirname, '..'));
+  scan(path.join(__dirname, '../../app'));
+});

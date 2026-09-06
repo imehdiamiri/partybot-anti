@@ -252,7 +252,6 @@ export function ImposterSession({ session }: Props) {
                     </>
                   ) : (
                     <>
-                      <IconSymbol name="checkmark.shield.fill" size={64} color={Colors.green} />
                       <Text style={styles.roleSubtitle}>The secret word is:</Text>
                       <View style={styles.wordBadge}>
                         <Text style={styles.wordText}>{secretWord}</Text>

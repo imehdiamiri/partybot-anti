@@ -2,7 +2,8 @@ import { Colors, Typography } from '@/src/theme/Colors';
 import { useNameInActivityBanner } from './GameActivity';
 import { useActionConfirmation } from '../ActionConfirmation';
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, Alert, ScrollView } from 'react-native';
+import { PhoneHandoffIllustration } from './GameIllustrations';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -49,203 +50,30 @@ interface GameHandoffViewProps {
 }
 
 export function GameHandoffView({
-  playerName,
-  title = "Pass the phone to",
-  subtitle,
-  accentColor = Colors.blue,
-  buttonTitle,
-  onReady,
-  onSkip,
-  rolePillText = "NEXT PLAYER"
+  playerName, title = "Pass the phone to", subtitle, accentColor = Colors.blue,
+  buttonTitle, onReady, onSkip, rolePillText = "NEXT PLAYER",
 }: GameHandoffViewProps) {
   const insets = useSafeAreaInsets();
-  
-  // Phone slide animation — loops left to right
-  const phoneSlide = useSharedValue(0);
-  const phoneOpacity = useSharedValue(0);
-  useEffect(() => {
-    phoneSlide.value = withRepeat(
-      withSequence(
-        withTiming(0, { duration: 0 }),
-        withTiming(0, { duration: 400 }),
-        withTiming(1, { duration: 700 }),
-        withTiming(1, { duration: 500 }),
-        withTiming(1, { duration: 600 }),
-      ),
-      -1,
-      false
-    );
-    phoneOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 0 }),
-        withTiming(1, { duration: 400 }),
-        withTiming(1, { duration: 700 }),
-        withTiming(1, { duration: 500 }),
-        withTiming(0, { duration: 300 }),
-        withTiming(0, { duration: 300 }),
-      ),
-      -1,
-      false
-    );
-  }, []);
-
-  const phoneAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: phoneSlide.value * 100 }],
-    opacity: phoneOpacity.value,
-  }));
-
-  // Left hand fades out as phone leaves, right hand brightens as phone arrives
-  const leftHandStyle = useAnimatedStyle(() => ({
-    opacity: 0.3 + (1 - phoneSlide.value) * 0.5,
-  }));
-
-  const rightHandStyle = useAnimatedStyle(() => ({
-    opacity: 0.2 + phoneSlide.value * 0.6,
-  }));
-
-  const displayButtonTitle = buttonTitle || "I'm Ready";
-
-  return (
-    <View style={[styles.passPhoneContainer, { paddingBottom: Math.max(20, insets.bottom + 8) }]}>
-      <AppBackgroundView variant="simple" />
-      
-      {/* Animated phone-passing illustration */}
-      <Animated.View entering={FadeIn.duration(600)} style={{ alignItems: 'center', marginTop: insets.top + 36 }}>
-        <View style={{ 
-          flexDirection: 'row', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          width: 220,
-          height: 72,
-        }}>
-          {/* Left hand (sender) — palm facing right */}
-          <Animated.View style={[{ transform: [{ scaleX: -1 }] }, leftHandStyle]}>
-            <IconSymbol name="hand.raised.fill" size={48} color={accentColor} />
-          </Animated.View>
-          
-          {/* Sliding phone — starts near left hand */}
-          <Animated.View style={[{ 
-            position: 'absolute',
-            left: 30,
-          }, phoneAnimStyle]}>
-            <IconSymbol name="iphone" size={36} color="white" />
-          </Animated.View>
-          
-          {/* Right hand (receiver) — palm facing left */}
-          <Animated.View style={rightHandStyle}>
-            <IconSymbol name="hand.raised.fill" size={48} color={accentColor} />
-          </Animated.View>
-        </View>
-      </Animated.View>
-
-      {/* Center content */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        
-
-
-
-        {/* Title label */}
-        <Animated.Text entering={FadeInDown.duration(400).delay(100)} style={{
-          fontSize: 13,
-          fontWeight: '600',
-          color: 'rgba(255,255,255,0.35)',
-          textTransform: 'uppercase',
-          letterSpacing: 3,
-          marginBottom: 10,
-        }}>{title}</Animated.Text>
-
-        {/* Player name */}
-        <Animated.Text testID="handoff-player-name" entering={FadeInDown.duration(400).delay(200)} numberOfLines={1} adjustsFontSizeToFit style={{
-          fontSize: 42,
-          fontFamily: 'Viral-Black',
-          color: 'white',
-          letterSpacing: -0.5,
-          textAlign: 'center',
-          paddingHorizontal: 24,
-        }}>{playerName}</Animated.Text>
-
-        {/* Role pill */}
-        <Animated.View entering={FadeIn.duration(400).delay(300)} style={{
-          marginTop: 16,
-          paddingHorizontal: 14,
-          paddingVertical: 5,
-          borderRadius: 100,
-          backgroundColor: `${accentColor}18`,
-          borderWidth: 1,
-          borderColor: `${accentColor}33`,
-        }}>
-          <Text style={{
-            fontSize: 11,
-            fontWeight: '700',
-            color: accentColor,
-            letterSpacing: 1.5,
-          }}>{rolePillText}</Text>
-        </Animated.View>
-
-        {/* Subtitle / privacy note */}
-        {subtitle && (
-          <Animated.View entering={FadeIn.duration(400).delay(400)} style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: 24,
-          }}>
-            <IconSymbol name="eye.slash.fill" size={14} color="rgba(255,255,255,0.25)" style={{ marginRight: 6 }} />
-            <Text style={{
-              fontSize: 13,
-              color: 'rgba(255,255,255,0.35)',
-              fontWeight: '500',
-            }}>{subtitle}</Text>
-          </Animated.View>
-        )}
+  return <ScrollView style={{ flex: 1, backgroundColor: '#08080F' }}
+    contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20, paddingBottom: Math.max(20, insets.bottom + 12) }}>
+    <View testID="handoff-card" style={{ width: '100%', maxWidth: 480, alignItems: 'center', padding: 24, borderRadius: 28, backgroundColor: '#171B26', borderWidth: 1, borderColor: '#303748', gap: 20 }}>
+      <Text style={{ color: accentColor, fontSize: 12, fontWeight: '700', letterSpacing: 1.5 }}>{rolePillText}</Text>
+      <PhoneHandoffIllustration color={accentColor} />
+      <View style={{ width: '100%', gap: 8, alignItems: 'center' }}>
+        <Text style={{ color: '#DCE3F0', fontSize: 22, fontWeight: '600', textAlign: 'center' }}>{title}</Text>
+        <Text testID="handoff-player-name" style={{ color: '#FFFFFF', fontSize: 38, fontWeight: '800', textAlign: 'center', width: '100%' }}>{playerName}</Text>
       </View>
-      
-      {/* Bottom button */}
-      <Animated.View entering={FadeInUp.duration(450).delay(400)} style={{ width: '100%', maxWidth: 540, alignSelf: 'center', paddingHorizontal: 24 }}>
-        <Pressable 
-          accessibilityRole="button"
-          testID="game-ready-button"
-          style={({ pressed }) => [{
-            height: 56,
-            borderRadius: 16,
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'row',
-            gap: 8,
-            overflow: 'hidden',
-            opacity: pressed ? 0.8 : 1,
-            backgroundColor: accentColor,
-          }]}
-          onPress={onReady}
-        >
-          <Text style={{
-            color: 'white',
-            fontSize: 17,
-            fontWeight: 'bold',
-            letterSpacing: 0.2,
-          }}>{displayButtonTitle}</Text>
-          <IconSymbol name="arrow.right" size={18} color="rgba(255,255,255,0.8)" />
-        </Pressable>
-
-        {onSkip && (
-          <Pressable
-            onPress={onSkip}
-            style={({ pressed }) => [{
-              marginTop: 14,
-              paddingVertical: 8,
-              alignItems: 'center',
-              opacity: pressed ? 0.5 : 1,
-            }]}
-          >
-            <Text style={{
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: 14,
-              fontWeight: '600',
-            }}>Skip this player</Text>
-          </Pressable>
-        )}
-      </Animated.View>
+      {subtitle && <Text style={{ color: '#B8C2D4', fontSize: 15, lineHeight: 22, textAlign: 'center' }}>{subtitle}</Text>}
+      <Pressable testID="game-ready-button" accessibilityRole="button" onPress={onReady}
+        style={({ pressed }) => ({ width: '100%', minHeight: 58, padding: 14, borderRadius: 16, backgroundColor: accentColor, opacity: pressed ? 0.8 : 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}>
+        <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '700', flexShrink: 1, textAlign: 'center' }}>{buttonTitle || "I'm Ready"}</Text>
+        <IconSymbol name="arrow.right" size={20} color="#FFFFFF" />
+      </Pressable>
+      {onSkip && <Pressable accessibilityRole="button" onPress={onSkip} style={{ minHeight: 44, padding: 12, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: '#B8C2D4', fontSize: 14, fontWeight: '600' }}>Skip this player</Text>
+      </Pressable>}
     </View>
-  );
+  </ScrollView>;
 }
 
 interface GamePassPhoneViewProps {

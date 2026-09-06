@@ -18,6 +18,7 @@ jest.mock('@/src/utils/browserRecordingPlayback',()=>({BrowserRecordingPlayback:
   play=jest.fn(async()=>{globalThis.drumPlayCalls=(globalThis.drumPlayCalls||0)+1;return true;}); stop=jest.fn(); clear=jest.fn();
   constructor(){ globalThis.drumAudioMock=this; }
 }}));
+jest.mock('@/src/components/games/GameIllustrations',()=>({DrumIllustration:'DrumVector'}));
 const {DrumChallengeSession}=require('@/src/components/games/DrumChallengeSession');
 test.each(['4/4','3/4','6/8','8/8'])('Metronome %s waits through listening and scores one tap after four silent bars', async rhythm => {
  jest.useFakeTimers(); let screen;

@@ -221,7 +221,7 @@ export function GuessTheSecondsSession({ session }: Props) {
   const currentTurn = !isFinished ? turnOrder[sync.activeTurnIndex] : null;
   const currentRoundNumber = currentTurn ? currentTurn.round : roundsPerPlayer;
   const currentPlayer = currentTurn ? players[currentTurn.playerIndex] : null;
-  useGameActivity(currentPlayer?.displayName, isFinished ? 'results' : sync.turnPhase === 'reveal' ? 'result' : sync.turnPhase);
+  useGameActivity(currentPlayer?.displayName, isFinished ? 'results' : sync.turnPhase === 'reveal' ? 'result' : sync.turnPhase === 'ready' ? 'playing' : sync.turnPhase);
   const isFirstPlayerOfCurrentRound = currentTurn ? currentTurn.playerIndex === 0 : false;
   const currentRoundTargetLocked = sync.roundTargets[currentRoundNumber] !== undefined;
   const displayedTargetTime = sync.roundTargets[currentRoundNumber] ?? sync.selectedTime;
@@ -327,7 +327,7 @@ export function GuessTheSecondsSession({ session }: Props) {
           <Text style={styles.roundText}>
             {isFinished ? 'All rounds complete' : `Round ${currentRoundNumber} / ${roundsPerPlayer}`}
           </Text>
-          {currentPlayer && !isFinished && (
+          {currentPlayer && !isFinished && sync.turnPhase === 'reveal' && (
             <SecondaryPlayerLabel name={currentPlayer.displayName}><PhaseTransition phaseKey={currentPlayer.id} type="scale">
               <View style={styles.nowPlayingBadge}>
                 <Text style={[styles.nowPlayingText, { fontSize: 22, color: '#68E8A8' }]}>{currentPlayer.displayName}</Text>
