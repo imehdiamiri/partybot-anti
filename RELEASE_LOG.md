@@ -27,7 +27,19 @@
 - Added react-test-renderer 19.2.3 as a development-only dependency for interaction
   regressions; no native/runtime dependency changed. Its deprecation warning is
   expected in the test runner and is not a production app error.
-- Publication and live layout evidence follow after verification.
+- Source commit: `cf4edcb`. Firebase Hosting deployment succeeded for partyplay-8;
+  live setup returns HTTP 200 and bundle `entry-956e714b4b2c91899d3200c015c4dee1.js`.
+  Live 390×844 screenshot and DOM measurement: all eight original action controls
+  are 100px tall; initial two-player screen fits without vertical scrolling.
+  No console errors on the inspected route. Temporary browser viewport was reset.
+- Expo Go SDK57 group: `26e20494-cac2-48d8-8708-46dc6c3895aa`;
+  Android `01a07453-6e62-7c01-8336-262c2bd66013`,
+  iOS `01a07453-6e62-712f-bb95-b29a57ee05a1`.
+  Both manifests verified HTTP 200, runtime `exposdk:57.0.0`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/26e20494-cac2-48d8-8708-46dc6c3895aa
+- Recovery tag: `checkpoint/reverse-playback-fixed-2026-09-06`; full-history
+  backup `playbot-reverse-playback-2026-09-06.bundle` in the Codex audit workspace.
+  No remote Git push, backend deployment or persistent local server.
 
 ## 2026-09-06 — Owner-requested Firebase / EAS republish
 
