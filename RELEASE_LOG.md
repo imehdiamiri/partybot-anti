@@ -22,6 +22,24 @@
 - Checks: TypeScript and 176 tests / 22 suites pass. Web/live and final update IDs
   recorded below after completion. Not every game phase has been manually exercised
   on physical iOS/Android hardware.
+- Source checkpoints: `93209cf` (shared UI/guides), `2aafaf7` (handoff correction).
+- Final Firebase Hosting export/deploy succeeded; live bundle:
+  `entry-0e3e45795d812f003bdc23813ca52fc6.js`.
+- Live checks: both Pass & Guess mode guides show different correct instructions;
+  Metronome setup selects its own guide. Active player advances from Player 1 to
+  Player 2, and final handoff shows UP NEXT before Ready (not NOW PLAYING).
+  Color adjustment and Submit produce a result with the TURN RESULT indicator.
+  Sound Match checked at 390x844 and 1440x900: bounded layout, taller tuner,
+  visible Play and Submit; no browser error logs during this smoke test.
+- Remaining accessibility caveat: React Native Web does not expose the numeric
+  slider aria-value fields in the rendered DOM; the named +/- buttons and spoken
+  frequency Play label are available. Screen-reader slider gestures are unverified.
+- Final backup tag: `checkpoint/shared-game-ui-release-2026-09-06`.
+  Offline bundle in audit workspace: `playbot-shared-game-ui-2026-09-06.bundle`.
+- Final Expo Go publish confirmed: branch `expo-go-sdk57`, runtime `exposdk:57.0.0`,
+  update group `f8fcd618-848d-4ea8-b526-e05d37933833`.
+  Android `01a0778e-b3b5-78c5-b0b6-bd599dbea08d`,
+  iOS `01a0778e-b3b5-75cd-bac5-a3f10807414b`.
 
 ## 2026-09-06 — Expanded Color Lab / Sound Studio controls
 
