@@ -5,6 +5,7 @@
 - Replaced the shared AppBackgroundView artwork with a plain #08080F surface for both legacy variants. Removed colored circles, sheen, vignette, gradients, and unnecessary viewport subscriptions. All existing screen consumers inherit the change; game artwork and control colors remain unchanged.
 - Three regression tests passed (default, explicit default, simple), TypeScript passed, web export passed. Original circle color definitions no longer occur in app source.
 - Recovery tag before change: `checkpoint/pre-flat-background-2026-09-06`.
+- Published Firebase Hosting (`partyplay-8`), web entry `entry-3439b58d66c520bb044659dd1ce450ac.js`; live setup and home visually confirmed without decorative circles. Expo Go SDK57 group `bffb9938-4553-4cb0-b3a2-59ebf1bd533d`, Android `01a0782e-0f1d-7f86-b676-5bbaf0e2ec64`, iOS `01a0782e-0f1d-7b8a-8589-ed6c1453e5fb`. Physical mobile not tested.
 
 
 ## 2026-09-06 — Single current-player identity
