@@ -9,6 +9,8 @@
 - Validation: TypeScript clean; 204 tests pass. Final expanded icon scan passes. Web export and Firebase Hosting succeeded; bundle entry-564da6e86a554ff7e21e43237795306f.js.
 - Live mobile-width (390x844) checks: shared handoff fits, Imposter reveal has no extra icon, drum vector retains proportions, miss shows a red cross, Rounds shows repeat, Guess the Seconds banner stays in place before/after Start. No browser errors. Physical iOS/Android devices not tested.
 - Pre-change checkpoint: checkpoint/before-handoff-icons-2026-09-06. No remote Git push; no persistent local server.
+- Expo Go SDK57 published to expo-go-sdk57 for Android/iOS: group f5248468-ebe6-4ccd-9602-c4fdf62a7162; source deb5477bdd425a6986fd83f0ea01d5a64de578bb.
+- Final tag: checkpoint/handoff-icons-release-2026-09-06. Offline full-history bundle: playbot-handoff-icons-2026-09-06.bundle in the Codex audit workspace.
 
 
 ## 2026-09-06 — Setup guide timing and metronome challenge
