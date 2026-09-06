@@ -29,7 +29,7 @@ export default function GameDetailScreen() {
 
   const [showPaywall, setShowPaywall] = useState(false);
   const [heroLoaded, setHeroLoaded] = useState(false);
-  const [heroAspectRatio, setHeroAspectRatio] = useState(3 / 2); // 3:2 matches 1536x1024 hero assets
+  const [heroAspectRatio, setHeroAspectRatio] = useState(1672 / 941); // Natural ratio of the shared 2026-09 hero set, including SSR.
   const { isPremium } = useEconomyStore();
 
   const onHeroLoad = useCallback(() => setHeroLoaded(true), []);
@@ -50,7 +50,7 @@ export default function GameDetailScreen() {
           }
         }
       } catch {
-        setHeroAspectRatio(3 / 2);
+        setHeroAspectRatio(1672 / 941);
       }
     } else if (game.heroImageURL) {
       try {
@@ -58,11 +58,11 @@ export default function GameDetailScreen() {
           Image.getSize(
             game.heroImageURL,
             (w, h) => { if (w && h) setHeroAspectRatio(w / h); },
-            () => { setHeroAspectRatio(3 / 2); }
+            () => { setHeroAspectRatio(1672 / 941); }
           );
         }
       } catch {
-        setHeroAspectRatio(3 / 2);
+        setHeroAspectRatio(1672 / 941);
       }
     }
   }, [game?.id]);

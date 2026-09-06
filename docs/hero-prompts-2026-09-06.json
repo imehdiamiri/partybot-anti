@@ -1,0 +1,101 @@
+{
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "id": "reverse-singing",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Two rounded microphones facing one another, a short luminous audio waveform between them with two bold backward-pointing triangular rewind symbols. Pink and cyan accents. Clearly recording and imitating reversed sound.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-1f619104-1fcc-48d7-b758-c27f477a7dcb.png",
+      "asset": "expo/assets/images/heroes/reverse-singing.webp"
+    },
+    {
+      "id": "guess-the-seconds",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: One chunky teal stopwatch with a clearly readable simple dial and a single warm orange fingertip poised over its top stop button. A subtle dotted arc implies passing seconds. Estimating elapsed time, no extra clocks.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-9690f59b-56d7-418b-9abd-4a929f40c60d.png",
+      "asset": "expo/assets/images/heroes/guess-the-seconds.webp"
+    },
+    {
+      "id": "imposter",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Three small friendly expressive 3D party-player characters in a close group, two holding identical cards showing an apple, third concealing a card with a large question mark behind their back and looking playfully suspicious. Purple and coral accents, not frightening. Just these characters and three cards.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-477cc1c1-9c7c-4714-b9ac-c5c5b7c1e9c3.png",
+      "asset": "expo/assets/images/heroes/imposter.webp"
+    },
+    {
+      "id": "memory-grid",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: A small neat 3-by-2 board of chunky rounded memory cards viewed at a gentle angle. Exactly two face-up cards show identical bright yellow stars; other four face-down midnight-blue cards. One matching card slightly lifted mid-flip. Cyan violet accents.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-5ae753b1-79d6-441d-bbf0-bfd681dd3627.png",
+      "asset": "expo/assets/images/heroes/memory-grid.webp"
+    },
+    {
+      "id": "reaction-time",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: One large glowing green rounded push button, a cartoon hand fingertip about to tap it, and one small crisp lightning-bolt shape above. Clear sense of quick reaction. Green cyan accents, clean empty background.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-bb35ce05-c798-49b3-8532-058c52b69cf6.png",
+      "asset": "expo/assets/images/heroes/reaction-time.webp"
+    },
+    {
+      "id": "eye-sight",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: One friendly stylized 3D eye looking directly at three floating large clean white digits '5 2 3' on a simple cyan translucent strip, brief light streak implies a flash. Instantly means see and remember numbers; no extra text.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-75bc4152-ccef-4c43-9218-2258efe8e66a.png",
+      "asset": "expo/assets/images/heroes/eye-sight.webp"
+    },
+    {
+      "id": "drum-challenge",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: One small premium rounded coral-red snare drum, two wooden drumsticks with one captured just above the drumhead, one restrained concentric pulse at impact. Pink violet accents; the single drum is the hero. Rhythm timing game.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-242ebfdb-b66f-4ea7-92aa-0cb6a7f6a5d1.png",
+      "asset": "expo/assets/images/heroes/drum-challenge.webp"
+    },
+    {
+      "id": "color-match",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Two large rounded color swatch tiles side by side, both coral pink, with one tiny three-knob color slider below one tile and a subtle linking curve. Recreating a target color, clean tactile 3D. Cyan coral accents.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-2038521f-025e-4cfa-a280-5920019fc99c.png",
+      "asset": "expo/assets/images/heroes/color-match.webp"
+    },
+    {
+      "id": "sound-match",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Two small rounded speaker cones facing forward with matching simple cyan sound-wave arcs between them, a single vertical pitch slider with a coral knob. Clear matching pitch, not music performance; no notes or text.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-51b2583a-b0f0-40ca-994f-77f6cec76375.png",
+      "asset": "expo/assets/images/heroes/sound-match.webp"
+    },
+    {
+      "id": "ten-tangle",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Two friendly rounded party characters, one dramatically acting with raised arms holding a small card displaying '8', the other thoughtfully guessing holding a small question-mark card. Expressive but minimal. Warm yellow violet accents, no extra props.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-264c2a41-4ae6-4541-a60f-1ee5c67c0543.png",
+      "asset": "expo/assets/images/heroes/ten-tangle.webp"
+    },
+    {
+      "id": "memory-path",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: A compact 5-by-5 board of chunky square tiles at a gentle isometric angle. One contiguous cyan illuminated stepping path winds from a green start tile to an orange end tile, remaining tiles dark violet. A single fingertip poised at next step. Clear find-and-remember-path concept, no text.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-37087f3d-760f-411b-9d97-bd87112ca78e.png",
+      "asset": "expo/assets/images/heroes/memory-path.webp"
+    },
+    {
+      "id": "pass-guess",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Two stylized friendly hands passing one rounded smartphone between them. Above the phone two blank speech bubbles and a single clean question mark suggest guessing who wrote a private answer. Blue yellow accents. Minimal objects, no illegible writing.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-b3b78b77-dcd1-4b0b-834e-133d270befae.png",
+      "asset": "expo/assets/images/heroes/pass-guess.webp"
+    },
+    {
+      "id": "tap-in-order",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Three chunky rounded square tiles prominently labeled '1', '2', '3', arranged in a gentle ascending sequence, connected by a short luminous path. A friendly fingertip touches tile 1. Teal yellow accents. Only these three numbers; tapping in numerical order.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-78222225-6383-4c8e-8beb-3d2d95e90210.png",
+      "asset": "expo/assets/images/heroes/tap-in-order.webp"
+    },
+    {
+      "id": "color-trap",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: Four softly rounded colorful glowing circles: cyan, yellow, purple and red. A friendly fingertip taps the cyan circle while the red circle clearly has an embossed white X. Avoid forbidden red, tap safe colors. Minimal, large readable circles.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-e7d09d21-b32f-405d-9fda-994d3379fd07.png",
+      "asset": "expo/assets/images/heroes/color-trap.webp"
+    },
+    {
+      "id": "draw-rush",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: A chunky yellow pencil drawing a simple friendly cat outline on a small white sketch card, with a tiny orange hourglass beside it. Clearly draw a word before time runs out. Blue yellow accents. No text, no extra art supplies.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-11b71f76-46f3-44c8-b92c-1dc64f1048db.png",
+      "asset": "expo/assets/images/heroes/draw-rush.webp"
+    },
+    {
+      "id": "spin-bottle",
+      "prompt": "Use case: stylized-concept. Asset: one landscape 16:9 hero illustration for a party mini-game, not a contact sheet. Pixar-style polished 3D animated-film aesthetic, tactile softly rounded objects, expressive readable silhouettes, soft cinematic studio light, dark indigo-to-purple seamless backdrop. Minimal uncluttered composition: one clear central concept occupying the middle 65%, generous clean margins, no busy scenery, no confetti, no UI frame, no game title, no logo, no watermark. Full-bleed rectangular image; rounding will be done in app. Make the actual play mechanic instantly understandable at small size. Subject: One glossy green glass soda bottle lying horizontally at the center of a circular arrangement of three small rounded player tokens, with a single curved motion arrow around it. Two small cards nearby show a question mark and a lightning bolt for truth or dare. Purple green accents. No alcohol branding, no text.",
+      "source": "C:\\Users\\Mehdi\\.codex\\generated_images\\01a00076-9f80-75d2-a1dd-01dbd8a97624\\exec-c0268340-2f35-4fad-8c58-eb5ecc443e9e.png",
+      "asset": "expo/assets/images/heroes/spin-bottle.webp"
+    }
+  ]
+}

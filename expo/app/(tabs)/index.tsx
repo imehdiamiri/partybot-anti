@@ -10,6 +10,7 @@ import { Colors } from '@/src/theme/Colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { GamesDefinitions, GameMode, GameModeDetails } from '@/src/models/AppModels';
 import { GameCardView } from '@/components/ui/GameCardView';
+import { GameLibraryWebStyles } from '@/src/components/GameLibraryWebStyles';
 import { OtherFunListView } from '@/src/components/games/OtherFunListView';
 
 export default function GamesScreen() {
@@ -55,6 +56,7 @@ export default function GamesScreen() {
 
   return (
     <View style={styles.container}>
+      <GameLibraryWebStyles />
       <AppBackgroundView />
       <ScrollView 
         ref={scrollViewRef}
@@ -148,9 +150,10 @@ export default function GamesScreen() {
 
             {/* Game Grid */}
             <View 
-              style={[styles.gamesGrid, { gap: gridGap }]}
+              style={[styles.gamesGrid, Platform.OS !== 'web' && { gap: gridGap }]}
               testID="games-grid"
               onLayout={(e: LayoutChangeEvent) => {
+                if (Platform.OS === 'web') return;
                 const w = e.nativeEvent.layout.width;
                 if (w > 0 && Math.abs(w - measuredWidth) > 1) {
                   setMeasuredWidth(w);
@@ -158,7 +161,7 @@ export default function GamesScreen() {
               }}
             >
               {filteredGames.map((game) => (
-                <View key={game.id.id} style={{ width: columnWidth }} testID={`game-card-${game.id.id}`}>
+                <View key={game.id.id} style={Platform.OS === 'web' ? undefined : { width: columnWidth }} testID={`game-card-${game.id.id}`}>
                   <TouchableOpacity 
                     activeOpacity={0.8} 
                     onPress={() => router.push(`/game/${game.id.id}` as any)}

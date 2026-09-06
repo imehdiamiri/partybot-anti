@@ -186,7 +186,7 @@ export function IconSymbol({
   // before a nested Suspense boundary hydrates, so Font.isLoaded alone is unsafe.
   // Keep that first hydration render identical; native/client-only mounts are ready.
   const hydrated = useSyncExternalStore(subscribeToHydration, clientSnapshot, serverSnapshot);
-  if (!hydrated) return <Text />;
+  if (!hydrated) return <Text style={[{ width: size, height: size, flexShrink: 0 }, style]} />;
   const mappedName = MAPPING[name] || 'help-outline';
   // Match the public font family registered by the root useFonts hook.
   return <MaterialIcons color={color} size={size} name={mappedName} style={style} />;

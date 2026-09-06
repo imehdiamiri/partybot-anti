@@ -40,5 +40,6 @@ test('font placeholders remain stable during nested web hydration', () => {
   expect(icon).toContain('const serverSnapshot = () => false');
   expect(icon).toContain('const clientSnapshot = () => true');
   expect(icon).toContain('useSyncExternalStore(subscribeToHydration, clientSnapshot, serverSnapshot)');
-  expect(icon.indexOf('if (!hydrated) return <Text />')).toBeLessThan(icon.indexOf('return <MaterialIcons'));
+  expect(icon).toContain('width: size, height: size, flexShrink: 0');
+  expect(icon.indexOf('if (!hydrated) return <Text style=')).toBeLessThan(icon.indexOf('return <MaterialIcons'));
 });
