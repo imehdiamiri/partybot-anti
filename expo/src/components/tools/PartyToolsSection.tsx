@@ -42,7 +42,8 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
   
   const effectiveWidth = containerWidth > 0 ? containerWidth : (windowWidth > 0 ? Math.min(windowWidth - 32, 720) : 358);
   const columns = effectiveWidth < 540 ? 2 : 3;
-  const columnWidth = Math.floor((effectiveWidth - 14 * (columns - 1)) / columns);
+  // Percentages also fit the first hydration frame and native layout before onLayout.
+  const columnWidth = columns === 2 ? '48%' : '32%';
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
@@ -112,7 +113,8 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 14,
+    justifyContent: 'space-between',
+    rowGap: 12,
   },
   cardContainer: {
     borderRadius: 18,
