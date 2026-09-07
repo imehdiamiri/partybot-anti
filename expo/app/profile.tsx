@@ -114,6 +114,8 @@ export default function ProfileScreen() {
                       // wallet, invite stats, RC mirror, auth record).
                       const { httpsCallable } = await import('firebase/functions');
                       const { functions, auth } = await import('@/src/lib/firebase');
+                      const { revokeAppleBeforeDeletion } = await import('@/src/services/AppleAccountDeletion');
+                      await revokeAppleBeforeDeletion();
                       const fn = httpsCallable(functions, 'deleteAccount');
                       await fn({});
                       // After deleteAccount succeeds the auth record is gone;

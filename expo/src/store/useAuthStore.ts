@@ -361,8 +361,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({ isBusy: true, errorMessage: null });
     try {
-      const nonce = Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15);
+      const nonce = Array.from(await Crypto.getRandomBytesAsync(32),
+        byte => byte.toString(16).padStart(2, '0')).join('');
       const hashedNonce = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         nonce
