@@ -1,5 +1,40 @@
 # Release log
 
+## 2026-09-07 — Installed Android audit build and final display fixes
+
+- Resource collision fix: `7b7461a`. UI recovery tag:
+  `checkpoint/2026-09-07-before-android-ui-fix`. Final UI source is recorded by
+  tag `checkpoint/2026-09-07-android-ui-verified`.
+- Set light status-bar icons consistently on dark screens, verified on the
+  installed Hourglass screen. Removed the single-line constraint that clipped
+  onboarding subtitles. These are compatible JavaScript changes for runtime 1.1.0.
+- Final checks: `npm run typecheck` PASS; `npx jest --runInBand --silent` PASS
+  (34 suites, 252 tests); `git diff --check` PASS. Baseline lint failures above remain.
+- Native `:app:assembleRelease -PreactNativeArchitectures=x86_64` PASS; final
+  incremental build completed in 2m08s, 952 tasks. Cache and temporary files now
+  reside at `D:\pb-gradle-20260907`; preserved/recreated generated CMake caches
+  after Windows Ninja rejected the earlier long cache path.
+- Installed `expo/android/app/build/outputs/apk/release/app-release.apk` with
+  `adb install -r`: Success. SHA256:
+  `96EE82ED7FC55F871AE1F3C5EE5CA7663A614625EF88256504C7864A11C338FA`.
+  Local debug signing, embedded release JS, version 1.1.0/code 1, x86_64 only;
+  this APK is for emulator validation, not ARM phone distribution.
+- Original Pixel_7 retained. Its data partition lacked install space. Created
+  Pixel_7_PlayBot_Audit at `D:\pb-avd-20260907`, Android 17 / 16KB pages,
+  12GB data, SwiftShader, 4GB RAM. At 2GB RAM Android lowmemorykiller terminated
+  foreground processes including the app; 2GB-device compatibility is unresolved.
+  The new emulator remains open with the app; no persistent Metro server.
+- Native smoke checks: onboarding and guest catalog; Memory Grid setup, tile
+  flips/move counter and confirmed exit; tools grid; bottle/hourglass images;
+  30-second countdown; restart to catalog with Wi-Fi/mobile data disabled after
+  onboarding. Restored network afterwards. No crash-buffer entries in the 4GB run.
+  These checks do not certify every game, first-install offline behavior, real
+  Google login, microphone, purchases, multi-phone play or physical ARM hardware.
+- Replacement cloud preview build (source `7b7461a`):
+  `d5f6f57b-a73a-4ec2-861e-04911080adb3`, last confirmed IN_QUEUE.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/d5f6f57b-a73a-4ec2-861e-04911080adb3
+  No cloud build success is claimed. No Firebase deployment or Git push.
+
 ## 2026-09-07 — Android emulator and native audit
 
 - Recovery checkpoint: `50083d4`, tag `checkpoint/2026-09-07-android-audit`.

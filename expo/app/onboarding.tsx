@@ -378,7 +378,7 @@ function CopyBlock({ active, eyebrow, title, subtitle, accent }: { active: boole
         <Text style={[styles.eyebrowText, { color: accent }]}>{eyebrow}</Text>
       </View>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{subtitle}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
     </Animated.View>
   );
 }

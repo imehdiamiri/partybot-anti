@@ -180,7 +180,7 @@ export default function RootLayout() {
       ) : (
         <ResponsiveWebContainer>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack screenOptions={{ headerShown: false, statusBarStyle: 'light' }}>
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
@@ -190,7 +190,7 @@ export default function RootLayout() {
               <Stack.Screen name="paywall" options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="team-setup" options={{ headerShown: false }} />
             </Stack>
-            <StatusBar style="auto" />
+            <StatusBar style="light" />
             <ToastOverlay />
           </ThemeProvider>
         </ResponsiveWebContainer>
