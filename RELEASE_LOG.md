@@ -34,6 +34,15 @@
   `d5f6f57b-a73a-4ec2-861e-04911080adb3`, last confirmed IN_QUEUE.
   https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/d5f6f57b-a73a-4ec2-861e-04911080adb3
   No cloud build success is claimed. No Firebase deployment or Git push.
+- EAS confirmed final Android preview OTA, runtime 1.1.0, source `bc4dbec`:
+  group `2a7a66de-0d1e-46ce-88c5-0fd0ee6232ae`, Android update
+  `01a07c6d-d1d2-7bba-bd5c-b6fb0837f328`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/2a7a66de-0d1e-46ce-88c5-0fd0ee6232ae
+  Neither runtime 1.0.1 nor Expo Go was targeted. Onboarding deep-link attempts
+  returned to the catalog, so the final subtitle change lacks a fresh visual
+  recheck. Final Android screenshot confirms readable status icons and bottom
+  navigation; host-window foreground activation was blocked by Windows access
+  denial at the end of the session. The emulator process remains running.
 
 ## 2026-09-07 — Android emulator and native audit
 
