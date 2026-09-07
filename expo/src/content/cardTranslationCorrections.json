@@ -106,7 +106,7 @@
   "Read an invented love letter from a sock to a washing machine.": {"fa":"یک نامهٔ عاشقانهٔ خیالی از طرف جوراب به ماشین لباسشویی بخوان.","tr":"Bir çorabın çamaşır makinesine yazdığı hayalî bir aşk mektubunu oku.","de":"Lies einen erfundenen Liebesbrief von einer Socke an eine Waschmaschine vor.","fr":"Lis une lettre d’amour imaginaire écrite par une chaussette à une machine à laver.","ar":"اقرأ رسالة حب خيالية من جورب إلى غسالة."},
   "Would you learn calligraphy or try making a tiny clay sculpture?": {"fa":"ترجیح می‌دهی خوشنویسی یاد بگیری یا ساختن یک مجسمهٔ کوچک گِلی را امتحان کنی؟","tr":"Hat sanatı öğrenmeyi mi, küçük bir kil heykel yapmayı denemeyi mi seçerdin?","de":"Würdest du lieber Kalligrafie lernen oder eine kleine Skulptur aus Ton formen?","fr":"Préférerais-tu apprendre la calligraphie ou essayer de faire une petite sculpture en argile ?","ar":"هل تفضّل تعلّم فن الخط أم تجربة صنع تمثال صغير من الطين؟"},
   "Someone tells a friend their partner is cheating but has only heard a rumor.": {"tr":"Biri, yalnızca bir söylentiye dayanarak arkadaşına partnerinin onu aldattığını söyler.","de":"Jemand sagt einem Freund, dessen Partner gehe fremd, hat aber nur ein Gerücht gehört.","fr":"Quelqu’un affirme à un ami que son partenaire le trompe, alors qu’il n’a entendu qu’une rumeur.","ar":"يخبر شخص صديقه بأن شريكه العاطفي يخونه، مع أنه لم يسمع سوى إشاعة."},
-  "Angry boss": {"fa":"رئیس عصبانی"},
+  "Angry boss": {"fa":"رئیس عصبانی","fr":"Patron en colère"},
   "Nervous bride": {"fa":"عروس مضطرب"},
   "Tired waiter at closing time": {"fa":"گارسون خسته هنگام تعطیل شدن رستوران"},
   "Chef tasting his own soup": {"fa":"سرآشپزی که سوپ خودش را می‌چشد"},
@@ -119,5 +119,9 @@
   "Someone stays in a relationship mainly because their families get along.": {"fa":"کسی بیشتر به این دلیل در رابطه می‌ماند که خانواده‌هایشان با هم خوب کنار می‌آیند.","ar":"يبقى شخص في علاقة أساساً لأن عائلتيهما تنسجمان معاً."},
   "A partner wants couples counseling; the other feels it means they have failed.": {"fa":"یکی از دو نفر مشاورهٔ زوج‌ها را می‌خواهد؛ دیگری فکر می‌کند این یعنی رابطه‌شان شکست خورده است.","ar":"يريد أحد الشريكين اللجوء إلى الإرشاد الزوجي، بينما يرى الآخر أن ذلك يعني فشل علاقتهما."},
   "Someone thinks being right in an argument matters more than feeling understood.": {"fa":"کسی فکر می‌کند حق داشتن در بحث مهم‌تر از احساس درک شدن است."},
-  "A couple realizes their idea of romance came mostly from films and social media.": {"fa":"یک زوج متوجه می‌شوند تصورشان از عشق بیشتر از فیلم‌ها و شبکه‌های اجتماعی آمده است."}
+  "A couple realizes their idea of romance came mostly from films and social media.": {"fa":"یک زوج متوجه می‌شوند تصورشان از عشق بیشتر از فیلم‌ها و شبکه‌های اجتماعی آمده است."},
+  "Sing the chorus of the last song you listened to": {"fa":"بخش ترجیع‌بند آخرین آهنگی را که شنیدی بخوان.","de":"Singe den Refrain des letzten Liedes, das du gehört hast."},
+  "Sing one sentence dramatically like an opera singer": {"de":"Singe einen Satz dramatisch wie eine Opernsängerin oder ein Opernsänger."},
+  "show up to a costume party in regular clothes": {"de":"Erscheine in Alltagskleidung auf einer Kostümparty."},
+  "Pretend your imaginary pet has just corrected your pronunciation.": {"de":"Tu so, als hätte dein imaginäres Haustier gerade deine Aussprache korrigiert."}
 }
