@@ -18,7 +18,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useToolAudio } from '@/src/hooks/useToolAudio';
 
 // Using the same single static hourglass image as the iOS version
-const HOURGLASS_IMG = require('@/assets/images/tools/hourglass.webp');
+const HOURGLASS_IMG = require('@/assets/images/tools/hourglass-scene.webp');
 
 const PRESETS = [
   { label: "30s", seconds: 30 },

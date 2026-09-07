@@ -397,7 +397,7 @@ export function BeerBottleView({ width: w }: { width: number }) {
     }}>
       <Image
         testID="beer-bottle-img"
-        source={require('@/assets/images/tools/bottle.webp')}
+        source={require('@/assets/images/tools/bottle-scene.webp')}
         style={{
           width: w,
           height: h,

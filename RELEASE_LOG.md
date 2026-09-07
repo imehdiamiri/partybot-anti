@@ -48,6 +48,21 @@
   JDK17 and Gradle9.3.1, x86_64 only, with embedded JavaScript and local debug
   signing. Old generated native project preserved in ignored
   `expo/.expo/android-audit-backup-20260907`. This is separate from cloud signing.
+- Local build exhausted C: and corrupted Gradle's class-analysis cache. Moved the
+  newly created Gradle9.3.1 cache/distribution to ignored
+  `expo/.expo/android-audit-gradle` on D:, preserved the corrupt cache as a backup,
+  and redirected this build's GRADLE_USER_HOME/TEMP/TMP there. C: recovered about
+  6GB free. Existing credentials and unrelated user files were retained.
+- Real Android resource merging then failed because bottle.png/bottle.webp and
+  hourglass.png/hourglass.webp map to identical drawable resource IDs. Renamed
+  gameplay WebP assets to bottle-scene.webp and hourglass-scene.webp and updated
+  their imports, preserving their bytes. Added a regression check for collisions
+  among tool images actually referenced by application components/routes.
+  Existing unused source images are not treated as bundled resources.
+- Recovery tag before resource repair:
+  `checkpoint/2026-09-07-before-android-resource-fix`. The queued cloud build
+  `13856da0-981b-421f-ae91-4f7eddd6be12` was canceled with EAS confirmation because
+  its source contains this reproducible native build failure. It is not a release.
 
 ## 2026-09-07 — Clearer relationship discussions and Persian copy review
 
