@@ -13,6 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.partybot",
+      "appleTeamId": "9R9TPVS9UL",
       "googleServicesFile": "./GoogleService-Info.plist",
       "buildNumber": "1",
       "usesAppleSignIn": true,

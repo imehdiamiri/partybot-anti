@@ -1,5 +1,31 @@
 # Release log
 
+## 2026-09-08 — iOS TestFlight preparation
+
+- Recovery tag: `checkpoint/2026-09-08-before-ios-setup`; prepared source tag:
+  `checkpoint/2026-09-08-ios-testflight-prepared`.
+- Verified Apple Developer membership for DIGIGET LTD, team `9R9TPVS9UL`, with
+  renewal September 8, 2027. Set that Apple team in Expo config.
+- Added a store-distribution `testflight` profile with a physical-device binary,
+  auto-increment and preview environment/channel. Production credential guards
+  remain intact. The profile intentionally does not certify purchases.
+- EAS history: existing iOS builds are old SDK54 simulator artifacts, not a signed
+  SDK57 physical-device build. No old artifact was submitted or updated.
+- Checks: TypeScript PASS; profile/team assertions PASS; Expo config introspection
+  PASS (Apple Sign-In and Google URL scheme present, native appVersion runtime);
+  iOS export PASS to ignored `.expo/ios-readiness-export`; targeted Jest PASS,
+  3 suites / 8 tests. Firebase plist bundle/project match current app config.
+- Signing command `eas credentials:configure-build --platform ios --profile testflight`
+  reached the Apple password prompt for the account holder. Canceled without
+  entering/storing a password; the owner must authenticate directly in a terminal.
+- App Store Connect Apps page is blocked by its first-use Terms of Service.
+  Requested explicit owner approval before acceptance; no terms were accepted.
+- RevenueCat App Store provider remains incomplete and requests an in-app purchase
+  key/issuer. No signing keys, service secrets or local environment files committed.
+- Detailed continuation and outstanding device/store checks: `IOS_RELEASE.md`.
+  No new iOS build ID, TestFlight submission, OTA, Firebase deployment or Git push.
+  Account confirmation is not App Review approval. Existing lint blockers remain.
+
 ## 2026-09-07 — Installed Android audit build and final display fixes
 
 - Resource collision fix: `7b7461a`. UI recovery tag:

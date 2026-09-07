@@ -25,6 +25,18 @@
         "APP_VARIANT": "preview"
       }
     },
+    "testflight": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "channel": "preview",
+      "environment": "preview",
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "APP_VARIANT": "preview"
+      }
+    },
     "production": {
       "autoIncrement": true,
       "channel": "production",
