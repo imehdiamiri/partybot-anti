@@ -12,5 +12,7 @@ test.each(['dice','bottle','hourglass','coin','teams','wheel'])('%s is a small b
 test('tool cards avoid percentage height in a wrapped native flex grid', () => {
   const code = fs.readFileSync(path.join(__dirname, '../components/tools/PartyToolsSection.tsx'),'utf8');
   expect(code).not.toContain("height: '100%'");
-  expect(code).toContain('minHeight: 146');
+  expect(code).toContain('minHeight: 130');
+  expect(code).toContain("const columnWidth = '32%'");
+  expect(code).not.toContain('<Text style={styles.subtitle}>');
 });

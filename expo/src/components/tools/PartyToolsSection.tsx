@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { ToolIllustration } from './ToolIllustration';
 import { useRouter } from 'expo-router';
 
@@ -37,13 +37,8 @@ interface PartyToolsSectionProps {
 
 export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps) {
   const router = useRouter();
-  const { width: windowWidth } = useWindowDimensions();
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-  
-  const effectiveWidth = containerWidth > 0 ? containerWidth : (windowWidth > 0 ? Math.min(windowWidth - 32, 720) : 358);
-  const columns = effectiveWidth < 540 ? 2 : 3;
-  // Percentages also fit the first hydration frame and native layout before onLayout.
-  const columnWidth = columns === 2 ? '48%' : '32%';
+  // Fixed 3-by-2 layout; percentages fit the first frame on every platform.
+  const columnWidth = '32%';
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
@@ -55,12 +50,11 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
         <ToolIllustration tool={tool.id} color={tool.tint} size={68} />
       </View>
       <Text style={styles.title}>{tool.title}</Text>
-      <Text style={styles.subtitle}>{tool.subtitle}</Text>
     </>
   );
 
   return (
-    <View style={styles.container} onLayout={(e: LayoutChangeEvent) => setContainerWidth(e.nativeEvent.layout.width)}>
+    <View style={styles.container}>
       {showsHeader && (
         <View style={styles.header}>
           <IconSymbol name="wrench.and.screwdriver.fill" size={12} color="rgba(255,255,255,0.55)" weight="bold" />
@@ -129,7 +123,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
     paddingVertical: 14,
     paddingHorizontal: 8,
-    minHeight: 146,
+    minHeight: 130,
     flexGrow: 1,
     alignItems: 'center',
     borderWidth: 1,
@@ -145,15 +139,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
     fontWeight: '900',
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 4,
-    fontWeight: '600',
   },
 });
