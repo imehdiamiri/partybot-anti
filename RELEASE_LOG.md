@@ -1,5 +1,42 @@
 # Release log
 
+## 2026-09-07 — Transparent tool pictures and compact 3-by-2 mobile grid
+
+- Source commits: b2897ce (artwork/drum), fe5bf38 (fluid widths), 8838667
+  (final requested 3-by-2 grid, no visible subtitles, synced web output).
+- Before tag: checkpoint/tool-images-mobile-before-2026-09-07.
+  Final tag: checkpoint/tool-images-mobile-2026-09-07.
+- Six built-in imagegen picture icons, locally cut out with explicit owner approval;
+  true RGBA 256px assets under expo/assets/images/tools. Prompt set in its README.
+  No API fallback or new native dependency. PNGs are vector-style, not SVGs.
+- Tools: 68px images, 130px minimum card height, fixed three columns/two rows,
+  percentage widths and natural height on native/web; removed subtitle text.
+  Long titles wrap at narrow widths. Card-category heading can shrink/wrap.
+- Catalog Drum Challenge now uses a dedicated monochrome SVG matching other
+  game icons. The larger gameplay illustration is intentionally unchanged.
+- Checks: TypeScript passed; Jest 30 suites/237 tests passed; 91 web routes exported.
+  Live tool screenshots inspected at 320/360/390/430/768/1280px: all six images
+  loaded, exactly 3x2 cards, no overlap or horizontal overflow. At 320/360px the
+  Team Splitter title wraps and the second row grows to 148px for readability.
+  Mobile browser smoke: home, Tools and all 16 game setup routes returned 200,
+  no JS page errors or horizontal overflow. This is not a complete playthrough.
+- Firebase Hosting partyplay-8 confirmed final deployment at https://partybot.games.
+  Final web entry: entry-819c3a85b043b972d8f917d8e1d60fef.js.
+- EAS confirmed final Expo Go publish for both platforms, runtime exposdk:57.0.0:
+  group 017ec7b0-d770-4714-9ce9-982f428d8fa0;
+  Android 01a07b84-8bae-7362-b3d0-ba737fd85f83;
+  iOS 01a07b84-8bae-70a8-a3c1-53797da35a39.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/017ec7b0-d770-4714-9ce9-982f428d8fa0
+  Earlier in-progress update attempts were interrupted to incorporate the owner's
+  subsequent layout requests; the final confirmed group above is authoritative.
+- Compatibility: native build history still contains SDK54 builds, not proof of
+  SDK57 binary compatibility. Expo Go updates use exposdk:57.0.0 separately.
+  No physical iOS/Android device test was available; signing/device input is
+  still required for a new standalone iOS binary. Do not claim old installed
+  SDK54 apps receive this OTA. Existing audio/native auth limitations still apply.
+- Recovery: full-history bundle in the audit workspace, final checkpoint tag;
+  use revert then republish (cloud releases do not roll back with Git alone).
+
 ## 2026-09-07 — Refined silver tool icons and longer Wheel
 
 - Replaced colorful object illustrations with a consistent silver outline SVG
