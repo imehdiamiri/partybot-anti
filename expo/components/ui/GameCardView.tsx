@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GameDefinition, GameMode, GameModeDetails, getPlayerCountText } from '@/src/models/AppModels';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { platformShadow } from '@/src/theme/Colors';
-import { DrumIllustration } from '@/src/components/games/GameIllustrations';
+import { DrumIcon } from './DrumIcon';
 
 // Platform-safe BlurView (iOS only)
 let BlurView: any = null;
@@ -104,7 +104,7 @@ const IOSGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
           {game.id.name}
         </Text>
         <View style={iosStyles.spacerMiddle1} />
-        {game.id.id === 'drum_challenge' ? <DrumIllustration size={52} /> : <IconSymbol name={game.id.symbolName as any} size={52} color="rgba(255, 255, 255, 0.95)" />}
+        {game.id.id === 'drum_challenge' ? <DrumIcon size={52} color="rgba(255, 255, 255, 0.95)" /> : <IconSymbol name={game.id.symbolName as any} size={52} color="rgba(255, 255, 255, 0.95)" />}
         <View style={iosStyles.spacerMiddle2} />
 
         <View style={iosStyles.modesContainer}>
@@ -181,7 +181,7 @@ const AndroidGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
 
           {/* Filled tonal icon disc — Material 3 hero shape */}
           <View style={[androidStyles.iconDisc, { backgroundColor: p.chipBg, borderColor: p.containerEdge }]}>
-            {game.id.id === 'drum_challenge' ? <DrumIllustration size={44} /> : <IconSymbol name={game.id.symbolName as any} size={44} color={p.primary} />}
+            {game.id.id === 'drum_challenge' ? <DrumIcon size={44} color={p.primary} /> : <IconSymbol name={game.id.symbolName as any} size={44} color={p.primary} />}
           </View>
 
           <View style={androidStyles.spacerMiddle2} />

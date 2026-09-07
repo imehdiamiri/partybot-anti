@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitleRow: {
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -188,6 +189,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,90,140,0.25)',
   },
   sectionTitle: {
+    flexShrink: 1,
     fontFamily: 'Viral-Black',
     fontSize: 16,
     color: 'white',

@@ -51,7 +51,7 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
   const renderCardInner = (tool: PartyTool) => (
     <>
       <View style={styles.iconContainer}>
-        <ToolIllustration tool={tool.id} color={tool.tint} size={84} />
+        <ToolIllustration tool={tool.id} color={tool.tint} size={68} />
       </View>
       <Text style={styles.title}>{tool.title}</Text>
       <Text style={styles.subtitle}>{tool.subtitle}</Text>
@@ -125,21 +125,21 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingVertical: 20,
+    paddingVertical: 14,
     paddingHorizontal: 8,
-    minHeight: 174,
-    height: '100%',
+    minHeight: 146,
+    flexGrow: 1,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',
     borderRadius: 18,
   },
   iconContainer: {
-    width: 88,
-    height: 88,
+    width: 72,
+    height: 72,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   title: {
     color: 'white',
