@@ -23,6 +23,19 @@
   or external requests.
 - Publication outcomes, source commit, final checkpoint, Firebase bundle and EAS
   update IDs are recorded after service confirmation below.
+- Source commit: `d4d9b90c5c1526f0b3fcc9587d7bc39dc07e459b`.
+  Firebase Hosting `partyplay-8` confirmed 334-file release. Live
+  https://partybot.games uses `entry-2bd52b59854ed9143aad0859bf4560cf.js`;
+  post-deploy Chromium repeated exact translation/navigation checks successfully.
+- EAS confirmed SDK 57 Expo Go update for Android and iOS on `expo-go-sdk57`,
+  runtime `exposdk:57.0.0`: group `b4097a68-9a89-426b-a57a-e3aec0a43d34`,
+  Android `01a07bd0-d57d-7587-ab38-192658ec84c8`,
+  iOS `01a07bd0-d57d-715e-aa2f-82cacc7c9716`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/b4097a68-9a89-426b-a57a-e3aec0a43d34
+  Publication is confirmed; receipt on a physical device was not available.
+- Final tag: `checkpoint/discussion-copy-reviewed-2026-09-07`. Full-history
+  `playbot-discussion-copy-reviewed-2026-09-07.bundle` verified in the audit
+  workspace. No remote Git push. Cloud rollback requires revert plus republish.
 
 ## 2026-09-07 — Bidirectional cards and bundled five-language preview
 
