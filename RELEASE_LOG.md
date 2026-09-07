@@ -32,6 +32,21 @@
   Publication results recorded below after confirmation. No backend deployment.
   Expo Go remains isolated on expo-go-sdk57 / exposdk:57.0.0; old SDK54 native
   binaries are not OTA-compatible. No standalone build/signing changes.
+- Publication confirmed: source commit 75d594b9fc7a2429d1c913ecae5bda30e69e9a93;
+  Firebase Hosting partyplay-8 released 334 files successfully. Live site
+  https://partybot.games references entry-64dccf316c010df21e2100d5f8e364b9.js.
+  Live Chromium checks repeated all five exact translations and navigation with
+  the network switched offline after page load, including left/right drags.
+- EAS confirmed Android/iOS Expo Go update on expo-go-sdk57, exposdk:57.0.0:
+  group 2b869351-adad-4cc5-8036-65a4b598d46d;
+  Android 01a07bb4-56e1-779e-9066-dcade4c3de96;
+  iOS 01a07bb4-56e1-71a2-88bc-0d7e7edf86b8.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/2b869351-adad-4cc5-8036-65a4b598d46d
+  Publication is confirmed, physical-device receipt is not tested. EAS's separate
+  web export was not synchronized over the verified Firebase build.
+- Recovery: local final checkpoint and full-history bundle in the audit workspace
+  (playbot-cards-offline-2026-09-07.bundle); no remote Git push. Revert and republish
+  for cloud rollback, retaining newer local changes.
 
 ## 2026-09-07 — Transparent tool pictures and compact 3-by-2 mobile grid
 
