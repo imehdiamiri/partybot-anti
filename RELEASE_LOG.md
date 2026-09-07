@@ -1,5 +1,29 @@
 # Release log
 
+## 2026-09-07 — Clearer relationship discussions and Persian copy review
+
+- Before tag: `checkpoint/discussion-copy-before-2026-09-07`.
+- Replaced six vague/generated discussion lenses across all 672 relationship cards
+  with direct questions tied to the presented situation: concrete compromise,
+  fair versus excessive expectations, clear communication before a decision,
+  shared boundaries, missing context before judgment, and consequences if the
+  conflict remains unchanged. Removed the ambiguous "open a useful conversation"
+  wording called out by the owner.
+- Re-authored each replacement question in fa/tr/de/fr/ar rather than passing it
+  through the local translation model. Preserved the reviewed Persian copy for all
+  112 new relationship scenarios. A full-catalog scan and deterministic sample
+  review found and corrected additional broken Persian phrases (download/archive
+  artifacts, untranslated English, and mistranslated props/actions). The correction
+  bank now contains 224 reviewed source units. Other legacy machine-assisted text
+  remains marked as translation preview and may still require editorial review.
+- Catalog remains exactly 2888 cards; IDs and saved/favorite compatibility remain
+  unchanged. TypeScript passed; 32 Jest suites / 244 tests passed. Offline Chromium
+  at 320/390/430/1280px confirmed exact language lookup, Next/Previous and drag
+  navigation, exhausted-deck return, >=44px controls, and no overflow, page errors,
+  or external requests.
+- Publication outcomes, source commit, final checkpoint, Firebase bundle and EAS
+  update IDs are recorded after service confirmation below.
+
 ## 2026-09-07 — Bidirectional cards and bundled five-language preview
 
 - Before tag: checkpoint/cards-navigation-languages-before-2026-09-07 at 131c8f3.

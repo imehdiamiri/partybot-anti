@@ -118,12 +118,12 @@ A couple realizes their idea of romance came mostly from films and social media.
 `.trim().split('\n');
 
 export const DISCUSSION_LENSES = [
-  'What would a fair agreement look like?',
-  'Which boundary needs to be discussed first?',
-  'How might each person describe the same situation differently?',
-  'What could someone say to open a useful conversation?',
-  'What missing detail could change your opinion?',
-  'What small action would show real progress a month later?',
+  'In this specific situation, what compromise could respect both sides?',
+  'Which expectation or behavior here is fair, and which one goes too far?',
+  'What should each person say clearly before either of them makes a decision?',
+  'What boundary or shared rule could prevent this problem from happening again?',
+  'What would you need to know before deciding whose response is more reasonable?',
+  'If nothing changes, can this conflict still be resolved, or will staying connected hurt the people involved? Why?',
 ];
 
 export const RELATIONSHIP_DISCUSSION_CARDS: PartyCard[] = RELATIONSHIP_SITUATIONS.flatMap((situation, index) =>

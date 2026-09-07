@@ -33,3 +33,15 @@ test('672 relationship discussions bring the built-in catalog to exactly 2888', 
     previous.add(normalized(c.text));
   }
 });
+
+test('relationship discussions use direct, situation-specific questions', () => {
+  const vaguePrompts = [
+    'What could someone say to open a useful conversation?',
+    'What missing detail could change your opinion?',
+    'What small action would show real progress a month later?',
+  ];
+  for (const card of RELATIONSHIP_DISCUSSION_CARDS) {
+    for (const vague of vaguePrompts) expect(card.text).not.toContain(vague);
+    expect(card.text).toMatch(/\?$/);
+  }
+});

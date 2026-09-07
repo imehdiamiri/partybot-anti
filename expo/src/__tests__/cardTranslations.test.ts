@@ -18,7 +18,7 @@ test('every built-in card has exactly five non-empty offline translations', () =
   }
 });
 test('reviewed discussion questions are present in each translated scenario', () => {
-  const question = 'What would a fair agreement look like?';
+  const question = 'In this specific situation, what compromise could respect both sides?';
   for (const lang of languages) {
     expect(bank['relationships-20260907-1-1'][lang]).toContain(corrections[question][lang as keyof typeof corrections[typeof question]]);
   }
