@@ -32,6 +32,22 @@
   preview safely strips those unverified keys and cannot certify real purchases.
   No Play Store submission, Firebase deployment or remote Git push in this batch.
   Publication and installation outcomes are recorded below only after confirmation.
+- Source fix commit: `117c9b62fc4a6880d5dda7d7705a4a06aa1d1490`, tag
+  `checkpoint/2026-09-07-android-purchase-fix`. EAS confirmed Android-only update
+  on preview/runtime 1.1.0: group `c25639f3-db65-4daa-9ac0-fd7dff4cd8f4`,
+  update `01a07c40-2978-737b-bc20-05d67adb5a45`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/c25639f3-db65-4daa-9ac0-fd7dff4cd8f4
+  Old runtime 1.0.1 and Expo Go are not targeted.
+- Owner's screenshot exposed an AVD display-layout issue: Pixel_7 had an extra
+  2160x3840 display configured, pushing the phone down inside the host window.
+  Backed up its config.ini, removed display 1 using `adb emu multidisplay del 1`,
+  and removed the persisted `hw.display1.*` settings. ADB now lists only the
+  1080x2400 built-in display. Windows Computer Use screenshot verifies the entire
+  phone fits normally, including its bottom gesture bar, with no extra black area.
+- Prepared local native release build for emulator testing using SDK57 prebuild,
+  JDK17 and Gradle9.3.1, x86_64 only, with embedded JavaScript and local debug
+  signing. Old generated native project preserved in ignored
+  `expo/.expo/android-audit-backup-20260907`. This is separate from cloud signing.
 
 ## 2026-09-07 — Clearer relationship discussions and Persian copy review
 
