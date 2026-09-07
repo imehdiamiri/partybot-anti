@@ -1,5 +1,6 @@
 
 import { EXPANSION_CARDS } from '../content/cardExpansion';
+import { RELATIONSHIP_DISCUSSION_CARDS } from '../content/cardsRelationshipDiscussion';
 
 export enum CardCategory {
   Act = 'act',
@@ -1572,4 +1573,4 @@ export const ORIGINAL_CARDS: PartyCard[] = ([
   { id: 'added-mlt-10', category: CardCategory.MostLikelyTo, subtype: CardSubtype.MLTFutureSuccess, text: "become the CEO of a multi-billion dollar startup", isSpicy: false },
 ] as any as PartyCard[]).filter(c => !c.isSpicy && c.subtype !== CardSubtype.MLTSpicy);
 
-export const ALL_CARDS: PartyCard[] = [...ORIGINAL_CARDS, ...EXPANSION_CARDS];
+export const ALL_CARDS: PartyCard[] = [...ORIGINAL_CARDS, ...EXPANSION_CARDS, ...RELATIONSHIP_DISCUSSION_CARDS];

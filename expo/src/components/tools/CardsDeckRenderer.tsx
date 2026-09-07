@@ -1,13 +1,14 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, AccessibilityInfo, PanResponder, useWindowDimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Animated, Easing, AccessibilityInfo, PanResponder, useWindowDimensions, Pressable, Platform, Modal, TextInput, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard, CardSubtype } from '@/src/models/CardModels';
 import { useSavedCardsStore } from '@/src/store/useSavedCardsStore';
 import { useCustomCardsStore } from '@/src/store/useCustomCardsStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CardDeckPicker } from '@/src/utils/cardDeck';
+import { CardDeckPicker, navigateCardIndex } from '@/src/utils/cardDeck';
+import { CardLanguage, CardLanguageButtons, CardTranslationText } from './CardTranslation';
 
 const deckPicker = new CardDeckPicker(AsyncStorage);
 
@@ -36,6 +37,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const insets = useSafeAreaInsets();
   const category = CardCategoryInfo[categoryId];
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
+  const [language, setLanguage] = useState<CardLanguage | null>(null);
+  const [availableDeckHeight, setAvailableDeckHeight] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionRef = useRef(false);
   const generationRef = useRef(0);
@@ -119,10 +122,10 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const baseW = windowWidth > 0 ? windowWidth : 390;
   const baseH = windowHeight > 0 ? windowHeight : 844;
-  const maxCardHeight = Math.max(300, baseH - 240);
+  const maxCardHeight = Math.max(180, availableDeckHeight > 0 ? availableDeckHeight - 30 : baseH - 330);
   // Intentional bounded portrait card with aspect ratio ~ 1 : 1.38, max width 460px on desktop
-  const cardWidth = Math.min(Math.min(baseW - 32, 460), maxCardHeight / 1.38);
-  const cardHeight = cardWidth * 1.38;
+  const cardWidth = Math.min(baseW - 64, 460);
+  const cardHeight = Math.min(cardWidth * 1.38, maxCardHeight);
   const swipeThreshold = cardWidth * 0.3;
   const swipeOutDistance = cardWidth * 1.5;
 
@@ -142,7 +145,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       onPanResponderTerminationRequest: () => false,
       onPanResponderMove: (_event, gesture) => {
         if (transitionRef.current) return;
-        position.setValue({ x: gesture.dx, y: gesture.dy });
+        position.setValue({ x: gesture.dx, y: 0 });
       },
       onPanResponderRelease: (_event, gesture) => {
         const threshold = swipeThresholdRef.current;
@@ -161,7 +164,10 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   ).current;
 
   const forceSwipe = (direction: 'left' | 'right') => {
-    if (transitionRef.current || currentIndex >= deckLengthRef.current) return;
+    if (transitionRef.current) return;
+    const nextIndex = navigateCardIndex(currentIndex, deckLengthRef.current, direction);
+    if (nextIndex === currentIndex) { resetPosition(); return; }
+    if (currentIndex >= deckLengthRef.current) { setCurrentIndex(nextIndex); return; }
     transitionRef.current = true;
     setIsTransitioning(true);
     const generation = generationRef.current;
@@ -174,7 +180,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       useNativeDriver: false,
     }).start(({ finished }) => {
       if (!finished || generation !== generationRef.current) return;
-      setCurrentIndex((prev) => Math.min(prev + 1, deckLengthRef.current));
+      setCurrentIndex(nextIndex);
     });
   };
 
@@ -233,13 +239,13 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   });
 
   const nextOpacity = position.x.interpolate({
-    inputRange: [0, swipeThreshold],
-    outputRange: [0, 1],
+    inputRange: [-swipeThreshold, 0],
+    outputRange: [1, 0],
     extrapolate: 'clamp',
   });
   const prevOpacity = position.x.interpolate({
-    inputRange: [-swipeThreshold, 0],
-    outputRange: [1, 0],
+    inputRange: [0, swipeThreshold],
+    outputRange: [0, 1],
     extrapolate: 'clamp',
   });
 
@@ -294,6 +300,9 @@ export function CardsDeckRenderer({ categoryId }: Props) {
           <IconSymbol name="sparkle.magnifyingglass" size={48} color="rgba(255,255,255,0.3)" />
           <Text style={styles.emptyTextTitle}>No more cards</Text>
           <Text style={styles.emptyText}>Change your filters or shuffle to start over.</Text>
+          {deck.length > 0 && <Pressable testID="deck-previous-button" accessibilityRole="button" style={styles.shuffleAgain} onPress={() => forceSwipe('right')}>
+            <Text style={styles.shuffleAgainText}>Previous card</Text>
+          </Pressable>}
           <Pressable style={styles.shuffleAgain} onPress={handleShuffle}>
             <IconSymbol name="shuffle" size={16} color="black" />
             <Text style={styles.shuffleAgainText}>Shuffle deck</Text>
@@ -336,12 +345,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             ]}
             {...panResponder.panHandlers}
           >
-            <CardFace card={card} category={category} />
-            <Animated.View style={[styles.stamp, styles.stampLike, { opacity: nextOpacity }]}>
+            <CardFace card={card} category={category} language={language} onLanguage={setLanguage} />
+            <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampLike, { opacity: nextOpacity }]}>
               <Text style={styles.stampText}>NEXT</Text>
             </Animated.View>
-            <Animated.View style={[styles.stamp, styles.stampNope, { opacity: prevOpacity }]}>
-              <Text style={styles.stampText}>NEXT</Text>
+            <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampNope, { opacity: prevOpacity }]}>
+              <Text style={styles.stampText}>{currentIndex > 0 ? 'PREVIOUS' : 'FIRST CARD'}</Text>
             </Animated.View>
           </Animated.View>
         );
@@ -421,7 +430,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     const progress = (currentIndex + 1) / Math.max(total, 1);
 
     return (
-      <View style={[styles.actionWrap, { maxWidth: cardWidth, paddingBottom: Math.max(16, insets.bottom) }]}>
+      <View style={[styles.actionWrap, { maxWidth: 460, paddingBottom: Math.max(12, insets.bottom) }]}>
         <View style={styles.progressRow}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: category.accentColor }]} />
@@ -430,25 +439,29 @@ export function CardsDeckRenderer({ categoryId }: Props) {
         </View>
 
         <View style={styles.actionBar}>
-          {/* Left: Shuffle */}
-          <Pressable style={styles.actionButton} onPress={handleShuffle} hitSlop={8}>
-            <IconSymbol name="shuffle" size={22} color="white" />
+          <Pressable accessibilityRole="button" accessibilityLabel="Previous card" testID="deck-previous-button"
+            disabled={isTransitioning || currentIndex === 0}
+            style={[styles.nextButton, { flex: 1, opacity: currentIndex === 0 ? 0.3 : 1 }]}
+            onPress={() => forceSwipe('right')}>
+            <IconSymbol name="arrow.left" size={18} color="black" />
+            <Text style={styles.nextButtonText}>Previous</Text>
           </Pressable>
-
           {/* Center: Next */}
           <Pressable 
             accessibilityRole="button"
             testID="deck-next-button"
             disabled={isTransitioning}
-            style={styles.nextButton} 
+            style={[styles.nextButton, { flex: 1 }]}
             onPress={() => forceSwipe('left')}
           >
             <Text style={styles.nextButtonText}>Next</Text>
             <IconSymbol name="arrow.right" size={18} color="black" />
           </Pressable>
-
-          {/* Right: Add Card & Favorite */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <Pressable testID="deck-shuffle-button" accessibilityRole="button" accessibilityLabel="Shuffle deck" style={styles.actionButton} onPress={handleShuffle}>
+              <IconSymbol name="shuffle" size={20} color="white" />
+            </Pressable>
             {categoryId !== CardCategory.Favorites && (
               <Pressable style={styles.actionButton} onPress={() => setIsAddModalVisible(true)} hitSlop={8}>
                 <IconSymbol name="plus" size={22} color="white" />
@@ -458,7 +471,6 @@ export function CardsDeckRenderer({ categoryId }: Props) {
               <IconSymbol name={isSaved ? 'star.fill' : 'star'} size={22} color={isSaved ? category.accentColor : 'white'} />
             </Pressable>
           </View>
-        </View>
       </View>
     );
   };
@@ -466,7 +478,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   return (
     <View style={styles.container}>
       {renderFilters()}
-      <View style={styles.deckContainer}>
+      <View style={styles.deckContainer} onLayout={e => setAvailableDeckHeight(e.nativeEvent.layout.height)}>
         {renderCards()}
       </View>
       {renderActionBar()}
@@ -526,7 +538,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   );
 }
 
-function CardFace({ card, category }: { card: PartyCard, category: any }) {
+function CardFace({ card, category, language = null, onLanguage }: { card: PartyCard, category: any; language?: CardLanguage | null; onLanguage?: (language: CardLanguage | null) => void }) {
   return (
     <View style={styles.cardContainer}>
       <View style={[styles.cardAccent, { backgroundColor: category.accentColor }]} />
@@ -534,15 +546,19 @@ function CardFace({ card, category }: { card: PartyCard, category: any }) {
         <View style={[styles.cornerDot, { backgroundColor: category.accentColor }]} />
         <Text style={styles.cornerText}>{card.subtype.toUpperCase()}</Text>
       </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.cardText}>{card.text}</Text>
-      </View>
+      <ScrollView style={{ flex: 1, zIndex: 2 }} contentContainerStyle={styles.cardContent} nestedScrollEnabled>
+        <Text testID={onLanguage ? 'card-english-text' : undefined} style={styles.cardText}>{card.text}</Text>
+        {onLanguage && <CardTranslationText cardId={card.id} language={language} />}
+      </ScrollView>
+      {onLanguage && <CardLanguageButtons selected={language} onSelect={onLanguage} />}
       <View style={styles.cardFooter}>
         <IconSymbol name="chevron.left" size={12} color="rgba(0,0,0,0.3)" />
-        <Text style={styles.cardFooterText}>swipe left or right to next</Text>
+        <Text style={styles.cardFooterText}>left: next · right: previous</Text>
         <IconSymbol name="chevron.right" size={12} color="rgba(0,0,0,0.3)" />
       </View>
-      <IconSymbol name={category.icon as any} size={140} color={category.accentColor + '0E'} style={styles.watermark} />
+      <View pointerEvents="none" style={styles.watermark}>
+        <IconSymbol name={category.icon as any} size={140} color={category.accentColor + '0E'} />
+      </View>
     </View>
   );
 }
@@ -711,18 +727,20 @@ const styles = StyleSheet.create({
     color: 'rgba(0,0,0,0.5)',
   },
   cardContent: {
-    flex: 1,
-    paddingHorizontal: 28,
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 54,
+    paddingBottom: 20,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2,
   },
   cardText: {
     fontFamily: 'Viral-Black',
-    fontSize: 26,
+    fontSize: 20,
     color: '#111',
     textAlign: 'center',
-    lineHeight: 34,
+    lineHeight: 28,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -733,9 +751,9 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
   cardFooterText: {
-    fontSize: 11,
+    fontSize: 10,
     color: 'rgba(0,0,0,0.3)',
-    letterSpacing: 1,
+    letterSpacing: 0.2,
     textTransform: 'uppercase',
     fontWeight: '700',
   },
@@ -810,8 +828,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   actionButton: {
-    width: 52,
-    height: 52,
+    width: 44,
+    height: 44,
     borderRadius: 26,
     backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
@@ -820,11 +838,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.12)',
   },
   nextButton: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    justifyContent: 'center',
     borderRadius: 28,
     gap: 8,
     shadowColor: '#000',

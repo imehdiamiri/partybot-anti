@@ -1,6 +1,9 @@
 import { shuffled } from './shuffle';
 
 interface Identified { id: string }
+export function navigateCardIndex(index: number, length: number, direction: 'left' | 'right'): number {
+  return Math.max(0, Math.min(length, index + (direction === 'left' ? 1 : -1)));
+}
 interface Storage {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<unknown>;

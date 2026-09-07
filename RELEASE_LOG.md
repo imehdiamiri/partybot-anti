@@ -1,5 +1,38 @@
 # Release log
 
+## 2026-09-07 — Bidirectional cards and bundled five-language preview
+
+- Before tag: checkpoint/cards-navigation-languages-before-2026-09-07 at 131c8f3.
+  Final checkpoint: checkpoint/cards-offline-2026-09-07 (after service confirmation).
+- Built-in catalog: exactly 2888 cards; Talk 1609. Added 112 original adult
+  relationship/social scenarios with six discussion questions each (672 cards).
+  Existing card IDs retained. Random opener avoidance and saved/favorite state
+  retained. Swipe left/Next advances; right/Previous returns to the same deck ID,
+  including returning from the exhausted deck; first-card Previous is disabled.
+- Five bundled translations for each built-in card: fa/tr/de/fr/ar. No runtime
+  translation network request, cloud API, new dependency or billable service.
+  Private custom prompts are not translated or uploaded. A previously loaded
+  app is required; this does not introduce full offline website installation.
+- Translation quality: local machine-assisted drafts, not fully proofread.
+  All 112 new Persian scenarios and six questions were authored/reviewed, and
+  sampled mistranslations corrected (136 source units with corrections). The UI
+  explicitly labels translations as preview; remaining idioms may need editing.
+  Provenance/reassembly: expo/src/content/CARD_TRANSLATIONS.md. Weights, model
+  runtime, temporary caches and Python environment are outside the repository.
+- Verification: TypeScript passed; 32 suites/242 tests passed, plus one added
+  watermark hit-layer regression test passed (243 total). 91 web routes exported.
+  Headless Chromium at 320/390/430/1280px: Next/Previous identity, all five exact
+  language lookups through navigation, exhausted-deck return, touch targets >=44px,
+  no horizontal overflow or JS errors. Offline test fixture blocked all external
+  requests; observed external requests: 0. No physical iOS/Android device test.
+  Fixed decorative watermark intercepting French/Arabic touches; added missing
+  Previous and unselected-Favorite icon mappings. Long bilingual text scrolls
+  inside the card without hiding navigation or language controls.
+- Web build synchronized: entry-64dccf316c010df21e2100d5f8e364b9.js.
+  Publication results recorded below after confirmation. No backend deployment.
+  Expo Go remains isolated on expo-go-sdk57 / exposdk:57.0.0; old SDK54 native
+  binaries are not OTA-compatible. No standalone build/signing changes.
+
 ## 2026-09-07 — Transparent tool pictures and compact 3-by-2 mobile grid
 
 - Source commits: b2897ce (artwork/drum), fe5bf38 (fluid widths), 8838667

@@ -15,7 +15,7 @@ test('adds 1,200 original cards and at least doubles every playable category', (
     counts[category] = { before, after };
   }
   console.info('Card counts', counts);
-  expect(ALL_CARDS).toHaveLength(2216);
+  expect(ALL_CARDS).toHaveLength(2888);
 });
 
 test('new cards have stable unique IDs, valid filters, no duplicate text or spicy content', () => {
@@ -111,4 +111,3 @@ test('Fisher-Yates preserves input and all cards, including tiny decks', () => {
   expect(shuffled([])).toEqual([]);
   expect(shuffled(['x'])).toEqual(['x']);
 });
-
