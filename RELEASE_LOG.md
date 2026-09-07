@@ -1,5 +1,38 @@
 # Release log
 
+## 2026-09-07 — Android emulator and native audit
+
+- Recovery checkpoint: `50083d4`, tag `checkpoint/2026-09-07-android-audit`.
+  Preserved the existing production credential guard and its tests after reviewing
+  the diff; no local credentials or generated native files were committed.
+- Started Pixel_7 with a cold boot after its saved snapshot failed with WHPX.
+  ADB reports boot complete, Android 17, x86_64, 16384-byte pages. The emulator is
+  left open at the owner's request. No Metro/Expo development server was started.
+- Existing local APK/native project is stale (version 1.0.0); it is not evidence
+  of SDK57 compatibility. EAS history confirms the SDK57 production build was
+  canceled and the completed preview binary is SDK54/runtime 1.0.1.
+- Requested SDK57 Android preview APK with existing EAS signing credentials:
+  `13856da0-981b-421f-ae91-4f7eddd6be12`, version/runtime 1.1.0, versionCode 2.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/13856da0-981b-421f-ae91-4f7eddd6be12
+  Status at this entry: IN_QUEUE, not installed or certified.
+- Corrected Android purchase screens to reference Google Play instead of Apple ID.
+  Purchase detail now shows an unavailable offer instead of an indefinite loading
+  spinner when no request is running. Moved package selection before the web return
+  to preserve unconditional hook ordering.
+- Checks: `npm run typecheck` PASS; `npx jest --runInBand --silent` PASS,
+  34 suites / 251 tests; `npx expo-doctor` PASS, 21/21; `git diff --check` PASS.
+  `expo config --type introspect` confirms native appVersion runtime and removal
+  of both external storage permissions. `npm run lint` FAIL: baseline 229 errors,
+  258 warnings. Includes React Compiler diagnostics, platform-conditional hooks,
+  missing Jest globals and an AudioStream namespace false positive (the installed
+  SDK declares the native AudioStream member). Lint is not certified clean.
+- Outstanding: install/playthrough of the new binary after EAS completes;
+  native login, microphone, background/resume, offline restart and purchases.
+  Production remains blocked by unverified public RevenueCat SDK configuration;
+  preview safely strips those unverified keys and cannot certify real purchases.
+  No Play Store submission, Firebase deployment or remote Git push in this batch.
+  Publication and installation outcomes are recorded below only after confirmation.
+
 ## 2026-09-07 — Clearer relationship discussions and Persian copy review
 
 - Before tag: `checkpoint/discussion-copy-before-2026-09-07`.

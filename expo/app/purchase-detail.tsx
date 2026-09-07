@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -83,7 +84,14 @@ export default function PurchaseDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { identifier } = useLocalSearchParams<{ identifier?: string }>();
-  const { isPurchasing, restorePurchases, purchasePackage, packages } = usePaywallStore();
+  const { isLoading, isPurchasing, restorePurchases, purchasePackage, packages } = usePaywallStore();
+
+  const pkg = useMemo(() => {
+    if (identifier) {
+      return packages.find((p) => p.identifier === identifier) || null;
+    }
+    return packages.find((p) => p.packageType === 'ANNUAL') || packages[0] || null;
+  }, [identifier, packages]);
 
   const safeBack = () => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } };
 
@@ -116,13 +124,6 @@ export default function PurchaseDetailScreen() {
     );
   }
 
-  const pkg = useMemo(() => {
-    if (identifier) {
-      return packages.find((p) => p.identifier === identifier) || null;
-    }
-    return packages.find((p) => p.packageType === 'ANNUAL') || packages[0] || null;
-  }, [identifier, packages]);
-
   if (!pkg) {
     return (
       <View style={styles.container}>
@@ -134,9 +135,9 @@ export default function PurchaseDetailScreen() {
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
-          <ActivityIndicator color="#fff" />
+          {isLoading && <ActivityIndicator color="#fff" />}
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center' }}>
-            Loading offerings…{'\n'}If this persists, check the App Store / RevenueCat configuration.
+            {isLoading ? 'Loading offers…' : 'This offer is currently unavailable. Please return to the store and try again later.'}
           </Text>
         </View>
       </View>
@@ -160,7 +161,9 @@ export default function PurchaseDetailScreen() {
       : kind === 'donation'
         ? `Tip — ${price}`
         : `Buy — ${price}`;
-  const legal = kind === 'subscription'
+  const legal = Platform.OS === 'android'
+    ? 'Payment is handled by Google Play. Review the price, renewal and cancellation terms in the Google Play checkout before confirming.'
+    : kind === 'subscription'
     ? 'Subscriptions auto-renew unless cancelled 24h before period end. Payment is charged to your Apple ID. Stars remain in your wallet after subscription ends.'
     : 'Payment is charged to your Apple ID. Stars and one-time purchases are non-refundable and can only be used in this app.';
 

@@ -7,7 +7,8 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -303,7 +304,9 @@ export default function PaywallScreen() {
 
           <View style={styles.legalContainer}>
             <Text style={styles.legalDisclaimer}>
-              Subscriptions auto-renew unless cancelled 24h before period end. Payment is charged to your Apple ID. Stars remain in your wallet after subscription ends.
+              {Platform.OS === 'android'
+                ? 'Payment is handled by Google Play. Review the price, renewal and cancellation terms in the Google Play checkout before confirming.'
+                : 'Subscriptions auto-renew unless cancelled 24h before period end. Payment is charged to your Apple ID. Stars remain in your wallet after subscription ends.'}
             </Text>
             <View style={styles.legalLinksRow}>
               <TouchableOpacity onPress={() => Linking.openURL(AppConstants.URLs.privacyPolicy)}>
