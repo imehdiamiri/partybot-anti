@@ -107,6 +107,101 @@ afterAll(async () => {
   testEnv.cleanup();
 });
 
+describe('Security regression: account and event boundaries', () => {
+  test('clients cannot delete server wallet, receipts, invite markers or the user root', async () => {
+    const uid = 'security_owner';
+    const protectedFields = {
+      wallet: { balance: 50, lastDailyClaim: '2026-09-08' },
+      processedTransactions: { receipt: { stars: 50 } },
+      invitedBy: 'inviter', isPremium: true, isAdmin: true,
+    };
+    await admin.database().ref(`users/${uid}`).set({ username: 'Owner', ...protectedFields });
+    const db = testEnvObj.authenticatedContext(uid).database();
+    for (const field of Object.keys(protectedFields)) {
+      await assertFails(db.ref(`users/${uid}/${field}`).remove());
+    }
+    await assertFails(db.ref(`users/${uid}`).remove());
+    await assertFails(db.ref(`users/${uid}`).set({ username: 'Reset' }));
+    await assertSucceeds(db.ref(`users/${uid}`).update({ username: 'Renamed', updatedAt: Date.now() }));
+    expect((await admin.database().ref(`users/${uid}/wallet/balance`).get()).val()).toBe(50);
+  });
+
+  test('private profile data is owner-only but public name remains readable', async () => {
+    await admin.database().ref('users/private_user').set({ username: 'Public name', email: 'private@example.test', wallet: { balance: 50 } });
+    const outsider = testEnvObj.authenticatedContext('outsider').database();
+    await assertFails(outsider.ref('users/private_user').get());
+    await assertFails(outsider.ref('users/private_user/email').get());
+    await assertFails(outsider.ref('users/private_user/wallet').get());
+    await assertSucceeds(outsider.ref('users/private_user/username').get());
+  });
+
+  test('self-assigned admin and unknown account fields are denied', async () => {
+    const db = testEnvObj.authenticatedContext('attacker').database();
+    await assertFails(db.ref('users/attacker/isAdmin').set(true));
+    await assertFails(db.ref('users/attacker/arbitrary').set('payload'));
+  });
+
+  test('friend request sender cannot accept, change identities, or bypass blocking', async () => {
+    const db = testEnvObj.authenticatedContext('sender').database();
+    const request = { fromUserId: 'sender', toUserId: 'recipient', status: 'pending', createdAt: Date.now() };
+    await assertSucceeds(db.ref('friendRequests/request1').set(request));
+    await assertFails(db.ref('friendRequests/request1/status').set('accepted'));
+    await assertFails(db.ref('friendRequests/request1/toUserId').set('victim'));
+    await admin.database().ref('blockedUsers/recipient/sender').set({ at: Date.now() });
+    await assertFails(db.ref('friendRequests/request2').set(request));
+    await assertFails(db.ref('friendships/recipient/sender').set({ status: 'active', since: Date.now() }));
+  });
+
+  test('telemetry cannot overwrite another users event or append arbitrary data', async () => {
+    await admin.database().ref('telemetry/event1').set({ userId: 'victim', event: 'open', at: Date.now() });
+    const db = testEnvObj.authenticatedContext('attacker').database();
+    await assertFails(db.ref('telemetry/event1').set({ userId: 'attacker', event: 'forged', at: Date.now() }));
+    await assertFails(db.ref('telemetry/event2').set({ userId: 'attacker', event: 'open', arbitrary: 'blob' }));
+  });
+
+  test('recipient can atomically accept and create reciprocal friendship edges, with scoped queries', async () => {
+    await admin.database().ref('friendRequests/request1').set({ fromUserId: 'sender', toUserId: 'recipient', status: 'pending', createdAt: Date.now() });
+    const recipient = testEnvObj.authenticatedContext('recipient').database();
+    const edge = { requestId: 'request1', status: 'active', since: Date.now() };
+    await assertSucceeds(recipient.ref().update({
+      'friendRequests/request1/status': 'accepted',
+      'friendships/sender/recipient': edge,
+      'friendships/recipient/sender': edge,
+    }));
+    await assertSucceeds(recipient.ref('friendRequests').orderByChild('toUserId').equalTo('recipient').limitToFirst(100).get());
+    await assertFails(recipient.ref('friendRequests').get());
+    await assertFails(recipient.ref('friendRequests').orderByChild('toUserId').equalTo('victim').limitToFirst(100).get());
+    await assertFails(recipient.ref('friendRequests').orderByChild('toUserId').equalTo('recipient').get());
+  });
+
+  test('allowed diagnostic events append, but nested tag blobs and crash mutation are denied', async () => {
+    const db = testEnvObj.authenticatedContext('owner').database();
+    await assertSucceeds(db.ref('telemetry/new').set({ userId: 'owner', event: 'open', at: Date.now(), tags: { platform: 'ios' } }));
+    await assertSucceeds(db.ref('crashLogs/owner/new').set({ message: 'failure', at: Date.now(), tags: { code: 1 } }));
+    await assertFails(db.ref('crashLogs/owner/new/message').set('rewritten'));
+    await assertFails(db.ref('crashLogs/owner/new').remove());
+    await assertFails(db.ref('telemetry/nested').set({ userId: 'owner', event: 'open', at: Date.now(), tags: { blob: { nested: true } } }));
+  });
+
+  test('a room guest cannot replace another players queued action', async () => {
+    await admin.database().ref('rooms/345678').set({
+      hostId: 'host', status: 'playing',
+      players: { host: { id: 'host', displayName: 'Host' }, guest: { id: 'guest', displayName: 'Guest' } },
+      actions: { victimAction: { playerId: 'host', type: 'answer', ts: Date.now() } },
+    });
+    const db = testEnvObj.authenticatedContext('guest').database();
+    const action = { playerId: 'guest', type: 'answer', ts: Date.now() };
+    await assertFails(db.ref('rooms/345678/actions/victimAction').set(action));
+    await assertSucceeds(db.ref('rooms/345678/actions/newAction').set(action));
+  });
+
+  test.each(['blockUser', 'unblockUser', 'reportUser'])('%s rejects database path separators in target IDs', async (name) => {
+    const wrapped = testEnv.wrap(functions[name]);
+    await expect(wrapped({ auth: { uid: 'sender' }, data: { targetUid: 'victim/nested', reason: 'harassment' } }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+});
+
 describe('RevenueCat Sync & Concurrency', () => {
   test('syncRevenueCat: exactly-once credit under concurrent duplicate calls', async () => {
     global.fetch = jest.fn(() =>

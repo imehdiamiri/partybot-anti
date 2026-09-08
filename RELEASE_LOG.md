@@ -1,5 +1,29 @@
 # Release log
 
+## 2026-09-08 — security hardening
+
+- Recovery: `checkpoint/2026-09-08-before-security-hardening` at `0a98015`.
+- Closed RTDB destructive account/financial-marker deletion, private profile
+  reads, forged friendship acceptance, event overwrites and backend target-path
+  injection. Profile sync merges only profile fields; friends use scoped reads
+  and atomic request-linked acceptance. Firestore preserves server fields.
+- Admin source verifies same-origin/recent login and current admin claims.
+  Static Hosting does not deploy this Next server; no admin-server deployment claim.
+- Compatible dependency updates: backend production 11 moderate / full tree 14
+  moderate; admin 8 moderate. Both zero critical/high. Node runtime updated to 22.
+- Tests: eight new regressions reproduced old failures; fixed RTDB/backend 37 PASS;
+  Firestore 2 PASS; app 36 suites/263 PASS; app/admin TypeScript PASS; Next build
+  PASS. Isolated Firestore emulator stopped after testing; the pre-existing RTDB
+  test emulator was reused and left under its original owner's control.
+- Final reproducible isolated run using `firebase.security.json`: 39/39 tests
+  PASS across RTDB/backend and Firestore; CLI confirmed both emulators stopped.
+  Web-only Expo export and sync PASS.
+- Firebase confirmed deletion of retired `generateCard(us-central1)` to complete
+  the authorized AI removal. Deployment and update confirmations follow below.
+- Remaining risks and compatibility: SECURITY_AUDIT.md. No penetration-test,
+  DDoS-resilience, App Check enforcement, clean-lint or App Store approval claim.
+  No Git push; no signed TestFlight submission.
+
 ## 2026-09-08 — iOS source cleanup and release audit
 
 - Recovery: `checkpoint/2026-09-08-before-ios-cleanup`; verified source tag:

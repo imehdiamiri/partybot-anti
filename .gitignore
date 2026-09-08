@@ -24,3 +24,13 @@ GoogleService-Info.plist
 Thumbs.db
 
 *.tsbuildinfo
+
+# Local security verification artifacts
+.security/
+functions/security-*.log
+functions/security-audit.json
+functions/security-audit-production.json
+functions/security-functions-list.json
+website/security-*.log
+website/security-audit.json
+.security-emulators.json

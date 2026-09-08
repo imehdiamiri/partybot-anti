@@ -1,6 +1,7 @@
 const { spawnSync } = require('child_process');
 
-const port = process.env.DATABASE_EMULATOR_PORT || '9012';
+const port = process.env.DATABASE_EMULATOR_PORT
+  || process.env.FIREBASE_DATABASE_EMULATOR_HOST?.split(':').pop() || '9012';
 
 const res = spawnSync('npx', ['jest', '--runInBand'], {
   cwd: __dirname,

@@ -21,6 +21,11 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 
+function validDatabaseId(value) {
+  return typeof value === 'string' && value.length > 0 && value.length <= 128
+    && !/[.#$\[\]/\u0000-\u001f\u007f]/.test(value);
+}
+
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -321,12 +326,12 @@ exports.syncRevenueCat = onCall(
       return { isPremium: false, isLifetime: false, credited: 0, skipped: true };
     }
 
-    const resp = await fetch(`https://api.revenuecat.com/v1/subscribers/${uid}`, {
+    const resp = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(uid)}`, {
       headers: { Authorization: `Bearer ${secret}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(15000),
     });
     if (!resp.ok) {
-      const body = await resp.text();
-      console.error('RC fetch failed', resp.status, body);
+      console.error('RC fetch failed', resp.status);
       throw new HttpsError('internal', `RevenueCat sync failed (${resp.status})`);
     }
 
@@ -423,6 +428,7 @@ exports.searchUsers = onCall({ cors: true }, async (request) => {
 
   const query = String(request.data?.query || '').trim().toLowerCase();
   if (query.length < 2) return { results: [] };
+  if (query.length > 32) throw new HttpsError('invalid-argument', 'Search must be at most 32 characters.');
 
   const snap = await admin
     .database()
@@ -537,7 +543,7 @@ exports.reportUser = onCall({ cors: true }, async (request) => {
   const reason = String(request.data?.reason || '');
   const context = String(request.data?.context || '').slice(0, 500);
 
-  if (!targetUid || targetUid === uid) {
+  if (!validDatabaseId(targetUid) || targetUid === uid) {
     throw new HttpsError('invalid-argument', 'Invalid target.');
   }
   if (!REPORT_REASONS.has(reason)) {
@@ -573,7 +579,7 @@ exports.blockUser = onCall({ cors: true }, async (request) => {
   await rateLimit(uid, 'blockUser', 60, 60 * 60 * 1000);
 
   const targetUid = String(request.data?.targetUid || '').trim();
-  if (!targetUid || targetUid === uid) {
+  if (!validDatabaseId(targetUid) || targetUid === uid) {
     throw new HttpsError('invalid-argument', 'Invalid target.');
   }
 
@@ -591,7 +597,7 @@ exports.unblockUser = onCall({ cors: true }, async (request) => {
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
   await rateLimit(uid, 'unblockUser', 60, 60 * 60 * 1000);
   const targetUid = String(request.data?.targetUid || '').trim();
-  if (!targetUid) throw new HttpsError('invalid-argument', 'Invalid target.');
+  if (!validDatabaseId(targetUid)) throw new HttpsError('invalid-argument', 'Invalid target.');
   await admin.database().ref(`blockedUsers/${uid}/${targetUid}`).remove();
   return { ok: true };
 });

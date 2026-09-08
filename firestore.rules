@@ -2,13 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // User profile docs — owner can write their own, anyone signed in can read.
+    // Private profiles are owner-only. Public social names live in RTDB.
     // Wallet/entitlement fields are server-only (Cloud Functions use admin SDK).
     match /users/{uid} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
-                            && request.auth.uid == uid
-                            && !request.resource.data.keys().hasAny(['wallet', 'isPremium', 'isLifetime', 'starsBalance']);
+      function profileFields() {
+        return ['username', 'email', 'provider', 'avatarURL', 'lastSeen', 'updatedAt'];
+      }
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.keys().hasOnly(profileFields());
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields());
       allow delete: if false;
     }
 

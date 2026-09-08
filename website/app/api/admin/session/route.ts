@@ -5,6 +5,9 @@ import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/auth";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  if (req.headers.get('origin') !== req.nextUrl.origin) {
+    return NextResponse.json({ error: 'invalid_origin' }, { status: 403 });
+  }
   const { idToken } = (await req.json().catch(() => ({}))) as { idToken?: string };
   if (!idToken || typeof idToken !== "string") {
     return NextResponse.json({ error: "missing_id_token" }, { status: 400 });
@@ -12,8 +15,12 @@ export async function POST(req: NextRequest) {
 
   const decoded = await adminAuth().verifyIdToken(idToken, true).catch(() => null);
   if (!decoded) return NextResponse.json({ error: "invalid_token" }, { status: 401 });
+  const authAge = Date.now() / 1000 - decoded.auth_time;
+  if (!Number.isFinite(authAge) || authAge < 0 || authAge > 300) {
+    return NextResponse.json({ error: 'recent_sign_in_required' }, { status: 401 });
+  }
 
-  const ok = decoded.admin === true || (await isAdminUid(decoded.uid).catch(() => false));
+  const ok = await isAdminUid(decoded.uid).catch(() => false);
   if (!ok) return NextResponse.json({ error: "not_admin" }, { status: 403 });
 
   const sessionCookie = await adminAuth().createSessionCookie(idToken, {
@@ -32,6 +39,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (req.headers.get('origin') !== req.nextUrl.origin) {
+    return NextResponse.json({ error: 'invalid_origin' }, { status: 403 });
+  }
   const session = req.cookies.get(SESSION_COOKIE)?.value;
   if (session) {
     try {

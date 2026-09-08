@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { rtdb as database, functions } from '../lib/firebase';
-import { ref, get as fbGet, set as fbSet, push, update as fbUpdate } from 'firebase/database';
+import { ref, get as fbGet, set as fbSet, push, update as fbUpdate, query, orderByChild, equalTo, limitToFirst } from 'firebase/database';
 import { httpsCallable } from 'firebase/functions';
 import { showToast } from '../components/ToastOverlay';
 import { cleanFriendName, friendNameKey, newGameFriends } from '../utils/friendNames';
@@ -105,32 +105,9 @@ export const useFriendsStore = create<FriendsState>()(
         try {
           let rawResults: Array<{ id: string; username: string; email?: string; avatarURL?: string }> = [];
 
-          // Try Cloud Function first (indexed, scalable)
-          try {
-            const { getFunctions, httpsCallable } = await import('firebase/functions');
-            const { app } = await import('../lib/firebase');
-            const functions = getFunctions(app);
-            const searchUsersFn = httpsCallable(functions, 'searchUsers');
-            const response = await searchUsersFn({ query: trimmed.toLowerCase() });
-            rawResults = (response.data as any).results || [];
-          } catch (fnError: any) {
-            // Fallback: client-side search (for dev / functions not deployed)
-            console.warn('searchUsers function unavailable, falling back to client scan:', fnError.message);
-            const usersRef = ref(database, 'users');
-            const snapshot = await fbGet(usersRef);
-            if (snapshot.exists()) {
-              const data = snapshot.val();
-              const lowerQuery = trimmed.toLowerCase();
-              for (const [uid, userData] of Object.entries(data as Record<string, any>)) {
-                if (uid === currentUserId) continue;
-                const username = userData.username || userData.displayName || '';
-                const email = userData.email || '';
-                if (username.toLowerCase().includes(lowerQuery) || email.toLowerCase().includes(lowerQuery)) {
-                  rawResults.push({ id: uid, username, email });
-                }
-              }
-            }
-          }
+          // Search returns only public fields; never scan private profile roots.
+          const response = await httpsCallable(functions, 'searchUsers')({ query: trimmed.toLowerCase() });
+          rawResults = (response.data as { results?: typeof rawResults }).results || [];
 
           // Enrich with relationship state (and hide blocked users entirely).
           const results: FriendSearchResult[] = rawResults
@@ -184,11 +161,14 @@ export const useFriendsStore = create<FriendsState>()(
           if (!snapshot.exists()) return;
           
           const request = snapshot.val();
-          await fbUpdate(reqRef, { status: 'accepted' });
+          if (request.toUserId !== currentUserId || request.status !== 'pending') return;
           
-          const friendshipData = { since: Date.now(), status: 'active' };
-          await fbSet(ref(database, `friendships/${currentUserId}/${request.fromUserId}`), friendshipData);
-          await fbSet(ref(database, `friendships/${request.fromUserId}/${currentUserId}`), friendshipData);
+          const friendshipData = { since: Date.now(), status: 'active', requestId };
+          await fbUpdate(ref(database), {
+            [`friendRequests/${requestId}/status`]: 'accepted',
+            [`friendships/${currentUserId}/${request.fromUserId}`]: friendshipData,
+            [`friendships/${request.fromUserId}/${currentUserId}`]: friendshipData,
+          });
           
           set(state => ({
             friendRequests: state.friendRequests.filter(r => r.id !== requestId),
@@ -226,17 +206,17 @@ export const useFriendsStore = create<FriendsState>()(
           const friends: Friend[] = [];
           
           for (const fid of friendIds) {
-            const userRef = ref(database, `users/${fid}`);
-            const userSnap = await fbGet(userRef);
-            if (userSnap.exists()) {
-              const u = userSnap.val();
+            const [username, displayName, avatarURL] = await Promise.all(
+              ['username', 'displayName', 'avatarURL'].map(field => fbGet(ref(database, `users/${fid}/${field}`))),
+            );
+            if (username.exists() || displayName.exists()) {
               friends.push({
                 id: fid,
-                name: u.username || u.displayName || 'Unknown',
+                name: username.val() || displayName.val() || 'Unknown',
                 isOnline: false,
                 status: 'Online friend',
                 kind: 'online',
-                avatarURL: u.avatarURL,
+                avatarURL: avatarURL.val() || undefined,
               });
             }
           }
@@ -250,7 +230,7 @@ export const useFriendsStore = create<FriendsState>()(
       loadFriendRequests: async (userId: string) => {
         try {
           const requestsRef = ref(database, 'friendRequests');
-          const snapshot = await fbGet(requestsRef);
+          const snapshot = await fbGet(query(requestsRef, orderByChild('toUserId'), equalTo(userId), limitToFirst(100)));
           if (!snapshot.exists()) {
             set({ friendRequests: [] });
             return;

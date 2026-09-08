@@ -3,8 +3,8 @@
     "users": {
       ".indexOn": ["usernameLower", "inviteCode"],
       "$uid": {
-        ".read": "auth != null",
-        ".write": "auth != null && auth.uid == $uid",
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": false,
 
         "wallet":                    { ".validate": false },
         "isPremium":                 { ".validate": false },
@@ -15,8 +15,14 @@
         "invitedBy":                 { ".validate": false },
         "inviteCode":                { ".validate": false },
 
-        "username":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
-        "usernameLower": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" }
+        "username": { ".read": "auth != null", ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
+        "usernameLower": { ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
+        "displayName": { ".read": "auth != null", ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isString() && newData.val().length <= 64" },
+        "avatarURL": { ".read": "auth != null", ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isString() && newData.val().length <= 2048" },
+        "email": { ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isString() && newData.val().length <= 320" },
+        "provider": { ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isString() && newData.val().length <= 32" },
+        "lastSeen": { ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+        "updatedAt": { ".write": "auth != null && auth.uid == $uid", ".validate": "newData.isNumber() && newData.val() <= now + 60000" }
       }
     },
 
@@ -33,20 +39,28 @@
       "$uid": {
         ".read":  "auth != null && auth.uid == $uid",
         "$friendUid": {
-          ".write": "auth != null && (auth.uid == $uid || auth.uid == $friendUid)"
+          ".write": "auth != null && (auth.uid == $uid || auth.uid == $friendUid) && (!newData.exists() || (!root.child('blockedUsers').child($uid).hasChild($friendUid) && !root.child('blockedUsers').child($friendUid).hasChild($uid) && newData.parent().parent().parent().child('friendRequests').child(newData.child('requestId').val()).child('status').val() == 'accepted' && newData.parent().parent().parent().child('friendRequests').child(newData.child('requestId').val()).child('toUserId').val() == auth.uid && ((newData.parent().parent().parent().child('friendRequests').child(newData.child('requestId').val()).child('fromUserId').val() == $uid && auth.uid == $friendUid) || (newData.parent().parent().parent().child('friendRequests').child(newData.child('requestId').val()).child('fromUserId').val() == $friendUid && auth.uid == $uid))))",
+          ".validate": "newData.hasChildren(['requestId', 'since', 'status'])",
+          "requestId": { ".validate": "newData.isString() && newData.val().length <= 128" },
+          "since": { ".validate": "newData.isNumber()" },
+          "status": { ".validate": "newData.val() == 'active'" },
+          "$other": { ".validate": false }
         }
       }
     },
 
     "friendRequests": {
       ".indexOn": ["toUserId", "fromUserId"],
+      ".read": "auth != null && query.limitToFirst <= 100 && ((query.orderByChild == 'toUserId' && query.equalTo == auth.uid) || (query.orderByChild == 'fromUserId' && query.equalTo == auth.uid))",
       "$rid": {
         ".read":  "auth != null && (data.child('toUserId').val() == auth.uid || data.child('fromUserId').val() == auth.uid)",
-        ".write": "auth != null && ((!data.exists() && newData.child('fromUserId').val() == auth.uid) || data.child('toUserId').val() == auth.uid || data.child('fromUserId').val() == auth.uid)",
-        "fromUserId": { ".validate": "newData.val() == auth.uid || data.exists()" },
-        "toUserId":   { ".validate": "newData.isString()" },
+        ".write": "auth != null && ((!newData.exists() && (data.child('fromUserId').val() == auth.uid || data.child('toUserId').val() == auth.uid)) || (newData.exists() && !root.child('blockedUsers').child(newData.child('toUserId').val()).hasChild(newData.child('fromUserId').val()) && !root.child('blockedUsers').child(newData.child('fromUserId').val()).hasChild(newData.child('toUserId').val()) && ((!data.exists() && newData.child('fromUserId').val() == auth.uid && newData.child('toUserId').val() != auth.uid && newData.child('status').val() == 'pending') || (data.child('toUserId').val() == auth.uid && data.child('status').val() == 'pending' && (newData.child('status').val() == 'accepted' || newData.child('status').val() == 'declined')))))",
+        ".validate": "newData.hasChildren(['fromUserId', 'toUserId', 'status', 'createdAt'])",
+        "fromUserId": { ".validate": "newData.isString() && newData.val().length <= 128 && (!data.exists() || newData.val() == data.val())" },
+        "toUserId":   { ".validate": "newData.isString() && newData.val().length <= 128 && (!data.exists() || newData.val() == data.val())" },
         "status":     { ".validate": "newData.val() == 'pending' || newData.val() == 'accepted' || newData.val() == 'declined'" },
-        "createdAt":  { ".validate": "newData.isNumber()" }
+        "createdAt":  { ".validate": "newData.isNumber() && (!data.exists() || newData.val() == data.val())" },
+        "$other": { ".validate": false }
       }
     },
 
@@ -109,7 +123,7 @@
         "actions": {
           ".read": "auth != null && data.parent().child('players').hasChild(auth.uid)",
           "$actionKey": {
-            ".write": "auth != null && ((!newData.exists() && (data.child('playerId').val() == auth.uid || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))) || (newData.exists() && data.parent().parent().child('players').hasChild(auth.uid) && ((newData.child('playerId').val() == auth.uid && newData.child('type').isString() && newData.child('type').val().length <= 64) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))))",
+            ".write": "auth != null && ((!newData.exists() && (data.child('playerId').val() == auth.uid || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))) || (newData.exists() && data.parent().parent().child('players').hasChild(auth.uid) && ((!data.exists() && newData.child('playerId').val() == auth.uid && newData.child('type').isString() && newData.child('type').val().length <= 64) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))))",
             "playerId": { ".validate": "newData.val() == auth.uid" },
             "type":     { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64" },
             "ts":       { ".validate": "newData.isNumber()" }
@@ -156,7 +170,13 @@
     "telemetry": {
       ".read": false,
       "$eid": {
-        ".write": "auth != null && newData.child('userId').val() == auth.uid && newData.child('event').isString() && newData.child('event').val().length <= 64"
+        ".write": "auth != null && !data.exists() && newData.child('userId').val() == auth.uid",
+        ".validate": "newData.hasChildren(['userId', 'event', 'at'])",
+        "userId": { ".validate": "newData.val() == auth.uid" },
+        "event": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64" },
+        "at": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+        "tags": { "$tag": { ".validate": "newData.isBoolean() || newData.isNumber() || (newData.isString() && newData.val().length <= 200)" } },
+        "$other": { ".validate": false }
       }
     },
 
@@ -191,15 +211,15 @@
       // we don't end up with arbitrary blobs.
       ".read": false,
       "$uid": {
-        ".write": "auth != null && auth.uid == $uid",
         "$pushId": {
+          ".write": "auth != null && auth.uid == $uid && !data.exists() && newData.exists()",
           ".validate": "newData.hasChildren(['message','at']) && newData.child('message').isString() && newData.child('message').val().length <= 1000 && newData.child('at').isNumber()",
           "message":    { ".validate": "newData.isString() && newData.val().length <= 1000" },
           "stack":      { ".validate": "newData.isString() && newData.val().length <= 4000" },
           "severity":   { ".validate": "newData.isString() && newData.val().length <= 16" },
           "platform":   { ".validate": "newData.isString() && newData.val().length <= 16" },
           "appVersion": { ".validate": "newData.isString() && newData.val().length <= 32" },
-          "tags":       { ".validate": "newData.hasChildren() || !newData.exists()" },
+          "tags":       { "$tag": { ".validate": "newData.isBoolean() || newData.isNumber() || (newData.isString() && newData.val().length <= 200)" } },
           "at":         { ".validate": "newData.isNumber()" },
           "$other":     { ".validate": false }
         }

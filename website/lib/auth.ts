@@ -23,7 +23,8 @@ export async function requireAdmin(): Promise<AdminUser> {
 
   try {
     const decoded = await adminAuth().verifySessionCookie(session, true);
-    const ok = decoded.admin === true || (await isAdminUid(decoded.uid));
+    // Consult current claims so a demoted admin cannot reuse an old session.
+    const ok = await isAdminUid(decoded.uid);
     if (!ok) redirect("/admin/login?error=not_admin");
     return { uid: decoded.uid, email: decoded.email ?? "" };
   } catch {
