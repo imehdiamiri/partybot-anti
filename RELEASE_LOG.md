@@ -16,6 +16,13 @@
   corrupt-record rejection. `git diff --check` PASS.
 - Only `redeemInvite` needs deployment. Client change is a comment correction;
   no mobile bundle/native config, rules or Hosting change is needed. No Git push.
+- Source: `1e4b038`. Firebase confirmed a successful update of
+  `redeemInvite(us-central1)` on Node 22 and overall deployment completion using
+  `firebase deploy --project partyplay-8 --only functions:redeemInvite`.
+  Verified checkpoint: `checkpoint/2026-09-08-invite-recovery-published`.
+  Isolated test emulators were stopped after verification. Rolling back to the
+  pre-recovery function would block retries of pending receipts until this
+  implementation is republished; Git revert alone does not roll back Firebase.
 
 ## 2026-09-08 — server input and purchase validation
 
