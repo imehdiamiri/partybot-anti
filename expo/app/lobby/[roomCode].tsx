@@ -20,6 +20,11 @@ export default function LobbyScreen() {
     return <Redirect href="/(tabs)" />;
   }
 
+  return <NativeLobbyScreen />;
+}
+
+function NativeLobbyScreen() {
+
   const { roomCode } = useLocalSearchParams<{ roomCode: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();

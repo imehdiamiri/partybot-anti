@@ -15,6 +15,11 @@ export default function JoinLobbyScreen() {
     return <Redirect href="/(tabs)" />;
   }
 
+  return <NativeJoinLobbyScreen />;
+}
+
+function NativeJoinLobbyScreen() {
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   

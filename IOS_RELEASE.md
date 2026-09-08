@@ -4,7 +4,7 @@
 
 - Apple Developer organization: DIGIGET LTD.
 - Apple team: `9R9TPVS9UL`; membership renews September 8, 2027.
-- Bundle identifier: `com.partybot`; version/runtime: `1.1.0`.
+- Bundle identifier: `com.partybot`; version/runtime: `1.1.1`.
 - EAS project: `b7949f49-aef7-4963-9d95-5eb35280136e`, owner `imehdiamiri`.
 - Firebase client plist matches `com.partybot` and `partyplay-8`.
 - Config introspection includes Apple Sign-In and the Google reversed-client URL scheme.

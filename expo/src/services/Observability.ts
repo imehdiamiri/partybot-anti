@@ -9,7 +9,7 @@
  *   2. Persist sanitized crash records in RTDB (`crashLogs/$uid/$pushId`) so
  *      the admin website can review them. Writes are best-effort and silent
  *      on failure (we never crash the crash handler).
- *   3. Strip user prompts, AI outputs, and any obvious PII before persisting.
+ *   3. Strip personal information and tokens before persisting.
  *
  * When the project graduates to an EAS build, swap `recordEvent()` for the
  * native `Sentry.captureException()` call — every call site already routes

@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "9R9TPVS9UL.com.partybot",
+        "paths": ["/invite", "/invite/*"]
+      }
+    ]
+  }
+}

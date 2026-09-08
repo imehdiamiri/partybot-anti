@@ -58,6 +58,14 @@ export default function ProfileScreen() {
   const { isSoundEnabled, setSoundEnabled, isVibrationEnabled, setVibrationEnabled } = useSettingsStore();
 
   const [username, setUsername] = useState(authAccount?.username || 'Guest');
+
+  const handleRestore = async () => {
+    const restored = await restorePurchases();
+    Alert.alert(
+      restored ? 'Purchases restored' : 'Could not restore purchases',
+      restored ? 'Your purchases have been checked with the store.' : usePaywallStore.getState().error || 'Please try again later.',
+    );
+  };
   
   const handleLogout = () => {
     if (activeSession) {
@@ -99,7 +107,7 @@ export default function ProfileScreen() {
             // Second confirmation — App Store reviewers expect a deliberate flow.
             Alert.alert(
               'Are you sure?',
-              'There is no recovery. Your username, stars, and Premium entitlement will be removed.',
+              'There is no recovery. Your username and stars will be removed. Deleting your account does not cancel a store subscription. Manage subscriptions in the App Store or Google Play.',
               [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -142,7 +150,6 @@ export default function ProfileScreen() {
                         k.startsWith('economy-') ||
                         k.startsWith('game-') ||
                         k.startsWith('multiplayer-') ||
-                        k.startsWith('rork-') ||
                         k.startsWith('partybot-')
                       );
                       if (drop.length > 0) await AsyncStorage.multiRemove(drop);
@@ -342,7 +349,7 @@ export default function ProfileScreen() {
           </View>
         </SurfaceCard>
 
-        <TouchableOpacity style={styles.restoreBtn} onPress={() => restorePurchases()}>
+        <TouchableOpacity style={styles.restoreBtn} onPress={handleRestore}>
           <Ionicons name="refresh" size={14} color={Colors.secondary} />
           <Text style={styles.restoreBtnText}>Restore Purchases</Text>
         </TouchableOpacity>
@@ -441,7 +448,7 @@ export default function ProfileScreen() {
       )}
 
       {!isWeb && (
-        <TouchableOpacity style={styles.prefRow} onPress={() => restorePurchases()}>
+        <TouchableOpacity style={styles.prefRow} onPress={handleRestore}>
           <View style={styles.prefLeft}>
             <Ionicons name="refresh" size={20} color={Colors.white} />
             <Text style={styles.prefText}>Restore Purchases</Text>

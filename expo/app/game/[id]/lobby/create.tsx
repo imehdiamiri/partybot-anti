@@ -21,6 +21,11 @@ export default function CreateLobbyScreen() {
     return <Redirect href="/(tabs)" />;
   }
 
+  return <NativeCreateLobbyScreen id={id} />;
+}
+
+function NativeCreateLobbyScreen({ id }: { id: string }) {
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   

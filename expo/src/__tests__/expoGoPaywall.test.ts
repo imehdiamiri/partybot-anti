@@ -9,3 +9,11 @@ test('Expo Go starts and configures safely without loading the purchases native 
   expect(usePaywallStore.getState().isConfigured).toBe(false);
   expect(usePaywallStore.getState().packages).toEqual([]);
 });
+
+test('unavailable native purchases and restore return useful errors without calling a missing SDK', async () => {
+  expect(await usePaywallStore.getState().restorePurchases()).toBe(false);
+  expect(usePaywallStore.getState().error).toContain('currently unavailable');
+  expect(await usePaywallStore.getState().purchasePackage({} as any)).toBe(false);
+  expect(usePaywallStore.getState().error).toContain('currently unavailable');
+  expect(usePaywallStore.getState().isPurchasing).toBe(false);
+});

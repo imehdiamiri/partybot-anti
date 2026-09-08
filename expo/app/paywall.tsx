@@ -1,11 +1,11 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
   Alert,
   Platform
@@ -31,13 +31,48 @@ enum PaywallTab {
 }
 
 export default function PaywallScreen() {
+  return isWeb ? <WebPaywallScreen /> : <NativePaywallScreen />;
+}
+
+function WebPaywallScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  
-  const { 
-    isLoading, 
-    isPurchasing, 
-    error, 
+
+  return (
+    <View style={styles.container}>
+      <AppBackgroundView />
+      <View style={[styles.centerWebContainer, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 40 }]}>
+        <IconSymbol name="sparkles" size={54} color={Colors.yellow} />
+        <Text style={styles.webTitle}>Local Play Unlocked</Text>
+        <Text style={styles.webSubtitle}>
+          All party games and tools are completely free to play in local 1-Phone mode on the web!
+        </Text>
+        <Text style={styles.webDetail}>
+          Premium subscriptions and Star packs are available in the mobile app for iOS and Android.
+        </Text>
+        <TouchableOpacity
+          style={styles.webBackButton}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/');
+          }}
+        >
+          <Text style={styles.webBackButtonText}>Back to Games</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+}
+
+function NativePaywallScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const {
+    isLoading,
+    isPurchasing,
+    error,
     configure,
     purchasePackage,
     restorePurchases,
@@ -53,32 +88,6 @@ export default function PaywallScreen() {
   const [tab, setTab] = useState<PaywallTab>(PaywallTab.Subscription);
   const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
 
-  if (isWeb) {
-    return (
-      <View style={styles.container}>
-        <AppBackgroundView />
-        <View style={[styles.centerWebContainer, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 40 }]}>
-          <IconSymbol name="sparkles" size={54} color={Colors.yellow} />
-          <Text style={styles.webTitle}>Local Play Unlocked</Text>
-          <Text style={styles.webSubtitle}>
-            All party games and tools are completely free to play in local 1-Phone mode on the web!
-          </Text>
-          <Text style={styles.webDetail}>
-            Premium subscriptions and Star packs are available in the mobile app for iOS and Android.
-          </Text>
-          <TouchableOpacity
-            style={styles.webBackButton}
-            onPress={() => {
-              if (router.canGoBack()) router.back();
-              else router.replace('/');
-            }}
-          >
-            <Text style={styles.webBackButtonText}>Back to Games</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   useEffect(() => {
     if (uid) configure(uid);
@@ -118,7 +127,7 @@ export default function PaywallScreen() {
   const renderTabSelector = () => (
     <View style={styles.tabContainer}>
       {Object.values(PaywallTab).map((t) => (
-        <TouchableOpacity 
+        <TouchableOpacity
           key={t}
           style={[styles.tabButton, tab === t && styles.tabButtonActive]}
           onPress={() => setTab(t)}
@@ -136,10 +145,10 @@ export default function PaywallScreen() {
       <View style={styles.iconContainer}>
         {/* Real radial gradient behind icon using SVG GlowView */}
         <GlowView color="rgba(255, 165, 0, 0.5)" size={180} style={{ position: 'absolute' }} />
-        <IconSymbol 
-          name={isPremium ? "crown.fill" : "sparkles"} 
-          size={44} 
-          color="#FFA500" 
+        <IconSymbol
+          name={isPremium ? "crown.fill" : "sparkles"}
+          size={44}
+          color="#FFA500"
         />
       </View>
       <Text style={styles.heroTitle}>
@@ -171,9 +180,9 @@ export default function PaywallScreen() {
         {subs.length > 0 && (
           <View style={{ gap: 10 }}>
             {subs.map(pkg => (
-              <PlanRow 
-                key={pkg.identifier} 
-                pkg={pkg} 
+              <PlanRow
+                key={pkg.identifier}
+                pkg={pkg}
                 isSelected={selectedPackage?.identifier === pkg.identifier}
                 onSelect={() => setSelectedPackage(pkg)}
               />
@@ -182,7 +191,7 @@ export default function PaywallScreen() {
         )}
 
         {lifetime && (
-          <LifetimeRow 
+          <LifetimeRow
             pkg={lifetime}
             isSelected={selectedPackage?.identifier === lifetime.identifier}
             onSelect={() => setSelectedPackage(lifetime)}
@@ -190,7 +199,7 @@ export default function PaywallScreen() {
         )}
 
         {/* CTA Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.ctaButton, (isPurchasing || !selectedPackage) && styles.ctaButtonDisabled]}
           disabled={isPurchasing || !selectedPackage}
           onPress={() => selectedPackage && handlePurchase(selectedPackage)}
@@ -203,7 +212,7 @@ export default function PaywallScreen() {
           >
             {isPurchasing && <ActivityIndicator color="white" style={{ marginRight: 8 }} />}
             <Text style={styles.ctaText}>
-              {selectedPackage?.packageType === 'LIFETIME' ? 'Get Lifetime Access' : 
+              {selectedPackage?.packageType === 'LIFETIME' ? 'Get Lifetime Access' :
                selectedPackage ? `Start ${selectedPackage.packageType.toLowerCase()}` : 'Continue'}
             </Text>
           </LinearGradient>
@@ -228,9 +237,9 @@ export default function PaywallScreen() {
         ) : (
           <View style={{ gap: 10 }}>
             {packs.map(pkg => (
-              <PackRow 
-                key={pkg.identifier} 
-                pkg={pkg} 
+              <PackRow
+                key={pkg.identifier}
+                pkg={pkg}
                 icon="star.fill"
                 iconColor={Colors.orange}
                 onPurchase={() => handlePurchase(pkg)}
@@ -259,9 +268,9 @@ export default function PaywallScreen() {
         ) : (
           <View style={{ gap: 10 }}>
             {donations.map(pkg => (
-              <PackRow 
-                key={pkg.identifier} 
-                pkg={pkg} 
+              <PackRow
+                key={pkg.identifier}
+                pkg={pkg}
                 icon="heart.fill"
                 iconColor="#FF2D55"
                 onPurchase={() => handlePurchase(pkg)}
@@ -277,7 +286,7 @@ export default function PaywallScreen() {
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      
+
       {/* Navigation Bar */}
       <View style={[styles.navBar, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.closeButton} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}>
@@ -337,9 +346,9 @@ const FeatureRow = ({ icon, color, text }: { icon: string, color: string, text: 
 const PlanRow = ({ pkg, isSelected, onSelect }: { pkg: PurchasesPackage, isSelected: boolean, onSelect: () => void }) => {
   const isBest = pkg.packageType === 'ANNUAL';
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.planRow, 
+        styles.planRow,
         isSelected ? styles.planRowSelected : styles.planRowDefault,
         isSelected && styles.planRowSelectedBorder,
         !isSelected && isBest && styles.planRowBestBorder
@@ -364,9 +373,9 @@ const PlanRow = ({ pkg, isSelected, onSelect }: { pkg: PurchasesPackage, isSelec
 };
 
 const LifetimeRow = ({ pkg, isSelected, onSelect }: { pkg: PurchasesPackage, isSelected: boolean, onSelect: () => void }) => (
-  <TouchableOpacity 
+  <TouchableOpacity
     style={[
-      styles.planRow, 
+      styles.planRow,
       isSelected ? styles.lifetimeSelected : styles.planRowDefault,
       isSelected && styles.lifetimeSelectedBorder
     ]}
@@ -385,7 +394,7 @@ const LifetimeRow = ({ pkg, isSelected, onSelect }: { pkg: PurchasesPackage, isS
 );
 
 const PackRow = ({ pkg, icon, iconColor, onPurchase, isPurchasing }: { pkg: PurchasesPackage, icon: string, iconColor: string, onPurchase: () => void, isPurchasing: boolean }) => (
-  <TouchableOpacity 
+  <TouchableOpacity
     style={styles.packRow}
     onPress={onPurchase}
     disabled={isPurchasing}

@@ -695,18 +695,10 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
 
   await db.ref().update(friendUpdates);
 
-  // 7. Firestore mirror.
-  try {
-    const historySnap = await admin.firestore().collection(`users/${uid}/history`).get();
-    if (!historySnap.empty) {
-      const batch = admin.firestore().batch();
-      historySnap.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
-    }
-    await admin.firestore().collection('users').doc(uid).delete(); 
-  } catch (e) {
-    console.error('Firestore deletion failed:', e);
-  }
+  // 7. Delete the entire Firestore subtree, including histories larger than one
+  // write batch. Keep the auth account available for retry if deletion fails.
+  const firestore = admin.firestore();
+  await firestore.recursiveDelete(firestore.collection('users').doc(uid));
 
   // 8. Revoke all sessions and delete the auth record.
   try { await admin.auth().revokeRefreshTokens(uid); } catch {}

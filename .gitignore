@@ -2,7 +2,6 @@ node_modules
 .env
 .env.*
 .expo
-.rork
 
 # Firebase
 .firebase/
@@ -23,3 +22,5 @@ GoogleService-Info.plist
 # OS
 .DS_Store
 Thumbs.db
+
+*.tsbuildinfo

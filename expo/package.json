@@ -1,10 +1,9 @@
 {
   "name": "expo-app",
   "main": "expo-router/entry",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
@@ -17,7 +16,6 @@
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-google-signin/google-signin": "^16.1.2",
-    "@react-native-picker/picker": "2.11.4",
     "babel-preset-expo": "~57.0.0",
     "expo": "^57.0.20",
     "expo-apple-authentication": "~57.0.1",
@@ -54,7 +52,6 @@
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
-    "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.1",
     "zustand": "^5.0.12"
   },

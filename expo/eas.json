@@ -25,6 +25,12 @@
         "APP_VARIANT": "preview"
       }
     },
+    "ios-simulator": {
+      "extends": "preview",
+      "ios": {
+        "simulator": true
+      }
+    },
     "testflight": {
       "distribution": "store",
       "autoIncrement": true,

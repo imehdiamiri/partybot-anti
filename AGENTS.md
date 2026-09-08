@@ -1,8 +1,8 @@
 # PlayBot development workflow
 
 The owner transferred all development and publishing to Codex on 2026-09-05.
-Work directly in this repository. Do not delegate to or wait for Antigravity.
-The old CODEX_ANTIGRAVITY_BRIDGE.md is an archive, not an active task queue.
+Work directly in this repository. Development is managed by Codex.
+Use RELEASE_LOG.md for release history.
 User-facing updates are Persian; code and technical release records are English.
 
 ## Checkpoints and releases

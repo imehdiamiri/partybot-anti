@@ -60,6 +60,11 @@ export function ResponsiveWebContainer({ children }: ResponsiveWebContainerProps
     return <>{children}</>;
   }
 
+  return <WebContainer>{children}</WebContainer>;
+}
+
+function WebContainer({ children }: ResponsiveWebContainerProps) {
+
   const pathname = usePathname();
   const rootRef = useRef<any>(null);
   const contentRef = useRef<any>(null);

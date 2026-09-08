@@ -1,5 +1,35 @@
 # Release log
 
+## 2026-09-08 — iOS source cleanup and release audit
+
+- Recovery: `checkpoint/2026-09-08-before-ios-cleanup`; verified source tag:
+  `checkpoint/2026-09-08-ios-cleanup-verified`. Owner explicitly approved deleting
+  the six historical coordination documents and correcting legacy tool names in
+  workflow instructions after automatic review initially rejected the broad cleanup.
+  Existing workflow/publishing safeguards and Git history were preserved.
+- Removed obsolete editor/generation metadata, unused source components/helpers,
+  broken maintenance scripts, unused native Picker/WebView and stale generated
+  build metadata. Updated developer docs to actual SDK57/Firebase architecture.
+- Repaired conditional Hook ordering, absent-SDK purchase/restore handling,
+  restore feedback, subscription-deletion notice, native link routing and Apple
+  domain association. Corrected legal pages' outdated features/data descriptions.
+- Scoped backend fix: deleteAccount now recursively removes the Firestore subtree
+  and propagates data-deletion failures before removing authentication.
+- Replaced unverified commercial audio with a locally generated original Music
+  Drop cue, retaining 9700ms timing and existing saved mode IDs.
+- Native dependency removal requires runtime/version 1.1.1 and new binaries.
+  No incompatible OTA is sent to 1.1.0 or Expo Go. Added an iOS simulator build
+  profile for native compilation checks without Apple signing credentials.
+- Checks: TypeScript PASS; app Jest 36 suites/263 tests PASS; backend emulator
+  tests 26 PASS; Expo Doctor 21/21 PASS; iOS/Android/web exports PASS;
+  git diff --check PASS. Web-only export synced to website/public.
+- Compatible dependency fixes: critical/high npm findings reduced to zero;
+  17 moderate findings remain. Source ESLint: 101 errors/256 warnings remain,
+  principally React Compiler patterns; no clean-lint or App Store approval claim.
+- Full findings and unresolved signing, purchases, store metadata, rights and
+  physical-device checks: IOS_AUDIT.md. Outcomes of deployments/build requests
+  are recorded below only after service confirmation. No Git push.
+
 ## 2026-09-08 — iOS TestFlight preparation
 
 - Recovery tag: `checkpoint/2026-09-08-before-ios-setup`; prepared source tag:
@@ -642,7 +672,7 @@
 - Physical-device receipt is not claimed. Existing test-renderer deprecation and
   Expo dynamic-import warning remain; no native dependency/runtime changed.
 - Recovery tag: `checkpoint/hero-refresh-2026-09-06`. Local backup bundle:
-  `C:/Users/Mehdi/Documents/Codex/2026-08-14/playbot-antigravity-ios-android-audit/playbot-hero-refresh-2026-09-06.bundle`.
+  `C:/Users/Mehdi/Documents/Codex/2026-08-14/playbot-legacy workspace-ios-android-audit/playbot-hero-refresh-2026-09-06.bundle`.
   Git remote push remains pending explicit destination confirmation; cloud rollback
   requires republishing a recovered version, not just reverting Git.
 
@@ -925,7 +955,7 @@
 - Before changes: `f636fafc33d9920b24666688a7edcaa2a188d84c`.
 - Tag: `checkpoint/2026-09-05-before-codex`.
 - Full Git bundle (verified):
-  `C:/Users/Mehdi/Documents/Codex/2026-08-14/playbot-antigravity-ios-android-audit/playbot-checkpoint-2026-09-05.bundle`.
+  `C:/Users/Mehdi/Documents/Codex/2026-08-14/playbot-legacy workspace-ios-android-audit/playbot-checkpoint-2026-09-05.bundle`.
 - Existing origin: `https://github.com/imehdiamiri/partybot-anti`; push was blocked by
   auto-review pending explicit destination confirmation. Local checkpoint is complete.
 - This checkpoint preserves the accumulated previous work; it is not a claim that
@@ -933,7 +963,7 @@
 
 ### Changes
 
-- Archived the Antigravity dispatch workflow; Codex now implements and releases.
+- Archived the legacy workspace dispatch workflow; Codex now implements and releases.
 - Removed unused AI toolkit and notifications dependencies. Retained the previously
   transitive `lucide-react-native@1.14.0` as a direct dependency used by Eye Sight.
 - Declared Puppeteer as a dev dependency so existing browser checks survive npm install.

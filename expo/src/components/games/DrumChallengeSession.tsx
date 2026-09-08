@@ -35,10 +35,10 @@ type DrumMode = 'whitney' | 'metronome';
 
 const MODES = {
   whitney: {
-    audio: require('@/assets/sounds/whitney_raw.wav'),
+    audio: require('@/assets/sounds/music_drop.wav'),
     beatTime: 9700,
-    title: 'Whitney Houston',
-    desc: 'The iconic beat drop!',
+    title: 'Music Drop',
+    desc: 'Catch the beat after the pause!',
   },
   metronome: {
     audio: null,

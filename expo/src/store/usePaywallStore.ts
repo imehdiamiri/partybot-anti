@@ -193,6 +193,10 @@ export const usePaywallStore = create<PaywallState>((set, get) => ({
   },
 
   purchasePackage: async (pkg: PurchasesPackage) => {
+    if (!hasApiKey() || !get().isConfigured) {
+      set({ error: 'Purchases are currently unavailable. Please try again later.' });
+      return false;
+    }
     set({ isPurchasing: true, error: null });
     try {
       await Purchases.purchasePackage(pkg);
@@ -209,6 +213,10 @@ export const usePaywallStore = create<PaywallState>((set, get) => ({
   },
 
   restorePurchases: async () => {
+    if (!hasApiKey() || !get().isConfigured) {
+      set({ error: 'Purchase restoration is currently unavailable. Please try again later.' });
+      return false;
+    }
     set({ isLoading: true, error: null });
     try {
       await Purchases.restorePurchases();

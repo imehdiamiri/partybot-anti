@@ -6,7 +6,7 @@
  *  - Firestore (user profiles, game history)
  *  - Realtime Database (live sessions, lobbies, presence, economy)
  *  - Storage (avatars, generated content)
- *  - Functions (server-validated mutations, AI proxy)
+ *  - Functions (server-validated mutations)
  *
  * Config is read from EXPO_PUBLIC_FIREBASE_* env vars. There is no hardcoded
  * fallback: shipping a fallback would leak the production project into every

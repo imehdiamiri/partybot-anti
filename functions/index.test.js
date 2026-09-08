@@ -74,6 +74,7 @@ beforeEach(() => {
   });
 
   jest.spyOn(admin, 'firestore').mockReturnValue({
+    recursiveDelete: jest.fn().mockResolvedValue(),
     collection: jest.fn().mockReturnValue({
       doc: jest.fn().mockReturnValue({
         delete: jest.fn().mockResolvedValue(),
@@ -369,6 +370,13 @@ describe('Invite Redemption & Migration Races', () => {
 });
 
 describe('Account Deletion Ownership-Safe Cleanup', () => {
+  test('Firestore failure keeps authentication available for a deletion retry', async () => {
+    admin.firestore().recursiveDelete.mockRejectedValueOnce(new Error('Firestore unavailable'));
+    const wrappedDelete = testEnv.wrap(functions.deleteAccount);
+    await expect(wrappedDelete({ data: {}, auth: { uid: 'deletion_retry' } })).rejects.toThrow('Firestore unavailable');
+    expect(admin.auth().deleteUser).not.toHaveBeenCalled();
+  });
+
   test('deleteAccount: removes inviteCodes registry reservation when owned by user', async () => {
     const uid = 'del_user_valid';
     await admin.database().ref(`users/${uid}`).set({

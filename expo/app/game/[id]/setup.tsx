@@ -653,7 +653,7 @@ export default function GameSetupScreen() {
             </View>
             <View style={{ flexDirection: 'column', gap: 10, marginTop: 10 }}>
               {([
-                { id: 'whitney', title: 'Whitney Houston', sub: 'The iconic beat drop', icon: 'mic.fill', color: Colors.green },
+                { id: 'whitney', title: 'Music Drop', sub: 'Catch the beat after the pause', icon: 'mic.fill', color: Colors.green },
                 { id: 'metronome', title: 'Metronome', sub: 'Pure internal timing test', icon: 'metronome', color: '#AF52DE' }
               ] as const).map(d => {
                 const sel = drumMode === d.id;

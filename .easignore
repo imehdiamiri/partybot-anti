@@ -3,7 +3,6 @@ node_modules/
 .env
 .env.*
 .expo/
-.rork/
 .firebase/
 .firebaserc
 *-debug*.log
