@@ -15,6 +15,13 @@
 - Scope/limits: SECURITY_AUDIT.md. App Check, multi-account abuse, real StoreKit
   testing, cross-account receipt handling and retry-safe multi-user invite credits
   remain open. No Git push, mobile update or App Store submission in this batch.
+- Source commit: `8b856fe`. Initial deployment stopped while listing cloud
+  functions; a subsequent diagnostic read confirmed successful IAM and Functions
+  API responses (HTTP 200). Retried only the same three affected targets.
+- Firebase confirmed successful updates for `recordHostMigration(us-central1)`,
+  `redeemInvite(us-central1)` and `syncRevenueCat(us-central1)` and overall deploy
+  completion. No other functions, rules, Hosting content or native runtime changed.
+  Verified checkpoint: `checkpoint/2026-09-08-server-validation-published`.
 
 ## 2026-09-08 — security hardening
 
