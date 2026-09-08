@@ -26,6 +26,10 @@ function validDatabaseId(value) {
     && !/[.#$\[\]/\u0000-\u001f\u007f]/.test(value);
 }
 
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -98,7 +102,14 @@ exports.recordHostMigration = onCall({ cors: true }, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
   await rateLimit(uid, 'recordHostMigration', 60, 60 * 1000);
-  const roomCode = String(request.data?.roomCode || '').slice(0, 12);
+  const roomCode = request.data?.roomCode;
+  if (typeof roomCode !== 'string' || !/^[0-9]{6}$/.test(roomCode)) {
+    throw new HttpsError('invalid-argument', 'Invalid room code.');
+  }
+  const room = (await admin.database().ref(`rooms/${roomCode}`).once('value')).val();
+  if (!room || room.hostId !== uid || !Object.hasOwn(room.players || {}, uid)) {
+    throw new HttpsError('permission-denied', 'Only the active room host may report migration.');
+  }
   const reason = String(request.data?.reason || 'host_gone').slice(0, 32);
   const day = new Date().toISOString().split('T')[0];
   const ref = admin.database().ref(`metrics/hostMigrations/${day}`);
@@ -155,8 +166,8 @@ exports.redeemInvite = onCall({ cors: true }, async (request) => {
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
   await rateLimit(uid, 'redeemInvite', 5, 60 * 60 * 1000);
 
-  const raw = String(request.data?.code || '').trim().toUpperCase();
-  if (!raw || raw.length < 4 || raw.length > 12) {
+  const raw = typeof request.data?.code === 'string' ? request.data.code.trim().toUpperCase() : '';
+  if (!/^[A-Z0-9]{4,12}$/.test(raw)) {
     throw new HttpsError('invalid-argument', 'Invalid invite code.');
   }
 
@@ -198,7 +209,7 @@ exports.redeemInvite = onCall({ cors: true }, async (request) => {
     }
   }
 
-  if (!inviterUid) {
+  if (!validDatabaseId(inviterUid)) {
     throw new HttpsError('not-found', 'Invalid invite code.');
   }
 
@@ -336,20 +347,31 @@ exports.syncRevenueCat = onCall(
     }
 
     const data = await resp.json();
-    const subscriber = data.subscriber || {};
-    const entitlements = subscriber.entitlements || {};
-    const nonSubs = subscriber.non_subscriptions || {};
+    // A successful HTTP status alone does not validate the upstream schema.
+    // Preserve saved state if the response is incomplete or has changed shape.
+    if (!isRecord(data?.subscriber) || !isRecord(data.subscriber.entitlements)
+      || !isRecord(data.subscriber.non_subscriptions)) {
+      throw new HttpsError('internal', 'Invalid purchase service response. Please retry.');
+    }
+    const subscriber = data.subscriber;
+    const entitlements = subscriber.entitlements;
+    const nonSubs = subscriber.non_subscriptions;
 
     const now = Date.now();
     const premiumEnt = entitlements[PREMIUM_ENTITLEMENT];
-    const expiresMs = premiumEnt?.expires_date
-      ? Date.parse(premiumEnt.expires_date)
-      : null;
-    const isPremium = !!premiumEnt && (expiresMs === null || expiresMs > now);
-    const isLifetime =
-      !!premiumEnt && expiresMs === null
-        ? true
-        : Object.keys(nonSubs).some((pid) => LIFETIME_PRODUCT_IDS.includes(pid));
+    const expiresMs = typeof premiumEnt?.expires_date === 'string'
+      ? Date.parse(premiumEnt.expires_date) : NaN;
+    const graceMs = typeof premiumEnt?.grace_period_expires_date === 'string'
+      ? Date.parse(premiumEnt.grace_period_expires_date) : NaN;
+    const isPremium = isRecord(premiumEnt)
+      && typeof premiumEnt.product_identifier === 'string'
+      && premiumEnt.product_identifier.length > 0
+      && (premiumEnt.expires_date === null
+        || (Number.isFinite(expiresMs) && (expiresMs > now || graceMs > now)));
+    // A historical product key is not evidence of a currently valid lifetime
+    // entitlement; missing expiry is also not the same as explicit null expiry.
+    const isLifetime = isPremium && premiumEnt.expires_date === null
+      && LIFETIME_PRODUCT_IDS.includes(premiumEnt.product_identifier);
 
     const processedRef = admin.database().ref(`users/${uid}/processedTransactions`);
     const processedSnap = await processedRef.once('value');
@@ -357,7 +379,7 @@ exports.syncRevenueCat = onCall(
 
     let newlyCredited = 0;
     for (const [pid, items] of Object.entries(nonSubs)) {
-      const stars = STAR_PACKS[pid];
+      const stars = Object.hasOwn(STAR_PACKS, pid) ? STAR_PACKS[pid] : 0;
       if (!stars || !Array.isArray(items)) continue;
       for (const item of items) {
         const txid = item.id || item.store_transaction_id;
@@ -379,7 +401,7 @@ exports.syncRevenueCat = onCall(
 
         let txnCredited = 0;
         for (const [pid, items] of Object.entries(nonSubs)) {
-          const stars = STAR_PACKS[pid];
+          const stars = Object.hasOwn(STAR_PACKS, pid) ? STAR_PACKS[pid] : 0;
           if (!stars || !Array.isArray(items)) continue;
           for (const item of items) {
             const txid = item.id || item.store_transaction_id;

@@ -202,6 +202,61 @@ describe('Security regression: account and event boundaries', () => {
   });
 });
 
+describe('Server validation and reward boundaries', () => {
+  test('invite redemption rejects nested registry paths', async () => {
+    await admin.database().ref('inviteCodes/ABCD/EFGH').set('inviter');
+    await expect(testEnv.wrap(functions.redeemInvite)({ auth: { uid: 'guest' }, data: { code: 'ABCD/EFGH' } }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  test('an outsider cannot create host migration metrics', async () => {
+    await expect(testEnv.wrap(functions.recordHostMigration)({ auth: { uid: 'outsider' }, data: { roomCode: '123456' } }))
+      .rejects.toMatchObject({ code: 'permission-denied' });
+    expect((await admin.database().ref('metrics').get()).exists()).toBe(false);
+  });
+
+  test('concurrent daily requests grant only one reward', async () => {
+    const wrapped = testEnv.wrap(functions.claimDailyReward);
+    const results = await Promise.allSettled(Array.from({ length: 5 }, () => wrapped({ auth: { uid: 'daily_race' }, data: {} })));
+    expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1);
+    expect((await admin.database().ref('users/daily_race/wallet/balance').get()).val()).toBe(5);
+  });
+
+  test.each(['recordHostMigration', 'claimDailyReward', 'redeemInvite', 'ensureInviteCode', 'syncRevenueCat', 'searchUsers', 'reportUser', 'blockUser', 'unblockUser', 'deleteAccount', 'bootstrapFirstAdmin'])('%s rejects missing authentication', async name => {
+    await expect(testEnv.wrap(functions[name])({ data: {} })).rejects.toMatchObject({ code: 'unauthenticated' });
+  });
+
+  test.each([
+    [{}, {}, false, false],
+    [undefined, { lifetime: [] }, false, false],
+    [{ product_identifier: 'monthly' }, {}, false, false],
+    [{ product_identifier: 'monthly', expires_date: 'invalid' }, {}, false, false],
+    [{ product_identifier: 'monthly', expires_date: '2000-01-01T00:00:00Z' }, {}, false, false],
+    [{ product_identifier: 'monthly', expires_date: '2999-01-01T00:00:00Z' }, {}, true, false],
+    [{ product_identifier: 'monthly', expires_date: '2000-01-01T00:00:00Z', grace_period_expires_date: '2999-01-01T00:00:00Z' }, {}, true, false],
+    [{ product_identifier: 'partybot_lifetime', expires_date: null }, {}, true, true],
+  ])('RevenueCat entitlement %# grants only explicit active access', async (premium, nonSubs, active, lifetime) => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ subscriber: { entitlements: premium === undefined ? {} : { Premium: premium }, non_subscriptions: nonSubs } }) });
+    const result = await testEnv.wrap(functions.syncRevenueCat)({ auth: { uid: 'entitlement_user' }, data: {} });
+    expect(result.isPremium).toBe(active);
+    expect(result.isLifetime).toBe(lifetime);
+  });
+
+  test('malformed RevenueCat response leaves saved entitlement untouched', async () => {
+    await admin.database().ref('users/known_customer').set({ isPremium: true });
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ error: 'bad upstream format' }) });
+    await expect(testEnv.wrap(functions.syncRevenueCat)({ auth: { uid: 'known_customer' }, data: {} })).rejects.toMatchObject({ code: 'internal' });
+    expect((await admin.database().ref('users/known_customer/isPremium').get()).val()).toBe(true);
+  });
+
+  test('inherited object names are not accepted as star products', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ subscriber: { entitlements: {}, non_subscriptions: { constructor: [{ id: 'fake_product' }] } } }) });
+    const result = await testEnv.wrap(functions.syncRevenueCat)({ auth: { uid: 'unknown_sku' }, data: {} });
+    expect(result.credited).toBe(0);
+    expect((await admin.database().ref('users/unknown_sku/wallet').get()).exists()).toBe(false);
+  });
+});
+
 describe('RevenueCat Sync & Concurrency', () => {
   test('syncRevenueCat: exactly-once credit under concurrent duplicate calls', async () => {
     global.fetch = jest.fn(() =>
@@ -996,6 +1051,9 @@ describe('Multiplayer RTDB Security & Authorization End-to-End', () => {
   test('Host migration counter (recordHostMigration) rate limits and increments metric', async () => {
     const uid = 'user_migration_test';
     const wrapped = testEnv.wrap(functions.recordHostMigration);
+    await admin.database().ref('rooms/111222').set({
+      hostId: uid, players: { [uid]: { id: uid, displayName: 'Host' } },
+    });
 
     const res = await wrapped({
       data: { roomCode: '111222', reason: 'host_gone' },

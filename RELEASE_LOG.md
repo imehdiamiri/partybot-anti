@@ -1,5 +1,21 @@
 # Release log
 
+## 2026-09-08 — server input and purchase validation
+
+- Recovery: `checkpoint/2026-09-08-before-server-validation` at `6b42b6b`.
+- Hardened `redeemInvite` code/registry validation, `recordHostMigration` current
+  host/member authorization, and `syncRevenueCat` schema/entitlement validation.
+  Valid subscription grace periods remain usable; historical product keys and
+  incomplete responses do not grant lifetime access. Unknown inherited object
+  names are not star products. No client/native configuration change.
+- Baseline: seven new regression failures; fixed suite: 63/63 PASS (61 backend
+  and RTDB, 2 Firestore), including all callable auth boundaries and concurrent
+  daily reward claims. `git diff --check` PASS. Verified isolated test processes
+  stopped; no persistent app server started.
+- Scope/limits: SECURITY_AUDIT.md. App Check, multi-account abuse, real StoreKit
+  testing, cross-account receipt handling and retry-safe multi-user invite credits
+  remain open. No Git push, mobile update or App Store submission in this batch.
+
 ## 2026-09-08 — security hardening
 
 - Recovery: `checkpoint/2026-09-08-before-security-hardening` at `0a98015`.

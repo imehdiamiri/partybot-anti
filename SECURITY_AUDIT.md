@@ -43,6 +43,29 @@ penetration test, DDoS test, or guarantee against compromise.
 
 ## Verification
 
+### Server validation follow-up
+
+- Invite redemption accepts only the existing alphanumeric code format and
+  validates the registry's UID before using it as a database path component.
+- Host migration metrics require a valid six-digit room and the caller to be its
+  current host/member. This validates current authority, not proof of a historical
+  migration event; malicious hosts and repeated reports still need deduplication.
+- RevenueCat schema errors leave saved entitlement state intact. Explicit active
+  entitlement data determines access; an absent expiry no longer means permanent
+  access, and a historical lifetime product key does not establish ownership.
+  Valid future grace periods are respected. Star products use own-property lookup
+  so JavaScript inherited names cannot become catalogue entries.
+- Seven new regression cases failed before the fixes. Final backend/rules suite:
+  **63 PASS** (61 RTDB/backend, 2 Firestore), including 11 unauthenticated callable
+  checks and a five-request race that credits the daily reward exactly once.
+- Reference: https://www.revenuecat.com/docs/api-v1/customer-info-model
+- This follow-up does not certify receipt transfer/refund handling across multiple
+  accounts. Invite redemption still has multiple server writes; a transient error
+  between marking redemption and crediting both wallets needs a retry-safe ledger
+  design before high-volume use. No fault-injection guarantee for that flow.
+
+### Previous client and dependency checks
+
 - Eight newly added security regressions failed against the previous implementation
   while the existing 26 backend tests passed. They pass after hardening.
 - RTDB/backend: 37 tests PASS, including positive profile, friendship, diagnostics
