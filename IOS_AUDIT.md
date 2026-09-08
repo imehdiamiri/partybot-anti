@@ -4,6 +4,11 @@ Scope: tracked mobile routes, components/services, dependencies, backend account
 deletion, store-facing legal pages and distribution configuration. This is not an
 App Review approval or a complete physical-device playthrough.
 
+Follow-up security hardening is documented in SECURITY_AUDIT.md. Commit 52a5488
+protects profile merges, private data and social authorization. Firebase confirmed
+the security rollout and Node 22 migration; compatible runtime 1.1.1 preview OTA
+updates were published. Signed-device and StoreKit verification remain required.
+
 ## Corrected
 
 - Removed the retired generation/editor configuration, obsolete coordination

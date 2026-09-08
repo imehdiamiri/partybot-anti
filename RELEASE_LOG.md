@@ -20,6 +20,24 @@
   Web-only Expo export and sync PASS.
 - Firebase confirmed deletion of retired `generateCard(us-central1)` to complete
   the authorized AI removal. Deployment and update confirmations follow below.
+- Source commit: `52a5488`. Firebase confirmed Hosting, RTDB rules, Firestore rules
+  and each of the twelve explicitly selected existing functions deployed. Final
+  inventory shows all twelve on nodejs22 and no generateCard endpoint.
+  Live site https://partybot.games and its standard Apple association endpoint
+  return HTTP 200; unauthenticated RTDB users read and blockUser call return 401.
+- Expo confirmed preview update group `d1e0336b-f24a-4a7e-a8ca-8a6842572320`,
+  runtime 1.1.1, iOS `01a0802b-6c7b-7561-bf62-302154947ccc` and Android
+  `01a0802b-6c7b-766c-866e-90577e90030e`, source `52a5488`:
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/d1e0336b-f24a-4a7e-a8ca-8a6842572320
+  No update was sent to incompatible runtime 1.1.0 or the production channel.
+- Expo confirmed the separate Expo Go SDK57 update group
+  `0e0ffd69-7b7c-4661-84f5-48ab57bd750f`, runtime `exposdk:57.0.0`, iOS
+  `01a0802e-0317-7310-8001-4c8aaca180e7`, Android
+  `01a0802e-0317-7da7-85d8-c5735f61c91f`:
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/0e0ffd69-7b7c-4661-84f5-48ab57bd750f
+  Application source is `52a5488`; only IOS_AUDIT.md and this release record were
+  modified while publishing (EAS marked the worktree dirty). Native module guards
+  remain intact. Final verification tag: `checkpoint/2026-09-08-security-published`.
 - Remaining risks and compatibility: SECURITY_AUDIT.md. No penetration-test,
   DDoS-resilience, App Check enforcement, clean-lint or App Store approval claim.
   No Git push; no signed TestFlight submission.
