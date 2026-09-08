@@ -41,6 +41,22 @@
   over the rewrite at /.well-known/apple-app-site-association. Added a static file
   at that exact path and allowed it through Hosting's ignore rules. Root association
   already returned the correct app ID. Final endpoint verification follows below.
+- Native configuration/static association fix: `a969b1d`. Firebase confirmed the
+  subsequent Hosting-only release at https://partybot.games. The exact standard
+  endpoint https://partybot.games/.well-known/apple-app-site-association returned
+  HTTP 200, application/json and app ID `9R9TPVS9UL.com.partybot` after deployment.
+  Apple device-side association caching is not certified by this HTTP check.
+- Post-plugin Expo Doctor: 21/21 PASS. RevenueCat's third-party bundled SDK retains
+  internal legacy sandbox identifiers; application-owned references are removed.
+- EAS confirmed FINISHED for iOS simulator build
+  `a8fb65ac-1aa5-4750-8243-038b7e31306e`, source `a969b1d`, runtime/version 1.1.1:
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/a8fb65ac-1aa5-4750-8243-038b7e31306e
+  Native compilation now passes. No signed device build, TestFlight submission,
+  OTA update or simulator playthrough was performed. Apple authentication,
+  App Store Connect terms, purchase setup and physical-device checks remain open.
+- Firebase deployment warned that the existing Node.js 20 functions runtime is
+  deprecated and scheduled for decommissioning on October 30, 2026. Runtime
+  migration remains a separate backend validation/release requirement.
 
 ## 2026-09-08 — iOS TestFlight preparation
 

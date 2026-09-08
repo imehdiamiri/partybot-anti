@@ -9,6 +9,9 @@ App Review approval or a complete physical-device playthrough.
 - Removed the retired generation/editor configuration, obsolete coordination
   archives (owner confirmed), unused source helpers and broken maintenance scripts.
   No runtime content-generation endpoint or SDK remains in the app.
+  Application-owned legacy tool references are removed. RevenueCat's bundled
+  third-party SDK still includes its own sandbox-detection identifiers; these
+  are dependency implementation details, not an app feature or visible branding.
 - Removed unused native Picker and WebView dependencies. Runtime/version 1.1.1
   deliberately requires a new binary; do not publish to runtime 1.1.0.
 - Separated platform components to remove conditional Hook ordering in paywall,
@@ -29,6 +32,8 @@ App Review approval or a complete physical-device playthrough.
   original synthesized cue. Kept the 9700ms scoring target and legacy saved mode
   identifier. The audio generation script documents its source.
 - Compatible dependency updates removed all critical/high npm audit findings.
+- Fixed the cloud CocoaPods failure with targeted module maps for GoogleUtilities
+  and RecaptchaInterop via the SDK-compatible Expo build-properties plugin.
 
 ## Verification
 
@@ -38,8 +43,16 @@ App Review approval or a complete physical-device playthrough.
 - Firebase database-emulator tests: 26 PASS, including deletion retry on Firestore
   failure; emulator stopped after completion.
 - Expo Doctor: 21/21 PASS.
+- Expo Doctor also passed 21/21 after the native build-properties addition.
+- Live domain association: the exact standard HTTPS endpoint returns HTTP 200,
+  application/json and 9R9TPVS9UL.com.partybot. Apple's device-side association
+  fetch and caching still require a signed device test.
 - Expo exports: iOS, Android and web PASS. These verify bundles, not native Xcode
   compilation, signing or real StoreKit purchases.
+- EAS native iOS simulator compilation: FINISHED for runtime 1.1.1, source
+  a969b1d, build a8fb65ac-1aa5-4750-8243-038b7e31306e. This confirms native
+  compilation after the CocoaPods fix; it is not a signed device build or an
+  executed simulator playthrough (this workstation is Windows).
 - ESLint source scan: 101 errors / 256 warnings remain. Conditional Hook ordering
   and missing Jest globals were repaired; most remaining errors concern React
   Compiler refs/immutability/effect patterns. A native AudioStream namespace check
