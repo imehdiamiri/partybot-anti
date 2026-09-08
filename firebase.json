@@ -16,7 +16,9 @@
     "public": "website/public",
     "ignore": [
       "firebase.json",
-      "**/.*"
+      "**/.git/**",
+      "**/.env*",
+      "**/.DS_Store"
     ],
     "rewrites": [
       {

@@ -29,6 +29,18 @@
 - Full findings and unresolved signing, purchases, store metadata, rights and
   physical-device checks: IOS_AUDIT.md. Outcomes of deployments/build requests
   are recorded below only after service confirmation. No Git push.
+- Source cleanup commit: `083708f`. Firebase confirmed deployment of Hosting and
+  only `deleteAccount(us-central1)`; https://partybot.games/privacy returns the
+  corrected Firebase description and no retired studio claim.
+- First iOS simulator build `0ab4c8ef-405a-4a9d-b86a-92973a10337f` FAILED during
+  CocoaPods installation: AppCheckCore requires module maps from GoogleUtilities
+  and RecaptchaInterop. Added SDK-compatible expo-build-properties with targeted
+  modular_headers for those two pods; introspection verifies apple.extraPods.
+  Windows prebuild does not generate iOS projects; cloud compilation is required.
+- Live association check found Firebase's automatic empty response took priority
+  over the rewrite at /.well-known/apple-app-site-association. Added a static file
+  at that exact path and allowed it through Hosting's ignore rules. Root association
+  already returned the correct app ID. Final endpoint verification follows below.
 
 ## 2026-09-08 — iOS TestFlight preparation
 
