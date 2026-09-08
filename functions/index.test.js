@@ -341,6 +341,125 @@ describe('RevenueCat Sync & Concurrency', () => {
   });
 });
 
+describe('Invite payout recovery', () => {
+  const uid = 'retry_invitee';
+  const inviter = 'retry_inviter';
+  const request = { auth: { uid }, data: { code: 'RETRY1' } };
+  beforeEach(async () => {
+    await admin.database().ref(`users/${inviter}`).set({ inviteCode: 'RETRY1', wallet: { balance: 7 } });
+    await admin.database().ref('inviteCodes/RETRY1').set(inviter);
+  });
+
+  function interruptPayment(afterCommit, target = `users/${inviter}`, occurrence = 1) {
+    const db = admin.database();
+    const originalRef = db.ref.bind(db);
+    let armed = true;
+    let calls = 0;
+    jest.spyOn(db, 'ref').mockImplementation(path => {
+      const ref = originalRef(path);
+      if (path === target || path === `${target}/wallet`) {
+        const transaction = ref.transaction.bind(ref);
+        ref.transaction = async (...args) => {
+          if (!armed || ++calls !== occurrence) return transaction(...args);
+          armed = false;
+          if (afterCommit) await transaction(...args);
+          throw new Error('simulated transport interruption');
+        };
+      }
+      return ref;
+    });
+  }
+
+  test.each([false, true])('retry completes interrupted payment (commit acknowledgement lost: %s)', async afterCommit => {
+    interruptPayment(afterCommit);
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    await expect(redeem(request)).rejects.toThrow('simulated transport interruption');
+    await expect(redeem(request)).resolves.toBeDefined();
+    await expect(redeem(request)).resolves.toBeDefined();
+    expect((await admin.database().ref(`users/${uid}/wallet/balance`).get()).val()).toBe(10);
+    expect((await admin.database().ref(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
+    expect((await admin.database().ref(`users/${inviter}/inviteStats`).get()).val()).toEqual({ totalInvites: 1, starsEarned: 30 });
+  });
+
+  test('concurrent retries return success with only one credit to each side', async () => {
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    const results = await Promise.all(Array.from({ length: 4 }, () => redeem(request)));
+    expect(results.reduce((sum, r) => sum + r.credited, 0)).toBe(10);
+    expect(results.reduce((sum, r) => sum + r.inviterCredited, 0)).toBe(30);
+    expect((await admin.database().ref(`users/${inviter}/inviteStats/totalInvites`).get()).val()).toBe(1);
+  });
+
+  test('retry uses the bound inviter if the public registry has changed', async () => {
+    interruptPayment(false);
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    await expect(redeem(request)).rejects.toThrow('simulated transport interruption');
+    await admin.database().ref('inviteCodes/RETRY1').set('different_owner');
+    await expect(redeem(request)).resolves.toBeDefined();
+    expect((await admin.database().ref(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
+    expect((await admin.database().ref('users/different_owner/wallet').get()).exists()).toBe(false);
+  });
+
+  test('legacy markers are not credited again when their historical status is unknown', async () => {
+    await admin.database().ref(`users/${uid}`).set({ invitedBy: inviter, wallet: { balance: 10 } });
+    await expect(testEnv.wrap(functions.redeemInvite)(request)).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect((await admin.database().ref(`users/${uid}/wallet/balance`).get()).val()).toBe(10);
+    expect((await admin.database().ref(`users/${inviter}/wallet/balance`).get()).val()).toBe(7);
+  });
+
+  test.each([1, 2])('retry survives lost acknowledgement of invitee transaction %s', async occurrence => {
+    interruptPayment(true, `users/${uid}`, occurrence);
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    await expect(redeem(request)).rejects.toThrow('simulated transport interruption');
+    await expect(redeem(request)).resolves.toBeDefined();
+    expect((await admin.database().ref(`users/${uid}/wallet/balance`).get()).val()).toBe(10);
+    expect((await admin.database().ref(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
+    expect((await admin.database().ref(`users/${inviter}/inviteStats/totalInvites`).get()).val()).toBe(1);
+  });
+
+  test('retry cannot recreate an inviter deleted during an interrupted payout', async () => {
+    interruptPayment(false);
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    await expect(redeem(request)).rejects.toThrow('simulated transport interruption');
+    await admin.database().ref(`users/${inviter}`).remove();
+    await expect(redeem(request)).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect((await admin.database().ref(`users/${inviter}`).get()).exists()).toBe(false);
+    expect((await admin.database().ref(`users/${uid}/wallet/balance`).get()).val()).toBe(10);
+  });
+
+  test('multiple invitees increment the same inviter without losing or repeating credits', async () => {
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    await Promise.all(['one', 'two', 'three'].map(suffix => redeem({ auth: { uid: `invitee_${suffix}` }, data: { code: 'RETRY1' } })));
+    expect((await admin.database().ref(`users/${inviter}/wallet/balance`).get()).val()).toBe(97);
+    expect((await admin.database().ref(`users/${inviter}/inviteStats`).get()).val()).toEqual({ totalInvites: 3, starsEarned: 90 });
+  });
+
+  test('a pending payout cannot switch to another invite code', async () => {
+    interruptPayment(false);
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    await expect(redeem(request)).rejects.toThrow('simulated transport interruption');
+    await expect(redeem({ auth: { uid }, data: { code: 'OTHER1' } })).rejects.toMatchObject({ code: 'failed-precondition' });
+    await expect(redeem(request)).resolves.toBeDefined();
+    expect((await admin.database().ref(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
+  });
+
+  test('clients cannot forge, edit or delete reward receipts and reservation state', async () => {
+    await testEnv.wrap(functions.redeemInvite)(request);
+    const db = testEnvObj.authenticatedContext(uid).database();
+    await assertFails(db.ref(`users/${uid}/inviteReward/status`).set('pending'));
+    await assertFails(db.ref(`users/${uid}/inviteReward`).remove());
+    const inviterDb = testEnvObj.authenticatedContext(inviter).database();
+    await assertFails(inviterDb.ref(`users/${inviter}/inviteRewardReceipts`).remove());
+    await assertFails(inviterDb.ref(`users/${inviter}/inviteRewardReceipts/forged`).set({ amount: 30 }));
+  });
+
+  test('invalid existing wallet state cannot produce a paid claim', async () => {
+    await admin.database().ref(`users/${uid}/wallet`).set('corrupt');
+    await expect(testEnv.wrap(functions.redeemInvite)(request)).rejects.toMatchObject({ code: 'internal' });
+    expect((await admin.database().ref(`users/${uid}/invitedBy`).get()).exists()).toBe(false);
+    expect((await admin.database().ref(`users/${inviter}/wallet/balance`).get()).val()).toBe(7);
+  });
+});
+
 describe('Invite Code Generation & Legacy Collision Safety', () => {
   test('ensureInviteCode: atomic reservation and bounded retry on collision', async () => {
     const wrappedEnsure = testEnv.wrap(functions.ensureInviteCode);
@@ -485,6 +604,7 @@ describe('Invite Redemption & Migration Races', () => {
     });
 
     // But registry SHARED was already claimed by concurrentWinner
+    await admin.database().ref(`users/${concurrentWinner}`).set({ inviteCode: 'SHARED' });
     await admin.database().ref('inviteCodes/SHARED').set(concurrentWinner);
 
     const wrappedRedeem = testEnv.wrap(functions.redeemInvite);

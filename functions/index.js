@@ -20,6 +20,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
+const { resumableClaim, settleInvite } = require('./invite-rewards');
 
 function validDatabaseId(value) {
   return typeof value === 'string' && value.length > 0 && value.length <= 128
@@ -156,10 +157,8 @@ exports.claimDailyReward = onCall({ cors: true }, async (request) => {
  * Server-authoritative invite redemption. Replaces the unsafe client-side
  * wallet writes that were rejected by RTDB rules anyway.
  *
- * Atomicity: each side is bumped via a `wallet` transaction so concurrent
- * redemptions can't lose updates. Idempotency: invitee's `invitedBy` field
- * is rules-protected (server-only) so it can only be set here, and it's the
- * gate that prevents double-claims.
+ * Each wallet commits with a server-owned receipt. Pending claims can resume
+ * after interruption; completed and legacy claims cannot be paid twice.
  */
 exports.redeemInvite = onCall({ cors: true }, async (request) => {
   const uid = request.auth?.uid;
@@ -171,44 +170,46 @@ exports.redeemInvite = onCall({ cors: true }, async (request) => {
     throw new HttpsError('invalid-argument', 'Invalid invite code.');
   }
 
-  // Already redeemed?
-  const invitedBySnap = await admin.database().ref(`users/${uid}/invitedBy`).once('value');
-  if (invitedBySnap.exists()) {
+  const user = (await admin.database().ref(`users/${uid}`).once('value')).val();
+  const pending = resumableClaim(user, raw);
+  if ((user?.invitedBy || user?.inviteReward) && !pending) {
     throw new HttpsError('failed-precondition', 'You already redeemed an invite code.');
   }
 
   // 1. Check global registry first.
-  let inviterUid = null;
-  const registryRef = admin.database().ref(`inviteCodes/${raw}`);
-  const registrySnap = await registryRef.once('value');
-  if (registrySnap.exists()) {
-    inviterUid = registrySnap.val();
-  } else {
-    // 2. Fallback to legacy index search (for codes generated before the registry).
-    const lookup = await admin
-      .database()
-      .ref('users')
-      .orderByChild('inviteCode')
-      .equalTo(raw)
-      .limitToFirst(1)
-      .once('value');
+  let inviterUid = pending?.inviterUid || null;
+  if (!pending) {
+    const registryRef = admin.database().ref(`inviteCodes/${raw}`);
+    const registrySnap = await registryRef.once('value');
+    if (registrySnap.exists()) {
+      inviterUid = registrySnap.val();
+    } else {
+      // 2. Fallback to legacy index search (for codes generated before the registry).
+      const lookup = await admin
+        .database()
+        .ref('users')
+        .orderByChild('inviteCode')
+        .equalTo(raw)
+        .limitToFirst(1)
+        .once('value');
 
-    if (lookup.exists()) {
-      let legacyUid = null;
-      lookup.forEach((c) => { legacyUid = c.key; });
-      if (legacyUid) {
-        // Atomic migration: only write if still empty, preventing race overwrites
-        const migTxn = await registryRef.transaction((cur) => (cur ? undefined : legacyUid));
-        if (migTxn.committed) {
-          inviterUid = legacyUid;
-        } else {
-          // If a concurrent reservation/migration claimed this code, use the authoritative registry winner
-          inviterUid = migTxn.snapshot.val() || legacyUid;
+      if (lookup.exists()) {
+        let legacyUid = null;
+        lookup.forEach((c) => { legacyUid = c.key; });
+        if (legacyUid) {
+          // Atomic migration: only write if still empty, preventing race overwrites
+          const migTxn = await registryRef.transaction((cur) => (cur ? undefined : legacyUid));
+          if (migTxn.committed) {
+            inviterUid = legacyUid;
+          } else {
+            // If a concurrent reservation/migration claimed this code, use the authoritative registry winner
+            inviterUid = migTxn.snapshot.val() || legacyUid;
+          }
         }
       }
     }
-  }
 
+  }
   if (!validDatabaseId(inviterUid)) {
     throw new HttpsError('not-found', 'Invalid invite code.');
   }
@@ -217,40 +218,10 @@ exports.redeemInvite = onCall({ cors: true }, async (request) => {
     throw new HttpsError('failed-precondition', 'You cannot redeem your own code.');
   }
 
-  const now = Date.now();
-
-  // 1. Mark invitee — this is the single point of idempotency.
-  const inviteeMark = await admin
-    .database()
-    .ref(`users/${uid}/invitedBy`)
-    .transaction((cur) => (cur ? undefined : inviterUid));
-  if (!inviteeMark.committed) {
-    throw new HttpsError('failed-precondition', 'You already redeemed an invite code.');
+  if (!pending && !(await admin.database().ref(`users/${inviterUid}`).once('value')).exists()) {
+    throw new HttpsError('not-found', 'Inviter account is unavailable.');
   }
-
-  // 2. Credit invitee.
-  await admin.database().ref(`users/${uid}/wallet`).transaction((w) => {
-    const wallet = w || { balance: 0, updatedAt: 0 };
-    wallet.balance = (wallet.balance || 0) + INVITEE_REWARD;
-    wallet.updatedAt = now;
-    return wallet;
-  });
-
-  // 3. Credit inviter + bump stats.
-  await admin.database().ref(`users/${inviterUid}/wallet`).transaction((w) => {
-    const wallet = w || { balance: 0, updatedAt: 0 };
-    wallet.balance = (wallet.balance || 0) + INVITER_REWARD;
-    wallet.updatedAt = now;
-    return wallet;
-  });
-  await admin.database().ref(`users/${inviterUid}/inviteStats`).transaction((s) => {
-    const stats = s || { totalInvites: 0, starsEarned: 0 };
-    stats.totalInvites = (stats.totalInvites || 0) + 1;
-    stats.starsEarned = (stats.starsEarned || 0) + INVITER_REWARD;
-    return stats;
-  });
-
-  return { credited: INVITEE_REWARD, inviterCredited: INVITER_REWARD };
+  return settleInvite(admin.database(), uid, raw, inviterUid, INVITEE_REWARD, INVITER_REWARD);
 });
 
 // ──────────────────────── ensureInviteCode ────────────────────────

@@ -8,7 +8,7 @@ import { httpsCallable } from 'firebase/functions';
  *
  * All wallet credit + idempotency lives in `functions/index.js`:
  *   - `ensureInviteCode`   — lazily mints (and caches) the user's invite code.
- *   - `redeemInvite`       — atomically credits both sides exactly once.
+ *   - `redeemInvite`       — resumes interrupted payouts without duplicate credits.
  *
  * The client used to do the credit math itself, which the RTDB rules now
  * (correctly) reject. Don't re-introduce direct wallet writes here.

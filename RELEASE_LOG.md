@@ -1,5 +1,22 @@
 # Release log
 
+## 2026-09-08 — recover interrupted invite rewards
+
+- Recovery: `checkpoint/2026-09-08-before-invite-recovery` at `5fe3130`.
+- `redeemInvite` uses per-user receipt transactions: invitee credit/reservation,
+  inviter credit/statistics/deduplication, then completion. Same-code retries
+  resume the saved binding without duplicating either credit. Public code changes
+  do not redirect a pending reward. Missing inviters are not recreated.
+- Legacy claims without receipt evidence are rejected instead of recredited.
+  Retries are caller initiated and retain the five-per-hour limit; deleted-account
+  and ambiguous historical payouts require support review. No reconciliation job.
+- Four baseline failures reproduced the previous broken retry behavior. Final
+  isolated RTDB/backend + Firestore tests: 75/75 PASS, including lost acknowledgement
+  before/after both payout stages, concurrent retries, receipt permissions and
+  corrupt-record rejection. `git diff --check` PASS.
+- Only `redeemInvite` needs deployment. Client change is a comment correction;
+  no mobile bundle/native config, rules or Hosting change is needed. No Git push.
+
 ## 2026-09-08 — server input and purchase validation
 
 - Recovery: `checkpoint/2026-09-08-before-server-validation` at `6b42b6b`.

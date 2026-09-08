@@ -43,6 +43,28 @@ penetration test, DDoS test, or guarantee against compromise.
 
 ## Verification
 
+### Invite payout recovery follow-up
+
+- New redemptions atomically reserve an opaque receipt with the invitee's wallet
+  credit. The inviter's wallet, statistics and deduplication receipt commit in
+  one transaction on that user's node. A final status records completion. No
+  transaction reads or locks the entire users tree.
+- Retrying the same code resumes the saved recipient binding, even after the
+  public registry changes. Completed retries return zero new credits. Receipts
+  cannot be changed by clients under the deployed profile-field allowlist.
+- Receipt IDs are random UUIDs. The inviter's receipt stores amount/time, not the
+  invitee UID; the invitee's reservation is removed with its user profile.
+- Four new baseline cases failed before the fix. Final suite: **75 PASS**,
+  covering failures before payment and after lost commit acknowledgements,
+  concurrent retries, multiple invitees, deleted inviter, changed codes, tampered
+  receipts, and corrupt wallet data. Invalid transaction data aborts and rejects
+  cleanly rather than throwing from an asynchronous SDK retry callback.
+- Recovery requires another call with the same code and remains subject to the
+  per-user rate limit. No unattended reconciliation worker was introduced.
+  Legacy redemptions without receipts are not automatically replayed because
+  their historical payment status cannot be inferred safely. A deleted inviter
+  is not recreated; interrupted payouts in that case require support review.
+
 ### Server validation follow-up
 
 - Invite redemption accepts only the existing alphanumeric code format and
@@ -59,10 +81,9 @@ penetration test, DDoS test, or guarantee against compromise.
   **63 PASS** (61 RTDB/backend, 2 Firestore), including 11 unauthenticated callable
   checks and a five-request race that credits the daily reward exactly once.
 - Reference: https://www.revenuecat.com/docs/api-v1/customer-info-model
-- This follow-up does not certify receipt transfer/refund handling across multiple
-  accounts. Invite redemption still has multiple server writes; a transient error
-  between marking redemption and crediting both wallets needs a retry-safe ledger
-  design before high-volume use. No fault-injection guarantee for that flow.
+- This follow-up does not certify purchase receipt transfer/refund handling across
+  multiple accounts. Invite recovery is now covered by the later receipt protocol
+  and fault-injection tests above; legacy and deleted-account limits still apply.
 
 ### Previous client and dependency checks
 
