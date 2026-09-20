@@ -23,8 +23,19 @@
   uses `exposdk:57.0.0`; preview's latest iOS simulator is 1.1.1, Android binary
   is 1.1.0. Publish this batch only to the separate Expo Go branch with preview
   environment. No native dependencies/config changed; native module guards kept.
-- Publication: pending service confirmation; IDs will be recorded below.
+- Source: `a810dcc52c7983c7cfc40701e9c5f413b9ea8dc9`. EAS confirmed
+  `Published!` for branch `expo-go-sdk57`, runtime `exposdk:57.0.0`, iOS and
+  Android, using `APP_VARIANT=expo-go npx eas-cli update --branch expo-go-sdk57
+  --environment preview --platform all --non-interactive` (with release message).
+  Native Hermes exports and asset upload PASS. Group:
+  `7fa61780-9a95-4b7e-9499-c68d83e08f7c`; iOS:
+  `01a0bea4-c8d8-701f-b16f-207d836d586f`; Android:
+  `01a0bea4-c8d8-7a59-abb5-1a5596855b15`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/7fa61780-9a95-4b7e-9499-c68d83e08f7c
+  Final tag: `checkpoint/2026-09-20-mobile-layout-published`.
   No Hosting/backend deployment, native binary, production OTA or Git push.
+  Rollback requires republishing the recovery source to the same Expo Go branch;
+  a Git revert alone does not roll back EAS.
 - Limits: browser checks are not physical-device iOS/Android visual QA. Native
   blur, Dynamic Type, keyboard and device gesture bars still need device review.
   Styling follows available Apple materials guidance, not an iOS 28 SDK claim.
