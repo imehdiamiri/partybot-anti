@@ -70,7 +70,7 @@ export default function GameSessionScreen() {
 
   if (!activeSession) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <AppBackgroundView />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#007AFF" />
@@ -88,7 +88,7 @@ export default function GameSessionScreen() {
 
   return (
     <GameSkipProvider>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <AppBackgroundView />
         <MultiplayerStatusBanner />
@@ -150,7 +150,7 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
           <Text style={styles.headerSideText}>Exit</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>{gameName}</Text>
+        <Text style={styles.headerTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{gameName}</Text>
 
         {skipHandler ? (
           <TouchableOpacity
@@ -195,7 +195,8 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    minWidth: 64,
+    width: 80,
+    justifyContent: 'center',
     minHeight: 44,
   },
   headerSideText: {
@@ -204,8 +205,8 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   headerSpacer: {
-    width: 50,
-    height: 40,
+    width: 80,
+    height: 44,
   },
   headerTitle: {
     flex: 1,

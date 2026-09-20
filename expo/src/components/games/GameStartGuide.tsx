@@ -42,9 +42,9 @@ export function GameIntroGate({ gameId, children, config }: { gameId: string; ch
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#101018' },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  card: { width: '100%', maxWidth: 480, padding: 24, borderRadius: 24, backgroundColor: '#20202d', gap: 16, alignItems: 'center' },
+  card: { width: '100%', maxWidth: 480, padding: 20, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', backgroundColor: '#1c1c29', gap: 16, alignItems: 'center' },
   eyebrow: { color: '#aeb5c9', fontSize: 12, letterSpacing: 2 },
   title: { color: '#fff', fontSize: 23, fontWeight: '700', textAlign: 'center' },
   step: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 12 },

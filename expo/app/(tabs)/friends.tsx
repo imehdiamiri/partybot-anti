@@ -1,3 +1,4 @@
+import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { Colors } from '@/src/theme/Colors';
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Share, Platform } from 'react-native';
@@ -124,7 +125,7 @@ export default function FriendsScreen() {
     <View style={styles.container}>
       <AppBackgroundView />
       <ScrollView 
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: 120 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
       >

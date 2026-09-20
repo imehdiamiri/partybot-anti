@@ -1,3 +1,4 @@
+import { tabBarBottom } from '@/src/utils/mobileLayout';
 import { Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, Keyboard } from 'react-native';
@@ -43,7 +44,7 @@ function TabIndicator({ focused, color }: { focused: boolean; color: string }) {
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
-  const bottom = Platform.OS === 'ios' ? Math.max(insets.bottom, 18) : 18;
+  const bottom = tabBarBottom(insets.bottom);
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -70,7 +71,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       <View testID="bottom-tab-bar" style={styles.tabBarContainer} pointerEvents="box-none">
         <LiquidGlass
           variant="chrome"
-          radius={32}
+          radius={24}
           specular
           shadow
           style={styles.tabBarShell}

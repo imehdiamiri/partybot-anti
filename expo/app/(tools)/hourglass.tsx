@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -71,6 +71,8 @@ const playGameEnd = () => { Haptics.notificationAsync(Haptics.NotificationFeedba
 
 
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const compact = height < 700;
   const [minutes, setMinutes] = useState(1);
   const [seconds, setSeconds] = useState(0);
   const [remaining, setRemaining] = useState(60);
@@ -191,7 +193,7 @@ const playGameEnd = () => { Haptics.notificationAsync(Haptics.NotificationFeedba
   }));
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       {/* Configuration */}
       {!isRunning && !isPaused && !isAlarming && (
         <View style={styles.configSection}>
@@ -225,12 +227,12 @@ const playGameEnd = () => { Haptics.notificationAsync(Haptics.NotificationFeedba
       <View style={{ flex: 1 }} />
 
       {/* Timer Display */}
-      <Animated.View testID="hourglass-stage" style={[styles.timerDisplay, animatedContainerStyle]}>
-        <Text testID="hourglass-timer-text" style={[styles.timeText, isAlarming ? { color: Colors.red } : { color: '#007AFF' }]}>
+      <Animated.View testID="hourglass-stage" style={[styles.timerDisplay, compact && { paddingVertical: 12, gap: 8 }, animatedContainerStyle]}>
+        <Text testID="hourglass-timer-text" style={[styles.timeText, compact && { fontSize: 44 }, isAlarming ? { color: Colors.red } : { color: '#007AFF' }]}>
           {timeString}
         </Text>
 
-        <View style={styles.hourglassWrapper}>
+        <View style={[styles.hourglassWrapper, compact && { width: 96, height: 132 }]}>
           <Image 
             source={HOURGLASS_IMG} 
             style={{ width: '100%', height: '100%' }} 
@@ -259,7 +261,7 @@ const playGameEnd = () => { Haptics.notificationAsync(Haptics.NotificationFeedba
           <ControlButton title="Start" icon="play.fill" colors={[Colors.cyan, '#007AFF']} onPress={start} disabled={totalSet === 0} />
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -285,7 +287,7 @@ const ControlButton = ({ title, icon, colors, onPress, disabled }: { title: stri
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingTop: 8,
     maxWidth: 600,
     width: '100%',
@@ -357,6 +359,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   timerDisplay: {
+    paddingVertical: 24,
     alignItems: 'center',
     gap: 16,
   },

@@ -30,7 +30,7 @@ export function ScreenHeader({
     <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
       {/* Left button slot */}
       {onLeftPress ? (
-        <TouchableOpacity onPress={onLeftPress} style={styles.leftButton}>
+        <TouchableOpacity onPress={onLeftPress} style={styles.leftButton} accessibilityRole="button" accessibilityLabel={leftLabel || "Back"}>
           {leftIcon ? <IconSymbol name={leftIcon as any} size={18} color="#007AFF" /> : null}
           {leftLabel ? (
             <Text style={[styles.leftButtonText, leftIcon ? { marginLeft: 2 } : null]}>
@@ -49,7 +49,7 @@ export function ScreenHeader({
 
       {/* Right button slot */}
       {onRightPress ? (
-        <TouchableOpacity onPress={onRightPress} style={styles.rightButton}>
+        <TouchableOpacity onPress={onRightPress} style={styles.rightButton} accessibilityRole="button" accessibilityLabel={rightLabel || rightIcon}>
           {rightIcon ? <IconSymbol name={rightIcon as any} size={18} color={rightColor} /> : null}
           {rightLabel ? (
             <Text style={[styles.rightButtonText, { color: rightColor }, rightIcon ? { marginLeft: 2 } : null]}>
@@ -75,24 +75,28 @@ const styles = StyleSheet.create({
   leftButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 90,
-    height: 44,
+    width: 76,
+    flexShrink: 0,
+    minHeight: 44,
     justifyContent: 'flex-start',
   },
   rightButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 90,
-    height: 44,
+    width: 76,
+    flexShrink: 0,
+    minHeight: 44,
     justifyContent: 'flex-end',
   },
   leftButtonText: {
     color: '#007AFF',
-    fontSize: 17,
+    fontSize: 15,
+    flexShrink: 1,
     fontWeight: '400',
   },
   rightButtonText: {
     fontSize: 15,
+    flexShrink: 1,
     fontWeight: '500',
   },
   headerTitle: {

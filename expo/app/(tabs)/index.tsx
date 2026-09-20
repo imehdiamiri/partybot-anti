@@ -1,3 +1,4 @@
+import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Platform, LayoutChangeEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +36,7 @@ export default function GamesScreen() {
     }
   }, [params.defaultTab, params.resetAt]);
 
-  const filteredGames = GamesDefinitions.filter(game => 
+  const filteredGames = GamesDefinitions.filter(game =>
     (Platform.OS !== 'web' && selectedModeFilter) ? game.id.supportedModes.includes(selectedModeFilter) : true
   );
 
@@ -58,9 +59,9 @@ export default function GamesScreen() {
     <View style={styles.container}>
       <GameLibraryWebStyles />
       <AppBackgroundView />
-      <ScrollView 
+      <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: 120 }]} 
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}
       >
         <View style={styles.header}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -86,7 +87,7 @@ export default function GamesScreen() {
         <View style={styles.libraryTabsContainer}>
           <LiquidGlass variant="high" radius={30} style={styles.libraryTabsWrapperOuter} shadow>
             <View style={styles.libraryTabsInner}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 testID="tab-library-games"
                 accessibilityRole="button"
                 style={[styles.libraryTab, selectedLibraryTab === 'Games' ? styles.libraryTabActive : null]}
@@ -95,7 +96,7 @@ export default function GamesScreen() {
                 <IconSymbol name="gamecontroller.fill" size={14} color={selectedLibraryTab === 'Games' ? "white" : "rgba(255,255,255,0.6)"} weight="bold" />
                 <Text style={selectedLibraryTab === 'Games' ? styles.libraryTabTextActive : styles.libraryTabText}>Games</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 testID="tab-library-ideas"
                 accessibilityRole="button"
                 style={[styles.libraryTab, selectedLibraryTab === 'Ideas' ? styles.libraryTabActive : null]}
@@ -113,7 +114,7 @@ export default function GamesScreen() {
             {/* Mode Filters - hidden on web since web is local 1-Phone only */}
             {Platform.OS !== 'web' && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modeFilterContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.modeFilterChip, selectedModeFilter === null && styles.modeFilterChipActive]}
                   onPress={() => setSelectedModeFilter(null)}
                   activeOpacity={0.7}
@@ -128,8 +129,8 @@ export default function GamesScreen() {
                 {Object.values(GameMode).map(mode => {
                   const isActive = selectedModeFilter === mode;
                   return (
-                    <TouchableOpacity 
-                      key={mode} 
+                    <TouchableOpacity
+                      key={mode}
                       style={[styles.modeFilterChip, isActive && styles.modeFilterChipActive]}
                       onPress={() => setSelectedModeFilter(mode)}
                       activeOpacity={0.7}
@@ -149,7 +150,7 @@ export default function GamesScreen() {
             )}
 
             {/* Game Grid */}
-            <View 
+            <View
               style={[styles.gamesGrid, Platform.OS !== 'web' && { gap: gridGap }]}
               testID="games-grid"
               onLayout={(e: LayoutChangeEvent) => {
@@ -162,8 +163,8 @@ export default function GamesScreen() {
             >
               {filteredGames.map((game) => (
                 <View key={game.id.id} style={Platform.OS === 'web' ? undefined : { width: columnWidth }} testID={`game-card-${game.id.id}`}>
-                  <TouchableOpacity 
-                    activeOpacity={0.8} 
+                  <TouchableOpacity
+                    activeOpacity={0.8}
                     onPress={() => router.push(`/game/${game.id.id}` as any)}
                     testID={`game-card-touch-${game.id.id}`}
                     accessibilityRole="button"
@@ -180,8 +181,8 @@ export default function GamesScreen() {
                 <IconSymbol name="gamecontroller" size={48} color="rgba(255,255,255,0.3)" />
                 <Text style={styles.emptyStateTitle}>No Games</Text>
                 <Text style={styles.emptyStateDesc}>
-                  {selectedModeFilter === null 
-                    ? "Games will appear here as they are added." 
+                  {selectedModeFilter === null
+                    ? "Games will appear here as they are added."
                     : "No games support this mode yet."}
                 </Text>
               </View>

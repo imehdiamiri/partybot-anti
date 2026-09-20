@@ -1,16 +1,13 @@
 import { Colors } from '@/src/theme/Colors';
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { ToolIllustration } from './ToolIllustration';
 import { useRouter } from 'expo-router';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
-// Platform-safe BlurView (iOS only — broken on Android)
-let BlurView: any = null;
-if (Platform.OS === 'ios') {
-  try { BlurView = require('expo-blur').BlurView; } catch {}
-}
+import { LiquidGlass } from '../LiquidGlass';
+import { toolGridColumns } from '@/src/utils/mobileLayout';
 
 export type PartyToolType = 'dice' | 'bottle' | 'hourglass' | 'coin' | 'teams' | 'wheel';
 
@@ -37,8 +34,9 @@ interface PartyToolsSectionProps {
 
 export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps) {
   const router = useRouter();
-  // Fixed 3-by-2 layout; percentages fit the first frame on every platform.
-  const columnWidth = '32%';
+  const { width, fontScale } = useWindowDimensions();
+  const columns = toolGridColumns(width, fontScale);
+  const columnWidth = columns === 2 ? '48.5%' : '32%';
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
@@ -50,6 +48,7 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
         <ToolIllustration tool={tool.id} color={tool.tint} size={68} />
       </View>
       <Text style={styles.title}>{tool.title}</Text>
+      <Text style={styles.subtitle}>{tool.subtitle}</Text>
     </>
   );
 
@@ -64,23 +63,17 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
 
       <View style={styles.grid}>
         {PARTY_TOOLS.map((tool) => (
-          <Pressable 
-            key={tool.id} 
+          <Pressable
+            key={tool.id}
             testID={`tool-card-${tool.id}`}
             accessibilityRole="button"
             accessibilityLabel={`${tool.title}, ${tool.subtitle}`}
-            style={[{ width: columnWidth }, styles.cardContainer]} 
+            style={({ pressed }) => [{ width: columnWidth }, styles.cardContainer, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}
             onPress={() => handlePress(tool.id)}
           >
-            {BlurView ? (
-              <BlurView intensity={30} tint="dark" style={styles.card}>
-                {renderCardInner(tool)}
-              </BlurView>
-            ) : (
-              <View style={[styles.card, { backgroundColor: 'rgba(30,30,45,0.85)' }]}>
-                {renderCardInner(tool)}
-              </View>
-            )}
+            <LiquidGlass variant="low" radius={22} shadow={false} style={styles.card}>
+              {renderCardInner(tool)}
+            </LiquidGlass>
           </Pressable>
         ))}
       </View>
@@ -111,7 +104,7 @@ const styles = StyleSheet.create({
     rowGap: 12,
   },
   cardContainer: {
-    borderRadius: 18,
+    borderRadius: 22,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -123,12 +116,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
     paddingVertical: 14,
     paddingHorizontal: 8,
-    minHeight: 130,
+    minHeight: 160,
     flexGrow: 1,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 18,
+    borderRadius: 22,
   },
   iconContainer: {
     width: 72,
@@ -141,6 +134,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     textAlign: 'center',
-    fontWeight: '900',
+    fontWeight: '700',
+  },
+  subtitle: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 5,
   },
 });

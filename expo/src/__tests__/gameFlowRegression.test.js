@@ -1,7 +1,7 @@
 const React = require('react');
 const {create, act} = require('react-test-renderer');
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-jest.mock('react-native', () => ({View:'View',Text:'Text',TextInput:'TextInput',ActivityIndicator:'Spinner',Pressable:'Pressable',ScrollView:'ScrollView',Platform:{OS:'web',select:s=>s.web||s.default},StyleSheet:{create:s=>s},Dimensions:{get:()=>({width:390,height:844})}}));
+jest.mock('react-native', () => ({View:'View',Text:'Text',TextInput:'TextInput',ActivityIndicator:'Spinner',Pressable:'Pressable',ScrollView:'ScrollView',Platform:{OS:'web',select:s=>s.web||s.default},StyleSheet:{create:s=>s},useWindowDimensions:()=>({width:390,height:844,fontScale:1}),Dimensions:{get:()=>({width:390,height:844})}}));
 jest.mock('react-native-reanimated', () => ({__esModule:true,default:{View:'AnimatedView',createAnimatedComponent:x=>x},useSharedValue:v=>React.useRef({value:v}).current,useAnimatedStyle:()=>({}),withTiming:v=>v,withSpring:v=>v,withRepeat:v=>v,withSequence:v=>v,cancelAnimation:()=>{},Easing:{linear:null},runOnJS:f=>f}));
 jest.mock('@/components/ui/icon-symbol',()=>({IconSymbol:'Icon'}));
 jest.mock('@/src/components/games/PhaseTransition',()=>({PhaseTransition:'Phase'}));

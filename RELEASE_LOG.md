@@ -1,5 +1,35 @@
 # Release log
 
+## 2026-09-20 — mobile layout and tools refinement
+
+- Recovery: `checkpoint/2026-09-20-before-mobile-layout` at `e7ee756`;
+  starting worktree clean. Source tag: `release/2026-09-20-mobile-layout`.
+- Floating tabs and game sessions respect Android/iOS bottom and lateral safe
+  areas. Session header uses balanced action slots and a two-line title.
+- Tools use adaptive two/three-column cards with descriptions and shared glass
+  styling. Glass honors iOS Reduce Transparency. Tool headers have no separator;
+  dice, coin, hourglass and bottle can scroll on short screens. Compact dice,
+  coin and timer art keeps controls reachable. Wheel includes bottom safe area.
+- Memory Grid measures its actual arena, preserves the configured column count
+  and fits 6x6 boards on narrow phones in both single-device/multiplayer layouts.
+  Color Trap targets stay inside the measured arena; its ready screen scrolls.
+- Checks: `npm run typecheck` PASS; Jest `--runInBand --silent`: 37 suites,
+  273 tests PASS; `git diff --check` PASS. `APP_VARIANT=expo-go npx expo export
+  --platform web` PASS (91 routes). Headless request-intercepted static-export
+  checks: 78 route/viewport combinations PASS (all 16 game setup screens,
+  main screens, six tools; 320x568, 390x844, 768x1024). Memory Grid 6x6 gameplay
+  separately PASS at all three sizes; screenshots inspected. No local server.
+- Existing EAS channels/builds inspected. Expo Go channel/branch `expo-go-sdk57`
+  uses `exposdk:57.0.0`; preview's latest iOS simulator is 1.1.1, Android binary
+  is 1.1.0. Publish this batch only to the separate Expo Go branch with preview
+  environment. No native dependencies/config changed; native module guards kept.
+- Publication: pending service confirmation; IDs will be recorded below.
+  No Hosting/backend deployment, native binary, production OTA or Git push.
+- Limits: browser checks are not physical-device iOS/Android visual QA. Native
+  blur, Dynamic Type, keyboard and device gesture bars still need device review.
+  Styling follows available Apple materials guidance, not an iOS 28 SDK claim.
+  Expo Go does not support the project's native Google login or real purchases.
+
 ## 2026-09-08 — recover interrupted invite rewards
 
 - Recovery: `checkpoint/2026-09-08-before-invite-recovery` at `5fe3130`.

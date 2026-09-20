@@ -1,8 +1,9 @@
+import { memoryTileSize } from '@/src/utils/mobileLayout';
 import { SecondaryPlayerLabel, useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { AudioManager } from '@/src/services/AudioManager';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions, ActivityIndicator } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Extrapolation } from 'react-native-reanimated';
 import { GameSession } from '@/src/store/useGameStore';
 import { GameMode } from '@/src/models/AppModels';
@@ -329,17 +330,16 @@ function MemoryGridMultiplayerSession({ session }: Props) {
   };
 
   const tileColor = (colorIndex: number) => TILE_COLORS[colorIndex % TILE_COLORS.length];
-  const windowDims = Dimensions.get('window');
+  const windowDims = useWindowDimensions();
+  const [gridArea, setGridArea] = useState({ width: 0, height: 0 });
   const screenWidth = windowDims.width;
   const screenHeight = windowDims.height;
   const gridPadding = 24;
   const tileGap = 8;
   const maxGridWidth = 540;
-  const availableWidth = Math.min(screenWidth - gridPadding * 2, maxGridWidth);
-  const availableHeight = Math.max(300, screenHeight - 220);
-  const maxTileByWidth = (availableWidth - tileGap * (cols - 1)) / cols;
-  const maxTileByHeight = (availableHeight - tileGap * (rows - 1)) / rows;
-  const tileSize = Math.max(40, Math.min(maxTileByWidth, maxTileByHeight, 110));
+  const availableWidth = gridArea.width > 0 ? gridArea.width - 24 : Math.min(screenWidth - gridPadding * 2, maxGridWidth - 24);
+  const availableHeight = gridArea.height > 0 ? gridArea.height - 12 : Math.max(120, screenHeight - 260);
+  const tileSize = memoryTileSize(availableWidth, availableHeight, cols, rows, tileGap);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -476,8 +476,8 @@ function MemoryGridMultiplayerSession({ session }: Props) {
         </View>
 
         {/* Grid */}
-        <View style={[styles.gridContainer, { paddingHorizontal: gridPadding - 12 }]}>
-          <View style={[styles.grid, { gap: tileGap }]}>
+        <View style={[styles.gridContainer, { paddingHorizontal: gridPadding - 12 }]} onLayout={({ nativeEvent }) => setGridArea(nativeEvent.layout)}>
+          <View style={[styles.grid, { gap: tileGap, width: tileSize * cols + tileGap * (cols - 1) }]}>
             {multiTiles.map((tile, i) => {
               const color = tileColor(tile.colorIndex);
               return (
@@ -745,17 +745,16 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
   };
 
   const tileColor = (colorIndex: number) => TILE_COLORS[colorIndex % TILE_COLORS.length];
-  const windowDims = Dimensions.get('window');
+  const windowDims = useWindowDimensions();
+  const [gridArea, setGridArea] = useState({ width: 0, height: 0 });
   const screenWidth = windowDims.width;
   const screenHeight = windowDims.height;
   const gridPadding = 24;
   const tileGap = 8;
   const maxGridWidth = 540;
-  const availableWidth = Math.min(screenWidth - gridPadding * 2, maxGridWidth);
-  const availableHeight = Math.max(300, screenHeight - 220);
-  const maxTileByWidth = (availableWidth - tileGap * (cols - 1)) / cols;
-  const maxTileByHeight = (availableHeight - tileGap * (rows - 1)) / rows;
-  const tileSize = Math.max(40, Math.min(maxTileByWidth, maxTileByHeight, 110));
+  const availableWidth = gridArea.width > 0 ? gridArea.width - 24 : Math.min(screenWidth - gridPadding * 2, maxGridWidth - 24);
+  const availableHeight = gridArea.height > 0 ? gridArea.height - 12 : Math.max(120, screenHeight - 260);
+  const tileSize = memoryTileSize(availableWidth, availableHeight, cols, rows, tileGap);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -839,8 +838,8 @@ function MemoryGridSingleDeviceSession({ session }: Props) {
         </View>
 
         {/* Grid */}
-        <View style={[styles.gridContainer, { paddingHorizontal: gridPadding - 12 }]}>
-          <View style={[styles.grid, { gap: tileGap }]}>
+        <View style={[styles.gridContainer, { paddingHorizontal: gridPadding - 12 }]} onLayout={({ nativeEvent }) => setGridArea(nativeEvent.layout)}>
+          <View style={[styles.grid, { gap: tileGap, width: tileSize * cols + tileGap * (cols - 1) }]}>
             {tiles.map((tile, i) => {
               const color = tileColor(tile.colorIndex);
               return (

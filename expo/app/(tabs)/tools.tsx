@@ -1,3 +1,4 @@
+import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
 
@@ -26,7 +27,7 @@ export default function ToolsScreen() {
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: 120 }]}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}>
         
         {/* Header */}
         <View style={styles.header}>
@@ -142,14 +143,14 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   bookmarkButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   profileButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

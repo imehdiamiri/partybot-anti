@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -193,12 +193,12 @@ export default function CoinFlipToolScreen() {
     setHasResult(false);
   };
 
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const baseWidth = width > 0 ? width : 390;
-  const coinSize = coinCount === 1 ? Math.min(baseWidth * 0.6, 260) : Math.min(baseWidth * 0.4, 160);
+  const coinSize = coinCount === 1 ? Math.min(baseWidth * 0.6, height < 700 ? 168 : 260) : Math.min(baseWidth * 0.4, height < 700 ? 110 : 160);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       {/* Stats Row */}
       <View style={styles.statsRow}>
         <View style={styles.statPill}>
@@ -312,13 +312,13 @@ export default function CoinFlipToolScreen() {
           </Text>
         </LinearGradient>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingTop: 8,
     maxWidth: 600,
     width: '100%',
@@ -326,6 +326,7 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 16,
@@ -414,6 +415,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   coinsRow: {
+    paddingVertical: 24,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 20,

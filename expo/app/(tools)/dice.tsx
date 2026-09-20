@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -76,6 +76,8 @@ const Die2DView = ({ value, size, shake, index }: { value: number; size: number;
 export default function DiceToolScreen() {
   const toolAudio = useToolAudio('dice');
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const compact = height < 700;
   const [count, setCount] = useState(1);
   const [values, setValues] = useState([1]);
   const [isRolling, setIsRolling] = useState(false);
@@ -127,7 +129,7 @@ export default function DiceToolScreen() {
   };
 
   const total = values.reduce((a, b) => a + b, 0);
-  const side = count === 1 ? 220 : (count === 2 ? 140 : 120);
+  const side = compact ? (count === 1 ? 144 : 88) : (count === 1 ? 220 : (count === 2 ? 140 : 120));
 
   const mainAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -140,7 +142,7 @@ export default function DiceToolScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.countSelector}>
         {[1, 2, 3, 4].map((n) => (
           <TouchableOpacity
@@ -162,8 +164,8 @@ export default function DiceToolScreen() {
         ))}
       </View>
 
-      <View testID="dice-stage" style={styles.middleArea}>
-        <Animated.View style={[mainAnimatedStyle, count === 4 && { width: 260 }]}>
+      <View testID="dice-stage" style={[styles.middleArea, { minHeight: compact ? 208 : 280 }]}>
+        <Animated.View style={[mainAnimatedStyle, count >= 3 && { width: side * 2 + 20 }]}>
           {values.map((v, i) => (
             <Die2DView key={i} index={i} value={v} size={side} shake={shakeAnim} />
           ))}
@@ -173,7 +175,7 @@ export default function DiceToolScreen() {
       <View style={styles.bottomArea}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalLabel}>{count === 1 ? 'VALUE' : 'TOTAL'}</Text>
-          <Text testID="dice-total-value" style={[styles.totalValue, isRolling && { opacity: 0.35 }]}>{total}</Text>
+          <Text testID="dice-total-value" style={[styles.totalValue, compact && { fontSize: 64 }, isRolling && { opacity: 0.35 }]}>{total}</Text>
         </View>
 
         <TouchableOpacity 
@@ -190,13 +192,13 @@ export default function DiceToolScreen() {
           </LinearGradient>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: 'black',
     maxWidth: 600,
     width: '100%',
@@ -204,13 +206,16 @@ const styles = StyleSheet.create({
   },
   countSelector: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 8,
     marginTop: 20,
     paddingHorizontal: 16,
   },
   countButton: {
-    paddingHorizontal: 14,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
     paddingVertical: 9,
     borderRadius: 20,
     borderWidth: 1,
@@ -235,6 +240,8 @@ const styles = StyleSheet.create({
   },
   middleArea: {
     flex: 1,
+    minHeight: 280,
+    paddingVertical: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },

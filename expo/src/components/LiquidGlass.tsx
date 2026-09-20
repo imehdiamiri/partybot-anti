@@ -1,5 +1,5 @@
-import React from 'react';
-import { Platform, StyleSheet, View, ViewStyle } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { AccessibilityInfo, Platform, StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Glass, platformShadow } from '../theme/Colors';
 
@@ -27,7 +27,7 @@ interface LiquidGlassProps {
 
 /**
  * LiquidGlass: a unified frosted surface primitive.
- * - iOS: real BlurView + translucent fill + specular rim (true Liquid Glass).
+ * - iOS: real BlurView + translucent fill + specular rim (frosted glass styling).
  * - Android: tonal Material 3 surface with a subtle inner sheen and elevation.
  */
 export function LiquidGlass({
@@ -40,6 +40,17 @@ export function LiquidGlass({
   shadow = true,
   tintColor,
 }: LiquidGlassProps) {
+  const [reduceTransparency, setReduceTransparency] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    let active = true;
+    AccessibilityInfo.isReduceTransparencyEnabled().then(value => {
+      if (active) setReduceTransparency(value);
+    }).catch(() => {});
+    const subscription = AccessibilityInfo.addEventListener('reduceTransparencyChanged', setReduceTransparency);
+    return () => { active = false; subscription.remove(); };
+  }, []);
+
   const intensity = {
     low: Glass.intensityLow,
     mid: Glass.intensityMid,
@@ -75,7 +86,7 @@ export function LiquidGlass({
       ]}
     >
       <View style={[StyleSheet.absoluteFill, radiusStyle, { overflow: 'hidden' }]} pointerEvents="none">
-        {Platform.OS === 'ios' && BlurView ? (
+        {Platform.OS === 'ios' && BlurView && !reduceTransparency ? (
           <>
             <BlurView intensity={intensity} tint={tint} style={StyleSheet.absoluteFill} />
             <View style={[StyleSheet.absoluteFill, { backgroundColor: fill }]} />

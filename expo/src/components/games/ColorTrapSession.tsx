@@ -1,8 +1,9 @@
+import { arenaCoordinate } from '@/src/utils/mobileLayout';
 import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
 import { AudioManager } from '@/src/services/AudioManager';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing, runOnJS } from 'react-native-reanimated';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -66,9 +67,9 @@ function seedRng(seed: number) {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function AnimatedCircle({
-  tile, lifetime, tileSize, color, onTap,
+  tile, lifetime, tileSize, color, onTap, arena,
 }: {
-  tile: ActiveTile; lifetime: number;
+  tile: ActiveTile; lifetime: number; arena: { width: number; height: number };
   tileSize: number; color: string; onTap: (id: number) => void;
 }) {
   const progress = useSharedValue(0);
@@ -118,8 +119,8 @@ function AnimatedCircle({
       style={[
         st.circleTile,
         {
-          left: `${tile.xPercent}%`,
-          top: `${tile.yPercent}%`,
+          left: arenaCoordinate(tile.xPercent, arena.width, finalSize),
+          top: arenaCoordinate(tile.yPercent, arena.height, finalSize),
           width: finalSize,
           height: finalSize,
           borderRadius: finalSize / 2,
@@ -172,9 +173,10 @@ export function ColorTrapSession({ session }: Props) {
   const diff = DIFFICULTIES[difficulty];
   const player = players[playerIdx];
 
-  const sw = Dimensions.get('window').width;
+  const { width: sw } = useWindowDimensions();
+  const [arena, setArena] = useState({ width: 0, height: 0 });
   const stageWidth = Math.min(sw, 560);
-  const tileSize = stageWidth * 0.20;
+  const tileSize = Math.min(arena.width || stageWidth, arena.height || stageWidth) * 0.20;
 
   const startGame = (turnIndex = playerIdx, turnForbidden = forbiddenIdx) => {
     if (gameActiveRef.current || !players[turnIndex]) return;
@@ -340,7 +342,7 @@ export function ColorTrapSession({ session }: Props) {
     const forbiddenName = PALETTE_NAMES[forbiddenIdx];
     return (
       <PhaseTransition phaseKey="ready" style={st.container}>
-        <View style={st.readyScreen}>
+        <ScrollView contentContainerStyle={st.readyScreen}>
           {/* Big forbidden color display */}
           <View style={st.readyTop}>
             <Text style={st.readyTitle}>
@@ -410,7 +412,7 @@ export function ColorTrapSession({ session }: Props) {
           >
             <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: '600' }}>Skip this player</Text>
           </Pressable>
-        </View>
+        </ScrollView>
       </PhaseTransition>
     );
   }
@@ -467,11 +469,12 @@ export function ColorTrapSession({ session }: Props) {
         </View>
 
         {/* Arena */}
-        <View style={[st.arena, { flex: 1, marginBottom: 24 }]}>
+        <View style={[st.arena, { flex: 1, marginBottom: 24 }]} onLayout={({ nativeEvent }) => setArena(nativeEvent.layout)}>
           {activeTiles.map(tile => (
             <AnimatedCircle
               key={tile.id}
               tile={tile}
+              arena={arena}
               lifetime={diff.tileLifetime}
               tileSize={tileSize}
               color={PALETTE[tile.colorIndex]}
@@ -531,7 +534,7 @@ const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
 
   // ─── Ready Screen ───
-  readyScreen: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 40, paddingTop: 20, maxWidth: 560, width: '100%', alignSelf: 'center' },
+  readyScreen: { flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 40, paddingTop: 20, maxWidth: 560, width: '100%', alignSelf: 'center' },
   readyTop: { alignItems: 'center', gap: 4 },
   readyTitle: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
   readyPlayerName: { color: '#fff', fontSize: 32, fontFamily: 'Viral-Black' },

@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
@@ -68,6 +69,7 @@ const fitLabel = (label: string, sliceCount: number) => {
 
 export default function WheelToolScreen() {
   const toolAudio = useToolAudio('wheel');
+  const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
   const wheelSize = Math.min((screenW > 0 ? screenW : 390) - 40, 360);
   const radius = wheelSize / 2;
@@ -232,7 +234,7 @@ export default function WheelToolScreen() {
     <AppBackgroundView />
     <ScrollView
       style={styles.scrollContainer}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingBottom: Math.max(32, insets.bottom + 16) }]}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}

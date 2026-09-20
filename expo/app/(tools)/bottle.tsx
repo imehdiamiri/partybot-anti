@@ -111,7 +111,7 @@ export default function BottleToolScreen() {
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      <View style={styles.content}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Input Row */}
       <View style={styles.inputContainer}>
         <TextInput
@@ -172,7 +172,7 @@ export default function BottleToolScreen() {
       )}
 
       {/* Spin Area */}
-      <View style={styles.spinArea}>
+      <View style={[styles.spinArea, { minHeight: bottleSize + 24 }]}>
         <View testID="bottle-stage" style={[styles.wheelContainer, { width: bottleSize, height: bottleSize }]}>
           {/* Name Ring */}
           {names.length > 0 && names.map((name, index) => {
@@ -236,7 +236,7 @@ export default function BottleToolScreen() {
           </LinearGradient>
         </TouchableOpacity>
       </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     maxWidth: 600,
     width: '100%',
     alignSelf: 'center',
