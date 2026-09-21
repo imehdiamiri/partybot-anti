@@ -27,7 +27,21 @@
 - EAS channels/builds inspected: Expo Go branch/channel `expo-go-sdk57` uses
   `exposdk:57.0.0`; latest native iOS simulator is 1.1.1, Android binary 1.1.0.
   Publish only Expo Go with APP_VARIANT=expo-go and environment preview, plus
-  Firebase Hosting project partyplay-8. Deployment confirmations will follow.
+  Firebase Hosting project partyplay-8.
+- Source commit: `e26f364e24149dbe6f7aa7a2370d312578ee1995`.
+  EAS confirmed Published for both platforms via `APP_VARIANT=expo-go npx eas-cli
+  update --branch expo-go-sdk57 --environment preview --platform all --non-interactive`
+  with the release message. Update group: `ef23acce-69e2-4f81-a61b-4dd06e723e0a`;
+  iOS: `01a0c5c1-fdfe-75ef-8e88-d33b39216afb`;
+  Android: `01a0c5c1-fdfe-799e-a63a-b9b34a8c58cf`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/ef23acce-69e2-4f81-a61b-4dd06e723e0a
+- Final web export and `node sync-web-build.js` PASS. Firebase confirmed Deploy
+  complete via `npx --yes firebase-tools deploy --only hosting --project partyplay-8
+  --non-interactive`. Live: https://partybot.games and https://partyplay-8.web.app.
+  HTTPS 200 and current bundle verified on /tools, /game/tap_in_order/setup and
+  /game/reverse_singing/setup. Live bundle `entry-7e820ce5cb0926711e1c8f9c9e66691b.js`
+  matches local SHA-256 `fe101ce9e8a191e349ce29afb46d59c9679cd0ffb44638c06dba16e60bfcaec8`.
+  Final record tag: `checkpoint/2026-09-21-device-fixes-published`.
 - Limits: browser emulation and mocked native audio tests do not certify real
   iOS/Android hardware appearance, gesture behavior or microphone/speaker loudness.
   Expo Go native Google login and purchases remain unavailable. No native build,
