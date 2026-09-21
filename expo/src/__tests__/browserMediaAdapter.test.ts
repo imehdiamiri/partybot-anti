@@ -71,7 +71,7 @@ describe('Browser Media Adapter', () => {
         const sampleRate = 44100;
         const length = 44100;
         const channel1 = new Float32Array(length);
-        for (let i = 0; i < length; i++) channel1[i] = (i / length) * 2 - 1;
+        for (let i = 0; i < length; i++) channel1[i] = ((i / length) * 2 - 1) * 0.1;
         return {
           numberOfChannels: 1,
           length,
@@ -205,6 +205,8 @@ describe('Browser Media Adapter', () => {
     expect(result.originalWavUri).toContain('blob:');
     expect(result.reversedWavUri).toContain('blob:');
 
+    // Quiet capture is normalized before producing both original and reversed WAVs.
+    expect(Math.abs(recorder.originalBuffer!.getChannelData(0)[0])).toBeCloseTo(0.92);
     // Verify reverse math: first sample becomes last
     const orig = recorder.originalBuffer!.getChannelData(0);
     const rev = recorder.reversedBuffer!.getChannelData(0);

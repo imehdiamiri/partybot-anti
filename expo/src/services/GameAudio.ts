@@ -4,6 +4,7 @@ import {
 } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import { pcm16ToWav } from '../utils/pcmWav';
+import { normalizeVoiceWav } from '../utils/voiceGain';
 
 // Small compatibility boundary for the existing game sessions. All native audio is
 // now implemented by expo-audio; no expo-av module is loaded in Expo Go.
@@ -74,7 +75,7 @@ export namespace Audio {
       if (this.released) return;
       this.released = true;
       this.subscription?.remove();
-      this.player.remove();
+      try { this.player.pause(); } finally { this.player.remove(); }
     }
   }
 
@@ -117,6 +118,7 @@ export namespace Audio {
         this.subscription?.remove();
         if (!this.byteCount) throw new Error('No microphone audio was captured');
         const wav = pcm16ToWav(this.chunks, this.sampleRate, this.channels);
+        normalizeVoiceWav(wav);
         const file = new File(Paths.cache, `reverse-${Date.now()}-${Math.random().toString(36).slice(2)}.wav`);
         file.write(wav);
         this.uri = file.uri;

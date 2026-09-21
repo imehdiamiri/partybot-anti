@@ -658,12 +658,13 @@ const st = StyleSheet.create({
   startBtnTx: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
 
   fullPress: { flex: 1 },
-  fullCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  fullCenter: { flex: 1, width: '100%', paddingHorizontal: 24, paddingVertical: 76, alignItems: 'center', justifyContent: 'center', gap: 12 },
   bigText: { color: '#fff', fontSize: 48, fontFamily: 'Viral-Black', letterSpacing: 0.5 },
   bigSub: { color: 'rgba(255,255,255,0.85)', fontSize: 18, fontWeight: '600' },
   megaText: {
     color: '#fff',
-    fontSize: 140,
+    fontSize: 96,
+    textAlign: 'center',
     fontFamily: 'Viral-Black',
     letterSpacing: 4,
     textShadowColor: 'rgba(0,0,0,0.35)',
@@ -673,6 +674,10 @@ const st = StyleSheet.create({
   },
 
   waitText: {
+    textAlign: 'center',
+    width: '100%',
+    maxWidth: 480,
+    flexShrink: 1,
     color: '#fff',
     fontSize: 48,
     fontFamily: 'Viral-Black',

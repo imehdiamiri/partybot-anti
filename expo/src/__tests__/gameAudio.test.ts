@@ -26,6 +26,8 @@ test('audio adapter preserves millisecond timing and pitch behavior', async () =
 test('audio cleanup is idempotent and prevents playback after release', async () => {
   const { sound } = await Audio.Sound.createAsync(1);
   await sound.unloadAsync(); await sound.unloadAsync(); await sound.playAsync();
+  expect(mockPlayer.pause).toHaveBeenCalledTimes(1);
+  expect(mockPlayer.pause.mock.invocationCallOrder[0]).toBeLessThan(mockPlayer.remove.mock.invocationCallOrder[0]);
   expect(mockPlayer.remove).toHaveBeenCalledTimes(1);
   expect(mockPlayer.play).not.toHaveBeenCalled();
 });

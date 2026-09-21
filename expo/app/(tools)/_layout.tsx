@@ -9,6 +9,7 @@ export default function ToolsLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
+        gestureEnabled: false,
         statusBarStyle: 'light',
         headerBackVisible: false,
         headerTitleAlign: 'center',

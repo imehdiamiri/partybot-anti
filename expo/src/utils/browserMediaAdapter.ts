@@ -1,3 +1,4 @@
+import { normalizeVoiceChannels } from './voiceGain';
 import { isWeb } from './platform';
 
 /**
@@ -272,6 +273,7 @@ export class WebAudioRecorder {
 
           // Decode audio data to AudioBuffer
           const decoded = await ctx.decodeAudioData(arrayBuffer);
+          normalizeVoiceChannels(Array.from({ length: decoded.numberOfChannels }, (_, c) => decoded.getChannelData(c)));
           this.originalBuffer = decoded;
 
           // Create reversed clone

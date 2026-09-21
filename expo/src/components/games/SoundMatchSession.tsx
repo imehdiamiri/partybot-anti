@@ -1,3 +1,4 @@
+import { useSliderDrag } from '@/src/hooks/useSliderDrag';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { MatchStudio } from './MatchStudio';
@@ -206,11 +207,6 @@ export function SoundMatchSession({ session }: Props) {
     return (1 - pct) * sliderHeight;
   }, [sliderHeight]);
 
-  const positionToFreq = useCallback((pos: number) => {
-    const pct = 1 - pos / sliderHeight;
-    return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN);
-  }, [sliderHeight]);
-
   // Generate target frequencies for all rounds
   const [targetFrequencies] = useState<number[]>(() => {
     return Array.from({ length: maxRounds }, () => {
@@ -230,6 +226,7 @@ export function SoundMatchSession({ session }: Props) {
   const [isPlayingGuess, setIsPlayingGuess] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  const soundGeneration = useRef(0);
   const activeSoundRef = useRef<Audio.Sound | null>(null);
   const webToneStopRef = useRef<(() => void) | null>(null);
   const webToneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -244,6 +241,7 @@ export function SoundMatchSession({ session }: Props) {
   // Clean up any playing sounds on unmount
   useEffect(() => {
     return () => {
+      soundGeneration.current++;
       if (webToneStopRef.current) {
         webToneStopRef.current();
         webToneStopRef.current = null;
@@ -343,25 +341,18 @@ export function SoundMatchSession({ session }: Props) {
   }, [isPlayingTarget, isPlayingGuess]);
 
   const stopActiveSound = async () => {
-    if (webToneStopRef.current) {
-      webToneStopRef.current();
-      webToneStopRef.current = null;
-    }
-    if (webToneTimerRef.current) {
-      clearTimeout(webToneTimerRef.current);
-      webToneTimerRef.current = null;
-    }
-    if (activeSoundRef.current) {
-      try {
-        await activeSoundRef.current.stopAsync();
-        await activeSoundRef.current.unloadAsync();
-      } catch (e) {
-        // ignore
-      }
-      activeSoundRef.current = null;
-    }
+    soundGeneration.current++;
+    if (livePlayTimerRef.current) { clearTimeout(livePlayTimerRef.current); livePlayTimerRef.current = null; }
+    webToneStopRef.current?.();
+    webToneStopRef.current = null;
+    if (webToneTimerRef.current) clearTimeout(webToneTimerRef.current);
+    webToneTimerRef.current = null;
+    const sound = activeSoundRef.current;
+    activeSoundRef.current = null;
     setIsPlayingTarget(false);
     setIsPlayingGuess(false);
+    // unloadAsync pauses synchronously before releasing the native player.
+    if (sound) await sound.unloadAsync().catch(() => {});
   };
   const transitionBusy = useRef(false);
   const mounted = useRef(true);
@@ -369,15 +360,18 @@ export function SoundMatchSession({ session }: Props) {
   useEffect(() => { transitionBusy.current = false; }, [phase, playerIdx, roundIdx]);
 
   const playFrequency = async (freq: number, duration: number, isTarget: boolean) => {
-    await stopActiveSound();
+    const stopped = stopActiveSound();
+    const generation = soundGeneration.current;
+    await stopped;
+    if (!mounted.current || generation !== soundGeneration.current) return;
     
     if (!useSettingsStore.getState().isSoundEnabled) {
       if (isTarget) {
         setIsPlayingTarget(true);
-        setTimeout(() => setIsPlayingTarget(false), duration * 1000);
+        webToneTimerRef.current = setTimeout(() => setIsPlayingTarget(false), duration * 1000);
       } else {
         setIsPlayingGuess(true);
-        setTimeout(() => setIsPlayingGuess(false), duration * 1000);
+        webToneTimerRef.current = setTimeout(() => setIsPlayingGuess(false), duration * 1000);
       }
       return;
     }
@@ -403,15 +397,18 @@ export function SoundMatchSession({ session }: Props) {
       else setIsPlayingGuess(true);
 
       const fileUri = await generateToneWav(freq, duration);
+      if (!mounted.current || generation !== soundGeneration.current) return;
       const { sound } = await Audio.Sound.createAsync(
         { uri: fileUri },
-        { shouldPlay: true }
+        { shouldPlay: false }
       );
+      if (!mounted.current || generation !== soundGeneration.current) { await sound.unloadAsync(); return; }
       activeSoundRef.current = sound;
 
       sound.setOnPlaybackStatusUpdate((status) => {
+        if (generation !== soundGeneration.current || !mounted.current) return;
         if ('didJustFinish' in status && status.didJustFinish) {
-          sound.unloadAsync();
+          sound.unloadAsync().catch(() => {});
           if (activeSoundRef.current === sound) {
             activeSoundRef.current = null;
           }
@@ -419,7 +416,9 @@ export function SoundMatchSession({ session }: Props) {
           setIsPlayingGuess(false);
         }
       });
+      await sound.playAsync();
     } catch (e) {
+      if (!mounted.current || generation !== soundGeneration.current) return;
       console.warn('Failed to play tone', e);
       setIsPlayingTarget(false);
       setIsPlayingGuess(false);
@@ -584,45 +583,22 @@ export function SoundMatchSession({ session }: Props) {
     });
   }, [guesses, players]);
 
-  // ─── Vertical Slider Touch Handler ─────────────────────────────────
-  const trackPageYRef = useRef(0);
-
-  const handleSliderGrant = (e: GestureResponderEvent) => {
-    setIsDragging(true);
-    const { pageY, locationY } = e.nativeEvent;
-    trackPageYRef.current = pageY - locationY;
-
-    // Calculate initial frequency on touch down
-    const clampedY = Math.max(0, Math.min(sliderHeight, locationY));
-    const freq = positionToFreq(clampedY);
-    const clampedFreq = Math.max(FREQ_MIN, Math.min(FREQ_MAX, Math.round(freq)));
-    setCurrentGuessFreq(clampedFreq);
-    schedulePlayLive(clampedFreq);
-    Haptics.selectionAsync();
-  };
-
-  const handleSliderMove = (e: GestureResponderEvent) => {
-    const { pageY } = e.nativeEvent;
-    const relativeY = pageY - trackPageYRef.current;
-    const clampedY = Math.max(0, Math.min(sliderHeight, relativeY));
-    const freq = positionToFreq(clampedY);
-    const clampedFreq = Math.max(FREQ_MIN, Math.min(FREQ_MAX, Math.round(freq)));
-    
-    setCurrentGuessFreq(clampedFreq);
-    schedulePlayLive(clampedFreq);
-    
-    if (clampedFreq !== lastPlayedFreqRef.current && clampedFreq % 50 === 0) {
-      Haptics.selectionAsync();
-    }
-  };
-
-  const handleSliderRelease = () => {
-    setIsDragging(false);
-    // Play the final frequency clearly when finger lifts
-    if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
-    lastPlayedFreqRef.current = currentGuessFreq;
-    playFrequency(currentGuessFreq, 1.0, false);
-  };
+  const sliderResponders = useSliderDrag({
+    axis: 'y', length: sliderHeight, value: currentGuessFreq,
+    min: FREQ_MIN, max: FREQ_MAX, inverted: true,
+    onDraggingChange: setIsDragging,
+    onChange: value => {
+      const frequency = Math.round(value);
+      setCurrentGuessFreq(frequency);
+      schedulePlayLive(frequency);
+    },
+    onComplete: value => {
+      if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
+      const frequency = Math.round(value);
+      lastPlayedFreqRef.current = frequency;
+      void playFrequency(frequency, 1.0, false);
+    },
+  });
 
   const adjustFreq = (delta: number) => {
     const newFreq = Math.max(FREQ_MIN, Math.min(FREQ_MAX, currentGuessFreq + delta));
@@ -721,7 +697,7 @@ export function SoundMatchSession({ session }: Props) {
     const glowColor = `hsl(${Math.round(hue)}, 85%, 55%)`;
 
     return (
-      <MatchStudio kind="sound" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
+      <MatchStudio scrollEnabled={!isDragging} kind="sound" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.recreateStage} testID="sound-match-recreate-stage">
           <View style={st.recreateHeader}>
             <Text style={st.sectionTitle}>Find that frequency</Text>
@@ -758,12 +734,7 @@ export function SoundMatchSession({ session }: Props) {
                 {/* The slider track */}
                 <View
                   style={[st.vSliderTrackContainer, { height: sliderHeight }]}
-                  onStartShouldSetResponder={() => true}
-                  onMoveShouldSetResponder={() => true}
-                  onResponderGrant={handleSliderGrant}
-                  onResponderMove={handleSliderMove}
-                  onResponderRelease={handleSliderRelease}
-                  onResponderTerminate={handleSliderRelease}
+                  {...sliderResponders}
                   testID="sound-match-slider-track"
                   accessibilityRole="adjustable"
                   accessibilityLabel="Frequency"
@@ -1192,6 +1163,7 @@ const st = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   vSliderTrackContainer: {
+    touchAction: 'none',
     width: 60,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1235,7 +1207,7 @@ const st = StyleSheet.create({
     fontWeight: 'bold',
     color: 'rgba(255,255,255,0.2)',
     position: 'absolute',
-    bottom: -18,
+    bottom: -4,
     alignSelf: 'center',
   },
 

@@ -242,7 +242,6 @@ export function ImposterSession({ session }: Props) {
             />
           ) : (
             <ScrollView contentContainerStyle={styles.centerContent}>
-              {currentPlayer?.id !== imposterId && <ImposterWordTranslation key={`${roundNumber}-${currentPlayer?.id}`} word={secretWord} category={category} />}
               <LiquidGlass radius={24} style={styles.card}>
                 <View style={styles.centerItems}>
                   {currentPlayer?.id === imposterId ? (
@@ -259,6 +258,7 @@ export function ImposterSession({ session }: Props) {
                       </View>
                     </>
                   )}
+                  {currentPlayer?.id !== imposterId && <ImposterWordTranslation key={`${roundNumber}-${currentPlayer?.id}`} word={secretWord} category={category} />}
                   <Pressable testID="imposter-got-it-button" accessibilityRole="button" style={[styles.primaryBtn, { marginTop: 30 }]} onPress={handleGotIt}>
                     <Text style={styles.primaryBtnText}>Got it, pass the phone</Text>
                   </Pressable>

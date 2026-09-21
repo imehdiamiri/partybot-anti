@@ -1,3 +1,4 @@
+import { useSliderDrag } from '@/src/hooks/useSliderDrag';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
 import { MatchStudio } from './MatchStudio';
@@ -30,6 +31,7 @@ import { hsvToHsl, calculateColorMatchScore } from '@/src/utils/colorMatchMath';
 const calculateScore = calculateColorMatchScore;
 
 export function ColorMatchSession({ session }: Props) {
+  const [isDragging, setIsDragging] = useState(false);
   const { height: viewportHeight } = useWindowDimensions();
   const swatchHeight = Math.min(360, Math.max(160, viewportHeight - 710));
   const players = session.players;
@@ -307,7 +309,7 @@ export function ColorMatchSession({ session }: Props) {
     const guessHsl = hsvToHsl(currentGuess.h, currentGuess.s, currentGuess.b);
 
     return (
-      <MatchStudio kind="color" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
+      <MatchStudio scrollEnabled={!isDragging} kind="color" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.recreateHeader}>
           <Text style={st.sectionTitle}>Mix it from memory</Text>
           <Text style={st.swatchLabel}>Adjust hue, saturation and brightness.</Text>
@@ -321,6 +323,7 @@ export function ColorMatchSession({ session }: Props) {
         <View style={st.slidersContainer}>
           {/* Hue Slider */}
           <ColorSlider
+            onDraggingChange={setIsDragging}
             label="Hue"
             value={currentGuess.h}
             min={0}
@@ -341,6 +344,7 @@ export function ColorMatchSession({ session }: Props) {
 
           {/* Saturation Slider */}
           <ColorSlider
+            onDraggingChange={setIsDragging}
             label="Saturation"
             value={currentGuess.s}
             min={0}
@@ -361,6 +365,7 @@ export function ColorMatchSession({ session }: Props) {
 
           {/* Brightness Slider */}
           <ColorSlider
+            onDraggingChange={setIsDragging}
             label="Brightness"
             value={currentGuess.b}
             min={0}
@@ -468,7 +473,8 @@ export function ColorMatchSession({ session }: Props) {
 }
 
 // Custom interactive Slider using standard React Native responder system
-function ColorSlider({
+export function ColorSlider({
+  onDraggingChange,
   label,
   value,
   min,
@@ -479,6 +485,7 @@ function ColorSlider({
   iconName,
   thumbColor,
 }: {
+  onDraggingChange: (dragging: boolean) => void;
   label: string;
   value: number;
   min: number;
@@ -490,20 +497,9 @@ function ColorSlider({
   thumbColor: string;
 }) {
   const [width, setWidth] = useState(1);
-  const trackRef = useRef<View>(null);
-
-  const handleTouch = (e: GestureResponderEvent) => {
-    const { locationX } = e.nativeEvent;
-    let pct = locationX / width;
-    pct = Math.max(0, Math.min(1, pct));
-    const val = min + pct * (max - min);
-    onChange(val);
-    
-    // Selection feedback haptics during adjustments
-    if (Math.round(val) % 5 === 0) {
-      Haptics.selectionAsync();
-    }
-  };
+  const responders = useSliderDrag({ axis: 'x', length: width, min, max, value,
+    onDraggingChange, onChange,
+  });
 
   return (
     <View style={st.sliderContainer}>
@@ -516,12 +512,14 @@ function ColorSlider({
       </View>
       
       <View
-        ref={trackRef}
+        testID={`color-slider-${label.toLowerCase()}`}
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={handleTouch}
-        onResponderMove={handleTouch}
+        {...responders}
+        accessibilityRole="adjustable"
+        accessibilityLabel={label}
+        accessibilityValue={{ min, max, now: Math.round(value) }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={e => onChange(Math.max(min, Math.min(max, value + (e.nativeEvent.actionName === 'increment' ? 1 : -1))))}
         style={st.sliderTrackContainer}
       >
         <View style={[StyleSheet.absoluteFill, { justifyContent: 'center' }]} pointerEvents="none">
@@ -697,6 +695,7 @@ const st = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
   sliderTrackContainer: {
+    touchAction: 'none',
     height: 44,
     width: '100%',
     justifyContent: 'center',

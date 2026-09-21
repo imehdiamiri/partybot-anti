@@ -94,6 +94,7 @@ export function DrumChallengeSession({ session }: Props) {
   const waveAnim = useSharedValue(0);
 
   useEffect(() => {
+    let disposed = false;
     if (!isWeb) {
       (async () => {
         try {
@@ -104,11 +105,14 @@ export function DrumChallengeSession({ session }: Props) {
             shouldDuckAndroid: true,
             playThroughEarpieceAndroid: false,
           });
+          if (disposed) return;
           // Preload drum hit (player tap feedback)
           const { sound: drumSound } = await Audio.Sound.createAsync(DRUM_HIT_AUDIO, { shouldPlay: false });
+          if (disposed) { await drumSound.unloadAsync(); return; }
           drumRef.current = drumSound;
           // Preload metronome tick
           const { sound: tickSound } = await Audio.Sound.createAsync(METRONOME_TICK_AUDIO, { shouldPlay: false });
+          if (disposed) { await tickSound.unloadAsync(); return; }
           tickRef.current = tickSound;
         } catch (e) {
           console.warn('DrumChallenge: failed to init audio', e);
@@ -116,12 +120,14 @@ export function DrumChallengeSession({ session }: Props) {
       })();
     }
     return () => {
+      disposed = true;
+      phaseRef.current = 'ready';
       attemptGeneration.current++;
       webPlayback.current.clear();
       if (!isWeb) {
-        soundRef.current?.unloadAsync();
-        drumRef.current?.unloadAsync();
-        tickRef.current?.unloadAsync();
+        void soundRef.current?.unloadAsync().catch(() => {});
+        void drumRef.current?.unloadAsync().catch(() => {});
+        void tickRef.current?.unloadAsync().catch(() => {});
         tickPoolRef.current.forEach(s => s.unloadAsync().catch(() => {}));
         tickPoolRef.current = [];
       }
@@ -129,6 +135,8 @@ export function DrumChallengeSession({ session }: Props) {
       metronomeTimersRef.current.forEach(t => clearTimeout(t));
       metronomeTimersRef.current = [];
       cancelAnimation(waveAnim);
+      cancelAnimation(drumScale);
+      cancelAnimation(drumGlow);
     };
   }, []);
 

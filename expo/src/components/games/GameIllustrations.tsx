@@ -57,7 +57,6 @@ export function PhoneHandoffIllustration({ color }: { color: string }) {
         <Rect x="10" y="19" width="44" height="65" rx="7" fill={color} opacity={0.22} />
         <Line x1="25" y1="11" x2="39" y2="11" stroke="#E5EBF5" strokeWidth="3" strokeLinecap="round" />
         <Circle cx="32" cy="94" r="3" fill="#E5EBF5" />
-        <Path d="M20 51H44M35 42L44 51L35 60" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" />
       </Svg>
     </Animated.View>
   </View>;

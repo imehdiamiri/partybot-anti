@@ -1,5 +1,38 @@
 # Release log
 
+## 2026-09-21 — device layout, gesture ownership and recording loudness
+
+- Recovery: `checkpoint/2026-09-21-before-device-fixes` at `83d5b80`;
+  initial worktree clean. Source tag: `release/2026-09-21-device-fixes`.
+- Disable native swipe-back globally and consume Android Back during games;
+  web session removal is guarded. Explicit Exit retains confirmation.
+  Color/Sound Match sliders own the touch until release, use stable page deltas,
+  and suspend parent scrolling. Match phases reset their scroll position.
+- Tap in Order uses explicit rows and integer cell sizes, preserving 6x6 on iOS.
+  Tools cards have bounded, font-aware heights instead of unconstrained flex growth.
+  Reaction Time instructions are centered/inset. Imposter translations follow the
+  secret word within its card; handoff art retains only the between-hands arrow.
+- Native audio cleanup pauses before player removal. Drum Challenge disposes late
+  preloads and pending attempts on Exit. Sound Match rejects stale tone loads.
+- Reverse Singing normalizes captured PCM on native and decoded samples on web
+  before creating original/reversed WAVs. Shared peak gain up to 16x (~24 dB),
+  0.92 peak target; already loud audio and near silence remain unchanged. Stereo
+  balance, sample rate, duration and reverse order are preserved. No new native module.
+- Checks: TypeScript PASS; Jest 40 suites / 283 tests PASS; native Drum lifecycle
+  tests separately PASS after correcting the test platform to iOS; diff check PASS.
+  Web export PASS (91 routes). Static browser checks across 78 route/viewport
+  combinations and Memory Grid 6x6 at three sizes PASS. Touch regression checks
+  cover Tools, Tap in Order, Reaction Time, Color/Sound sliders and confirmed Exit
+  at 320x568, 393x852, 430x932 and 768x1024. No persistent development server.
+- EAS channels/builds inspected: Expo Go branch/channel `expo-go-sdk57` uses
+  `exposdk:57.0.0`; latest native iOS simulator is 1.1.1, Android binary 1.1.0.
+  Publish only Expo Go with APP_VARIANT=expo-go and environment preview, plus
+  Firebase Hosting project partyplay-8. Deployment confirmations will follow.
+- Limits: browser emulation and mocked native audio tests do not certify real
+  iOS/Android hardware appearance, gesture behavior or microphone/speaker loudness.
+  Expo Go native Google login and purchases remain unavailable. No native build,
+  production OTA, backend deploy or Git push. Rollback needs separate republishing.
+
 ## 2026-09-20 — mobile layout and tools refinement
 
 - Recovery: `checkpoint/2026-09-20-before-mobile-layout` at `e7ee756`;

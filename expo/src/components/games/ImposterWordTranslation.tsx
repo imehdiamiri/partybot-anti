@@ -37,7 +37,7 @@ export function ImposterWordTranslation({ word, category = 'random' }: { word: s
   </View>;
 }
 const s = StyleSheet.create({
-  container: { width: '100%', maxWidth: 560, alignSelf: 'center', marginBottom: 20, gap: 12 },
+  container: { width: '100%', maxWidth: 560, alignSelf: 'center', marginTop: 20, gap: 12 },
   hint: { color: '#C3CDD9', textAlign: 'center', fontSize: 14 },
   languages: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 8 },
   language: { minWidth: 76, minHeight: 66, borderRadius: 12, borderWidth: 1, borderColor: '#384250', backgroundColor: '#1C2330', padding: 10, alignItems: 'center', justifyContent: 'center', gap: 6 },

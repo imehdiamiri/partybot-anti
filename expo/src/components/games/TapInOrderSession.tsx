@@ -1,3 +1,4 @@
+import { GameGrid } from './GameGrid';
 import { AudioManager } from '@/src/services/AudioManager';
 import { SecondaryPlayerLabel, useGameActivity } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
@@ -371,7 +372,7 @@ export function TapInOrderSession({ session }: Props) {
   const spacing = 6;
   const maxGridByHeight = Math.max(260, sh - 320);
   const gridW = Math.min(Math.min(sw - 48, 400), maxGridByHeight);
-  const tileSz = (gridW - spacing * (GRID_SIZE - 1)) / GRID_SIZE;
+  const tileSz = Math.floor((gridW - spacing * (GRID_SIZE - 1)) / GRID_SIZE);
 
   // ══════════════════════════════════════════════════════════
   // MULTIPLAYER MODES
@@ -512,7 +513,7 @@ export function TapInOrderSession({ session }: Props) {
           </View>
 
           {/* Grid */}
-          <View style={[st.gridWrap, { width: gridW }]}>
+          <GameGrid columns={GRID_SIZE} width={gridW} gap={spacing}>
             {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
               const isSelected = deterministicBoard.selectedCells.includes(idx);
               const isTapped = multiTappedCells.has(idx);
@@ -558,7 +559,7 @@ export function TapInOrderSession({ session }: Props) {
                 </Pressable>
               );
             })}
-          </View>
+          </GameGrid>
 
           {/* Give Up button */}
           {multiPhase === 'playing' && (
@@ -734,7 +735,7 @@ export function TapInOrderSession({ session }: Props) {
         </View>
 
         {/* Grid */}
-        <View style={[st.gridWrap, { width: gridW }]}>
+        <GameGrid columns={GRID_SIZE} width={gridW} gap={spacing}>
           {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
             const isSelected = selectedCells.includes(idx);
             const isTapped = tappedCells.has(idx);
@@ -780,7 +781,7 @@ export function TapInOrderSession({ session }: Props) {
               </Pressable>
             );
           })}
-        </View>
+        </GameGrid>
 
         {/* Give Up button */}
         {phase === 'playing' && (
@@ -869,7 +870,6 @@ const st = StyleSheet.create({
   progWrap: { paddingHorizontal: 16, paddingBottom: 12, maxWidth: 540, width: '100%', alignSelf: 'center' },
   progBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' },
   progFill: { height: 6, borderRadius: 3 },
-  gridWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignSelf: 'center' },
   tile: { flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
   tileNum: { fontSize: 20, fontFamily: 'Viral-Black' },
   giveUp: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, paddingVertical: 12, marginHorizontal: 16, borderRadius: 16, backgroundColor: 'rgba(255,59,48,0.15)', borderWidth: 1, borderColor: 'rgba(255,59,48,0.3)', maxWidth: 540, width: '100%', alignSelf: 'center' },

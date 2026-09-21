@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, BackHandler, Platform } from 'react-native';
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useActionConfirmation } from '@/src/components/ActionConfirmation';
@@ -24,6 +24,15 @@ export default function GameSessionScreen() {
   const { currentRoom } = useMultiplayerStore();
 
   const isExitingRef = useRef(false);
+  const navigation = useNavigation();
+  useFocusEffect(useCallback(() => {
+    // A game is left only through its explicit, confirmed Exit action.
+    const back = BackHandler.addEventListener('hardwareBackPress', () => true);
+    const unsubscribe = Platform.OS === 'web' ? navigation.addListener('beforeRemove', event => {
+      if (!isExitingRef.current && useGameStore.getState().activeSession) event.preventDefault();
+    }) : () => {};
+    return () => { back.remove(); unsubscribe(); };
+  }, [navigation]));
 
   useEffect(() => {
     if (isExitingRef.current) return;
@@ -89,7 +98,7 @@ export default function GameSessionScreen() {
   return (
     <GameSkipProvider>
       <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
-        <Stack.Screen options={{ headerShown: false }} />
+        <Stack.Screen options={{ headerShown: false, gestureEnabled: false, fullScreenGestureEnabled: false }} />
         <AppBackgroundView />
         <MultiplayerStatusBanner />
 

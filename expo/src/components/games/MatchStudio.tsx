@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-export function MatchStudio({ kind, step, player, round, children }: {
-  kind: 'color' | 'sound'; step: 0 | 1 | 2; player: string; round: string; children: React.ReactNode;
+export function MatchStudio({ kind, step, player, round, children, scrollEnabled = true }: {
+  kind: 'color' | 'sound'; step: 0 | 1 | 2; player: string; round: string; children: React.ReactNode; scrollEnabled?: boolean;
 }) {
+  const scroll = useRef<ScrollView>(null);
+  useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [step]);
   const accent = kind === 'color' ? '#B9A3FF' : '#7DE4D5';
   const labels = kind === 'color' ? ['Observe', 'Mix', 'Compare'] : ['Listen', 'Tune', 'Compare'];
-  return <ScrollView style={s.scroll} contentContainerStyle={s.content}>
+  return <ScrollView ref={scroll} scrollEnabled={scrollEnabled} bounces={false} contentInsetAdjustmentBehavior="never" style={s.scroll} contentContainerStyle={s.content}>
     <View style={s.shell} testID={`${kind}-match-studio`}>
       <View style={s.heading}>
         <View style={{ flex: 1 }}>

@@ -180,7 +180,7 @@ export default function RootLayout() {
       ) : (
         <ResponsiveWebContainer>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false, statusBarStyle: 'light' }}>
+            <Stack screenOptions={{ headerShown: false, statusBarStyle: 'light', gestureEnabled: false, fullScreenGestureEnabled: false }}>
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
