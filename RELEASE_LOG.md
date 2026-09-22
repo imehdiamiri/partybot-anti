@@ -26,7 +26,23 @@
   late-load/loop cleanup. Web export PASS (91 routes). Browser checks: full-width/
   height handoff in Color Match and Imposter at 320x568, 393x852 and 768x1024;
   actual recorded bottle/dice/wheel buffer playback PASS. Screenshots inspected.
-  Final source diff and publish confirmations are recorded below.
+  Final `git diff --check` and private-credential scan PASS.
+- Source: `506715b062a7101636fd6369b4a6739e71dc26a7`. EAS confirmed Published via
+  `APP_VARIANT=expo-go npx eas-cli update --branch expo-go-sdk57 --environment
+  preview --platform all --non-interactive` with the release message; runtime
+  `exposdk:57.0.0`, Android and iOS. Group `67c9b78a-7c9f-4c8e-a45a-e42873efa9b0`;
+  iOS `01a0c914-50ff-76fd-9033-3c66975ad40c`;
+  Android `01a0c914-50ff-7b52-8cdb-8d6ca8d9383e`. 12 new assets uploaded.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/67c9b78a-7c9f-4c8e-a45a-e42873efa9b0
+- Hosting confirmed Deploy complete after one-off Expo web export,
+  `node sync-web-build.js`, and `npx --yes firebase-tools deploy --only hosting
+  --project partyplay-8 --non-interactive`. Live https://partybot.games and
+  https://partyplay-8.web.app. /tools, /game/reverse_singing/setup and
+  /game/imposter/setup return HTTPS 200 with the current entry bundle.
+  `entry-3bcc53da0b00d35dfb0467f9a4b60e78.js` live SHA-256 equals local:
+  `d81f63cc3ce69b4c36f6ddbd58175a24b96d5292dc52a05d1f2287fa548e7894`.
+  All 12 live recorded tool WAVs also match local SHA-256, ruling out stale assets.
+  Final tag: `checkpoint/2026-09-22-audio-handoff-published`.
 - Existing Expo Go channel inspected: expo-go-sdk57 / exposdk:57.0.0; recent iOS
   build history inspected. Native dependencies/config unchanged. Publish only
   matching Expo Go preview plus Firebase Hosting partyplay-8; no native binary,
