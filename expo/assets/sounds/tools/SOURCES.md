@@ -1,42 +1,25 @@
-# Recorded tool Foley
+# Tool Foley — soft refresh, 2026-09-22
 
-All source recordings are CC0 (https://creativecommons.org/publicdomain/zero/1.0/), verified 2026-09-22. Freesound sources use the publicly available high-quality MP3 previews; the Kenney archive contains OGG recordings. No synthetic melodies remain in the tool cues.
+All sources are CC0: https://creativecommons.org/publicdomain/zero/1.0/.
+Freesound high-quality previews and Kenney OGG assets are edited locally.
 
-## Bottle — SpliceSound
+| Tool | Source | Local input | SHA-256 |
+| --- | --- | --- | --- |
+| Bottle | [mincedbeats: Glass Bottle Spins And Rolls](https://freesound.org/people/mincedbeats/sounds/698783/) | bottle-spin-new.mp3 | 956b8ad3875955382377e42cad1a357e25a28e3861b04c3cb1c7b277d72ac33a |
+| Coin | [janbezouska: Coin Spin](https://freesound.org/people/janbezouska/sounds/386452/) | coin-new.mp3 | a115a323b55a694fa812954d4414124fbb722840a0957e37db9f168e663fb4e4 |
+| Hourglass | [dland: Kitchen Timer — Done!](https://freesound.org/people/dland/sounds/149506/) | timer-new.mp3 | 3f95937b07d45f515d63a6af405c054dc34623b8280f741f8f6092a1c0af264c |
+| Wheel | [Kenney Impact Sounds](https://kenney.nl/assets/impact-sounds), wood light 000/002 | impact.zip | 029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8 |
+| Dice / Teams | [Kenney Casino Audio](https://kenney.nl/assets/casino-audio), dice shake/throw 3, card fan 2/place 4 | casino.zip | f36250766ac5bc378c13708ddf12a23a8e54a3251f8d482c7536e51b5dbafa18 |
 
-- Source and license: https://freesound.org/people/SpliceSound/sounds/150438/
-- Download: https://cdn.freesound.org/previews/150/150438_1480854-hq.mp3
-- Input: `bottle.mp3`
-- SHA-256: `5a8d00afe347cf51830d39ba272614cb2c8445305a9d8a75da2d7258160b8dbd`
+Preview URLs: `https://cdn.freesound.org/previews/698/698783_723858-hq.mp3`,
+`https://cdn.freesound.org/previews/386/386452_3287894-hq.mp3`,
+`https://cdn.freesound.org/previews/149/149506_274531-hq.mp3`.
 
-## Wheel — takecoins
-
-- Source and license: https://freesound.org/people/takecoins/sounds/588351/
-- Download: https://cdn.freesound.org/previews/588/588351_13287395-hq.mp3
-- Input: `wheel.mp3`
-- SHA-256: `923ee9995b22788fd869576f7ef3016afeb92f21954dac33cba3b2a9a8a4d0e2`
-
-## Coin — SpaceJoe
-
-- Source and license: https://freesound.org/people/SpaceJoe/sounds/485744/
-- Download: https://cdn.freesound.org/previews/485/485744_6150892-hq.mp3
-- Input: `coin.mp3`
-- SHA-256: `39ee070aa23cda3fe336f5776cb10c40a0990e2847047643260f8d3dff8ab9c7`
-
-## Timer — maphill
-
-- Source and license: https://freesound.org/people/maphill/sounds/204103/
-- Download: https://cdn.freesound.org/previews/204/204103_573247-hq.mp3
-- Input: `timer.mp3`
-- SHA-256: `5594f7b0bcac15f96838b69c57b231994619dacaddd1876511e376010c8ddde2`
-
-## Dice and team cards — Kenney
-
-- Source and license: https://kenney.nl/assets/casino-audio
-- Download: https://kenney.nl/media/pages/assets/casino-audio/2472606a04-1721639069/kenney_casino-audio.zip
-- Input: `casino.zip`
-- SHA-256: `f36250766ac5bc378c13708ddf12a23a8e54a3251f8d482c7536e51b5dbafa18`
-
-Edits: mono downmix, trim, 44.1 kHz PCM16, DC removal, peak level 0.82 and short edge fades; bottle friction uses a crossfaded loop. Exact cuts are in `../../../scripts/prepare-tool-foley.py`. Bottle uses continuous glass-on-wood friction plus its settling tail. Wheel uses a recorded roulette detent and final movement. Dice uses rattling dice then a real throw. Coin uses recorded metal contact/settling. Teams uses card shuffling/dealing. Hourglass uses a real mechanical timer tick and alarm bell.
-
-Web and native load the same bundled WAV files. The legacy sound generator does not overwrite these recordings.
+Exact cuts and processing: `../../../scripts/prepare-tool-foley.py`.
+Processing: mono 44.1 kHz PCM16, DC removal, 95 Hz high-pass, gentle low-pass,
+quiet-floor suppression and edge fades; gain capped at 4x, peak 0.48, RMS 0.065.
+Bottle, coin, dice and cards use single motion clips, never rapid loops.
+Wheel uses softened wooden detent clicks; hourglass uses a mechanical tick/bell.
+Playback gain is additionally reduced per tool in ToolSoundDesign.ts.
+Native and web use the same 12 bundled files. The legacy generator does not
+replace these assets. Source downloads stay in ignored .expo/foley.

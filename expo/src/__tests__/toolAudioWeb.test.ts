@@ -23,12 +23,13 @@ beforeEach(() => {
 });
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 
-test('web plays the bundled recording, loops bottle friction, and stops on navigation', async () => {
+test('web plays the bundled recording, plays bottle motion once, and stops on navigation', async () => {
   global.fetch = jest.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) })) as any;
   const audio = new ToolAudio('bottle'); audio.prepare(); await flush(); audio.begin();
   expect(fetch).toHaveBeenCalledWith('/recorded-tool.wav');
   expect(sources[0].buffer).toBe(decoded);
-  expect(sources[0].loop).toBe(true);
+  expect(sources[0].loop).toBe(false);
+  audio.tick(); audio.tick(); expect(sources).toHaveLength(1);
   expect(sources[0].start).toHaveBeenCalledTimes(1);
   audio.dispose(); expect(sources[0].stop).toHaveBeenCalledTimes(1);
 });

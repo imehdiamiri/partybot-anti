@@ -3,7 +3,7 @@ const mockPlayers: any[] = [];
 const mockSettings = { isSoundEnabled: true };
 let mockSettingsListener: (state: typeof mockSettings) => void;
 jest.mock('expo-audio', () => ({ createAudioPlayer: jest.fn(() => {
-  const player = { isLoaded: true, volume: 1, setPlaybackRate: jest.fn(), seekTo: jest.fn(async () => {}), play: jest.fn(), pause: jest.fn(), remove: jest.fn() };
+  const player = { isLoaded: true, volume: 0, setPlaybackRate: jest.fn(), seekTo: jest.fn(async () => {}), play: jest.fn(), pause: jest.fn(), remove: jest.fn() };
   mockPlayers.push(player); return player;
 }) }));
 jest.mock('../store/useSettingsStore', () => ({ useSettingsStore: {
@@ -25,7 +25,7 @@ test.each(TOOL_KINDS)('%s bundles distinct PCM recordings without clipping', kin
     expect(wav.readUInt32LE(24)).toBe(44100);
     let peak = 0;
     for (let i = 44; i < wav.length; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)) / 32768);
-    expect(peak).toBeGreaterThan(0.1); expect(peak).toBeLessThan(0.9);
+    expect(peak).toBeGreaterThan(0.02); expect(peak).toBeLessThan(0.5);
   }
 });
 
@@ -60,16 +60,23 @@ test('navigation cancels deferred work and prevents delayed sound after disposal
   expect(mockPlayers.every(player => !player.play.mock.calls.length)).toBe(true);
 });
 
-test('bottle friction is one continuous loop, slows with motion, and stops on finish', async () => {
-  const audio = new ToolAudio('bottle'); audio.prepare(); audio.begin(8000);
+test.each(['bottle', 'dice', 'coin', 'teams'] as const)('%s motion plays once without a repeating grain or loop', async kind => {
+  const audio = new ToolAudio(kind); audio.prepare(); audio.begin(8000);
   await Promise.resolve();
-  expect(mockPlayers[0].loop).toBe(true);
-  jest.advanceTimersByTime(6000); audio.tick();
-  expect(mockPlayers[0].setPlaybackRate.mock.calls[0][0]).toBeCloseTo(0.775);
-  expect(mockPlayers[0].play).toHaveBeenCalledTimes(1);
+  expect(mockPlayers[0].loop).toBe(false);
+  for (let i = 0; i < 60; i++) { jest.advanceTimersByTime(100); audio.tick(); }
+  await Promise.resolve();
+  expect(mockPlayers.reduce((total, player) => total + player.play.mock.calls.length, 0)).toBe(1);
   audio.finish(); await Promise.resolve();
   expect(mockPlayers[0].pause).toHaveBeenCalled();
-  expect(mockPlayers[3].loop).toBe(false);
   expect(mockPlayers[3].play).toHaveBeenCalledTimes(1);
+  audio.dispose();
+});
+
+test('wheel detents are rate limited even when animation crosses many segments', async () => {
+  const audio = new ToolAudio('wheel'); audio.prepare(); audio.begin(8000); await Promise.resolve();
+  for (let i = 0; i < 100; i++) { jest.advanceTimersByTime(10); audio.tick(); await Promise.resolve(); }
+  expect(mockPlayers.reduce((total, player) => total + player.play.mock.calls.length, 0)).toBeLessThanOrEqual(6);
+  expect(mockPlayers.every(player => player.volume <= .3)).toBe(true);
   audio.dispose();
 });

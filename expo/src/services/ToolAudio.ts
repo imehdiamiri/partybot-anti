@@ -2,7 +2,7 @@ import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { Platform } from 'react-native';
 import { Asset } from 'expo-asset';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { toolTickVolume, type ToolKind, type ToolCue } from './ToolSoundDesign';
+import { TOOL_AUDIO_PROFILE, toolTickVolume, type ToolKind, type ToolCue } from './ToolSoundDesign';
 
 const assets = {
   wheel: [require('@/assets/sounds/tools/wheel-tick.wav'), require('@/assets/sounds/tools/wheel-end.wav')],
@@ -14,11 +14,10 @@ const assets = {
 };
 let context: AudioContext | undefined;
 
-/** One screen owns its recorded effects, motion-bound loops and deferred work. */
+/** One screen owns its recorded effects, one-shot motions and deferred work. */
 export class ToolAudio {
   private players: AudioPlayer[] = [];
   private nodes = new Set<AudioBufferSourceNode>();
-  private gains = new Map<AudioBufferSourceNode, GainNode>();
   private buffers = new Map<ToolCue, AudioBuffer>();
   private loads = new Map<ToolCue, Promise<AudioBuffer>>();
   private timers = new Set<ReturnType<typeof setTimeout>>();
@@ -53,33 +52,25 @@ export class ToolAudio {
     this.active = true;
     this.duration = Math.max(1, durationMs);
     this.startedAt = Date.now();
-    this.lastTick = -Infinity;
-    this.cue('tick', 0.62); // Synchronous user gesture also unlocks mobile-browser audio.
+    this.lastTick = Date.now();
+    this.cue('tick', TOOL_AUDIO_PROFILE[this.kind].volume); // Synchronous user gesture also unlocks mobile-browser audio.
   }
 
   tick() {
-    if (!this.active || Date.now() - this.lastTick < 35) return;
+    const profile = TOOL_AUDIO_PROFILE[this.kind];
+    if (!this.active || !profile.repeated || Date.now() - this.lastTick < profile.interval) return;
     this.lastTick = Date.now();
-    if (this.kind === 'bottle') {
-      // Continuous glass friction follows the slowing bottle instead of repeated beeps.
-      const progress = Math.min(1, (Date.now() - this.startedAt) / this.duration);
-      const rate = 1.15 - 0.5 * progress;
-      this.nodes.forEach(node => { node.playbackRate.value = rate; const gain = this.gains.get(node); if (gain) gain.gain.value = toolTickVolume(progress); });
-      const player = this.players[0];
-      if (player) { player.setPlaybackRate(rate); player.volume = toolTickVolume(progress); }
-      return;
-    }
-    this.cue('tick', toolTickVolume((Date.now() - this.startedAt) / this.duration));
+    this.cue('tick', profile.volume * toolTickVolume((Date.now() - this.startedAt) / this.duration));
   }
 
   finish() {
     if (!this.active) return;
     this.active = false;
     this.stopSounds();
-    this.cue('end', 0.55);
+    this.cue('end', TOOL_AUDIO_PROFILE[this.kind].endVolume);
   }
 
-  cue(cue: ToolCue = 'tick', volume = 0.3) {
+  cue(cue: ToolCue = 'tick', volume = TOOL_AUDIO_PROFILE[this.kind].volume) {
     if (!this.enabled || !useSettingsStore.getState().isSoundEnabled) return;
     if (Platform.OS === 'web') {
       if (typeof window === 'undefined' || document.hidden) return;
@@ -96,12 +87,11 @@ export class ToolAudio {
           const source = ctx.createBufferSource();
           const gain = ctx.createGain();
           source.buffer = buffer;
-          source.loop = this.kind === 'bottle' && cue === 'tick' && this.active;
+          source.loop = false;
           gain.gain.value = volume;
           source.connect(gain).connect(ctx.destination);
           this.nodes.add(source);
-          this.gains.set(source, gain);
-          source.onended = () => { this.nodes.delete(source); this.gains.delete(source); source.disconnect(); gain.disconnect(); };
+          source.onended = () => { this.nodes.delete(source); source.disconnect(); gain.disconnect(); };
           source.start();
         };
         const buffer = this.buffers.get(cue);
@@ -109,11 +99,10 @@ export class ToolAudio {
         else void this.loadBuffer(cue).then(play).catch(() => {});
       } catch { /* Audio support must never block a tool. */ }
     } else {
-      const player = this.players[cue === 'end' ? 3 : this.kind === 'bottle' ? 0 : this.slot++ % 3];
+      const player = this.players[cue === 'end' ? 3 : this.slot++ % 3];
       if (!player?.isLoaded) return;
       const generation = this.generation;
-      player.loop = this.kind === 'bottle' && cue === 'tick' && this.active;
-      if (this.kind === 'bottle') player.shouldCorrectPitch = false;
+      player.loop = false;
       player.volume = volume;
       void player.seekTo(0).then(() => {
         if (this.enabled && generation === this.generation && useSettingsStore.getState().isSoundEnabled) player.play();
@@ -152,8 +141,6 @@ export class ToolAudio {
   stopSounds() {
     this.generation++;
     this.nodes.forEach(source => { try { source.stop(); source.disconnect(); } catch {} });
-    this.gains.forEach(gain => gain.disconnect());
-    this.gains.clear();
     this.nodes.clear();
     this.players.forEach(player => { try { player.pause(); } catch {} });
   }

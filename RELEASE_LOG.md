@@ -1,5 +1,28 @@
 # Release log
 
+## 2026-09-22 — soft tool sounds and one-row Imposter translations
+
+- Recovery: checkpoint/2026-09-22-before-tools-sound-refresh at af461ba.
+  Source tag: release/2026-09-22-soft-tools-language-row.
+- Replaced all 12 tool WAVs with different CC0 source clips. Soft filtering,
+  bounded RMS/peak and lower playback gains reduce harshness. Bottle, dice,
+  coin and cards play once per motion; wheel detents are capped at 180 ms and
+  fade with progress. No bottle loop or rapid repeated motion samples.
+  Sources and reproducible processing are recorded in tools/SOURCES.md.
+- Imposter language controls share five equal-width cells without wrapping.
+  Measured container width scales gaps, flags and labels; accessible labels and
+  minimum 48 px touch height retained. Translation privacy unchanged.
+- Validation: TypeScript PASS; Jest 41 suites / 290 tests PASS; web export PASS.
+  Browser: all five languages in one row and working translation at 320, 393,
+  768 px; full-page handoff regressions and real bottle/dice/wheel WAV playback
+  PASS. Small-screen screenshot inspected. No physical iOS/Android listening
+  session available; subjective sound quality still needs the owner's phone.
+- Existing Expo channel/builds inspected: expo-go-sdk57 points at SDK 57 runtime.
+  No native dependency/config changes; publish only Expo Go preview and Hosting.
+  Installed native runtime 1.1.1 is separate. Git remote push remains withheld.
+- Publishing confirmation pending below; no release success claimed yet.
+
+
 ## 2026-09-22 — louder singing, recorded tool Foley and full-page handoff
 
 - Recovery: `checkpoint/2026-09-22-before-audio-handoff` at `d4654cf`;

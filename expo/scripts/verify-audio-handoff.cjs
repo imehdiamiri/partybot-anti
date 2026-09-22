@@ -48,10 +48,31 @@ const assert = require('assert');
         await click('game-ready-button');
         await page.waitForFunction(()=>!document.querySelector('[data-testid="handoff-screen"]'));
         console.log(`${game} fullscreen handoff ${width}x${height} PASS`);
+        if (game === 'imposter') {
+          for (let attempt = 0; attempt < 5 && !await page.$('[data-testid="imposter-language-row"]'); attempt++) {
+            await click('imposter-got-it-button');
+            await click('game-ready-button');
+          }
+          await page.waitForSelector('[data-testid="imposter-language-row"]');
+          await new Promise(resolve => setTimeout(resolve, 300));
+          const layout = await page.$eval('[data-testid="imposter-language-row"]', row => {
+            const bounds = row.getBoundingClientRect();
+            return { left: bounds.left, right: bounds.right, cells: [...row.children].map(cell => {
+              const r = cell.getBoundingClientRect();
+              return { left: r.left, right: r.right, top: r.top, height: r.height };
+            }) };
+          });
+          assert.equal(layout.cells.length, 5);
+          assert(layout.cells.every(cell => Math.abs(cell.top - layout.cells[0].top) < 1 && cell.left >= layout.left - 1 && cell.right <= layout.right + 1 && cell.height <= 60));
+          await click('imposter-language-fa');
+          await page.waitForSelector('[data-testid="imposter-translated-word"]');
+          await page.screenshot({path: `.expo/imposter-flags-${width}.png`});
+          console.log(`Five compact language buttons in one row at ${width}px PASS`);
+        }
       }
     }
     await page.setViewport({width:393,height:852,isMobile:true,hasTouch:true,deviceScaleFactor:1});
-    for (const [tool,button,duration,loop] of [['bottle','bottle-spin-btn',.7,true],['dice','dice-roll-btn',.13,false],['wheel','wheel-spin-btn',.055,false]]) {
+    for (const [tool,button,duration,loop] of [['bottle','bottle-spin-btn',1.3,false],['dice','dice-roll-btn',1.35,false],['wheel','wheel-spin-btn',.18,false]]) {
       await page.goto('https://layout.invalid/'+tool,{waitUntil:'networkidle0'});
       await click(button);
       await page.waitForFunction((duration,loop)=>window.playedClips.some(c=>Math.abs(c.duration-duration)<.001 && c.loop===loop),{},duration,loop);
