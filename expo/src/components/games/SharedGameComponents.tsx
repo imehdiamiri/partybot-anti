@@ -66,14 +66,15 @@ export function GameHandoffView({
     registerHandoff(canSkip ? () => skipRef.current?.() : null, playerName);
     return () => registerHandoff(null);
   }, [canSkip, playerName, registerHandoff]);
-  return <ScrollView style={{ flex: 1, backgroundColor: '#08080F' }}
-    contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20, paddingBottom: Math.max(20, insets.bottom + 12) }}>
+  return <ScrollView testID="handoff-screen" bounces={false} style={{ flex: 1, width: '100%', backgroundColor: '#08080F' }}
+    contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: Math.max(24, insets.bottom + 12) }}>
     {previousResult && <View testID="previous-player-result" style={{ width: '100%', maxWidth: 480, padding: 22, marginBottom: 16, borderRadius: 22, backgroundColor: '#14251F', borderWidth: 1, borderColor: '#355E4F', gap: 10 }}>
       <Text style={{ color: '#B6C2D5', fontSize: 12, fontWeight: '700', letterSpacing: 1 }}>TURN RESULT</Text>
       {!!previousResult.name && <Text style={{ color: '#68E8A8', fontSize: 26, fontWeight: '800' }}>{previousResult.name}</Text>}
       <Text style={{ color: '#F3F6FB', fontSize: 19, lineHeight: 28 }}>{previousResult.summary || 'Turn complete'}</Text>
     </View>}
-    <View testID="handoff-card" style={{ width: '100%', maxWidth: 480, alignItems: 'center', padding: 24, borderRadius: 28, backgroundColor: '#171B26', borderWidth: 1, borderColor: '#303748', gap: 20 }}>
+    <View testID="handoff-card" style={{ flexGrow: 1, width: '100%', maxWidth: 640, alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+      <View style={{ flexGrow: 1, width: '100%', justifyContent: 'center', alignItems: 'center', gap: 24 }}>
       <Text style={{ color: accentColor, fontSize: 12, fontWeight: '700', letterSpacing: 1.5 }}>{rolePillText}</Text>
       {!finalTurn && <PhoneHandoffIllustration color={accentColor} />}
       {!finalTurn && <View style={{ width: '100%', gap: 8, alignItems: 'center' }}>
@@ -81,6 +82,7 @@ export function GameHandoffView({
         <Text testID="handoff-player-name" style={{ color: '#68E8A8', fontSize: 40, fontWeight: '800', textAlign: 'center', width: '100%' }}>{playerName}</Text>
       </View>}
       {subtitle && <Text style={{ color: '#B8C2D4', fontSize: 15, lineHeight: 22, textAlign: 'center' }}>{subtitle}</Text>}
+      </View>
       <Pressable testID="game-ready-button" accessibilityRole="button" onPress={onReady}
         style={({ pressed }) => ({ width: '100%', minHeight: 58, padding: 14, borderRadius: 16, backgroundColor: accentColor, opacity: pressed ? 0.8 : 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}>
         <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '700', flexShrink: 1, textAlign: 'center' }}>{buttonTitle || "I'm Ready"}</Text>
@@ -222,7 +224,7 @@ export function GameResultsScreen({ players, results, onPlayAgain, title, badgeL
     secondary: r.stats.map(s => `${s.label}: ${s.value}`).join(' · '),
     isSkipped: !!r.isSkipped,
   }));
-  return <ScrollView style={{ flex: 1, backgroundColor: '#08080F' }}
+  return <ScrollView testID="handoff-screen" bounces={false} style={{ flex: 1, width: '100%', backgroundColor: '#08080F' }}
     contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
     <ResultsScoreboard entries={entries} title={title || (players.length > 1 ? 'Final Rankings' : 'Complete!')}
       badgeLabel={badgeLabel} onPlayAgain={onPlayAgain} />

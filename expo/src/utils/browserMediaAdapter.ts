@@ -273,7 +273,7 @@ export class WebAudioRecorder {
 
           // Decode audio data to AudioBuffer
           const decoded = await ctx.decodeAudioData(arrayBuffer);
-          normalizeVoiceChannels(Array.from({ length: decoded.numberOfChannels }, (_, c) => decoded.getChannelData(c)));
+          normalizeVoiceChannels(Array.from({ length: decoded.numberOfChannels }, (_, c) => decoded.getChannelData(c)), decoded.sampleRate);
           this.originalBuffer = decoded;
 
           // Create reversed clone

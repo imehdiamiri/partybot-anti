@@ -165,10 +165,11 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
           <TouchableOpacity
             onPress={handleSkip}
             testID="session-skip-button"
+            accessibilityLabel={skipLabel}
             accessibilityRole="button"
             style={styles.headerSideButton}
           >
-            <Text style={[styles.headerSideText, { color: '#CFD5E3', fontSize: skipLabel === 'Skip' ? 17 : 12 }]}>{skipLabel}</Text>
+            <Text numberOfLines={1} style={[styles.headerSideText, { color: '#CFD5E3' }]}>Skip</Text>
             <IconSymbol name="forward.fill" size={18} color="#CFD5E3" />
           </TouchableOpacity>
         ) : (

@@ -1,5 +1,41 @@
 # Release log
 
+## 2026-09-22 — louder singing, recorded tool Foley and full-page handoff
+
+- Recovery: `checkpoint/2026-09-22-before-audio-handoff` at `d4654cf`;
+  initial tree clean. Source tag: `release/2026-09-22-audio-handoff`.
+- Reverse Singing now measures active 20 ms windows instead of peak-normalizing.
+  Robust speech RMS sets fixed linked-channel gain, up to 64x, targeting 0.28 RMS.
+  A smooth limiter above 0.75 caps boosted transients below 0.98. A single handling
+  bump no longer holds down the entire take. Silence/already-loud audio is retained;
+  original and reversed files use the same processing locally. Native playback
+  already explicitly leaves recording mode and selects the speaker route.
+- All 12 tool cues replaced by edited CC0 recordings: glass bottle on hardwood,
+  roulette, dice shake/throw, metal coin, card shuffle/deal for teams, mechanical
+  timer tick/bell for hourglass. No musical completion jingle. Sources, licenses,
+  input hashes and reproducible edit script are in assets/sounds/tools/SOURCES.md.
+  Browser and native now load the identical bundled WAVs. Bottle friction loops
+  only during motion, slows/fades with the animation and stops on exit/mute.
+  Async web loads cannot play after navigation or cancellation.
+- Shared Next Player view fills the available session page, without an inset card;
+  large centered player/illustration and a bottom Ready button, scrollable on small
+  screens. Imposter removes its handoff side gutter. Header keeps Exit accessible;
+  compact Skip text avoids wrapping while its full accessibility label is retained.
+- Validation: TypeScript PASS; Jest 41 suites / 286 tests PASS, including quiet
+  singing with a loud transient, native/web PCM agreement, recorded WAV checks and
+  late-load/loop cleanup. Web export PASS (91 routes). Browser checks: full-width/
+  height handoff in Color Match and Imposter at 320x568, 393x852 and 768x1024;
+  actual recorded bottle/dice/wheel buffer playback PASS. Screenshots inspected.
+  Final source diff and publish confirmations are recorded below.
+- Existing Expo Go channel inspected: expo-go-sdk57 / exposdk:57.0.0; recent iOS
+  build history inspected. Native dependencies/config unchanged. Publish only
+  matching Expo Go preview plus Firebase Hosting partyplay-8; no native binary,
+  backend deployment, production OTA or Git push.
+- Limits: hardware loudness and native screen appearance are not certified by
+  browser/mocked tests. Newly captured takes receive the new loudness processing.
+  Expo Go native Google sign-in and real purchases remain unavailable. Rollback
+  requires republishing the checkpoint separately to Hosting and Expo Go.
+
 ## 2026-09-21 — device layout, gesture ownership and recording loudness
 
 - Recovery: `checkpoint/2026-09-21-before-device-fixes` at `83d5b80`;

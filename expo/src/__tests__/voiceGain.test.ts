@@ -1,42 +1,53 @@
 import { normalizeVoiceChannels, normalizeVoiceWav, voiceGain } from '../utils/voiceGain';
 import { pcm16ToWav } from '../utils/pcmWav';
 
-test('quiet speech gets louder with consistent stereo balance and peak headroom', () => {
-  const channels = [new Float32Array([0, 0.1, -0.2]), new Float32Array([0.05, -0.1, 0])];
-  normalizeVoiceChannels(channels);
-  expect(channels[0][2]).toBeCloseTo(-0.92);
-  expect(channels[0][1]).toBeCloseTo(0.46);
-  expect(channels[1][0]).toBeCloseTo(0.23);
+const speech = (amplitude: number) => Float32Array.from({ length: 44100 }, (_, i) => amplitude * Math.sin(2 * Math.PI * 440 * i / 44100));
+const rms = (a: Float32Array) => Math.sqrt(a.reduce((sum, x) => sum + x * x, 0) / a.length);
+
+test('a handling transient no longer prevents quiet singing from becoming audible', () => {
+  const quiet = speech(0.008);
+  quiet[100] = 0.95;
+  const before = rms(quiet.slice(1000));
+  normalizeVoiceChannels([quiet]);
+  expect(rms(quiet.slice(1000))).toBeGreaterThan(before * 30);
+  expect(rms(quiet.slice(1000))).toBeGreaterThan(0.25);
+  expect(quiet.every(x => Number.isFinite(x) && Math.abs(x) <= 0.981)).toBe(true);
 });
 
-test('silence is untouched and very quiet recordings have a bounded gain', () => {
+test('silence and already loud audio are preserved; very quiet speech has bounded gain', () => {
   expect(voiceGain(0)).toBe(1);
   expect(voiceGain(0.0001)).toBe(1);
-  expect(voiceGain(0.005)).toBe(16);
-  expect(voiceGain(0.95)).toBe(1);
-  expect(voiceGain(NaN)).toBe(1);
-});
-
-test('native PCM recording gains match web and retain WAV timing and channels', () => {
-  const raw = new Uint8Array(8);
-  const data = new DataView(raw.buffer);
-  [1000, -2000, 500, -1000].forEach((sample, i) => data.setInt16(i * 2, sample, true));
-  const wav = pcm16ToWav([raw], 48000, 2);
-  const header = wav.slice(0, 44);
-  normalizeVoiceWav(wav);
-  expect(wav.slice(0, 44)).toEqual(header);
-  const view = new DataView(wav.buffer);
-  expect(view.getInt16(46, true)).toBe(-30147);
-  expect(view.getInt16(44, true)).toBe(15073);
-  expect(view.getInt16(48, true)).toBe(7537);
-});
-
-test('already loud PCM and float recordings remain unchanged', () => {
-  const loud = new Float32Array([1, -1, 0.5]);
+  expect(voiceGain(0.001)).toBe(64);
+  expect(voiceGain(0.4)).toBe(1);
+  const silent = new Float32Array(1000);
+  normalizeVoiceChannels([silent]);
+  expect(silent.every(x => x === 0)).toBe(true);
+  const loud = speech(0.8), copy = loud.slice();
   normalizeVoiceChannels([loud]);
-  expect([...loud]).toEqual([1, -1, 0.5]);
-  const raw = new Uint8Array([0, 128, 255, 127]);
-  const wav = pcm16ToWav([raw], 44100, 1);
-  normalizeVoiceWav(wav);
-  expect(wav.slice(44)).toEqual(raw);
+  expect(loud).toEqual(copy);
+});
+
+test('linked channels preserve stereo balance below the limiter knee', () => {
+  const left = speech(0.03), right = Float32Array.from(left, x => x * 0.5);
+  normalizeVoiceChannels([left, right]);
+  for (let i = 0; i < left.length; i += 97) expect(right[i]).toBeCloseTo(left[i] * 0.5, 5);
+});
+
+test('native and web processing agree while preserving PCM timing and channels', () => {
+  const raw = new Uint8Array(44100 * 4), data = new DataView(raw.buffer);
+  const left = speech(0.015), right = speech(0.008);
+  for (let i = 0; i < left.length; i++) {
+    data.setInt16(i * 4, Math.round(left[i] * 32768), true);
+    data.setInt16(i * 4 + 2, Math.round(right[i] * 32768), true);
+    left[i] = data.getInt16(i * 4, true) / 32768;
+    right[i] = data.getInt16(i * 4 + 2, true) / 32768;
+  }
+  const wav = pcm16ToWav([raw], 44100, 2), header = wav.slice(0, 44);
+  normalizeVoiceWav(wav); normalizeVoiceChannels([left, right]);
+  expect(wav.slice(0, 44)).toEqual(header);
+  const output = new DataView(wav.buffer);
+  for (let i = 0; i < left.length; i += 113) {
+    expect(output.getInt16(44 + i * 4, true) / 32768).toBeCloseTo(left[i], 4);
+    expect(output.getInt16(46 + i * 4, true) / 32768).toBeCloseTo(right[i], 4);
+  }
 });

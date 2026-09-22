@@ -221,7 +221,8 @@ export function ImposterSession({ session }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, phase === 'reveal' && !isRoleRevealed && { paddingHorizontal: 0 }]}>
+
       {phase === 'reveal' && (
         <PhaseTransition phaseKey={`reveal-${activePlayerIndex}-${isRoleRevealed}`} type="scale" style={{ flex: 1 }}>
           {!isRoleRevealed ? (
