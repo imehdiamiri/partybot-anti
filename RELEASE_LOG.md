@@ -20,6 +20,27 @@
   Physical iOS/Android listening not available. No native dependency/config change.
   Existing SDK57 Expo Go channel and latest builds inspected this session; only
   compatible Expo Go preview and Hosting will be published. No remote Git push.
+- Source commit: 5838068e6de38bb8836f7d9cbeb14667b4d86d7d.
+- Browser PASS: original 12-second recording decodes/plays, confirmed Exit stops
+  its active buffer; prior handoff/language/tool checks also pass.
+- Firebase Hosting deploy confirmed complete for partyplay-8. Live
+  https://partybot.games/game/drum_challenge/setup returns Whitney Houston mode.
+  Live original WAV hash matches the restored source. Web bundle SHA-256:
+  004eb78244c629ac1a90c5f4c59d2922ba6addbddff7b048ae7efd22967b4c86.
+- Offline backup: .backups/playbot-2026-09-22-161713-658.bundle, 92,305,570 bytes;
+  git bundle verify confirms complete history, no prerequisites. SHA-256:
+  9b7663a2466f5258433229f33455f752c7a02b5720791b9e10e074ac81b2eb3f.
+  Includes source commit and both recovery/release tags; this subsequent release
+  receipt is in local Git. Backup is local to this disk, not off-machine storage.
+- EAS confirmed Published using APP_VARIANT=expo-go, branch expo-go-sdk57,
+  environment preview, platform all, runtime exposdk:57.0.0.
+  Group d7f06d06-940f-48da-83e9-76ae93a54a7b;
+  Android 01a0c945-2c2a-7540-9739-5886e9a0ab50;
+  iOS 01a0c945-2c2a-7c06-a18e-34c469498d65.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/d7f06d06-940f-48da-83e9-76ae93a54a7b
+  Native installed binaries remain on their separate runtime; Expo Go native
+  Google login/purchases remain unavailable. No publication blockers.
+- Staged credential/path scan and diff whitespace checks PASS.
 
 
 ## 2026-09-22 — soft tool sounds and one-row Imposter translations
