@@ -37,3 +37,4 @@ GoogleService-Info.plist
 # Firebase client configuration is required by native prebuild, but stays out of Git.
 !expo/google-services.json
 !expo/GoogleService-Info.plist
+/.backups/

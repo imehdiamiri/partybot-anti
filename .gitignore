@@ -34,3 +34,6 @@ functions/security-functions-list.json
 website/security-*.log
 website/security-audit.json
 .security-emulators.json
+
+# Local offline Git history backups
+/.backups/

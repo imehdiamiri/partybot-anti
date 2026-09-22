@@ -8,7 +8,7 @@ test.each([
   ['memory_path', { gameMode: 'turnBased' }, undefined, 'Turn Based'],
   ['memory_path', { gameMode: 'timeRace' }, undefined, 'Time Race'],
   ['drum_challenge', { drumMode: 'metronome' }, undefined, 'Metronome'],
-  ['drum_challenge', { drumMode: 'whitney' }, undefined, 'Music Drop'],
+  ['drum_challenge', { drumMode: 'whitney' }, undefined, 'Whitney Houston'],
   ['draw_rush', { conceptMode: 'freeDraw' }, undefined, 'Free Draw'],
   ['draw_rush', { conceptMode: 'preset' }, undefined, 'Prompt'],
 ] as const)('selects the %s mode guide', (game, config, mode, title) => {

@@ -1,5 +1,27 @@
 # Release log
 
+## 2026-09-22 — restore Whitney Houston challenge and local recovery
+
+- Recovery: checkpoint/2026-09-22-before-whitney-restore at 60862d2.
+  Source tag: release/2026-09-22-whitney-restored.
+- Restored original 12-second Whitney recording byte-for-byte from 083708f^,
+  SHA-256 96d64b877cf3658ef0cbf95db82c2c89d51d26a172ba2e74e5abea6060d6669d.
+  Restored Whitney Houston mode labels in setup, tutorial and session. Catalog
+  description identifies Whitney Houston Drum Challenge; compact game header
+  remains Drum Challenge to fit phones and also serve the Metronome mode.
+- Aligned scoring to the original recording's first drum attack at 9.860 seconds
+  (previous 9.700-second target preceded it by 160 ms). Asset RMS regression
+  verifies the quiet pre-attack and audible attack. Exit cleanup is preserved.
+- Added scripts/backup-local.ps1 and LOCAL_RECOVERY.md. Dated Git bundles include
+  committed history, branches/tags and SHA-256 checksum; .backups excluded from
+  Git and EAS uploads. Ignored credentials and uncommitted work are not included.
+- Validation: TypeScript PASS; Jest 41 suites / 290 tests PASS; web export PASS.
+  Browser restoration/exit check and publication confirmations recorded below.
+  Physical iOS/Android listening not available. No native dependency/config change.
+  Existing SDK57 Expo Go channel and latest builds inspected this session; only
+  compatible Expo Go preview and Hosting will be published. No remote Git push.
+
+
 ## 2026-09-22 — soft tool sounds and one-row Imposter translations
 
 - Recovery: checkpoint/2026-09-22-before-tools-sound-refresh at af461ba.

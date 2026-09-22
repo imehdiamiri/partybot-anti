@@ -14,7 +14,7 @@ const MODE_HINTS: Record<string, Record<string, { title: string; tip: string }>>
     turnBased: { title: 'Memory Path · Turn Based', tip: 'Discover the hidden route from Start to End. | A wrong step resets your position and uses one of your remaining tries. | Remember the path and finish before your tries run out; then pass the phone.' },
   },
   drum_challenge: {
-    whitney: { title: 'Drum Challenge · Music Drop', tip: 'Listen to the music build-up. | Tap the drum once at the exact moment the drum hit should land. | Your result shows how early or late you tapped. Smaller error is better.' },
+    whitney: { title: 'Drum Challenge · Whitney Houston', tip: 'Listen to the music build-up. | Tap the drum once at the exact moment the drum hit should land. | Your result shows how early or late you tapped. Smaller error is better.' },
     metronome: { title: 'Drum Challenge · Metronome', tip: 'Listen to four bars of your chosen rhythm. The accented click marks each group. | When the sound stops, count four more complete bars in your head. There is no visual countdown. | Tap once on the first beat AFTER those four silent bars. Your result shows milliseconds early or late; smaller error wins.' },
   },
   draw_rush: {

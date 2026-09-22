@@ -25,6 +25,12 @@ const assert = require('assert');
 
     await page.evaluateOnNewDocument(() => {
       window.playedClips = [];
+      window.stoppedClips = [];
+      const stop = AudioBufferSourceNode.prototype.stop;
+      AudioBufferSourceNode.prototype.stop = function (...args) {
+        window.stoppedClips.push(this.buffer?.duration);
+        return stop.apply(this, args);
+      };
       const original = AudioBufferSourceNode.prototype.start;
       AudioBufferSourceNode.prototype.start = function (...args) {
         window.playedClips.push({ duration: this.buffer?.duration, loop: this.loop, length: this.buffer?.length });
@@ -72,6 +78,16 @@ const assert = require('assert');
       }
     }
     await page.setViewport({width:393,height:852,isMobile:true,hasTouch:true,deviceScaleFactor:1});
+    await page.goto('https://layout.invalid/game/drum_challenge/setup',{waitUntil:'networkidle0'});
+    assert((await page.content()).includes('Whitney Houston'));
+    await click('setup-start-button'); await click('game-guide-start');
+    await click('game-ready-button');
+    await page.waitForFunction(()=>window.playedClips.some(clip=>clip.duration===12));
+    await page.screenshot({path:'.expo/whitney-playing.png'});
+    await click('session-exit-button');
+    await click('action-confirm');
+    await page.waitForFunction(()=>window.stoppedClips.includes(12));
+    console.log('Whitney mode: original recording plays and confirmed Exit stops it PASS');
     for (const [tool,button,duration,loop] of [['bottle','bottle-spin-btn',1.3,false],['dice','dice-roll-btn',1.35,false],['wheel','wheel-spin-btn',.18,false]]) {
       await page.goto('https://layout.invalid/'+tool,{waitUntil:'networkidle0'});
       await click(button);

@@ -261,7 +261,7 @@ export const Games: Record<string, GameType> = {
   drumChallenge: {
     id: 'drum_challenge',
     name: 'Drum Challenge',
-    shortDescription: 'A music clip plays — tap the drum at the EXACT moment the beat drops. Closest to 0 ms wins.',
+    shortDescription: 'Whitney Houston Drum Challenge — tap the drum at the EXACT moment the beat drops. Closest to 0 ms wins.',
     minPlayers: 1,
     maxPlayers: 30,
     unlockCostStars: 0,

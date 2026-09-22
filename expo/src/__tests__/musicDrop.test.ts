@@ -1,17 +1,24 @@
 import fs from 'fs';
 import path from 'path';
+import { createHash } from 'crypto';
 
-test('original music cue keeps the scoring target aligned with its audible drop', () => {
-  const wav = fs.readFileSync(path.resolve(__dirname, '../../assets/sounds/music_drop.wav'));
+test('Whitney mode preserves the original recording and scores its audible drum attack', () => {
+  const wav = fs.readFileSync(path.resolve(__dirname, '../../assets/sounds/whitney_raw.wav'));
+  expect(createHash('sha256').update(wav).digest('hex')).toBe('96d64b877cf3658ef0cbf95db82c2c89d51d26a172ba2e74e5abea6060d6669d');
   expect(wav.toString('ascii', 0, 4)).toBe('RIFF');
   const rate = wav.readUInt32LE(24);
-  expect(rate).toBe(44100);
+  expect(rate).toBe(22050);
   expect(wav.readUInt32LE(40)).toBe(rate * 12 * 2);
-  const sample = (time: number) => wav.readInt16LE(44 + Math.floor(time * rate) * 2);
-  expect(sample(9)).toBe(0);
-  expect(sample(9.69)).toBe(0);
-  expect(Math.abs(sample(9.71))).toBeGreaterThan(100);
+  const rms = (start: number, end: number) => {
+    let total = 0; let count = 0;
+    for (let i = Math.floor(start * rate); i < Math.floor(end * rate); i++) {
+      total += (wav.readInt16LE(44 + i * 2) / 32768) ** 2; count++;
+    }
+    return Math.sqrt(total / count);
+  };
+  expect(rms(9.80, 9.86)).toBeLessThan(0.02);
+  expect(rms(9.86, 9.91)).toBeGreaterThan(0.15);
   const source = fs.readFileSync(path.resolve(__dirname, '../components/games/DrumChallengeSession.tsx'), 'utf8');
-  expect(source).toContain('beatTime: 9700');
-  expect(source).toContain('sounds/music_drop.wav');
+  expect(source).toContain('beatTime: 9860');
+  expect(source).toContain('sounds/whitney_raw.wav');
 });
