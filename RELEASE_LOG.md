@@ -20,7 +20,23 @@
 - Existing Expo channel/builds inspected: expo-go-sdk57 points at SDK 57 runtime.
   No native dependency/config changes; publish only Expo Go preview and Hosting.
   Installed native runtime 1.1.1 is separate. Git remote push remains withheld.
-- Publishing confirmation pending below; no release success claimed yet.
+- Source commit: 7fcae1183df93624f19c7da7a30950d0016564ae.
+- Firebase `npx --yes firebase-tools deploy --only hosting --project partyplay-8
+  --non-interactive` confirmed release complete. Live URLs https://partybot.games
+  and https://partyplay-8.web.app. Three live routes return HTTP 200 with bundle
+  entry-48b2ee909a7b6b2e634027b059951cfd.js; SHA-256
+  6144a4894506a1953be1d15aeeb823a1a70db2ea0b033e4d7e90e6142c7dc5f5.
+  Live JS and all 12 WAV files match local hashes.
+- EAS `APP_VARIANT=expo-go npx eas-cli update --branch expo-go-sdk57
+  --environment preview --platform all --non-interactive` confirmed Published;
+  runtime exposdk:57.0.0, iOS and Android, 12 new assets uploaded.
+  Group: 1b778779-6421-4fcb-b178-7a1915f65ed4.
+  Android: 01a0c937-c3f1-79b0-b3e1-f5ad33c61b03.
+  iOS: 01a0c937-c3f1-7801-bab8-fc43cc5cebd5.
+  Dashboard: https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/1b778779-6421-4fcb-b178-7a1915f65ed4
+- Expo Go native login/purchases remain unavailable by design; email login/games
+  preview supported. No backend or native binary deployment. Credential scan and
+  diff whitespace check PASS. No publication blockers.
 
 
 ## 2026-09-22 — louder singing, recorded tool Foley and full-page handoff
