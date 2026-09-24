@@ -28,7 +28,28 @@
   separate. Physical iOS/Android playback/appearance not directly tested here.
 - Real-browser synthetic microphone test PASS: original, reverse, half-speed
   continues beyond normal duration and ends naturally, mimic, Result, Stop, Retry.
-- Publishing and offline backup confirmations follow. No remote Git push.
+- Source commit: cba2c72251432946dfb82d5590a74543bb8990a5. No remote Git push.
+- Firebase Hosting command `npx --yes firebase-tools deploy --only hosting
+  --project partyplay-8 --non-interactive` confirmed release complete.
+  https://partybot.games and https://partyplay-8.web.app updated. Four live game
+  setup routes return current bundle entry-54a66568d2bf70eb64c5c501e5e73323.js;
+  live/local SHA-256 matches:
+  370ef74e61c27cf43785cb7bc61644093bc115686f3c5c4d4ee8d6cf50a24f4d.
+- scripts/backup-local.ps1 created .backups/playbot-2026-09-24-142950-948.bundle
+  (94,465,456 bytes); git bundle verify PASS, complete history. SHA-256:
+  1857bc03ac04de54df87d1c11fdc794a78ca697823a04a8db6df4e70930e44f8.
+  Includes source commit and before/after tags; subsequent release receipt stays
+  in local Git. Ignored credentials/uncommitted files are excluded.
+- EAS confirmed Published via APP_VARIANT=expo-go, branch expo-go-sdk57,
+  environment preview, platform all; runtime exposdk:57.0.0.
+  Group: 2ae6d205-41cb-4b8e-9319-1ab6263dd94e.
+  Android: 01a0d32f-82ca-78e3-b556-e2be46b111e4.
+  iOS: 01a0d32f-82ca-7a76-aebf-97220c4007e2.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/2ae6d205-41cb-4b8e-9319-1ab6263dd94e
+  EAS source marker has an asterisk only because this release receipt was being
+  written during upload; application source remained unchanged after source commit.
+  Expo Go preview retains native-login/purchase limitations; no native build or
+  backend deployment. No publication blockers. Credential and whitespace scans PASS.
 
 
 ## 2026-09-22 — restore Whitney Houston challenge and local recovery
