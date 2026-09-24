@@ -310,14 +310,8 @@ export function ColorMatchSession({ session }: Props) {
 
     return (
       <MatchStudio scrollEnabled={!isDragging} kind="color" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
-        <View style={st.recreateHeader}>
-          <Text style={st.sectionTitle}>Mix it from memory</Text>
-          <Text style={st.swatchLabel}>Adjust hue, saturation and brightness.</Text>
-        </View>
-
-        <View style={st.singleSwatchContainer}>
-          <View testID="color-match-guess-swatch" style={[st.colorSwatchLarge, { height: swatchHeight, backgroundColor: guessHsl, shadowColor: guessHsl }]} />
-          <Text style={st.swatchLabel}>Your Guess</Text>
+        <View style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center' }}>
+          <View testID="color-match-guess-swatch" style={[st.colorSwatchLarge, { flex: 1, height: undefined, maxHeight: 360, marginVertical: 0, backgroundColor: guessHsl }]} />
         </View>
 
         <View style={st.slidersContainer}>
@@ -385,7 +379,7 @@ export function ColorMatchSession({ session }: Props) {
           />
         </View>
 
-        <TouchableOpacity testID="color-match-submit-button" style={st.submitButton} onPress={handleSubmitGuess} activeOpacity={0.85} accessibilityRole="button">
+        <TouchableOpacity testID="color-match-submit-button" style={[st.submitButton, { height: 48, minHeight: 48, marginTop: 0, flexShrink: 0 }]} onPress={handleSubmitGuess} activeOpacity={0.85} accessibilityRole="button">
           <Text style={st.submitButtonText}>Submit Match</Text>
         </TouchableOpacity>
       </MatchStudio>
@@ -672,8 +666,8 @@ const st = StyleSheet.create({
     width: '100%',
     maxWidth: 540,
     alignSelf: 'center',
-    gap: 10,
-    marginVertical: 8,
+    gap: 2,
+    marginVertical: 0,
   },
   sliderContainer: {
     width: '100%',
@@ -681,7 +675,7 @@ const st = StyleSheet.create({
   sliderLabelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 0,
     paddingHorizontal: 4,
   },
   sliderLabel: {

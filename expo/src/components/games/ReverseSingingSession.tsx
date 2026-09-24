@@ -8,6 +8,7 @@ import { BrowserRecordingPlayback } from '@/src/utils/browserRecordingPlayback';
 import { LiquidGlass } from '@/src/components/LiquidGlass';
 import { isWeb } from '@/src/utils/platform';
 import { WebAudioRecorder, isWebMediaRecorderSupported, revokeWebAudioUrl } from '@/src/utils/browserMediaAdapter';
+import { slowVoiceWav } from '@/src/utils/slowVoiceWav';
 import { canStartReverseTake } from '@/src/utils/reverseSingingFlow';
 
 // Platform-safe imports
@@ -610,16 +611,32 @@ export function ReverseSingingSession({ session }: Props) {
       const previous = soundRef.current;
       soundRef.current = null;
       if (previous) { try { await previous.unloadAsync(); } catch {} }
+      if (generation !== playbackGeneration.current || !mounted.current) return;
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true, playThroughEarpieceAndroid: false });
+      let playbackUri = uri;
+      if (rate === 0.5) {
+        const slowUri = uri.replace(/\.wav$/i, '_slow.wav');
+        if (!(await FileSystem.getInfoAsync(slowUri)).exists) {
+          const raw = atob(await FileSystem.readAsStringAsync(uri, { encoding: FileSystemEncoding.Base64 }));
+          const bytes = slowVoiceWav(Uint8Array.from(raw, char => char.charCodeAt(0)));
+          let encoded = '';
+          for (let offset = 0; offset < bytes.length; offset += 24576) {
+            encoded += btoa(String.fromCharCode(...bytes.subarray(offset, offset + 24576)));
+          }
+          await FileSystem.writeAsStringAsync(slowUri, encoded, { encoding: FileSystemEncoding.Base64 });
+        }
+        playbackUri = slowUri;
+      }
+      if (generation !== playbackGeneration.current || !mounted.current) return;
 
       const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri },
+        { uri: playbackUri },
         { volume: 1.0 }
       );
 
       if (generation !== playbackGeneration.current || !mounted.current) { await newSound.unloadAsync(); return; }
       // Set rate after loading; discard playback overtaken by Retry or recording.
-      if (rate !== 1.0) {
+      if (rate !== 1.0 && rate !== 0.5) {
         await newSound.setRateAsync(rate, true, Audio.PitchCorrectionQuality?.High ?? 1);
       }
       if (generation !== playbackGeneration.current || !mounted.current) { await newSound.unloadAsync(); return; }
@@ -744,6 +761,7 @@ export function ReverseSingingSession({ session }: Props) {
 
             <Pressable 
               testID="reverse-singing-p1-play-slow"
+              accessibilityLabel="Play reversed recording at half speed"
               accessibilityRole="button"
               style={[styles.circleBtn, !p1ReversedUri && styles.disabled]}
               onPress={() => playSound(p1ReversedUri, 0.5)}
@@ -827,7 +845,10 @@ export function ReverseSingingSession({ session }: Props) {
         </View>
       </LiquidGlass>
 
-      {isPlaying && <Text accessibilityLiveRegion="polite" style={styles.roundHint}>Playing audio…</Text>}
+      {isPlaying && <Pressable testID="reverse-singing-stop-playback" accessibilityRole="button"
+        accessibilityLabel="Stop playback" onPress={stopPlayback} style={{ alignSelf: 'center', padding: 12, minHeight: 44 }}>
+        <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>■ Stop playback</Text>
+      </Pressable>}
       {p2Uri && <Text style={styles.roundHint}>Both takes are ready. Play Result to compare, or Retry for a new round.</Text>}
 
     </ScrollView>

@@ -8,6 +8,15 @@ export function MatchStudio({ kind, step, player, round, children, scrollEnabled
   useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [step]);
   const accent = kind === 'color' ? '#B9A3FF' : '#7DE4D5';
   const labels = kind === 'color' ? ['Observe', 'Mix', 'Compare'] : ['Listen', 'Tune', 'Compare'];
+  if (step === 1) return <View style={[s.scroll, { padding: 8 }]}>
+    <View style={[s.shell, { flex: 1, minHeight: 0 }]} testID={`${kind}-match-studio`}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, marginBottom: 6 }}>
+        <Text style={[s.label, { color: accent }]}>{kind === 'color' ? 'Mix color' : 'Tune frequency'}</Text>
+        <Text style={[s.label, { color: '#BDC4D2' }]}>Round {round}</Text>
+      </View>
+      <View style={[s.surface, { flex: 1, minHeight: 0, padding: 10, borderRadius: 18 }]}>{children}</View>
+    </View>
+  </View>;
   return <ScrollView ref={scroll} scrollEnabled={scrollEnabled} bounces={false} contentInsetAdjustmentBehavior="never" style={s.scroll} contentContainerStyle={s.content}>
     <View style={s.shell} testID={`${kind}-match-studio`}>
       <View style={s.heading}>

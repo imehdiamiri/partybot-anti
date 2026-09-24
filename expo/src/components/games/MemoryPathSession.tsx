@@ -16,106 +16,12 @@ import { PhaseTransition } from './PhaseTransition';
 
 interface Props { session: GameSession; }
 type Phase = 'ready' | 'countdown' | 'playing' | 'playerComplete' | 'results';
-interface PathCoord { row: number; col: number; }
+import { generatePath, type PathCoord } from '@/src/utils/memoryPath';
 type TileState = 'hidden' | 'start' | 'end' | 'correct' | 'wrong';
 interface PlayerResult { playerId: string; timeMs: number; attempts: number; finished: boolean; progress: number; }
 
 const GRID_MAP: Record<string, number> = { easy: 5, medium: 6, hard: 7, expert: 8 };
 const DEFAULT_GRID = 5;
-
-// Path generator: randomized DFS with self-avoiding path check
-function generatePath(rows: number, cols: number, targetLength: number = 8): PathCoord[] {
-  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-  const validPaths: PathCoord[][] = [];
-  
-  function dfs(current: PathCoord, path: PathCoord[], visited: Set<string>): void {
-    if (validPaths.length >= 100) return;
-    
-    if (path.length === targetLength) {
-      const s = path[0], e = path[path.length - 1];
-      const dist = Math.abs(s.row - e.row) + Math.abs(s.col - e.col);
-      // Ensure start and end aren't too close
-      if (dist >= 3) {
-        validPaths.push([...path]);
-      }
-      return;
-    }
-    
-    let neighbors: PathCoord[] = [];
-    for (const [dr, dc] of dirs) {
-      const nr = current.row + dr, nc = current.col + dc;
-      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
-        let adjUsed = 0;
-        for (const [dr2, dc2] of dirs) {
-          const ar = nr + dr2, ac = nc + dc2;
-          if (ar >= 0 && ar < rows && ac >= 0 && ac < cols && visited.has(`${ar},${ac}`)) {
-            adjUsed++;
-          }
-        }
-        // Self-avoiding path: neighbor should not touch more than 1 visited tile (the current one)
-        if (adjUsed <= 1) {
-          neighbors.push({ row: nr, col: nc });
-        }
-      }
-    }
-    
-    // Randomize neighbors
-    for (let i = neighbors.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
-    }
-    
-    for (const next of neighbors) {
-      const key = `${next.row},${next.col}`;
-      visited.add(key);
-      path.push(next);
-      dfs(next, path, visited);
-      path.pop();
-      visited.delete(key);
-    }
-  }
-  
-  // Try up to 400 random starting positions
-  for (let attempt = 0; attempt < 400; attempt++) {
-    const startRow = Math.floor(Math.random() * rows);
-    const startCol = Math.floor(Math.random() * cols);
-    const start: PathCoord = { row: startRow, col: startCol };
-    const visited = new Set<string>();
-    visited.add(`${start.row},${start.col}`);
-    dfs(start, [start], visited);
-    if (validPaths.length >= 100) break;
-  }
-  
-  if (validPaths.length > 0) {
-    const randIdx = Math.floor(Math.random() * validPaths.length);
-    return validPaths[randIdx];
-  }
-  
-  // Fallback: simple random walk if no perfect self-avoiding path is found
-  const fallback: PathCoord[] = [];
-  let currRow = Math.floor(Math.random() * rows);
-  let currCol = Math.floor(Math.random() * cols);
-  const visited = new Set<string>();
-  
-  for (let i = 0; i < targetLength; i++) {
-    fallback.push({ row: currRow, col: currCol });
-    visited.add(`${currRow},${currCol}`);
-    
-    const neighbors: PathCoord[] = [];
-    for (const [dr, dc] of dirs) {
-      const nr = currRow + dr;
-      const nc = currCol + dc;
-      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
-        neighbors.push({ row: nr, col: nc });
-      }
-    }
-    if (neighbors.length === 0) break;
-    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
-    currRow = next.row;
-    currCol = next.col;
-  }
-  return fallback;
-}
 
 export function MemoryPathSession({ session }: Props) {
   const registerSkip = useRegisterSkip();

@@ -13,11 +13,12 @@ jest.mock('../utils/platform', () => ({ isWeb: false }));
 jest.mock('expo-sharing', () => ({}));
 jest.mock('../utils/browserMediaAdapter', () => ({ revokeWebAudioUrl: jest.fn(), getWebAudioContext: () => null }));
 const mockFiles = new Map<string, string>();
+const mockGetInfo = jest.fn(async (uri: string) => ({ exists: mockFiles.has(uri) }));
 jest.mock('expo-file-system/legacy', () => ({
   EncodingType: { Base64: 'base64' },
   readAsStringAsync: async (uri: string) => mockFiles.get(uri),
   writeAsStringAsync: async (uri: string, b64: string) => { mockFiles.set(uri, b64); },
-  getInfoAsync: async (uri: string) => ({ exists: mockFiles.has(uri) }),
+  getInfoAsync: (uri: string) => mockGetInfo(uri),
 }));
 const mockSounds: any[] = [];
 let mockTake = 0;
@@ -64,7 +65,14 @@ test('native source and mimic reversal produce playable WAVs; replay and Retry k
     const reversed = Buffer.from(mockFiles.get('file:///take-1_reversed.wav')!, 'base64');
     expect(reversed.readInt16LE(44)).toBe(view.getInt16(98, true));
     await press('p1-play-slow');
-    expect(mockSounds.at(-1).setRateAsync).toHaveBeenCalledWith(.5, true, 1);
+    expect(mockSounds.at(-1).setRateAsync).not.toHaveBeenCalled();
+    expect(mockSounds.at(-1).uri).toBe('file:///take-1_reversed_slow.wav');
+    const slow = Buffer.from(mockFiles.get(mockSounds.at(-1).uri)!, 'base64');
+    expect(slow.readUInt32LE(24)).toBe(22050);
+    expect(slow.subarray(44)).toEqual(reversed.subarray(44));
+    await press('stop-playback');
+    expect(mockSounds.at(-1).unloadAsync).toHaveBeenCalled();
+    await press('p1-play');
     await press('p2-record'); await press('p2-record');
     await press('p2-result');
     expect(mockSounds.at(-1).uri).toBe('file:///take-2_reversed.wav');
@@ -77,5 +85,27 @@ test('native source and mimic reversal produce playable WAVs; replay and Retry k
     expect(button('p1-record').props.disabled).toBeFalsy();
     expect(button('p2-result').props.disabled).toBe(true);
     expect(mockMode).toHaveBeenCalledWith({ allowsRecordingIOS: false, playsInSilentModeIOS: true, playThroughEarpieceAndroid: false });
+  } finally { await act(async () => screen.unmount()); }
+});
+
+
+test('Retry cancels pending slow preparation and cannot start stale audio', async () => {
+  let screen: any;
+  await act(async () => { screen = create(React.createElement(ReverseSingingSession, {
+    session: { players: [{ displayName: 'Alex' }, { displayName: 'Sam' }] } as any,
+  })); });
+  const button = (id: string) => screen.root.findByProps({ testID: 'reverse-singing-' + id });
+  const press = async (id: string) => { await act(async () => { await button(id).props.onPress(); }); };
+  try {
+    await press('p1-record'); await press('p1-record');
+    let release!: (value: { exists: boolean }) => void;
+    mockGetInfo.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+    const before = mockSounds.length;
+    let pending!: Promise<void>;
+    await act(async () => { pending = button('p1-play-slow').props.onPress(); });
+    await press('retry');
+    await act(async () => { release({ exists: false }); await pending; });
+    expect(mockSounds).toHaveLength(before);
+    expect(button('p1-play-slow').props.disabled).toBe(true);
   } finally { await act(async () => screen.unmount()); }
 });

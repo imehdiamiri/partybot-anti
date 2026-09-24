@@ -60,14 +60,14 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     const b1 = bytes[i];
     const b2 = i + 1 < len ? bytes[i + 1] : 0;
     const b3 = i + 2 < len ? bytes[i + 2] : 0;
-    
+
     const enc1 = b1 >> 2;
     const enc2 = ((b1 & 3) << 4) | (b2 >> 4);
     const enc3 = i + 1 < len ? (((b2 & 15) << 2) | (b3 >> 6)) : 64;
     const enc4 = i + 2 < len ? (b3 & 63) : 64;
-    
-    base64 += chars.charAt(enc1) + chars.charAt(enc2) + 
-              (enc3 === 64 ? '=' : chars.charAt(enc3)) + 
+
+    base64 += chars.charAt(enc1) + chars.charAt(enc2) +
+              (enc3 === 64 ? '=' : chars.charAt(enc3)) +
               (enc4 === 64 ? '=' : chars.charAt(enc4));
   }
   return base64;
@@ -139,11 +139,11 @@ function calculateAuditoryScore(target: number, guess: number): number {
 
   // Compute difference in octaves: diff = abs(log2(target / guess))
   const diff = Math.abs(Math.log2(targetRounded / guessRounded));
-  
+
   // Define maximum tolerable difference as 1.2 octaves (about a 10th interval)
   const maxDiff = 1.2;
   const normDiff = Math.min(1.0, diff / maxDiff);
-  
+
   // Power factor of 1.2 to give slightly better rewards for closer matches
   const rawScore = 10 * Math.pow(1 - normDiff, 1.2);
   return Math.max(0, Math.round(rawScore * 100) / 100);
@@ -155,7 +155,7 @@ const FREQ_MAX = 1000;
 // Sound Wave Bar helper component for premium animated audio visualizer
 function SoundWaveBar({ active, height, delay, color = '#FF2D55' }: { active: boolean; height: number; delay: number; color?: string }) {
   const scale = useSharedValue(0.2);
-  
+
   useEffect(() => {
     if (active) {
       scale.value = withRepeat(
@@ -200,7 +200,8 @@ export function SoundMatchSession({ session }: Props) {
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // Derive vertical slider height responsively from usable viewport height
-  const sliderHeight = Math.min(Math.max(windowHeight - 550, 220), 620);
+  const [tuningHeight, setTuningHeight] = useState(300);
+  const sliderHeight = Math.max(40, tuningHeight - 112);
 
   const freqToPosition = useCallback((freq: number) => {
     const pct = (freq - FREQ_MIN) / (FREQ_MAX - FREQ_MIN);
@@ -218,10 +219,10 @@ export function SoundMatchSession({ session }: Props) {
   const [phase, setPhase] = useState<Phase>('ready');
   const [roundIdx, setRoundIdx] = useState(0);
   const [playerIdx, setPlayerIdx] = useState(0);
-  
+
   const [currentGuessFreq, setCurrentGuessFreq] = useState(440);
   const [guesses, setGuesses] = useState<PlayerRoundResult[]>([]);
-  
+
   const [isPlayingTarget, setIsPlayingTarget] = useState(false);
   const [isPlayingGuess, setIsPlayingGuess] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -364,7 +365,7 @@ export function SoundMatchSession({ session }: Props) {
     const generation = soundGeneration.current;
     await stopped;
     if (!mounted.current || generation !== soundGeneration.current) return;
-    
+
     if (!useSettingsStore.getState().isSoundEnabled) {
       if (isTarget) {
         setIsPlayingTarget(true);
@@ -428,7 +429,7 @@ export function SoundMatchSession({ session }: Props) {
   // Live play: debounced auto-play while dragging the slider
   const schedulePlayLive = useCallback((freq: number) => {
     if (livePlayTimerRef.current) clearTimeout(livePlayTimerRef.current);
-    
+
     // Only replay if frequency changed enough (> 8 Hz difference)
     const diff = Math.abs(freq - lastPlayedFreqRef.current);
     if (diff < 8) return;
@@ -545,7 +546,7 @@ export function SoundMatchSession({ session }: Props) {
     transitionBusy.current = true;
     await stopActiveSound();
     if (!mounted.current) return;
-    
+
     const isLastPlayer = playerIdx + 1 >= players.length;
     if (isLastPlayer) {
       const isLastRound = roundIdx + 1 >= maxRounds;
@@ -666,9 +667,9 @@ export function SoundMatchSession({ session }: Props) {
             {isPlayingTarget ? 'Playing target frequency...' : 'Tap the button to play the tone'}
           </Text>
 
-          <TouchableOpacity 
-            style={st.readyMatchButton} 
-            onPress={handleStartMatch} 
+          <TouchableOpacity
+            style={st.readyMatchButton}
+            onPress={handleStartMatch}
             activeOpacity={0.8}
             accessibilityRole="button"
             testID="sound-match-ready-button"
@@ -699,13 +700,8 @@ export function SoundMatchSession({ session }: Props) {
     return (
       <MatchStudio scrollEnabled={!isDragging} kind="sound" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.recreateStage} testID="sound-match-recreate-stage">
-          <View style={st.recreateHeader}>
-            <Text style={st.sectionTitle}>Find that frequency</Text>
-            <Text style={st.tuneInstructions}>Slide to tune · arrows adjust by 1 Hz</Text>
-          </View>
-
           {/* Main area: vertical slider + frequency display inside centered bounded stage */}
-          <View style={st.recreateBody}>
+          <View style={st.recreateBody} onLayout={event => setTuningHeight(event.nativeEvent.layout.height)}>
             {/* Left side: vertical slider */}
             <View style={[st.vSliderArea, { height: sliderHeight + 112 }]}>
               {/* Scale labels */}
@@ -752,7 +748,7 @@ export function SoundMatchSession({ session }: Props) {
                   />
 
                   {/* Filled portion glow */}
-                  <View 
+                  <View
                     pointerEvents="none"
                     style={[st.vSliderFill, { top: thumbY, backgroundColor: `hsla(${Math.round(hue)}, 85%, 55%, 0.15)` }]}
                   />
@@ -791,7 +787,7 @@ export function SoundMatchSession({ session }: Props) {
               <TouchableOpacity
                 onPress={() => playFrequency(currentGuessFreq, 3, false)}
                 activeOpacity={0.8}
-                style={[st.freqCircle, { borderColor: glowColor, shadowColor: glowColor }]}
+                style={[st.freqCircle, { height: Math.max(72, Math.min(172, tuningHeight - 76)), borderColor: glowColor, shadowColor: glowColor }]}
                 accessibilityRole="button"
                 accessibilityLabel={`Play ${Math.round(currentGuessFreq)} Hz for 3 seconds`}
                 testID="sound-match-freq-circle"
@@ -819,22 +815,12 @@ export function SoundMatchSession({ session }: Props) {
                 <IconSymbol name={isPlayingGuess ? 'waveform' : 'play.fill'} size={24} color="#0B2426" />
                 <Text style={st.previewButtonText}>{isPlayingGuess ? 'Playing…' : 'Play tone'}</Text>
               </TouchableOpacity>
-              <Text style={st.dragHint}>{isDragging ? 'Release to preview' : '3-second preview'}</Text>
-
-              {/* Symmetrical dynamic wave visualizer in recreate phase */}
-              <View style={st.visualizerWaveContainerSmall}>
-                <SoundWaveBar active={isPlayingGuess} height={12} delay={0} color={glowColor} />
-                <SoundWaveBar active={isPlayingGuess} height={22} delay={80} color={glowColor} />
-                <SoundWaveBar active={isPlayingGuess} height={32} delay={160} color={glowColor} />
-                <SoundWaveBar active={isPlayingGuess} height={22} delay={240} color={glowColor} />
-                <SoundWaveBar active={isPlayingGuess} height={12} delay={320} color={glowColor} />
-              </View>
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={st.submitButton} 
-            onPress={handleSubmitGuess} 
+          <TouchableOpacity
+            style={[st.submitButton, { height: 48, minHeight: 48, flexShrink: 0, marginTop: 8 }]}
+            onPress={handleSubmitGuess}
             activeOpacity={0.8}
             accessibilityRole="button"
             testID="sound-match-submit-button"
@@ -867,13 +853,13 @@ export function SoundMatchSession({ session }: Props) {
       <MatchStudio kind="sound" step={2} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
         <View style={st.roundResultCard}>
           <Text style={st.roundResultPlayer}>{activePlayer?.displayName} · Result</Text>
-          
+
           <View style={st.scoreBubbleContainer}>
             <View style={[st.scoreBubble, { borderColor: isGoodScore ? Colors.green : Colors.orange }]}>
               <Text style={st.scoreValue}>{lastResult.score.toFixed(2)}</Text>
               <Text style={st.scoreMax}>/ 10</Text>
             </View>
-            
+
             {/* Animated Feedback Badge */}
             {feedbackConfig && (
               <Animated.View style={[st.feedbackBadge, animatedBadgeStyle, { backgroundColor: feedbackConfig.color + '15', borderColor: feedbackConfig.color }]}>
@@ -1094,8 +1080,8 @@ const st = StyleSheet.create({
     maxWidth: 720,
     alignSelf: 'center',
     alignItems: 'center',
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1,
+    minHeight: 0,
     justifyContent: 'center',
   },
   recreateHeader: {
@@ -1104,7 +1090,7 @@ const st = StyleSheet.create({
     marginBottom: 10,
   },
   tuneInstructions: { fontSize: 13, color: '#BCC6D7', textAlign: 'center', marginBottom: 8 },
-  previewButton: { minHeight: 56, width: '100%', maxWidth: 220, borderRadius: 18, backgroundColor: '#7DE4D5', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12 },
+  previewButton: { minHeight: 48, width: '100%', maxWidth: 220, borderRadius: 18, backgroundColor: '#7DE4D5', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12 },
   previewButtonText: { fontSize: 16, fontWeight: '700', color: '#0B2426' },
   recreateRound: {
     fontSize: 13,
@@ -1126,8 +1112,8 @@ const st = StyleSheet.create({
     gap: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1,
+    minHeight: 0,
   },
 
   // ─── Vertical Slider ────────────────────

@@ -1,5 +1,36 @@
 # Release log
 
+## 2026-09-24 — winding Memory Path, reliable slow replay and compact matching
+
+- Recovery: checkpoint/2026-09-24-before-game-fixes at abe26c3.
+  Source tag: release/2026-09-24-game-fixes.
+- Memory Path uses bounded randomized backtracking, unique orthogonal cells,
+  a maximum two-move straight run and minimum 55% turns (rounded down). Paths
+  may touch earlier cells without revisiting them; this removes the old long-
+  corridor bias. Full-length fallback handles degenerate/custom grid input.
+- Reverse Singing native half-speed replay now writes a cached PCM WAV with
+  half the sample clock and unchanged samples/gain. This bypasses native pitch
+  correction/time stretching and doubles full-take duration, matching web's
+  lower-pitch half-speed behavior. Retry/record/exit cancellation guards cover
+  pending preparation. Added an explicit Stop playback control and turtle label.
+- Color/Sound Match tuning phase uses available flex layout, no ScrollView.
+  Removed lab/studio banners, stepper and redundant explanations. Color swatch
+  takes remaining space; sound track measures its actual container. Compact
+  round indicator, 44+ px touch targets and visible 48 px Submit remain.
+- Validation: TypeScript PASS; Jest 43 suites / 298 tests PASS, including seeded
+  winding/length/uniqueness tests through setup maximum lengths, PCM preservation
+  and doubled duration, native action flow and Retry during slow preparation.
+  Web export PASS. Browser touch checks at 320x487, 393x771, 430x851, 768x943
+  (81 px reserved for device chrome): all sliders/Submit fit without scrolling;
+  drag, preview, fine tune and submit PASS. Smallest screenshots inspected.
+- Existing Expo channel/builds inspected: SDK57 Expo Go branch matches runtime
+  exposdk:57.0.0; no native dependency or config change. Native binary runtime is
+  separate. Physical iOS/Android playback/appearance not directly tested here.
+- Real-browser synthetic microphone test PASS: original, reverse, half-speed
+  continues beyond normal duration and ends naturally, mimic, Result, Stop, Retry.
+- Publishing and offline backup confirmations follow. No remote Git push.
+
+
 ## 2026-09-22 — restore Whitney Houston challenge and local recovery
 
 - Recovery: checkpoint/2026-09-22-before-whitney-restore at 60862d2.
