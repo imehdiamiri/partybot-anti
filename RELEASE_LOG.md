@@ -24,7 +24,25 @@
   mobile performance claim). No direct physical iOS/Android listening test.
 - Existing Expo channel/builds checked; Expo Go SDK57 runtime remains separate
   from installed binaries. No dependency/native config changes; no Git push.
-- Publication and local backup receipts follow.
+- Source: 70fae23c6c173611d5042ad5fe67e5d902b877d5.
+- Firebase Hosting confirmed release complete with `npx --yes firebase-tools
+  deploy --only hosting --project partyplay-8 --non-interactive`.
+  https://partybot.games and https://partyplay-8.web.app updated; four live game
+  routes reference entry-be9d7e8b8aaa54db4f702f7d2577dccd.js. Live/local SHA-256:
+  a20e1915805edcf6e3b3424db59a1b75e9ee317bb1eef4d54780a81c15e1186a.
+- EAS confirmed Published via APP_VARIANT=expo-go, branch expo-go-sdk57,
+  environment preview, platform all, runtime exposdk:57.0.0.
+  Group c1fdea73-9cf4-4531-863a-1b04bbfa09cf;
+  Android 01a0dafd-d2c1-735b-a754-ac71551e65a6;
+  iOS 01a0dafd-d2c1-7cca-ad80-a878d3f7481b.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/c1fdea73-9cf4-4531-863a-1b04bbfa09cf
+- Verified complete-history backup:
+  .backups/playbot-2026-09-26-025151-466.bundle (94,842,599 bytes), SHA-256
+  d8afe156cf7d5685bf0cfda15ac0707b0f612106c840ce56ec7b2e5a704b3bbb.
+  Includes source and before/after tags; this later receipt is in local Git.
+  Ignored credentials/uncommitted files remain excluded. Git diff whitespace
+  and credential/path scans PASS. No publication blockers. Expo Go native Google
+  login/purchases remain unavailable; no native binary or backend deployed.
 
 
 ## 2026-09-24 — winding Memory Path, reliable slow replay and compact matching
