@@ -310,8 +310,8 @@ export function ColorMatchSession({ session }: Props) {
 
     return (
       <MatchStudio scrollEnabled={!isDragging} kind="color" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
-        <View style={{ flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center' }}>
-          <View testID="color-match-guess-swatch" style={[st.colorSwatchLarge, { flex: 1, height: undefined, maxHeight: 360, marginVertical: 0, backgroundColor: guessHsl }]} />
+        <View style={{ flex: 1, minHeight: 16, alignItems: 'center', justifyContent: 'center' }}>
+          <View testID="color-match-guess-swatch" style={[st.colorSwatchLarge, { flex: 1, height: undefined, maxHeight: 120, maxWidth: 240, marginVertical: 0, backgroundColor: guessHsl }]} />
         </View>
 
         <View style={st.slidersContainer}>
@@ -379,7 +379,7 @@ export function ColorMatchSession({ session }: Props) {
           />
         </View>
 
-        <TouchableOpacity testID="color-match-submit-button" style={[st.submitButton, { height: 48, minHeight: 48, marginTop: 0, flexShrink: 0 }]} onPress={handleSubmitGuess} activeOpacity={0.85} accessibilityRole="button">
+        <TouchableOpacity testID="color-match-submit-button" style={[st.submitButton, { height: 48, minHeight: 48, marginTop: 12, flexShrink: 0 }]} onPress={handleSubmitGuess} activeOpacity={0.85} accessibilityRole="button">
           <Text style={st.submitButtonText}>Submit Match</Text>
         </TouchableOpacity>
       </MatchStudio>
@@ -666,7 +666,7 @@ const st = StyleSheet.create({
     width: '100%',
     maxWidth: 540,
     alignSelf: 'center',
-    gap: 2,
+    gap: 10,
     marginVertical: 0,
   },
   sliderContainer: {

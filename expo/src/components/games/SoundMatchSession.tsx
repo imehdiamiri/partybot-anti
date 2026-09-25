@@ -819,7 +819,7 @@ export function SoundMatchSession({ session }: Props) {
           </View>
 
           <TouchableOpacity
-            style={[st.submitButton, { height: 48, minHeight: 48, flexShrink: 0, marginTop: 8 }]}
+            style={[st.submitButton, { height: 48, minHeight: 48, flexShrink: 0, marginTop: 24 }]}
             onPress={handleSubmitGuess}
             activeOpacity={0.8}
             accessibilityRole="button"

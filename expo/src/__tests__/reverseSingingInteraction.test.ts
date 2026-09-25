@@ -15,6 +15,7 @@ jest.mock('../utils/platform', () => ({ isWeb: true }));
 const mockSources: any[] = [];
 const mockContext = {
   state: 'running', destination: {},
+  createBuffer: (channels: number, length: number, sampleRate: number) => { const data = new Float32Array(length); return { length, numberOfChannels: channels, sampleRate, getChannelData: () => data }; },
   createBufferSource: jest.fn(() => {
     const source = { buffer: null, playbackRate: { value: 1 }, connect: jest.fn(),
       disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(), onended: null };
@@ -28,7 +29,7 @@ const mockRecorder = {
   stop: jest.fn(async () => {
     const take = ++mockTake;
     mockRecorder.originalBuffer = { take, reversed: false };
-    mockRecorder.reversedBuffer = { take, reversed: true };
+    mockRecorder.reversedBuffer = { take, reversed: true, numberOfChannels: 1, sampleRate: 44100, getChannelData: () => new Float32Array(4410) };
     return { originalWavUri: `blob:take-${take}`, reversedWavUri: `blob:reverse-${take}`, durationMs: 2500 };
   }),
   cleanup: jest.fn(), revokeAllCreatedUrls: jest.fn(),
@@ -65,17 +66,18 @@ test('only source Record locks; reverse, slow play, mimic Result, replay and Ret
   expect(button('p2-record').props.disabled).toBe(false);
   expect(button('retry').parent).toBe(button('p1-record').parent);
   await press('p1-play-reverse');
-  expect(mockSources.at(-1).buffer).toEqual({ take: 1, reversed: true });
+  expect(mockSources.at(-1).buffer).toMatchObject({ take: 1, reversed: true });
   expect(mockSources.at(-1).start).toHaveBeenCalledTimes(1);
   await press('p1-play-slow');
-  expect(mockSources.at(-1).playbackRate.value).toBe(.5);
+  expect(mockSources.at(-1).playbackRate.value).toBe(1);
+  expect(mockSources.at(-1).buffer.length).toBe(8820);
   const previousSource = mockSources.at(-1);
   await record(2);
   expect(previousSource.stop).toHaveBeenCalled();
   await press('p1-play-reverse');
-  expect(mockSources.at(-1).buffer).toEqual({ take: 1, reversed: true });
+  expect(mockSources.at(-1).buffer).toMatchObject({ take: 1, reversed: true });
   await press('p2-result');
-  expect(mockSources.at(-1).buffer).toEqual({ take: 2, reversed: true });
+  expect(mockSources.at(-1).buffer).toMatchObject({ take: 2, reversed: true });
   await press('p2-result');
   expect(mockSources.at(-1).start).toHaveBeenCalledTimes(1);
   await press('p1-play');
@@ -89,7 +91,7 @@ test('only source Record locks; reverse, slow play, mimic Result, replay and Ret
   expect(button('p2-record').props.disabled).toBe(true);
   await record(1);
   await press('p1-play-reverse');
-  expect(mockSources.at(-1).buffer).toEqual({ take: 3, reversed: true });
+  expect(mockSources.at(-1).buffer).toMatchObject({ take: 3, reversed: true });
 });
 
 test('all original action buttons have their original 100px size', () => {
@@ -107,7 +109,7 @@ test('source playback remains available while the mimic is being processed', asy
   await act(async () => { stopping = button('p2-record').props.onPress(); });
   expect(button('p1-play-reverse').props.disabled).toBe(false);
   await press('p1-play-reverse');
-  expect(mockSources.at(-1).buffer).toEqual({ take: 1, reversed: true });
+  expect(mockSources.at(-1).buffer).toMatchObject({ take: 1, reversed: true });
   await act(async () => {
     finish({ originalWavUri: 'blob:mimic', reversedWavUri: 'blob:mimic-reversed', durationMs: 1000 });
     await stopping;

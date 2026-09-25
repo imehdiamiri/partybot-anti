@@ -615,7 +615,7 @@ export function ReverseSingingSession({ session }: Props) {
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true, playThroughEarpieceAndroid: false });
       let playbackUri = uri;
       if (rate === 0.5) {
-        const slowUri = uri.replace(/\.wav$/i, '_slow.wav');
+        const slowUri = uri.replace(/\.wav$/i, '_slow_pitch_v2.wav');
         if (!(await FileSystem.getInfoAsync(slowUri)).exists) {
           const raw = atob(await FileSystem.readAsStringAsync(uri, { encoding: FileSystemEncoding.Base64 }));
           const bytes = slowVoiceWav(Uint8Array.from(raw, char => char.charCodeAt(0)));

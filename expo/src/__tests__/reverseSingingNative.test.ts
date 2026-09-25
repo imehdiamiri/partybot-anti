@@ -66,10 +66,10 @@ test('native source and mimic reversal produce playable WAVs; replay and Retry k
     expect(reversed.readInt16LE(44)).toBe(view.getInt16(98, true));
     await press('p1-play-slow');
     expect(mockSounds.at(-1).setRateAsync).not.toHaveBeenCalled();
-    expect(mockSounds.at(-1).uri).toBe('file:///take-1_reversed_slow.wav');
+    expect(mockSounds.at(-1).uri).toBe('file:///take-1_reversed_slow_pitch_v2.wav');
     const slow = Buffer.from(mockFiles.get(mockSounds.at(-1).uri)!, 'base64');
-    expect(slow.readUInt32LE(24)).toBe(22050);
-    expect(slow.subarray(44)).toEqual(reversed.subarray(44));
+    expect(slow.readUInt32LE(24)).toBe(44100);
+    expect(slow.length - 44).toBe((reversed.length - 44) * 2);
     await press('stop-playback');
     expect(mockSounds.at(-1).unloadAsync).toHaveBeenCalled();
     await press('p1-play');

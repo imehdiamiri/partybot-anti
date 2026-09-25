@@ -68,6 +68,11 @@ const assert = require('assert');
       await fits('color-match-submit-button',height);
       for(const slider of ['hue','saturation','brightness']) await drag('color-slider-'+slider,'x');
       await fits('color-match-submit-button',height);
+      const colorSpacing = await page.evaluate(() => {
+        const box = id => document.querySelector(`[data-testid="${id}"]`).getBoundingClientRect();
+        return { gap: box('color-match-submit-button').top - box('color-slider-brightness').bottom, swatch: box('color-match-guess-swatch').height };
+      });
+      assert(colorSpacing.gap >= 20 && colorSpacing.swatch <= 121, JSON.stringify(colorSpacing));
       await page.screenshot({path:`.expo/compact-color-${width}.png`});
       await click('color-match-submit-button'); await page.waitForSelector('[data-testid="color-match-continue-button"]');
       await start('sound_match'); await click('sound-match-ready-button');
@@ -77,6 +82,11 @@ const assert = require('assert');
       await click('sound-match-freq-up-button'); await click('sound-match-freq-down-button');
       await click('sound-match-play-guess-button');
       await fits('sound-match-submit-button',height);
+      const soundGap = await page.evaluate(() => {
+        const box = id => document.querySelector(`[data-testid="${id}"]`).getBoundingClientRect();
+        return box('sound-match-submit-button').top - box('sound-match-freq-down-button').bottom;
+      });
+      assert(soundGap >= 24, `Sound controls need 24 px before Submit: ${soundGap}`);
       await page.screenshot({path:`.expo/compact-sound-${width}.png`});
       await click('sound-match-submit-button');
       console.log(`${width}x${height}: controls + Submit fit without scrolling; slider touch and submission PASS`);

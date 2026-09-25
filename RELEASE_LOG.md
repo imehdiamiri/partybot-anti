@@ -1,5 +1,32 @@
 # Release log
 
+## 2026-09-26 — pitch-preserving turtle replay and match control spacing
+
+- Recovery: checkpoint/2026-09-26-before-pitch-spacing at 018a999.
+  Source tag: release/2026-09-26-pitch-spacing.
+- Replaced sample-clock halving with shared waveform-similarity overlap-add:
+  original-rate windows are aligned/crossfaded into exactly twice the frames.
+  Native PCM WAV and web AudioBuffer use the same stretcher, then play at 1x.
+  Sample rate/pitch remain unchanged. Stereo channels share alignment. Native
+  cache filename versioned to avoid replaying older octave-lowered files.
+  Web cache invalidates on replacement/Retry. Existing stop/exit guards retained.
+- Color Match preview capped at 240x120, slider rows separated by 10 px, with
+  at least 20 px before Submit. Sound tuning controls have 24 px before Submit.
+  Full-page layout and 44+ px touch targets retained without scrolling.
+- Validation: TypeScript PASS; Jest 43 suites / 302 tests PASS. Signal tests at
+  110/220/440/880 Hz verify double duration and original pitch rather than its
+  lower octave; native WAV sample rate/duration, stereo phase, silence, replay,
+  cancellation and Retry covered. Web export PASS.
+- Browser: touch controls, measured spacing and visible Submit PASS at 320x487,
+  393x771, 430x851, 768x943. Screenshot inspected. Synthetic microphone test:
+  original/reverse/slow/natural completion/mimic/result/Stop/Retry PASS. A 60-second
+  synthesized clip stretched to 120 seconds in 246 ms on this desktop (not a
+  mobile performance claim). No direct physical iOS/Android listening test.
+- Existing Expo channel/builds checked; Expo Go SDK57 runtime remains separate
+  from installed binaries. No dependency/native config changes; no Git push.
+- Publication and local backup receipts follow.
+
+
 ## 2026-09-24 — winding Memory Path, reliable slow replay and compact matching
 
 - Recovery: checkpoint/2026-09-24-before-game-fixes at abe26c3.

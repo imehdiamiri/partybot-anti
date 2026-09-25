@@ -15,16 +15,18 @@ test('Retry cancels a pending browser resume before it can start old audio', asy
 test('a suspended context is resumed from Play, repeated playback replaces its node, and old end events cannot stop a new take', async () => {
   const nodes: any[] = [];
   const context: any = { state: 'suspended', resume: jest.fn(async () => {}), destination: {},
+    createBuffer: (count: number, length: number) => { const data = new Float32Array(length); return { length, getChannelData: () => data }; },
     createBufferSource: () => {
       const node = { connect: jest.fn(), disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(), playbackRate: { value: 1 }, onended: null };
       nodes.push(node); return node;
     } };
   const playback = new BrowserRecordingPlayback(() => context);
   const ended = jest.fn();
-  playback.remember('blob:first', { length: 100 } as AudioBuffer);
+  playback.remember('blob:first', { length: 100, numberOfChannels: 1, sampleRate: 44100, getChannelData: () => new Float32Array(100) } as unknown as AudioBuffer);
   await playback.play('blob:first', .5, ended);
   expect(context.resume).toHaveBeenCalled();
-  expect(nodes[0].playbackRate.value).toBe(.5);
+  expect(nodes[0].playbackRate.value).toBe(1);
+  expect(nodes[0].buffer.length).toBe(200);
   const staleEnd = nodes[0].onended;
   await playback.play('blob:first', 1, ended);
   expect(nodes[0].stop).toHaveBeenCalled();
