@@ -27,7 +27,23 @@
 - Existing EAS channel and recent builds inspected. No native/config/dependency
   changes. Expo Go SDK57 remains separate from native binary runtimes. Physical
   iOS/Android visual testing unavailable; no Git push or persistent server.
-  Publication receipts and verified backup follow after service confirmation.
+- Source commit: 38f1abb8fac4bf8fb5ffde6f63986077fbc8ced2.
+- Firebase Hosting confirmed release complete using `npx --yes firebase-tools
+  deploy --only hosting --project partyplay-8 --non-interactive`.
+  https://partybot.games and https://partyplay-8.web.app updated. Four live game
+  routes and JavaScript bytes verified against local hosting output:
+  entry-b7a0d289125279c20bd38dc5ced30fa7.js, SHA-256
+  2fd89a078e0a92dd4c0f2d613d1533eefe3dc7acf279071b12904ad35d84173a.
+- EAS confirmed Published with APP_VARIANT=expo-go, branch expo-go-sdk57,
+  environment preview, platforms all, runtime exposdk:57.0.0.
+  Group 59f177c7-af44-44f3-abd2-1f7eaae39dd5;
+  Android 01a0e4ad-d202-7290-a709-29643be1ea67;
+  iOS 01a0e4ad-d202-77d9-aa2e-5bff28ab60a6.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/59f177c7-af44-44f3-abd2-1f7eaae39dd5
+- Verified .backups/playbot-2026-09-28-000047-098.bundle (91,714,285 bytes),
+  SHA-256 b6955ba610143455409b81cbf37f2bf0f467d64c0c2944da6e3da42ef365fa58.
+  No unresolved publication blockers; physical device checks and local-only
+  guide-history scope remain the limitations noted above.
 
 ## 2026-09-27 — shared match game control design
 
