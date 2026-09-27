@@ -26,6 +26,27 @@
   changes. Expo Go SDK57 preview stays separate from installed native runtimes.
   Publication receipts and verified local backup recorded below after completion.
   No Git remote push.
+- Initial design publication: Firebase confirmed release complete; live bundle
+  entry-5a23a6a47860c3cca1a93435da9fc080.js matches local SHA-256
+  86aa754f8a289e25e652f257f68a9c38eaf1d9d08fe03126263270c93c24206a.
+  EAS group e39939b2-6bd5-4797-ba06-8029932e5b25 published for SDK57:
+  Android 01a0e2c8-2ce8-7e56-aa83-38e153027d43,
+  iOS 01a0e2c8-2ce8-7abc-b3f6-4776d03d03c2. EAS marked a298c06 dirty
+  because the user's larger-preview follow-up began after native bundle export.
+  This initial update is superseded by the clean follow-up below.
+- Verified bundle .backups/playbot-2026-09-27-150919-656.bundle (94,856,624 bytes),
+  SHA-256 83596afeb8d76ce1c4765194c9397b47935fa6a118115362345e243d99f1f31f.
+
+### Larger color preview follow-up
+
+- User requested a large color area after reviewing the redesign. Replaced the
+  small side swatch with a full-width 144 px preview (72 px on compact screens).
+  Separate control and action cards retained. Primary blue deepened for 5.29:1
+  white-text contrast. Recovery: checkpoint/2026-09-27-before-large-preview;
+  source tag: release/2026-09-27-large-color-preview.
+- Follow-up validation: TypeScript and web export PASS. Four viewport touch,
+  keyboard, preview-size and no-scroll checks rerun PASS; enlarged phone
+  screenshot inspected. No behavior/native dependency changes.
 
 ## 2026-09-26 — pitch-preserving turtle replay and match control spacing
 

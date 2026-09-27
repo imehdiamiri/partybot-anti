@@ -60,11 +60,14 @@ export function GameSlider({ label, value, min, max, onChange, onComplete, onDra
 
 export function MatchPreview({ color, frequency, onPlay, playing = false }: { color?: string; frequency?: number; onPlay?: () => void; playing?: boolean }) {
   const compact = useCompactGame();
+  if (color) return <View style={[s.preview, { flexDirection: 'column', alignItems: 'stretch', padding: compact ? 8 : 12, gap: 8 }]}>
+    <View testID="color-match-guess-swatch" style={{ width: '100%', height: compact ? 72 : 144, borderRadius: 14, backgroundColor: color, borderWidth: 1, borderColor: '#FFFFFF33' }} />
+    <Text style={[s.previewLabel, { fontSize: compact ? 13 : 14 }]}>Your color</Text>
+  </View>;
   return <View style={[s.preview, { padding: compact ? 4 : 16, minHeight: compact ? 52 : 96 }]}>
-    {color ? <View testID="color-match-guess-swatch" style={{ width: compact ? 52 : 88, height: compact ? 44 : 64, borderRadius: 14, backgroundColor: color, borderWidth: 1, borderColor: '#FFFFFF33' }} />
-      : <View testID="sound-match-freq-circle"><Text style={[s.frequency, { fontSize: compact ? 28 : 40 }]}>{frequency}<Text style={{ fontSize: 14, color: D.muted }}> Hz</Text></Text></View>}
-    <View style={{ flex: 1, gap: 4 }}><Text style={s.previewLabel}>{color ? 'Your color' : 'Your tone'}</Text>
-      {!compact && <Text style={{ color: D.muted, fontSize: 13 }}>{color ? 'Match what you remember' : 'Listen and fine-tune'}</Text>}
+    <View testID="sound-match-freq-circle"><Text style={[s.frequency, { fontSize: compact ? 28 : 40 }]}>{frequency}<Text style={{ fontSize: 14, color: D.muted }}> Hz</Text></Text></View>
+    <View style={{ flex: 1, gap: 4 }}><Text style={s.previewLabel}>Your tone</Text>
+      {!compact && <Text style={{ color: D.muted, fontSize: 13 }}>Listen and fine-tune</Text>}
     </View>
     {onPlay && <Pressable testID="sound-match-play-guess-button" accessibilityRole="button" accessibilityLabel="Play your tone for 3 seconds" onPress={onPlay}
       style={({ pressed }) => [s.play, { opacity: pressed ? .7 : 1 }]}><Text style={{ color: D.text, fontSize: 18 }}>{playing ? '♫' : '▶'}</Text></Pressable>}

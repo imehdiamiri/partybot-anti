@@ -70,9 +70,9 @@ const assert = require('assert');
       await fits('color-match-submit-button',height);
       const colorSpacing = await page.evaluate(() => {
         const box = id => document.querySelector(`[data-testid="${id}"]`).getBoundingClientRect();
-        return { gap: box('color-match-submit-button').top - box('color-slider-brightness').bottom, swatch: box('color-match-guess-swatch').height };
+        return { gap: box('color-match-submit-button').top - box('color-slider-brightness').bottom, swatch: box('color-match-guess-swatch').height, swatchWidth: box('color-match-guess-swatch').width };
       });
-      assert(colorSpacing.gap >= 14 && colorSpacing.swatch <= 121, JSON.stringify(colorSpacing));
+      assert(colorSpacing.gap >= 14 && colorSpacing.swatch >= 72 && colorSpacing.swatchWidth >= Math.min(width - 60, 530), JSON.stringify(colorSpacing));
       await page.screenshot({path:`.expo/compact-color-${width}.png`});
       await click('color-match-submit-button'); await page.waitForSelector('[data-testid="color-match-continue-button"]');
       await start('sound_match'); await click('sound-match-ready-button');
