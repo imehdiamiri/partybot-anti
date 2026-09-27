@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, StyleSheet, Text, View } from 'react-native';
 
+import { GameDesign as D } from '@/src/theme/GameDesign';
+
 type Activity = { name: string; phase: string } | null;
 const ActivityContext = createContext<{ activity: Activity; setActivity: (value: Activity) => void }>({ activity: null, setActivity: () => {} });
 
@@ -69,11 +71,11 @@ export function GameActivityBanner() {
 }
 
 export const GAME_UI = StyleSheet.create({
-  primaryButton: { minHeight: 56, borderRadius: 16, paddingHorizontal: 20, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  primaryButton: { minHeight: 56, borderRadius: D.buttonRadius, paddingHorizontal: 20, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
   buttonText: { fontSize: 16, fontWeight: '700' },
 });
 const s = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 36, paddingHorizontal: 12, marginTop: 6, borderRadius: 12, backgroundColor: '#191D27', borderWidth: 1, borderColor: '#303642' },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 36, paddingHorizontal: 12, marginTop: 6, borderRadius: 12, backgroundColor: D.surface, borderWidth: 1, borderColor: D.border },
   dot: { width: 7, height: 7, borderRadius: 4 },
   label: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
   name: { flex: 1, color: '#68E8A8', fontSize: 20, fontWeight: '800' },

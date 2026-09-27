@@ -1,4 +1,4 @@
-import { useSliderDrag } from '@/src/hooks/useSliderDrag';
+import { GameSlider, GameActionButton, GameControlCard, MatchPreview } from './GameControls';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
 import { MatchStudio } from './MatchStudio';
@@ -310,13 +310,10 @@ export function ColorMatchSession({ session }: Props) {
 
     return (
       <MatchStudio scrollEnabled={!isDragging} kind="color" step={1} player={activePlayer.displayName} round={`${roundIdx + 1} / ${maxRounds}`}>
-        <View style={{ flex: 1, minHeight: 16, alignItems: 'center', justifyContent: 'center' }}>
-          <View testID="color-match-guess-swatch" style={[st.colorSwatchLarge, { flex: 1, height: undefined, maxHeight: 120, maxWidth: 240, marginVertical: 0, backgroundColor: guessHsl }]} />
-        </View>
-
-        <View style={st.slidersContainer}>
+        <MatchPreview color={guessHsl} />
+        <GameControlCard>
           {/* Hue Slider */}
-          <ColorSlider
+          <GameSlider
             onDraggingChange={setIsDragging}
             label="Hue"
             value={currentGuess.h}
@@ -324,7 +321,7 @@ export function ColorMatchSession({ session }: Props) {
             max={360}
             formatValue={(v) => `${Math.round(v)}°`}
             onChange={(h) => setCurrentGuess(prev => ({ ...prev, h }))}
-            iconName="paintpalette.fill"
+            testID="color-slider-hue"
             thumbColor={guessHsl}
             renderTrack={() => (
               <LinearGradient
@@ -337,7 +334,7 @@ export function ColorMatchSession({ session }: Props) {
           />
 
           {/* Saturation Slider */}
-          <ColorSlider
+          <GameSlider
             onDraggingChange={setIsDragging}
             label="Saturation"
             value={currentGuess.s}
@@ -345,7 +342,7 @@ export function ColorMatchSession({ session }: Props) {
             max={100}
             formatValue={(v) => `${Math.round(v)}%`}
             onChange={(s) => setCurrentGuess(prev => ({ ...prev, s }))}
-            iconName="drop.fill"
+            testID="color-slider-saturation"
             thumbColor={guessHsl}
             renderTrack={() => (
               <LinearGradient
@@ -358,7 +355,7 @@ export function ColorMatchSession({ session }: Props) {
           />
 
           {/* Brightness Slider */}
-          <ColorSlider
+          <GameSlider
             onDraggingChange={setIsDragging}
             label="Brightness"
             value={currentGuess.b}
@@ -366,7 +363,7 @@ export function ColorMatchSession({ session }: Props) {
             max={100}
             formatValue={(v) => `${Math.round(v)}%`}
             onChange={(b) => setCurrentGuess(prev => ({ ...prev, b }))}
-            iconName="sun.max.fill"
+            testID="color-slider-brightness"
             thumbColor={guessHsl}
             renderTrack={() => (
               <LinearGradient
@@ -377,11 +374,8 @@ export function ColorMatchSession({ session }: Props) {
               />
             )}
           />
-        </View>
-
-        <TouchableOpacity testID="color-match-submit-button" style={[st.submitButton, { height: 48, minHeight: 48, marginTop: 12, flexShrink: 0 }]} onPress={handleSubmitGuess} activeOpacity={0.85} accessibilityRole="button">
-          <Text style={st.submitButtonText}>Submit Match</Text>
-        </TouchableOpacity>
+        </GameControlCard>
+        <GameActionButton testID="color-match-submit-button" onPress={handleSubmitGuess} />
       </MatchStudio>
     );
   }
@@ -467,75 +461,7 @@ export function ColorMatchSession({ session }: Props) {
 }
 
 // Custom interactive Slider using standard React Native responder system
-export function ColorSlider({
-  onDraggingChange,
-  label,
-  value,
-  min,
-  max,
-  onChange,
-  renderTrack,
-  formatValue,
-  iconName,
-  thumbColor,
-}: {
-  onDraggingChange: (dragging: boolean) => void;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (val: number) => void;
-  renderTrack: () => React.ReactNode;
-  formatValue: (val: number) => string;
-  iconName: 'paintpalette.fill' | 'drop.fill' | 'sun.max.fill';
-  thumbColor: string;
-}) {
-  const [width, setWidth] = useState(1);
-  const responders = useSliderDrag({ axis: 'x', length: width, min, max, value,
-    onDraggingChange, onChange,
-  });
-
-  return (
-    <View style={st.sliderContainer}>
-      <View style={st.sliderLabelRow}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <IconSymbol name={iconName} size={15} color="rgba(255,255,255,0.7)" />
-          <Text style={st.sliderLabel}>{label}</Text>
-        </View>
-        <Text style={st.sliderValueText}>{formatValue(value)}</Text>
-      </View>
-      
-      <View
-        testID={`color-slider-${label.toLowerCase()}`}
-        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-        {...responders}
-        accessibilityRole="adjustable"
-        accessibilityLabel={label}
-        accessibilityValue={{ min, max, now: Math.round(value) }}
-        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-        onAccessibilityAction={e => onChange(Math.max(min, Math.min(max, value + (e.nativeEvent.actionName === 'increment' ? 1 : -1))))}
-        style={st.sliderTrackContainer}
-      >
-        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center' }]} pointerEvents="none">
-          {renderTrack()}
-        </View>
-        <View
-          pointerEvents="none"
-          style={[
-            st.sliderThumb,
-            {
-              left: `${((value - min) / (max - min)) * 100}%`,
-            },
-          ]}
-        >
-          <View style={[st.sliderThumbInner, { backgroundColor: thumbColor }]} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const st = StyleSheet.create({
+export const st = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
@@ -696,8 +622,8 @@ const st = StyleSheet.create({
     position: 'relative',
   },
   sliderTrack: {
-    height: 20,
-    borderRadius: 10,
+    height: 12,
+    borderRadius: 6,
     width: '100%',
     alignSelf: 'center',
   },

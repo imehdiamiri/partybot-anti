@@ -1,5 +1,32 @@
 # Release log
 
+## 2026-09-27 — shared match game control design
+
+- Recovery checkpoint: checkpoint/2026-09-27-before-game-design at 67aca34.
+  Source tag: release/2026-09-27-game-design.
+- Rebuilt Color Match and Sound Match matching screens with independent preview,
+  controls and primary-action surfaces. Content follows its natural height rather
+  than pushing Submit to the screen bottom. Color preview is 88x64 on regular
+  phones; compact screens use 52x44. Sound frequency now uses a horizontal slider.
+- Shared GameDesign tokens and GameControls components standardize surfaces,
+  borders, typography, 44 px slider interaction areas and 48/52 px primary actions.
+  Shared activity banner and existing GAME_UI button radius use the same tokens.
+  Game-specific board visuals remain intact. Compact rows adapt to available
+  height; accessible enlarged text retains the ScrollView escape hatch.
+- Stable touch ownership, accessibility values/actions and web keyboard arrows,
+  Home/End supported. Sound +/- 1 Hz and preview remain separate controls.
+- Validation: npm run typecheck PASS; Jest 43 suites / 302 tests PASS; one-off
+  APP_VARIANT=expo-go Expo web export and node sync-web-build.js PASS.
+  verify-compact-matches.cjs PASS at 320x487, 393x771, 430x851 and 768x943:
+  no scroll needed for Submit, touch drags change values without moving the
+  page or exiting, keyboard fine tuning, preview, +/- and submission work.
+  Phone screenshots inspected. Physical iOS/Android appearance not directly
+  tested; native update uses the shared React Native implementation.
+- Existing Expo preview channel/builds inspected. No native dependency/config
+  changes. Expo Go SDK57 preview stays separate from installed native runtimes.
+  Publication receipts and verified local backup recorded below after completion.
+  No Git remote push.
+
 ## 2026-09-26 — pitch-preserving turtle replay and match control spacing
 
 - Recovery: checkpoint/2026-09-26-before-pitch-spacing at 018a999.
