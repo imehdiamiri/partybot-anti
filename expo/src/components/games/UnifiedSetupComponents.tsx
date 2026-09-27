@@ -1,3 +1,4 @@
+import { getWebAudioContext } from '@/src/utils/browserMediaAdapter';
 import { Colors } from '@/src/theme/Colors';
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, TouchableOpacity } from 'react-native';
@@ -49,6 +50,7 @@ export function SetupPlayersSection({
           <View style={styles.stepperContainer}>
             <Pressable 
               style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount <= minPlayers ? 0.3 : 1 }]}
+              testID="setup-player-minus" accessibilityRole="button" accessibilityLabel="Remove a player"
               onPress={() => onUpdateCount(Math.max(minPlayers, playerCount - 1))}
               disabled={playerCount <= minPlayers}
             >
@@ -59,6 +61,7 @@ export function SetupPlayersSection({
             
             <Pressable 
               style={[styles.stepperButton, { backgroundColor: 'rgba(52, 199, 89, 0.12)', opacity: playerCount >= maxPlayers ? 0.3 : 1 }]}
+              testID="setup-player-plus" accessibilityRole="button" accessibilityLabel="Add a player"
               onPress={() => onUpdateCount(Math.min(maxPlayers, playerCount + 1))}
               disabled={playerCount >= maxPlayers}
             >
@@ -195,7 +198,7 @@ export function SetupStartButton({
       accessibilityRole="button"
       testID="setup-start-button"
       style={[styles.startButton, { backgroundColor: tint, opacity: disabled ? 0.5 : 1 }]}
-      onPress={onPress}
+      onPress={() => { getWebAudioContext(); onPress(); }}
       disabled={disabled}
     >
       <IconSymbol name={icon as any} size={20} color="white" />

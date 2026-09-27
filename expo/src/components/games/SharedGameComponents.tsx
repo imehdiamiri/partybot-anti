@@ -1,3 +1,4 @@
+import { useSoloHandoff } from './SinglePlayerContext';
 import { Colors, Typography } from '@/src/theme/Colors';
 import { useNameInActivityBanner } from './GameActivity';
 import { useActionConfirmation } from '../ActionConfirmation';
@@ -61,11 +62,13 @@ export function GameHandoffView({
   const registerHandoff = useRegisterHandoffSkip();
   const skipRef = useRef(onSkip);
   skipRef.current = onSkip;
-  const canSkip = !!onSkip;
+  const solo = useSoloHandoff(onReady, finalTurn);
+  const canSkip = !!onSkip && !solo;
   useEffect(() => {
     registerHandoff(canSkip ? () => skipRef.current?.() : null, playerName);
     return () => registerHandoff(null);
   }, [canSkip, playerName, registerHandoff]);
+  if (solo) return null;
   return <ScrollView testID="handoff-screen" bounces={false} style={{ flex: 1, width: '100%', backgroundColor: '#08080F' }}
     contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: Math.max(24, insets.bottom + 12) }}>
     {previousResult && <View testID="previous-player-result" style={{ width: '100%', maxWidth: 480, padding: 22, marginBottom: 16, borderRadius: 22, backgroundColor: '#14251F', borderWidth: 1, borderColor: '#355E4F', gap: 10 }}>

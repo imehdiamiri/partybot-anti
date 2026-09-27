@@ -1,4 +1,5 @@
 import React from 'react';
+import { SinglePlayerContext } from './SinglePlayerContext';
 import { View, Text, StyleSheet } from 'react-native';
 import { GameType } from '@/src/models/AppModels';
 import { GameSession } from '@/src/store/useGameStore';
@@ -36,7 +37,13 @@ function withHint(session: GameSession, child: React.ReactNode) {
   return hint ? <GameIntroGate gameId={gameId} config={session.gameConfig}>{child}</GameIntroGate> : child;
 }
 
-export function GameSessionRenderer({ session, game }: Props) {
+export function GameSessionRenderer(props: Props) {
+  return <SinglePlayerContext.Provider value={props.session.players.length === 1}>
+    <SessionContent {...props} />
+  </SinglePlayerContext.Provider>;
+}
+
+function SessionContent({ session, game }: Props) {
   switch (game.id) {
     case 'reverse_singing':
       return withHint(session, <ReverseSingingSession session={session} />);

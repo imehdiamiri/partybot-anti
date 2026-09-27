@@ -27,7 +27,11 @@ const assert = require('assert');
     const start = async (game, grid) => {
       await page.goto('https://layout.invalid/game/'+game+'/setup', {waitUntil:'networkidle0'});
       if(grid) await page.evaluate(text => [...document.querySelectorAll('div')].find(el=>el.textContent===text&&el.children.length===0).click(),grid);
-      await click('setup-start-button'); await click('game-guide-start'); await click('game-ready-button');
+      await click('setup-start-button');
+      await page.waitForSelector('[data-testid="game-start-guide"], [data-testid="handoff-screen"], [data-testid="game-active-player"]');
+      if (await page.$('[data-testid="game-guide-start"]')) await click('game-guide-start');
+      await page.waitForSelector('[data-testid="handoff-screen"], [data-testid="game-active-player"]');
+      if (await page.$('[data-testid="game-ready-button"]')) await click('game-ready-button');
     };
     const touch = await page.createCDPSession();
     async function drag(id, axis) {

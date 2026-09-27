@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuthStore } from '@/src/store/useAuthStore';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { GAME_HINTS } from '@/src/constants/GameHints';
@@ -10,8 +12,30 @@ export const useReplayGuide = () => useContext(ReplayGuide);
 
 /** A start screen, not an overlay: no game mounts or starts its clock underneath. */
 export function GameStartGuide({ gameId, onStart, config, mode }: { gameId: string; onStart: () => void; config?: Record<string, any>; mode?: string }) {
-  const hint = getGameHint(gameId, config, mode);
+  const userId = useAuthStore(state => state.currentUser?.uid || 'guest_local');
+  const historyKey = `game-guide:v1:${encodeURIComponent(userId)}:${gameId}`;
+  return <RememberedGuide key={historyKey} {...{ historyKey, gameId, onStart, config, mode }} />;
+}
+
+const acknowledged = new Set<string>();
+function RememberedGuide({ historyKey, gameId, onStart, config, mode }: {
+  historyKey: string; gameId: string; onStart: () => void; config?: Record<string, any>; mode?: string;
+}) {
+  const [seen, setSeen] = useState<boolean | null>(null);
+  const startRef = useRef(onStart);
+  startRef.current = onStart;
   const started = useRef(false);
+  useEffect(() => {
+    let active = true;
+    const read = acknowledged.has(historyKey) ? Promise.resolve('1') : AsyncStorage.getItem(historyKey);
+    read.then(value => { if (active) setSeen(value === '1'); }).catch(() => { if (active) setSeen(false); });
+    return () => { active = false; };
+  }, [historyKey]);
+  useEffect(() => {
+    if (seen && !started.current) { started.current = true; startRef.current(); }
+  }, [seen]);
+  const hint = getGameHint(gameId, config, mode);
+  if (seen !== false) return <View testID="game-guide-loading" style={{ flex: 1 }} />;
   return <ScrollView style={s.screen} contentContainerStyle={s.content}>
     <View style={s.card} testID="game-start-guide">
       <IconSymbol name={hint.icon as any} size={42} color={hint.accent} />
@@ -22,7 +46,7 @@ export function GameStartGuide({ gameId, onStart, config, mode }: { gameId: stri
         <Text style={s.copy}>{step}</Text>
       </View>)}
       <Pressable testID="game-guide-start" accessibilityRole="button" style={[s.button, GAME_UI.primaryButton, { backgroundColor: hint.accent }]}
-        onPress={() => { if (!started.current) { started.current = true; onStart(); } }}>
+        onPress={() => { if (!started.current) { started.current = true; acknowledged.add(historyKey); void AsyncStorage.setItem(historyKey, '1').catch(() => {}); onStart(); } }}>
         <Text style={s.buttonText}>Got it — let’s play</Text>
       </Pressable>
     </View>
@@ -31,13 +55,8 @@ export function GameStartGuide({ gameId, onStart, config, mode }: { gameId: stri
 
 export function GameIntroGate({ gameId, children, config }: { gameId: string; children: React.ReactNode; config?: Record<string, any> }) {
   const [ready, setReady] = useState(false);
-  const [pending, setPending] = useState<(() => void) | null>(null);
-  return <ReplayGuide.Provider value={start => setPending(() => start)}>
-    {!ready ? <GameStartGuide gameId={gameId} config={config} onStart={() => setReady(true)} /> :
-      <View style={{ flex: 1 }}>
-        <View style={{ flex: 1, display: pending ? 'none' : 'flex' }}>{children}</View>
-        {pending && <GameStartGuide gameId={gameId} config={config} onStart={() => { const start = pending; setPending(null); start(); }} />}
-      </View>}
+  return <ReplayGuide.Provider value={start => start()}>
+    {!ready ? <GameStartGuide gameId={gameId} config={config} onStart={() => setReady(true)} /> : children}
   </ReplayGuide.Provider>;
 }
 

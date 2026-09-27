@@ -1,5 +1,34 @@
 # Release log
 
+## 2026-09-28 — first-use guides and direct solo starts
+
+- Recovery checkpoint: checkpoint/2026-09-27-before-start-flow at ae11cea.
+  Source tag: release/2026-09-28-start-flow.
+- Shared session context auto-advances handoffs exactly once when the session
+  contains one player. Multiple players on one device still see handoffs;
+  final-result summaries and game-specific rule/target screens are retained.
+- Game guides persist acknowledgement per game and account UID in AsyncStorage.
+  Guests use local-device/browser history. Subsequent sessions and Play Again
+  bypass the guide; Pass & Guess uses the same gate. Storage reads gate mounting
+  so clocks cannot start behind a first-use guide. Failed persistence retains
+  in-memory acknowledgement and never blocks play. History is local, not synced
+  across devices; clearing app/browser storage resets it.
+- Web detail page now has a large blue Play Now action for the single-device mode
+  (solo or friends). Native mode cards retain choices with 56 px blue play circles
+  and 28 px white play icons. Setup Start unlocks web audio synchronously with the
+  gesture before solo auto-start; native behavior is unchanged.
+- Validation: TypeScript PASS; Jest 43 suites / 306 tests PASS, including stored
+  guide reload, account/game isolation, storage failure, replay and solo/final
+  handoff behavior. One-off Expo web export and hosting sync PASS.
+  Compact match layout/touch/keyboard checks PASS at 320x487, 393x771,
+  430x851 and 768x943 with persistent guides.
+  Browser verify-start-flow.cjs PASS for prominent Play, first guide, reload
+  persistence, solo bypass and multiplayer handoff. Screenshot inspected.
+- Existing EAS channel and recent builds inspected. No native/config/dependency
+  changes. Expo Go SDK57 remains separate from native binary runtimes. Physical
+  iOS/Android visual testing unavailable; no Git push or persistent server.
+  Publication receipts and verified backup follow after service confirmation.
+
 ## 2026-09-27 — shared match game control design
 
 - Recovery checkpoint: checkpoint/2026-09-27-before-game-design at 67aca34.

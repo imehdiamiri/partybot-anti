@@ -245,7 +245,7 @@ export default function GameDetailScreen() {
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Choose a Mode</Text>
+            <Text style={styles.sectionTitle}>{isWeb ? 'Ready to play?' : 'Choose a Mode'}</Text>
             
             <View style={styles.modesContainer}>
               {(isWeb ? [GameMode.singleDevice] : game.supportedModes).map(mode => {
@@ -257,7 +257,7 @@ export default function GameDetailScreen() {
                     key={mode} 
                     testID={`game-detail-mode-${mode}`}
                     accessibilityRole="button"
-                    style={styles.modeCard}
+                    style={[styles.modeCard, isWeb && { minHeight: 104, backgroundColor: '#2465DC', borderRadius: 20 }]}
                     activeOpacity={0.7}
                     onPress={() => handleModeSelect(mode)}
                   >
@@ -274,14 +274,14 @@ export default function GameDetailScreen() {
                     </View>
                     
                     <View style={styles.modeTextContainer}>
-                      <Text style={styles.modeTitle}>{isWeb ? '1-Phone Pass & Play' : modeDetails.title}</Text>
-                      <Text style={styles.modeSubtitle} numberOfLines={2}>
-                        {isWeb ? 'Play with everyone on this device' : modeDetails.subtitle}
+                      <Text style={[styles.modeTitle, isWeb && { fontSize: 22, fontWeight: '700' }]}>{isWeb ? 'Play Now' : modeDetails.title}</Text>
+                      <Text style={[styles.modeSubtitle, isWeb && { color: '#EAF1FF' }]} numberOfLines={2}>
+                        {isWeb ? 'One device · Play solo or with friends' : modeDetails.subtitle}
                       </Text>
                     </View>
                     
                     <View style={styles.modePlayIcon}>
-                      <IconSymbol name="play.fill" size={14} color="#007AFF" />
+                      <IconSymbol name="play.fill" size={28} color="white" />
                     </View>
                   </TouchableOpacity>
                 );
@@ -479,10 +479,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   modePlayIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 122, 255, 0.15)',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#2465DC',
     justifyContent: 'center',
     alignItems: 'center',
   },
