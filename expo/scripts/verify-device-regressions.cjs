@@ -52,6 +52,7 @@ const assert = require('assert');
     for (const [width,height] of [[320,568],[393,852],[430,932],[768,1024]]) {
       await page.setViewport({width,height,deviceScaleFactor:1,hasTouch:true});
       await page.goto('https://layout.invalid/tools',{waitUntil:'networkidle0'});
+      await page.waitForSelector('[data-testid^="tool-card-"]');
       const cards=await page.$$eval('[data-testid^="tool-card-"]',els=>els.map(el=>el.getBoundingClientRect().height));
       assert.equal(cards.length,6); assert(cards.every(height=>height>=150&&height<=220),'bounded tool cards');
       await page.screenshot({path:`.expo/device-tools-${width}.png`});
@@ -74,7 +75,7 @@ const assert = require('assert');
       await click('session-exit-button'); await click('action-confirm');
       await page.waitForFunction(()=>!location.pathname.includes('/session'));
       await start('sound_match');await click('sound-match-ready-button');
-      await drag('sound-match-slider-track','y');
+      await drag('sound-match-slider-track','x');
       await page.screenshot({path:`.expo/device-sound-${width}.png`});
       console.log(`${width}x${height}: tools, Tap in Order, Reaction, touch sliders and confirmed Exit PASS`);
     }

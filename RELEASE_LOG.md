@@ -47,6 +47,25 @@
 - Follow-up validation: TypeScript and web export PASS. Four viewport touch,
   keyboard, preview-size and no-scroll checks rerun PASS; enlarged phone
   screenshot inspected. No behavior/native dependency changes.
+- Final source: 32eb2c8eb54c39a2e190992568ad79650e96af08.
+  Firebase Hosting confirmed release complete at https://partybot.games and
+  https://partyplay-8.web.app. Four live game routes and bundle bytes verified:
+  entry-c9ffdd9ded49c3a1f071ebf6acc1e90b.js, SHA-256
+  34fcfea051653a999ac5a72a80ca1fbf2f4cd38e259e05cdbc1053c8d7231570.
+- EAS confirmed Published with clean source commit, APP_VARIANT=expo-go,
+  branch expo-go-sdk57, environment preview, runtime exposdk:57.0.0, both platforms.
+  Group c3e19ef2-d417-4af6-bd2e-42a09e3e6f89;
+  Android 01a0e2cc-774a-7895-83ad-227ed3b3fe7b;
+  iOS 01a0e2cc-774a-7d10-a000-19863834ff30.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/c3e19ef2-d417-4af6-bd2e-42a09e3e6f89
+- Verified local bundle .backups/playbot-2026-09-27-151507-138.bundle
+  (92,746,965 bytes), SHA-256
+  82d92f23f1b0e7fc82a2d557f35a68aa6d7008fd6a1ca92a6d15dd3f2302f5ce.
+- The broader browser smoke harness initially read Tools before hydration;
+  added an explicit card wait and updated Sound drag direction to horizontal.
+  Rerun PASS at 320x568, 393x852, 430x932 and 768x1024 for Tools, Tap in Order,
+  Reaction Time, sliders and Exit cancel/confirm. No unresolved release blockers;
+  physical-device visual review remains the compatibility caveat above.
 
 ## 2026-09-26 — pitch-preserving turtle replay and match control spacing
 
