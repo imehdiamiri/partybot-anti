@@ -24,7 +24,18 @@
   768x943 after the global policy. Physical Safari not tested.
 - Web-only release: no native runtime or dependency changes; native shell never
   installs these DOM handlers. No EAS update needed for this browser-only fix.
-  No Git remote push or persistent server. Publication/backup receipts follow.
+  No Git remote push or persistent server.
+- Source: ddc7b8abf53302c5e06ae36f6cd00918a1675e03.
+  Firebase confirmed release complete with `npx --yes firebase-tools deploy
+  --only hosting --project partyplay-8 --non-interactive`.
+  https://partybot.games and https://partyplay-8.web.app updated. Live Guess the
+  Seconds HTML includes viewport/gesture CSS; four routes and bundle bytes match
+  local output. entry-77b6645d379a058493eddfa44d2e16a8.js SHA-256:
+  7c6b805a0677cfc299334f38d6c826edf2d421bdbee1d6a27c585b42a7933730.
+- Verified local backup .backups/playbot-2026-09-28-001115-206.bundle
+  (91,825,455 bytes), SHA-256
+  c93dd6f8abdf211cce3b550245e5a47df6ef2d1059df02a1dfc266bda8a9eeb6.
+  No unresolved release blockers; physical Safari remains unverified.
 
 ## 2026-09-28 — first-use guides and direct solo starts
 
