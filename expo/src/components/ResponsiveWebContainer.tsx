@@ -1,3 +1,4 @@
+import { installWebZoomGuards } from '@/src/utils/webZoomGuards';
 import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { usePathname } from 'expo-router';
@@ -65,6 +66,7 @@ export function ResponsiveWebContainer({ children }: ResponsiveWebContainerProps
 
 function WebContainer({ children }: ResponsiveWebContainerProps) {
 
+  useEffect(() => installWebZoomGuards(document), []);
   const pathname = usePathname();
   const rootRef = useRef<any>(null);
   const contentRef = useRef<any>(null);

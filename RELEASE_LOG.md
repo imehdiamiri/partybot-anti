@@ -1,5 +1,31 @@
 # Release log
 
+## 2026-09-28 — prevent accidental touch zoom in the web app
+
+- Recovery checkpoint: checkpoint/2026-09-28-before-web-touch at 44216ab.
+  Source tag: release/2026-09-28-web-touch.
+- Added a static Expo HTML document with one fixed-scale viewport and root
+  touch-action pan-x pan-y: single-finger panning remains available, pinch and
+  double-tap browser zoom are excluded. Inputs have a 16 px minimum font to
+  avoid Safari focus zoom. Existing slider touch-action:none remains intact.
+- Web shell installs non-passive cancellation for Safari gesturestart/change,
+  multi-touch touchmove, dblclick and Ctrl-wheel trackpad pinch. It does not
+  cancel ordinary clicks, one-finger touchmove or ordinary wheel scrolling;
+  listeners are removed on unmount. Browser/OS accessibility overrides and
+  explicit browser menu zoom are outside page control.
+- Guess the Seconds steppers expose accessible names and stable test IDs.
+- Validation: TypeScript PASS; Jest 44 suites / 307 tests PASS, including event
+  cancellation, normal input preservation and cleanup. Static web export and
+  hosting sync PASS. Mobile Chromium emulation at widths 320/393/430: six rapid
+  taps each on +/- produced all expected values; two-finger pinch kept scale=1,
+  no horizontal overflow, exactly one viewport, synthetic Safari gesture event
+  canceled. Tools still scrolls with one finger. Color/Sound Match touch,
+  keyboard, submission and no-scroll layout PASS at 320x487, 393x771, 430x851,
+  768x943 after the global policy. Physical Safari not tested.
+- Web-only release: no native runtime or dependency changes; native shell never
+  installs these DOM handlers. No EAS update needed for this browser-only fix.
+  No Git remote push or persistent server. Publication/backup receipts follow.
+
 ## 2026-09-28 — first-use guides and direct solo starts
 
 - Recovery checkpoint: checkpoint/2026-09-27-before-start-flow at ae11cea.

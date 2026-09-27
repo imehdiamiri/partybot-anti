@@ -414,6 +414,7 @@ export function GuessTheSecondsSession({ session }: Props) {
           <View style={styles.selectorArea}>
             <Pressable
               style={[styles.stepperButton, !canEditTargetTime && styles.stepperDisabled]}
+              testID="guess-seconds-minus" accessibilityRole="button" accessibilityLabel="Decrease target time"
               onPress={() => adjustTargetTime(-1)}
               disabled={!canEditTargetTime}
             >
@@ -427,7 +428,7 @@ export function GuessTheSecondsSession({ session }: Props) {
                   <Text style={styles.runningLabel}>Counting…</Text>
                 </Animated.View>
               ) : (
-                <Text style={styles.timeDisplay}>
+                <Text testID="guess-seconds-target" style={styles.timeDisplay}>
                   {displayedTargetTime.toFixed(2)}
                 </Text>
               )}
@@ -435,6 +436,7 @@ export function GuessTheSecondsSession({ session }: Props) {
 
             <Pressable
               style={[styles.stepperButton, !canEditTargetTime && styles.stepperDisabled]}
+              testID="guess-seconds-plus" accessibilityRole="button" accessibilityLabel="Increase target time"
               onPress={() => adjustTargetTime(1)}
               disabled={!canEditTargetTime}
             >
