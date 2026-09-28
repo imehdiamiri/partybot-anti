@@ -51,6 +51,9 @@
   iOS: 01a0e8bb-d258-72af-9084-940362d3f9bd.
   https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/4c2116be-a66e-45f3-987a-9051ebfbce3b
   Existing channels/builds inspected before publishing; no native runtime update.
+- Verified local Git bundle: .backups/playbot-2026-09-28-185803-595.bundle
+  (92,204,855 bytes), includes cb20704 and release tags. SHA-256:
+  1e71cea86a1ae39830c32f3c84b962186b3012199b403760aaaa2fadf5a0609f.
 - No unresolved release blockers. Real-device microphone listening and native
   device UI checks remain unverified. Git rollback alone does not roll back
   Hosting/EAS or the separately enabled Firebase email/password provider.
