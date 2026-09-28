@@ -35,7 +35,25 @@
 - Physical iOS/Android/Safari not tested. Expo Go preview requires SDK 57;
   native custom binaries use a separate runtime and are not targeted by this
   Expo Go release. No native dependency changes, no Git push, no persistent server.
-- Publishing receipts will be recorded after service confirmation.
+- Source commit: 9669dba; Hosting auth deep-link follow-up: b71136f.
+  Protected auth routes are omitted by static export; explicit /auth and
+  /auth/** Hosting rewrites serve app.html so refresh/direct links resolve.
+- Firebase Hosting confirmed both deployments complete using
+  `npx --yes firebase-tools deploy --only hosting --project partyplay-8 --non-interactive`.
+  Live https://partybot.games and https://partyplay-8.web.app updated.
+  /, /tools, /onboarding and /auth return HTTP 200; live bundle equals local:
+  entry-09f950847e0f7e1a20035ff08d873f21.js SHA-256
+  f5b518abb86b6643ec8e90a46e87d6875398f91fc601903e173e235853e6a1a1.
+- EAS confirmed Published using APP_VARIANT=expo-go, branch expo-go-sdk57,
+  environment preview, platform all; runtime exposdk:57.0.0.
+  Group: 4c2116be-a66e-45f3-987a-9051ebfbce3b.
+  Android: 01a0e8bb-d258-767d-8159-f565ff446f7b.
+  iOS: 01a0e8bb-d258-72af-9084-940362d3f9bd.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/4c2116be-a66e-45f3-987a-9051ebfbce3b
+  Existing channels/builds inspected before publishing; no native runtime update.
+- No unresolved release blockers. Real-device microphone listening and native
+  device UI checks remain unverified. Git rollback alone does not roll back
+  Hosting/EAS or the separately enabled Firebase email/password provider.
 
 
 ## 2026-09-28 — prevent accidental touch zoom in the web app
