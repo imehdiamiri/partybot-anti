@@ -42,7 +42,23 @@
   The following final release supersedes it.
 - Existing Expo channel/builds inspected. Target is expo-go-sdk57/preview,
   runtime exposdk:57.0.0 only; no dependency/runtime change or native binary OTA.
-  No Git push or persistent server. Publication receipts follow confirmation.
+  No Git push or persistent server.
+- Final source: eaa402656819a0d839c24370552f0aba4fefef2b (base fix f010211).
+  Firebase Hosting confirmed release complete; https://partybot.games and
+  https://partyplay-8.web.app updated. /, /tools, /onboarding and /auth return 200.
+  Live entry-567f13abfef82b4186ad1206051ec9bc.js matches local bytes, SHA-256
+  0190355187192734ab478f364800a8705eee5c8648442a84c034e654d711fb2b.
+  Live-site touch submission also PASS for invalid login, malformed signup,
+  opening Google and restoring the form after popup close; no account created.
+- EAS confirmed Published on expo-go-sdk57, exposdk:57.0.0, android+ios:
+  group 729eb96f-3d26-4ae6-b4f4-e4f5dcceec40;
+  Android 01a0e8e3-33b3-7299-819c-da35739b1bf7;
+  iOS 01a0e8e3-33b3-735a-8823-833bb17be15c.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/729eb96f-3d26-4ae6-b4f4-e4f5dcceec40
+- No unresolved release blockers. Native physical keyboard behavior and real
+  Google account consent remain unverified. Expo Go retains email login only;
+  web Google does not enable unsupported native Google modules in Expo Go.
+  Reverting Git alone does not undo Hosting/EAS or authorized-domain changes.
 
 
 ## 2026-09-28 — Persian content, account onboarding, voice peaks and square tools
