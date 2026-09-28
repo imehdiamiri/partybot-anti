@@ -196,7 +196,7 @@ describe('Browser Media Adapter', () => {
 
     const recorder = new WebAudioRecorder();
     await recorder.start();
-    expect((global as any).navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true });
+    expect((global as any).navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: { autoGainControl: false, noiseSuppression: false, echoCancellation: false } });
 
     const result = await recorder.stop();
     expect(result.durationMs).toBe(1000);

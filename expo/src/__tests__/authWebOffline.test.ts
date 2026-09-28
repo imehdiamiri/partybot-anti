@@ -43,18 +43,10 @@ jest.mock('firebase/auth', () => ({
   signInAnonymously: jest.fn().mockImplementation(() => {
     throw new Error('NETWORK_ESCAPE_HATCH: firebase signInAnonymously must not be called on web');
   }),
-  signInWithEmailAndPassword: jest.fn().mockImplementation(() => {
-    throw new Error('NETWORK_ESCAPE_HATCH: firebase signInWithEmailAndPassword must not be called on web');
-  }),
-  createUserWithEmailAndPassword: jest.fn().mockImplementation(() => {
-    throw new Error('NETWORK_ESCAPE_HATCH: firebase createUserWithEmailAndPassword must not be called on web');
-  }),
-  signOut: jest.fn().mockImplementation(() => {
-    throw new Error('NETWORK_ESCAPE_HATCH: firebase signOut must not be called on web');
-  }),
-  onAuthStateChanged: jest.fn().mockImplementation(() => {
-    throw new Error('NETWORK_ESCAPE_HATCH: firebase onAuthStateChanged must not be called on web');
-  }),
+  signInWithEmailAndPassword: jest.fn(),
+  createUserWithEmailAndPassword: jest.fn(),
+  signOut: jest.fn(),
+  onAuthStateChanged: jest.fn(),
   GoogleAuthProvider: {
     credential: jest.fn(),
   },
@@ -76,66 +68,60 @@ jest.mock('../utils/platform', () => ({
 
 import { useAuthStore } from '../store/useAuthStore';
 
-describe('Web Local-First Auth Isolation', () => {
+const firebaseAuth = jest.requireMock('firebase/auth');
+const registeredUser = { uid: 'registered-user', email: 'newhost@partygames.app', isAnonymous: false, displayName: null, providerData: [{ providerId: 'password' }] };
+
+describe('Web real account authentication', () => {
   beforeEach(() => {
-    useAuthStore.setState({
-      currentUser: null,
-      authAccount: null,
-      isBusy: false,
-      isInitialized: false,
-      errorMessage: null,
-    });
+    jest.clearAllMocks();
+    useAuthStore.setState({ currentUser: null, authAccount: null, isBusy: false, isInitialized: false, errorMessage: null });
+    firebaseAuth.createUserWithEmailAndPassword.mockResolvedValue({ user: registeredUser });
+    firebaseAuth.signInWithEmailAndPassword.mockResolvedValue({ user: registeredUser });
+    firebaseAuth.signOut.mockResolvedValue(undefined);
   });
 
-  test('initialize() configures local guest without invoking Firebase onAuthStateChanged', () => {
-    const unsub = useAuthStore.getState().initialize();
-    expect(typeof unsub).toBe('function');
-    const state = useAuthStore.getState();
-    expect(state.isInitialized).toBe(true);
-    expect(state.currentUser?.uid).toBe('guest_local');
-    expect(state.currentUser?.displayName).toBe('Guest');
-    expect(state.currentUser?.isAnonymous).toBe(true);
-    expect(state.authAccount?.provider).toBe('guest');
+  test('initialization restores Firebase users and returns the listener cleanup', () => {
+    const stop = jest.fn();
+    firebaseAuth.onAuthStateChanged.mockImplementation((_auth: unknown, callback: Function) => { callback(registeredUser); return stop; });
+    expect(useAuthStore.getState().initialize()).toBe(stop);
+    expect(useAuthStore.getState().currentUser).toBe(registeredUser);
+    expect(useAuthStore.getState().isInitialized).toBe(true);
   });
 
-  test('signIn() sets local username offline without calling Firebase signInWithEmailAndPassword', async () => {
-    await useAuthStore.getState().signIn('PlayerOne', 'secret123');
-    const state = useAuthStore.getState();
-    expect(state.isBusy).toBe(false);
-    expect(state.errorMessage).toBeNull();
-    expect(state.currentUser?.displayName).toBe('playerone');
-    expect(state.authAccount?.username).toBe('playerone');
-    expect(state.authAccount?.provider).toBe('guest');
+  test('signed-out initialization never fabricates an authenticated guest', () => {
+    firebaseAuth.onAuthStateChanged.mockImplementation((_auth: unknown, callback: Function) => { callback(null); return jest.fn(); });
+    useAuthStore.getState().initialize();
+    expect(useAuthStore.getState().currentUser).toBeNull();
+    expect(useAuthStore.getState().isInitialized).toBe(true);
   });
 
-  test('signUp() sets local username offline without calling Firebase createUserWithEmailAndPassword', async () => {
+  test('signup creates a real account with the supplied password', async () => {
     await useAuthStore.getState().signUp('NewHost', 'secret123');
-    const state = useAuthStore.getState();
-    expect(state.isBusy).toBe(false);
-    expect(state.errorMessage).toBeNull();
-    expect(state.currentUser?.displayName).toBe('newhost');
-    expect(state.authAccount?.username).toBe('newhost');
+    expect(firebaseAuth.createUserWithEmailAndPassword).toHaveBeenCalledWith({}, 'newhost@partygames.app', 'secret123');
+    expect(useAuthStore.getState().currentUser?.isAnonymous).toBe(false);
+    expect(useAuthStore.getState().authAccount?.provider).toBe('username');
   });
 
-  test('signInAnonymously() resets to local guest without calling Firebase signInAnonymously', async () => {
-    await useAuthStore.getState().signInAnonymously();
-    const state = useAuthStore.getState();
-    expect(state.currentUser?.uid).toBe('guest_local');
-    expect(state.currentUser?.displayName).toBe('Guest');
-    expect(state.currentUser?.isAnonymous).toBe(true);
+  test('email sign-in preserves the email rather than appending the username domain', async () => {
+    await useAuthStore.getState().signIn('Player@Example.com', 'secret123');
+    expect(firebaseAuth.signInWithEmailAndPassword).toHaveBeenCalledWith({}, 'player@example.com', 'secret123');
+    expect(useAuthStore.getState().currentUser).toBe(registeredUser);
   });
 
-  test('signOut() resets local state without calling Firebase signOut', async () => {
-    useAuthStore.setState({
-      currentUser: { uid: 'custom_guest', displayName: 'Custom', isAnonymous: true },
-      authAccount: { id: 'custom_guest', username: 'Custom', provider: 'guest' },
-    });
+  test('incorrect password stays signed out and displays an error', async () => {
+    firebaseAuth.signInWithEmailAndPassword.mockRejectedValueOnce({ code: 'auth/invalid-credential' });
+    await useAuthStore.getState().signIn('Player', 'wrong');
+    expect(useAuthStore.getState().currentUser).toBeNull();
+    expect(useAuthStore.getState().errorMessage).toBe('Wrong username or password.');
+    expect(useAuthStore.getState().isBusy).toBe(false);
+  });
 
+  test('signout ends the Firebase session and clears the local account', async () => {
+    useAuthStore.setState({ currentUser: registeredUser });
     await useAuthStore.getState().signOut();
-    const state = useAuthStore.getState();
-    expect(state.currentUser?.uid).toBe('guest_local');
-    expect(state.currentUser?.displayName).toBe('Guest');
-    expect(state.isBusy).toBe(false);
+    expect(firebaseAuth.signOut).toHaveBeenCalledWith({});
+    expect(useAuthStore.getState().currentUser).toBeNull();
+    expect(useAuthStore.getState().authAccount).toBeNull();
   });
 
   test('signInWithGoogle() sets informational message without calling native Google Sign-In or Firebase', async () => {

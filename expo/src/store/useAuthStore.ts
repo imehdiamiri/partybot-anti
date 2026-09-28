@@ -44,7 +44,7 @@ interface AuthState {
   isInitialized: boolean;
   errorMessage: string | null;
 
-  initialize: () => void;
+  initialize: () => (() => void);
   signUp: (username: string, password: string) => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -60,7 +60,7 @@ const normalizeUsername = (username: string) => {
 };
 
 const getEmailForUsername = (username: string) => {
-  return `${username}@partygames.app`;
+  return username.includes('@') ? username : `${username}@partygames.app`;
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -71,19 +71,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   errorMessage: null,
 
   initialize: () => {
-    if (isWeb) {
-      set({
-        currentUser: { uid: 'guest_local', isAnonymous: true, displayName: 'Guest' },
-        authAccount: {
-          id: 'guest_local',
-          username: 'Guest',
-          provider: 'guest',
-        },
-        isInitialized: true,
-      });
-      return () => {};
-    }
-
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         const displayName = user.displayName ?? user.email?.split('@')[0] ?? 'Player';
@@ -128,24 +115,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signUp: async (username: string, password: string) => {
-    if (isWeb) {
-      try {
-        const normalized = normalizeUsername(username);
-        set({
-          currentUser: { uid: 'guest_local', isAnonymous: true, displayName: normalized },
-          authAccount: {
-            id: 'guest_local',
-            username: normalized,
-            provider: 'guest',
-          },
-          isBusy: false,
-        });
-      } catch (err: any) {
-        set({ errorMessage: err?.message || 'Invalid username', isBusy: false });
-      }
-      return;
-    }
-
     set({ isBusy: true, errorMessage: null });
     try {
       const normalized = normalizeUsername(username);
@@ -175,24 +144,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (username: string, password: string) => {
-    if (isWeb) {
-      try {
-        const normalized = normalizeUsername(username);
-        set({
-          currentUser: { uid: 'guest_local', isAnonymous: true, displayName: normalized },
-          authAccount: {
-            id: 'guest_local',
-            username: normalized,
-            provider: 'guest',
-          },
-          isBusy: false,
-        });
-      } catch (err: any) {
-        set({ errorMessage: err?.message || 'Invalid username', isBusy: false });
-      }
-      return;
-    }
-
     set({ isBusy: true, errorMessage: null });
     try {
       const normalized = normalizeUsername(username);
@@ -257,7 +208,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signInWithGoogle: async () => {
     if (isWeb) {
       set({
-        errorMessage: 'Google Sign-In is available on the mobile app. Web local games are ready to play without sign-in!',
+        errorMessage: 'Google Sign-In is available on the mobile app. Use username/email and password on web.',
         isBusy: false,
       });
       return;
@@ -353,7 +304,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signInWithApple: async () => {
     if (isWeb) {
       set({
-        errorMessage: 'Apple Sign-In is available on the iOS app. Web local games are ready to play without sign-in!',
+        errorMessage: 'Apple Sign-In is available on the iOS app. Use username/email and password on web.',
         isBusy: false,
       });
       return;
@@ -413,15 +364,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    if (isWeb) {
-      set({
-        currentUser: { uid: 'guest_local', isAnonymous: true, displayName: 'Guest' },
-        authAccount: { id: 'guest_local', username: 'Guest', provider: 'guest' },
-        isBusy: false,
-      });
-      return;
-    }
-
     set({ isBusy: true });
     try {
       await firebaseSignOut(auth);

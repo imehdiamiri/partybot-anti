@@ -1,5 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useRef } from 'react';
 import { AppState, AppStateStatus, View } from 'react-native';
@@ -34,13 +34,16 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { initialize, currentUser, isInitialized, signInAnonymously } = useAuthStore();
+  const { initialize, currentUser, isInitialized } = useAuthStore();
   const { hasCompletedOnboarding } = useSettingsStore();
-  const segments = useSegments();
-  const router = useRouter();
-  const navigationState = useRootNavigationState();
+  const [settingsReady, setSettingsReady] = useState(useSettingsStore.persist.hasHydrated());
+  useEffect(() => {
+    const stop = useSettingsStore.persist.onFinishHydration(() => setSettingsReady(true));
+    if (useSettingsStore.persist.hasHydrated()) setSettingsReady(true);
+    return stop;
+  }, []);
+  const registered = !!currentUser && !currentUser.isAnonymous && currentUser.uid !== 'guest_local';
 
-  const [isMounted, setIsMounted] = useState(false);
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
   // Load unified rounded display font; aliased to legacy 'Viral-*' names so all
@@ -60,11 +63,10 @@ export default function RootLayout() {
   useAudioPreload();
 
   useEffect(() => {
-    setIsMounted(true);
     if (!isWeb) {
       Observability.install();
     }
-    initialize();
+    const unsubscribe = initialize();
 
     if (!isWeb) {
       Audio.setAudioModeAsync({
@@ -74,6 +76,7 @@ export default function RootLayout() {
         playThroughEarpieceAndroid: false,
       }).catch(() => {});
     }
+    return unsubscribe;
   }, [initialize]);
 
   // Bridge Firebase auth → economy listener + RevenueCat configure.
@@ -143,52 +146,38 @@ export default function RootLayout() {
     };
   }, [currentUser?.uid]);
 
-  // Track whether onboarding has been shown THIS session (app launch) to prevent loops.
-  const onboardingShownThisSession = useRef(false);
-
-  useEffect(() => {
-    if (!isMounted || !navigationState?.key || !isInitialized) return;
-
-    const inOnboarding = segments[0] === 'onboarding';
-
-    const timer = setTimeout(() => {
-      // Show onboarding once on mobile if the user has not completed it yet.
-      if (!isWeb && !hasCompletedOnboarding && !inOnboarding && !onboardingShownThisSession.current) {
-        onboardingShownThisSession.current = true;
-        router.replace('/onboarding');
-        return;
-      }
-
-      if (inOnboarding) {
-        onboardingShownThisSession.current = true;
-      }
-
-      // Auto-create an anonymous session so the user can start playing
-      // offline immediately once they leave onboarding (or on web).
-      if (!inOnboarding && !currentUser) {
-        signInAnonymously().catch(() => {});
-      }
-    }, 10);
-
-    return () => clearTimeout(timer);
-  }, [currentUser, isInitialized, segments, navigationState?.key, isMounted, hasCompletedOnboarding]);
 
   return (
     <RootErrorBoundary>
-      {!fontsLoaded && !fontError && !isWeb ? (
+      {!isInitialized || !settingsReady || (!fontsLoaded && !fontError && !isWeb) ? (
         <View style={{ flex: 1, backgroundColor: 'black' }} />
       ) : (
         <ResponsiveWebContainer>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack screenOptions={{ headerShown: false, statusBarStyle: 'light', gestureEnabled: false, fullScreenGestureEnabled: false }}>
-              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Protected guard={!registered && !hasCompletedOnboarding}>
+                <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              </Stack.Protected>
+              <Stack.Protected guard={!registered && hasCompletedOnboarding}>
               <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
+              </Stack.Protected>
+              <Stack.Protected guard={registered}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(tools)" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
               <Stack.Screen name="purchase-detail" options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="paywall" options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="team-setup" options={{ headerShown: false }} />
+              <Stack.Screen name="game/[id]/setup" />
+              <Stack.Screen name="game/[id]/session" />
+              <Stack.Screen name="game/[id]/lobby/create" />
+              <Stack.Screen name="cards/[categoryId]" />
+              <Stack.Screen name="lobby/join" />
+              <Stack.Screen name="lobby/[roomCode]" />
+              <Stack.Screen name="invite" />
+              <Stack.Screen name="play" />
+              <Stack.Screen name="+not-found" />
+              </Stack.Protected>
             </Stack>
             <StatusBar style="light" />
             <ToastOverlay />

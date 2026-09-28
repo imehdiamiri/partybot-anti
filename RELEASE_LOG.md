@@ -1,5 +1,43 @@
 # Release log
 
+## 2026-09-28 — Persian content, account onboarding, voice peaks and square tools
+
+- Recovery checkpoint: checkpoint/2026-09-28-before-persian-onboarding at 16005d7.
+  Source tag: release/2026-09-28-persian-onboarding-tools.
+- AI reviewed all 2,888 built-in Persian cards against their English text:
+  rewrote 2,216 standalone cards and reviewed 112 relationship scenarios with
+  six question lenses (672 cards), refining five scenarios. 2,230 final card
+  strings differ from the prior release. Corrections are persisted by English
+  source so regeneration preserves the review. Reviewed 1,350 Imposter words;
+  corrected 40 Persian meanings. Structural comparison confirms all other
+  language values, card IDs and English content remain unchanged.
+- First use now shows onboarding on web and native, then requires Firebase
+  registration/sign-in. Protected routes prevent direct-link bypass. Existing
+  registered accounts restore; anonymous/local guests cannot unlock features.
+  Onboarding adapts to viewport changes and keeps its CTA below the copy.
+- Production auth probe exposed PASSWORD_LOGIN_DISABLED. Applied the scoped
+  Identity Toolkit projects.updateConfig mask signIn.email.enabled and
+  signIn.email.passwordRequired to partyplay-8, both true. Service confirmed;
+  a subsequent nonexistent-user login returns normal credential rejection.
+  No real test account was created. No Functions/database rules deployed.
+- Reverse Singing uses linked-channel offline look-ahead gain limiting with
+  0.89 peak ceiling, 5 ms anticipation and 50 ms release instead of sample
+  saturation. Quiet speech remains amplified; sustained loud waves retain
+  their shape. Browser capture disables automatic gain/noise/echo processing.
+- Shared Tools cards show only illustration and title, with aspectRatio:1
+  across web/iOS/Android. Removed rendered descriptions and centered content.
+- Checks: TypeScript PASS; Jest 44 suites / 312 tests PASS. Audio tests cover
+  quiet speech, transients, sustained loud-signal distortion, silence and
+  linked stereo. Static Expo web export and sync PASS. Intercepted Chromium
+  verification PASS: first-use onboarding and tools at 320/390/768/1280 widths,
+  protected deep links, Firebase signup request and restored login. Browser
+  signup responses mocked. Actual Firebase credential endpoint probed separately.
+- Physical iOS/Android/Safari not tested. Expo Go preview requires SDK 57;
+  native custom binaries use a separate runtime and are not targeted by this
+  Expo Go release. No native dependency changes, no Git push, no persistent server.
+- Publishing receipts will be recorded after service confirmation.
+
+
 ## 2026-09-28 — prevent accidental touch zoom in the web app
 
 - Recovery checkpoint: checkpoint/2026-09-28-before-web-touch at 44216ab.

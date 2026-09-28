@@ -51,3 +51,28 @@ test('native and web processing agree while preserving PCM timing and channels',
     expect(output.getInt16(46 + i * 4, true) / 32768).toBeCloseTo(right[i], 4);
   }
 });
+
+test('loud singing remains sinusoidal instead of flattening into distortion', () => {
+  const input = speech(0.01);
+  for (let i = 12000; i < 22000; i++) input[i] *= 40;
+  const original = input.slice();
+  normalizeVoiceChannels([input]);
+  expect(Math.max(...input.map(Math.abs))).toBeLessThanOrEqual(0.89001);
+  // Least-squares residual measures added waveform distortion on the sustained
+  // loud note, away from its attack/release. A saturating soft clipper fails this.
+  let cross = 0, energy = 0;
+  for (let i = 15000; i < 20000; i++) { cross += input[i] * original[i]; energy += original[i] ** 2; }
+  const scale = cross / energy;
+  let residual = 0, outputEnergy = 0;
+  for (let i = 15000; i < 20000; i++) { residual += (input[i] - original[i] * scale) ** 2; outputEnergy += input[i] ** 2; }
+  expect(Math.sqrt(residual / outputEnergy)).toBeLessThan(0.01);
+  expect(rms(input.slice(15000, 20000))).toBeGreaterThan(0.5);
+});
+
+test('over-range transients have headroom even when no boost is needed', () => {
+  const left = speech(0.8), right = Float32Array.from(left, x => x * 0.5);
+  left[0] = 1.2; right[0] = 0.6;
+  normalizeVoiceChannels([left, right]);
+  expect(left.every(x => Math.abs(x) <= 0.89001)).toBe(true);
+  for (let i = 0; i < left.length; i += 97) expect(right[i]).toBeCloseTo(left[i] * 0.5, 5);
+});

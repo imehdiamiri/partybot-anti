@@ -37,7 +37,6 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
   const { width, fontScale } = useWindowDimensions();
   const columns = toolGridColumns(width, fontScale);
   const columnWidth = columns === 2 ? '48.5%' : '32%';
-  const cardHeight = 108 + 62 * Math.max(1, fontScale);
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
@@ -49,7 +48,6 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
         <ToolIllustration tool={tool.id} color={tool.tint} size={68} />
       </View>
       <Text style={styles.title}>{tool.title}</Text>
-      <Text style={styles.subtitle}>{tool.subtitle}</Text>
     </>
   );
 
@@ -68,8 +66,8 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
             key={tool.id}
             testID={`tool-card-${tool.id}`}
             accessibilityRole="button"
-            accessibilityLabel={`${tool.title}, ${tool.subtitle}`}
-            style={({ pressed }) => [{ width: columnWidth, height: cardHeight }, styles.cardContainer, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}
+            accessibilityLabel={tool.title}
+            style={({ pressed }) => [{ width: columnWidth, aspectRatio: 1 }, styles.cardContainer, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}
             onPress={() => handlePress(tool.id)}
           >
             <LiquidGlass variant="low" radius={22} shadow={false} style={styles.card}>
@@ -117,9 +115,10 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingVertical: 14,
+    paddingVertical: 10,
     paddingHorizontal: 8,
     flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',

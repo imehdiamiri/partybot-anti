@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Dimensions,
+  useWindowDimensions,
   Image,
   Keyboard,
   Platform,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -35,7 +34,6 @@ import { Colors } from '@/src/theme/Colors';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { useFriendsStore } from '@/src/store/useFriendsStore';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PAGES = [0, 1, 2, 3] as const;
 type PageIndex = 0 | 1 | 2 | 3;
 
@@ -190,16 +188,17 @@ function HeroStage({ active }: { active: boolean }) {
   );
 }
 
-function IndicatorBar({ index, scrollX, accent }: { index: number; scrollX: SharedValue<number>; accent: string }) {
+function IndicatorBar({ index, scrollX, accent, width }: { index: number; scrollX: SharedValue<number>; accent: string; width: number }) {
   const animatedStyle = useAnimatedStyle(() => ({
-    width: interpolate(scrollX.value, [(index - 1) * SCREEN_WIDTH, index * SCREEN_WIDTH, (index + 1) * SCREEN_WIDTH], [8, 28, 8], Extrapolate.CLAMP),
-    opacity: interpolate(scrollX.value, [(index - 1) * SCREEN_WIDTH, index * SCREEN_WIDTH, (index + 1) * SCREEN_WIDTH], [0.3, 1, 0.3], Extrapolate.CLAMP),
+    width: interpolate(scrollX.value, [(index - 1) * width, index * width, (index + 1) * width], [8, 28, 8], Extrapolate.CLAMP),
+    opacity: interpolate(scrollX.value, [(index - 1) * width, index * width, (index + 1) * width], [0.3, 1, 0.3], Extrapolate.CLAMP),
   }));
   return <Animated.View style={[styles.indicator, { backgroundColor: accent }, animatedStyle]} />;
 }
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { setHasCompletedOnboarding, setPlayerName } = useSettingsStore();
   const [currentPage, setCurrentPage] = useState<PageIndex>(0);
@@ -226,9 +225,13 @@ export default function OnboardingScreen() {
   });
 
   const goToPage = useCallback((page: PageIndex) => {
-    scrollViewRef.current?.scrollTo({ x: page * SCREEN_WIDTH, animated: true });
+    scrollViewRef.current?.scrollTo({ x: page * width, animated: true });
     setCurrentPage(page);
-  }, []);
+  }, [width]);
+
+  useEffect(() => {
+    scrollViewRef.current?.scrollTo({ x: currentPage * width, animated: false });
+  }, [width]);
 
   const goNext = useCallback(() => {
     Keyboard.dismiss();
@@ -242,7 +245,7 @@ export default function OnboardingScreen() {
 
   const complete = useCallback(() => {
     const trimmed = name.trim();
-    if (trimmed.length < 2) return;
+    if (trimmed.length < 2) { goToPage(2); return; }
     Keyboard.dismiss();
     setPlayerName(trimmed);
     // Sync the user's name as the first offline friend ("me")
@@ -260,8 +263,8 @@ export default function OnboardingScreen() {
       });
     }
     setHasCompletedOnboarding(true);
-    router.replace('/(tabs)');
-  }, [name, router, setHasCompletedOnboarding, setPlayerName]);
+    router.replace('/auth?mode=signup');
+  }, [name, router, setHasCompletedOnboarding, setPlayerName, goToPage]);
 
   const isNameValid = name.trim().length >= 2;
   const onLastPage = currentPage === 3;
@@ -281,10 +284,10 @@ export default function OnboardingScreen() {
           scrollEventThrottle={16}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
-          onMomentumScrollEnd={(event) => setCurrentPage(Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH) as PageIndex)}
+          onMomentumScrollEnd={(event) => setCurrentPage(Math.round(event.nativeEvent.contentOffset.x / width) as PageIndex)}
         >
           {THEMES.map((theme, i) => (
-            <Pressable key={i} style={[styles.page, { paddingTop: insets.top + 16 }]} onPress={() => Keyboard.dismiss()}>
+            <Pressable key={i} style={[styles.page, { width, paddingTop: insets.top + 16 }]} onPress={() => Keyboard.dismiss()}>
               <View style={styles.brandRow}>
                   <Image source={require('@/assets/images/partybot-logo.png')} style={styles.brandLogo} resizeMode="contain" />
                 </View>
@@ -312,7 +315,7 @@ export default function OnboardingScreen() {
 
         <View style={[styles.bottomControls, { paddingBottom: insets.bottom + 24 }]}>
           <View style={styles.indicators}>
-            {PAGES.map((i) => <IndicatorBar key={i} index={i} scrollX={scrollX} accent={THEMES[i].accent} />)}
+            {PAGES.map((i) => <IndicatorBar key={i} index={i} scrollX={scrollX} accent={THEMES[i].accent} width={width} />)}
           </View>
 
           <View style={styles.navRow}>
@@ -332,6 +335,7 @@ export default function OnboardingScreen() {
 
             <Pressable
               disabled={currentPage === 2 && !isNameValid}
+              testID="onboarding-continue"
               onPress={onLastPage ? complete : goNext}
               style={({ pressed }) => [
                 styles.cta,
@@ -348,7 +352,7 @@ export default function OnboardingScreen() {
               />
               <View style={styles.ctaInner}>
                 <Text style={styles.ctaText}>
-                  {onLastPage ? "Let's Play" : currentPage === 2 ? (isNameValid ? 'Looks Good' : 'Type your name') : 'Continue'}
+                  {onLastPage ? "Create Account" : currentPage === 2 ? (isNameValid ? 'Looks Good' : 'Type your name') : 'Continue'}
                 </Text>
                 <IconSymbol name={onLastPage ? 'gamecontroller.fill' : 'chevron.right'} size={18} color="#fff" />
               </View>
@@ -450,12 +454,10 @@ function NameSticker({ active, name, setName, inputRef, accent }: { active: bool
   );
 }
 
-const STAGE = Math.min(SCREEN_WIDTH - 56, Math.min(SCREEN_HEIGHT * 0.42, 360));
-const NAME_W = Math.min(SCREEN_WIDTH - 48, 360);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'black' },
-  page: { width: SCREEN_WIDTH, flex: 1, paddingHorizontal: 24, paddingBottom: 200, alignItems: 'center', justifyContent: 'flex-start' },
+  page: { flex: 1, paddingHorizontal: 24, paddingBottom: 16, alignItems: 'center', justifyContent: 'flex-start' },
 
   brandRow: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   brandText: { fontFamily: 'Viral-Black', fontSize: 22, color: 'white', letterSpacing: -0.5 },
@@ -463,14 +465,14 @@ const styles = StyleSheet.create({
   skipBtn: { paddingHorizontal: 12, paddingVertical: 8 },
   skipText: { color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: '600' },
 
-  stageContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: STAGE + 40, width: '100%' },
+  stageContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 140, width: '100%' },
 
-  stageWrap: { width: STAGE, height: STAGE, alignItems: 'center', justifyContent: 'center' },
+  stageWrap: { width: '100%', height: '100%', maxWidth: 360, maxHeight: 360, alignItems: 'center', justifyContent: 'center' },
   glowOrb: {
     position: 'absolute',
-    width: STAGE * 0.95,
-    height: STAGE * 0.95,
-    borderRadius: STAGE,
+    width: '95%',
+    height: '95%',
+    borderRadius: 360,
     overflow: 'hidden',
     shadowOpacity: 0.6,
     shadowRadius: 60,
@@ -480,13 +482,13 @@ const styles = StyleSheet.create({
   artImage: { width: '94%', height: '94%' },
 
   heroBadgeWrap: { position: 'absolute', bottom: '14%', alignSelf: 'center' },
-  heroBadgeInner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, maxWidth: STAGE * 0.7 },
+  heroBadgeInner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, maxWidth: 252 },
   heroBadgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.green },
   heroBadgeText: { fontFamily: 'Viral-Black', fontSize: 15, color: '#fff', textAlign: 'center', letterSpacing: 1 },
 
-  nameStickerWrap: { width: NAME_W, alignItems: 'center', justifyContent: 'center', minHeight: 220 },
+  nameStickerWrap: { width: '100%', maxWidth: 360, alignItems: 'center', justifyContent: 'center', minHeight: 150 },
   nameContentColumn: { width: '100%', alignItems: 'center', gap: 14 },
-  nameCardPreview: { width: NAME_W * 0.72, height: NAME_W * 0.48 },
+  nameCardPreview: { width: 240, height: 160 },
   nameInputCard: { width: '100%', paddingHorizontal: 24, paddingVertical: 20, alignItems: 'center' },
   nameSticker: { width: '100%', padding: 24, alignItems: 'center' },
   nameStickerHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
@@ -510,7 +512,7 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontFamily: 'Viral-Black', fontSize: 30, lineHeight: 36, textAlign: 'center', marginBottom: 10, letterSpacing: -0.3 },
   subtitle: { color: 'rgba(255,255,255,0.6)', fontSize: 15, lineHeight: 22, textAlign: 'center', fontWeight: '500', paddingHorizontal: 12 },
 
-  bottomControls: { position: 'absolute', left: 24, right: 24, bottom: 0, gap: 18 },
+  bottomControls: { paddingHorizontal: 24, paddingTop: 8, gap: 18 },
   indicators: { flexDirection: 'row', justifyContent: 'center', gap: 6, height: 8, alignItems: 'center' },
   indicator: { height: 8, borderRadius: 999 },
 

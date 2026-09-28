@@ -15,7 +15,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Typography } from '../../src/theme/Colors';
@@ -35,7 +35,8 @@ export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  const [isLogin, setIsLogin] = useState(true);
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const [isLogin, setIsLogin] = useState(mode !== 'signup');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   
@@ -48,44 +49,9 @@ export default function AuthScreen() {
     signInWithGoogle,
   } = useAuthStore();
 
-  if (isWeb) {
-    return (
-      <View style={styles.container}>
-        <AppBackgroundView variant="simple" />
-        <View style={[styles.scrollContent, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 24, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28, flex: 1, gap: 18 }]}>
-          <Image source={require('@/assets/images/partybot-logo.png')} style={{ width: 220, height: 52 }} resizeMode="contain" />
-          
-          <View style={{ alignItems: 'center', gap: 10, maxWidth: 380, marginTop: 10 }}>
-            <IconSymbol name="sparkles" size={48} color={Colors.yellow} />
-            <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold', textAlign: 'center' }}>
-              Local Play Ready
-            </Text>
-            <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
-              PartyBot Web runs in 100% offline Local Mode. All 16 party games and tools are completely unlocked for 1-Phone play with no login or account required!
-            </Text>
-            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, textAlign: 'center', lineHeight: 18, marginTop: 4 }}>
-              Account sync, online friends, and multi-device rooms are available in the iOS and Android apps.
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={{ backgroundColor: Colors.blue, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 24, marginTop: 12 }}
-            onPress={() => {
-              if (router.canGoBack()) router.back();
-              else router.replace('/');
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Continue Playing</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
   const handleSubmit = () => {
     const trimmedUser = username.trim();
-    const trimmedPass = password.trim();
+    const trimmedPass = password;
     if (!trimmedUser || !trimmedPass || isBusy) return;
 
     Keyboard.dismiss();
@@ -113,25 +79,11 @@ export default function AuthScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Close button */}
-            <View style={styles.closeRow}>
-              <TouchableOpacity 
-                style={styles.closeBtn}
-                onPress={() => {
-                  if (router.canGoBack()) router.back();
-                  else router.replace('/');
-                }}
-                activeOpacity={0.7}
-              >
-                <IconSymbol name="xmark" size={14} color="rgba(255,255,255,0.8)" />
-              </TouchableOpacity>
-            </View>
-
             {/* Hero Section */}
             <View style={styles.heroSection}>
               <Image source={require('@/assets/images/partybot-logo.png')} style={{ width: 220, height: 52 }} resizeMode="contain" />
               <Text style={styles.appSubtitle}>
-                Sign in to unlock all games,{'\n'}earn rewards & play with friends
+                Create an account or sign in,{'\n'}earn rewards & play with friends
               </Text>
             </View>
 
@@ -151,6 +103,7 @@ export default function AuthScreen() {
                   <Ionicons name="person-outline" size={18} color="rgba(255,255,255,0.4)" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
+                    testID="auth-username"
                     placeholder="Username or email"
                     placeholderTextColor="rgba(255,255,255,0.3)"
                     autoCapitalize="none"
@@ -166,6 +119,7 @@ export default function AuthScreen() {
                   <Ionicons name="lock-closed-outline" size={18} color="rgba(255,255,255,0.4)" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
+                    testID="auth-password"
                     placeholder="Password"
                     placeholderTextColor="rgba(255,255,255,0.3)"
                     secureTextEntry
@@ -189,6 +143,7 @@ export default function AuthScreen() {
               <TouchableOpacity
                 style={[styles.primaryBtn, (!username || !password || isBusy) && styles.primaryBtnDisabled]}
                 disabled={!username || !password || isBusy}
+                testID="auth-submit"
                 onPress={handleSubmit}
                 activeOpacity={0.85}
               >
@@ -214,6 +169,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </View>
 
+            {!isWeb && <>
             {/* Divider */}
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
@@ -246,6 +202,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </View>
 
+            </>}
             {/* Legal */}
             <View style={styles.footerSection}>
               <View style={styles.legalRow}>

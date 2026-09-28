@@ -225,7 +225,7 @@ export class WebAudioRecorder {
     this.reversedBuffer = null;
 
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: { autoGainControl: false, noiseSuppression: false, echoCancellation: false } });
       const MR = (typeof window !== 'undefined' ? (window as any).MediaRecorder : (globalThis as any).MediaRecorder);
       const options = MR?.isTypeSupported?.('audio/webm')
         ? { mimeType: 'audio/webm' }

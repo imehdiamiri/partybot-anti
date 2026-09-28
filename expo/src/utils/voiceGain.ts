@@ -4,7 +4,7 @@ export function voiceGain(activeRms: number): number {
   return Math.max(1, Math.min(64, 0.28 / activeRms));
 }
 
-/** Linked-channel, fixed gain avoids pumping; soft limiting contains loud transients. */
+/** Offline look-ahead gain limiting preserves wave shapes instead of saturating samples. */
 export function normalizeVoiceChannels(channels: Float32Array[], sampleRate = 44100): void {
   if (!channels.length || !channels[0].length) return;
   const frames = channels[0].length;
@@ -23,15 +23,27 @@ export function normalizeVoiceChannels(channels: Float32Array[], sampleRate = 44
   if (!levels.length) return;
   levels.sort((a, b) => a - b);
   const gain = voiceGain(levels[Math.floor((levels.length - 1) * 0.65)]);
-  if (gain === 1) return;
-  for (const channel of channels) {
-    for (let i = 0; i < channel.length; i++) {
-      const amplified = channel[i] * gain;
-      // Linear across normal speech, smooth knee above 75% full scale.
-      const magnitude = Math.abs(amplified);
-      channel[i] = magnitude <= 0.75 ? amplified
-        : Math.sign(amplified) * (0.75 + 0.23 * Math.tanh((magnitude - 0.75) / 0.23));
-    }
+  // Leave reconstruction headroom. Do not waveshape with tanh: a sustained loud
+  // syllable otherwise becomes flattened even though its numerical peak is < 1.
+  const ceiling = 0.89;
+  const envelope = new Float32Array(frames);
+  const attack = Math.exp(-1 / (sampleRate * 0.005));
+  const release = Math.exp(-1 / (sampleRate * 0.05));
+  let next = 1;
+  for (let i = frames - 1; i >= 0; i--) {
+    let peak = 0;
+    for (const channel of channels) peak = Math.max(peak, Math.abs(channel[i]) * gain);
+    const required = peak > ceiling ? ceiling / peak : 1;
+    // Reading backwards anticipates a transient before it arrives. The envelope
+    // never exceeds the exact per-frame safe gain, including the first sample.
+    next = Math.min(required, next / attack);
+    envelope[i] = next;
+  }
+  let previous = envelope[0];
+  for (let i = 0; i < frames; i++) {
+    previous = Math.min(envelope[i], previous / release);
+    const linkedGain = gain * previous;
+    for (const channel of channels) channel[i] *= linkedGain;
   }
 }
 
