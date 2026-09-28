@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   useWindowDimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Image,
   Keyboard,
   Platform,
@@ -17,7 +19,6 @@ import Animated, {
   Extrapolate,
   interpolate,
   SharedValue,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -216,9 +217,16 @@ export default function OnboardingScreen() {
     return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => { scrollX.value = event.contentOffset.x; },
-  });
+  // Web ScrollView emits onScroll, but not native momentum-end events.
+  // Sync the settled page here too so swiping never leaves its form inactive.
+  const scrollHandler = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = event.nativeEvent.contentOffset.x;
+    scrollX.value = x;
+    const page = Math.round(x / width);
+    if (Math.abs(x - page * width) < 2) {
+      setCurrentPage(Math.max(0, Math.min(3, page)) as PageIndex);
+    }
+  }, [scrollX, width]);
 
   const goToPage = useCallback((page: PageIndex) => {
     scrollViewRef.current?.scrollTo({ x: page * width, animated: true });

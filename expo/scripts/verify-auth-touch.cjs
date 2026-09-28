@@ -41,7 +41,16 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     await page.goto('https://partybot.games/game/color_match/setup', { waitUntil: 'networkidle0' });
     await page.waitForSelector('[data-testid="onboarding-continue"]');
     assert.equal(await page.$('[data-testid="setup-start-button"]'), null, 'deep links cannot bypass onboarding');
-    for (let i = 0; i < 2; i++) { await page.click('[data-testid="onboarding-continue"]'); await wait(700); }
+    await wait(800);
+    // Scroll the carousel directly: web has no native momentum-end callback.
+    await page.$eval('[data-testid="onboarding-name"]', el => {
+      let scroller = el.parentElement;
+      while(scroller && !(scroller.scrollWidth > scroller.clientWidth * 3)) scroller=scroller.parentElement;
+      if(!scroller) throw new Error('Carousel not found');
+      scroller.scrollLeft=scroller.clientWidth*2;
+    });
+    await wait(700);
+    await page.screenshot({path:'.expo/onboarding-swiped.png'});
     await typeByTouch('[data-testid="onboarding-name"]', 'UI');
     await page.keyboard.press('Tab');
     await typeByTouch('[data-testid="onboarding-name"]', ' Reviewer');

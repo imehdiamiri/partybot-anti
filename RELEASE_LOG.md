@@ -33,6 +33,13 @@
   without creating an account. Google popup reached accounts.google.com sign-in
   and closing it restored the form. Account consent/completion and physical
   Safari/iOS/Android keyboard behavior not tested; no real test account created.
+- Follow-up: web ScrollView does not emit native momentum-end callbacks.
+  Settled-page state now also synchronizes from onScroll, so swiping to the
+  name slide activates its form/copy instead of leaving it inactive. Direct
+  carousel scrolling plus touch/re-focus checks PASS at 320 and 390 widths.
+- Initial Hosting release confirmed; initial Expo group
+  d929a9da-ab0d-4422-b9d1-d22ab6b04e87 confirmed before the carousel follow-up.
+  The following final release supersedes it.
 - Existing Expo channel/builds inspected. Target is expo-go-sdk57/preview,
   runtime exposdk:57.0.0 only; no dependency/runtime change or native binary OTA.
   No Git push or persistent server. Publication receipts follow confirmation.
