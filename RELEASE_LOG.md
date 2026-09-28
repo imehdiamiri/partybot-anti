@@ -55,6 +55,9 @@
   Android 01a0e8e3-33b3-7299-819c-da35739b1bf7;
   iOS 01a0e8e3-33b3-735a-8823-833bb17be15c.
   https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/729eb96f-3d26-4ae6-b4f4-e4f5dcceec40
+- Verified local Git backup: .backups/playbot-2026-09-28-194027-716.bundle
+  (94,179,523 bytes), including 7554c79 and release tags. SHA-256:
+  78a7c5193fef971761d4df4e0670184f3a08f8b0f8bc2f1d6ac5843db0a3183f.
 - No unresolved release blockers. Native physical keyboard behavior and real
   Google account consent remain unverified. Expo Go retains email login only;
   web Google does not enable unsupported native Google modules in Expo Go.
