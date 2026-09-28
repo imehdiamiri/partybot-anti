@@ -209,10 +209,6 @@ export default function OnboardingScreen() {
   const scrollX = useSharedValue(0);
 
   useEffect(() => {
-    if (currentPage === 2) setTimeout(() => inputRef.current?.focus(), 460);
-  }, [currentPage]);
-
-  useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
     const showSub = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
@@ -283,11 +279,11 @@ export default function OnboardingScreen() {
           onScroll={scrollHandler}
           scrollEventThrottle={16}
           keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           onMomentumScrollEnd={(event) => setCurrentPage(Math.round(event.nativeEvent.contentOffset.x / width) as PageIndex)}
         >
           {THEMES.map((theme, i) => (
-            <Pressable key={i} style={[styles.page, { width, paddingTop: insets.top + 16 }]} onPress={() => Keyboard.dismiss()}>
+            <View key={i} style={[styles.page, { width, paddingTop: insets.top + 16 }]}>
               <View style={styles.brandRow}>
                   <Image source={require('@/assets/images/partybot-logo.png')} style={styles.brandLogo} resizeMode="contain" />
                 </View>
@@ -309,7 +305,7 @@ export default function OnboardingScreen() {
                     accent={theme.accent}
                   />
                 )}
-            </Pressable>
+            </View>
           ))}
         </Animated.ScrollView>
 
@@ -388,39 +384,9 @@ function CopyBlock({ active, eyebrow, title, subtitle, accent }: { active: boole
 }
 
 function NameSticker({ active, name, setName, inputRef, accent }: { active: boolean; name: string; setName: (s: string) => void; inputRef: React.RefObject<TextInput | null>; accent: string }) {
-  const enter = useSharedValue(0);
-  const float = useSharedValue(0);
-
-  useEffect(() => {
-    if (active) {
-      enter.value = withSpring(1, { damping: 14, stiffness: 120 });
-      float.value = withRepeat(
-        withSequence(withTiming(1, { duration: 2400 }), withTiming(0, { duration: 2400 })),
-        -1,
-        true,
-      );
-    } else {
-      enter.value = withTiming(0, { duration: 180 });
-      float.value = 0;
-    }
-  }, [active, enter, float]);
-
-  const frameStyle = useAnimatedStyle(() => ({
-    opacity: enter.value,
-    transform: [
-      { scale: interpolate(enter.value, [0, 1], [0.92, 1], Extrapolate.CLAMP) },
-    ],
-  }));
-
-  const artStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: interpolate(float.value, [0, 1], [-6, 6], Extrapolate.CLAMP) },
-    ],
-  }));
-
   return (
-    <Animated.View style={[styles.nameStickerWrap, frameStyle]}>
-      <View style={[styles.glowOrb, { shadowColor: accent }]}>
+    <View style={styles.nameStickerWrap} pointerEvents={active ? 'auto' : 'none'}>
+      <View pointerEvents="none" style={[styles.glowOrb, { shadowColor: accent }]}>
         <LinearGradient
           colors={[accent + '88', accent + '33', 'rgba(0,0,0,0)']}
           style={StyleSheet.absoluteFill}
@@ -428,7 +394,7 @@ function NameSticker({ active, name, setName, inputRef, accent }: { active: bool
           end={{ x: 1, y: 1 }}
         />
       </View>
-      <Animated.View style={[styles.nameContentColumn, artStyle]}>
+      <View style={styles.nameContentColumn}>
         <LiquidGlass variant="high" radius={16} style={styles.nameInputCard} shadow>
           <View style={styles.nameStickerHeader}>
             <View style={[styles.nameStickerHeaderDot, { backgroundColor: accent }]} />
@@ -436,6 +402,9 @@ function NameSticker({ active, name, setName, inputRef, accent }: { active: bool
           </View>
           <TextInput
             ref={inputRef}
+            testID="onboarding-name"
+            accessibilityLabel="Your name"
+            selectionColor={Colors.blue}
             value={name}
             onChangeText={setName}
             placeholder="Type here…"
@@ -449,8 +418,8 @@ function NameSticker({ active, name, setName, inputRef, accent }: { active: bool
           />
           <View style={[styles.nameUnderline, { backgroundColor: accent }]} />
         </LiquidGlass>
-      </Animated.View>
-    </Animated.View>
+      </View>
+    </View>
   );
 }
 
@@ -495,6 +464,11 @@ const styles = StyleSheet.create({
   nameStickerHeaderDot: { width: 8, height: 8, borderRadius: 4 },
   nameStickerHeaderText: { fontFamily: 'Viral-Black', color: 'rgba(255,255,255,0.6)', fontSize: 12, letterSpacing: 2 },
   nameInput: {
+    position: 'relative',
+    zIndex: 1,
+    minHeight: 48,
+    backgroundColor: '#161923',
+    borderRadius: 10,
     fontFamily: 'Viral-Black',
     fontSize: 28,
     color: '#fff',

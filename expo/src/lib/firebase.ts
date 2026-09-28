@@ -15,7 +15,7 @@
 
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 // @ts-ignore: getReactNativePersistence is valid at runtime in RN context
-import { initializeAuth, getReactNativePersistence, getAuth, Auth } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence, getAuth, indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getDatabase, Database, ref, set as fbSet, update as fbUpdate, onDisconnect } from 'firebase/database';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
@@ -59,7 +59,11 @@ const app: FirebaseApp = getApps().length === 0
 let auth: Auth;
 try {
   if (Platform.OS === 'web') {
-    auth = getAuth(app);
+    // Email/password startup must not wait for Google's cross-origin popup iframe.
+    // Supply the popup resolver explicitly only when the user chooses Google.
+    auth = initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+    });
   } else {
     auth = initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage),

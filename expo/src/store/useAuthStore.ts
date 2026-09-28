@@ -9,6 +9,8 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithCredential,
+  signInWithPopup,
+  browserPopupRedirectResolver,
 } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
@@ -207,10 +209,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithGoogle: async () => {
     if (isWeb) {
-      set({
-        errorMessage: 'Google Sign-In is available on the mobile app. Use username/email and password on web.',
-        isBusy: false,
-      });
+      if (get().isBusy) return;
+      set({ isBusy: true, errorMessage: null });
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const { user } = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+        set({
+          currentUser: user,
+          authAccount: {
+            id: user.uid,
+            username: user.displayName ?? user.email?.split('@')[0] ?? 'Player',
+            email: user.email ?? undefined,
+            provider: 'google',
+          },
+        });
+      } catch (error: any) {
+        if (!['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(error.code)) {
+          set({ errorMessage: error.code === 'auth/popup-blocked'
+            ? 'Allow pop-ups for this site, then tap Continue with Google again.'
+            : error.code === 'auth/account-exists-with-different-credential'
+              ? 'This email already has an account. Sign in with its existing method first.'
+              : 'Google sign-in could not finish. Please try again or use your email and password.' });
+        }
+      } finally {
+        set({ isBusy: false });
+      }
       return;
     }
 

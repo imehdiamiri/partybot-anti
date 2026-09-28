@@ -8,22 +8,19 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
   Linking,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Typography } from '../../src/theme/Colors';
 import { AppBackgroundView } from '../../src/components/AppBackgroundView';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { AppConstants } from '../../src/constants/AppConstants';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { isWeb } from '../../src/utils/platform';
 
 // Platform-safe BlurView (conditional require, iOS only)
 let BlurView: any = null;
@@ -32,7 +29,6 @@ if (Platform.OS === 'ios') {
 }
 
 export default function AuthScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   
   const { mode } = useLocalSearchParams<{ mode?: string }>();
@@ -67,7 +63,6 @@ export default function AuthScreen() {
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <AppBackgroundView variant="simple" />
 
@@ -76,7 +71,7 @@ export default function AuthScreen() {
               styles.scrollContent,
               { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
             ]}
-            keyboardShouldPersistTaps="handled"
+            keyboardShouldPersistTaps="always"
             showsVerticalScrollIndicator={false}
           >
             {/* Hero Section */}
@@ -89,7 +84,7 @@ export default function AuthScreen() {
 
             {/* Form Card */}
             <View style={styles.formCard}>
-              <View style={[StyleSheet.absoluteFill, { borderRadius: 24, overflow: 'hidden' }]}>
+              <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: 24, overflow: 'hidden' }]}>
                 {Platform.OS === 'ios' && BlurView ? (
                   <BlurView tint="dark" intensity={40} style={StyleSheet.absoluteFill} />
                 ) : (
@@ -104,6 +99,8 @@ export default function AuthScreen() {
                   <TextInput
                     style={styles.input}
                     testID="auth-username"
+                    accessibilityLabel="Username or email"
+                    selectionColor={Colors.blue}
                     placeholder="Username or email"
                     placeholderTextColor="rgba(255,255,255,0.3)"
                     autoCapitalize="none"
@@ -120,6 +117,8 @@ export default function AuthScreen() {
                   <TextInput
                     style={styles.input}
                     testID="auth-password"
+                    accessibilityLabel="Password"
+                    selectionColor={Colors.blue}
                     placeholder="Password"
                     placeholderTextColor="rgba(255,255,255,0.3)"
                     secureTextEntry
@@ -169,7 +168,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </View>
 
-            {!isWeb && <>
+            <>
             {/* Divider */}
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
@@ -194,6 +193,9 @@ export default function AuthScreen() {
               <TouchableOpacity
                 style={styles.socialBtn}
                 disabled={isBusy}
+                testID="auth-google"
+                accessibilityRole="button"
+                accessibilityLabel="Continue with Google"
                 onPress={() => signInWithGoogle().catch(() => {})}
                 activeOpacity={0.7}
               >
@@ -202,7 +204,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </View>
 
-            </>}
+            </>
             {/* Legal */}
             <View style={styles.footerSection}>
               <View style={styles.legalRow}>
@@ -232,7 +234,6 @@ export default function AuthScreen() {
             </View>
           )}
         </View>
-      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
@@ -322,6 +323,10 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   input: {
+    position: 'relative',
+    zIndex: 1,
+    minWidth: 0,
+    minHeight: 48,
     flex: 1,
     paddingVertical: 14,
     color: Colors.white,

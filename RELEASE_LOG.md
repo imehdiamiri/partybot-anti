@@ -1,5 +1,43 @@
 # Release log
 
+## 2026-09-28 — touchable onboarding/auth fields and web Google sign-in
+
+- Recovery checkpoint: checkpoint/2026-09-28-before-auth-input-fix at c159c4e.
+  Source tag: release/2026-09-28-auth-inputs.
+- Reproduced loss of name-input focus using a real emulated touch (previous
+  programmatic page.type tests force focus and missed it). Removed page-wide
+  keyboard-dismiss press responders from onboarding and authentication.
+  Name entry no longer floats/fades or auto-focuses while changing slides;
+  decorative glow ignores touches. Explicit positioned input styling keeps
+  the white name above the glass background with a distinct dark input surface.
+  Auth decorative background ignores touches; inputs have a 48 px minimum and
+  scroll containers preserve button/input taps with the keyboard active.
+- Web now shows Continue with Google and uses Firebase signInWithPopup.
+  Closing/canceling or blocking the popup releases busy state; blocked popups
+  show recovery guidance. Native/Expo Go module guards remain unchanged.
+  Web auth persistence initializes separately from the popup resolver, which
+  is supplied only when Google is selected, avoiding proactive iframe loading.
+- Read production Google provider configuration: already enabled with OAuth
+  client configured. Added only partybot.games to authorizedDomains via scoped
+  Identity Toolkit updateConfig; existing authorized domains preserved and
+  service returned HTTP 200. No provider keys, accounts or rules modified.
+- Checks: `npm run typecheck` PASS; Jest 44 suites / 315 tests PASS, including
+  Google success, cancellation and popup-blocked cleanup. Static web export
+  and hosting sync PASS. `verify-auth-touch.cjs` PASS at 320x568 and 390x844:
+  touch focus/re-focus, visible name, editable email/password and Google button.
+  Existing desktop onboarding/signup/session restoration test PASS with mocked
+  Firebase responses. Mobile successful-signup mock fixture timed out; mobile
+  touch checks and real-service negative credential checks were used separately.
+- Real-service browser verification: nonexistent email login returned normal
+  invalid-credential feedback; malformed-email signup returned invalid-email
+  without creating an account. Google popup reached accounts.google.com sign-in
+  and closing it restored the form. Account consent/completion and physical
+  Safari/iOS/Android keyboard behavior not tested; no real test account created.
+- Existing Expo channel/builds inspected. Target is expo-go-sdk57/preview,
+  runtime exposdk:57.0.0 only; no dependency/runtime change or native binary OTA.
+  No Git push or persistent server. Publication receipts follow confirmation.
+
+
 ## 2026-09-28 — Persian content, account onboarding, voice peaks and square tools
 
 - Recovery checkpoint: checkpoint/2026-09-28-before-persian-onboarding at 16005d7.

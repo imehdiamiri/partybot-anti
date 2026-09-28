@@ -47,9 +47,9 @@ jest.mock('firebase/auth', () => ({
   createUserWithEmailAndPassword: jest.fn(),
   signOut: jest.fn(),
   onAuthStateChanged: jest.fn(),
-  GoogleAuthProvider: {
-    credential: jest.fn(),
-  },
+  signInWithPopup: jest.fn(),
+  browserPopupRedirectResolver: 'web-popup-resolver',
+  GoogleAuthProvider: Object.assign(jest.fn().mockImplementation(() => ({ setCustomParameters: jest.fn() })), { credential: jest.fn() }),
   OAuthProvider: jest.fn().mockImplementation(() => ({
     credential: jest.fn(),
   })),
@@ -124,11 +124,22 @@ describe('Web real account authentication', () => {
     expect(useAuthStore.getState().authAccount).toBeNull();
   });
 
-  test('signInWithGoogle() sets informational message without calling native Google Sign-In or Firebase', async () => {
+  test('Google web sign-in uses the Firebase popup and stores the real account', async () => {
+    firebaseAuth.signInWithPopup.mockResolvedValueOnce({user:registeredUser});
     await useAuthStore.getState().signInWithGoogle();
-    const state = useAuthStore.getState();
-    expect(state.isBusy).toBe(false);
-    expect(state.errorMessage).toContain('Google Sign-In is available on the mobile app');
+    expect(firebaseAuth.signInWithPopup).toHaveBeenCalledWith({}, expect.any(Object), 'web-popup-resolver');
+    expect(useAuthStore.getState().authAccount?.provider).toBe('google');
+    expect(useAuthStore.getState().currentUser).toBe(registeredUser);
+    expect(useAuthStore.getState().isBusy).toBe(false);
+  });
+
+  test.each(['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/popup-blocked'])('Google %s releases the form for another attempt', async code => {
+    firebaseAuth.signInWithPopup.mockRejectedValueOnce({code});
+    await useAuthStore.getState().signInWithGoogle();
+    expect(useAuthStore.getState().isBusy).toBe(false);
+    expect(useAuthStore.getState().currentUser).toBeNull();
+    if(code==='auth/popup-blocked') expect(useAuthStore.getState().errorMessage).toContain('Allow pop-ups');
+    else expect(useAuthStore.getState().errorMessage).toBeNull();
   });
 
   test('signInWithApple() sets informational message without calling Apple auth or Firebase', async () => {
