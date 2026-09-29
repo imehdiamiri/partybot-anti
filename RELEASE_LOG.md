@@ -1,5 +1,31 @@
 # Release log
 
+## 2026-09-29 — GitHub synchronization verified
+
+- User approved one-time atomic force-with-lease history repair. GitHub accepted
+  all guarded ref updates (exit 0). Main reached
+  d8a965b774201fdd7e2f06ea7e4f63b2c44acb02; all 112 local tags matched remote
+  object IDs with zero mismatches. A fresh shallow clone directly from GitHub
+  returned identical HEAD. Public repository:
+  https://github.com/imehdiamiri/partybot-anti
+- Source audit/repair tag: release/2026-09-29-github-sync. Final receipt tag:
+  release/2026-09-29-github-sync-verified. Earlier published cloud build/update
+  receipts are unchanged; this batch did not redeploy Firebase or EAS.
+- Current source tree was preserved byte-for-byte through sanitization. Ignored
+  credentials and private original-history bundle remain local. Empty env
+  templates and MAC_SETUP.md cover fresh Mac/Windows continuation.
+- The historical upload incident remains documented above. Rewriting refs does
+  not revoke exposed credentials or guarantee removal from caches/clones.
+  Revoke/rotate the two legacy RevenueCat private keys; request GitHub sensitive
+  data/cache cleanup if required. Original unsafe history must not be re-pushed.
+- Future completed batches are authorized to push normally to this origin;
+  use checked command outcomes, fetch before editing on another machine, and
+  never repeat a forced history change without explicit owner approval.
+- Verification: diff check PASS, 3,364 outgoing text blobs scanned clean for
+  targeted secret patterns before push, remote ref comparison PASS, fresh clone
+  PASS. No application code changes in this batch, so prior 323-test result was
+  not unnecessarily rerun. No credentials or token values are in these receipts.
+
 ## 2026-09-29 — GitHub history sanitization incident / repair pending
 
 - Sanitization in an isolated clone completed: 108 outgoing commits processed,
