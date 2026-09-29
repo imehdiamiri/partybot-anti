@@ -1,5 +1,54 @@
 # Release log
 
+## 2026-09-29 — store readiness audit and AdMob account preparation
+
+- Recovery checkpoint: `checkpoint/2026-09-29-release-admob-audit` at `0db35b2`.
+  Batch source/receipt tag: `release/2026-09-29-admob-readiness`.
+- Audited EAS latest 12 builds and production environment names, AdMob,
+  AdSense, Google Play, RevenueCat and App Store Connect after owner login.
+  Detailed evidence and remaining work are in `RELEASE_READINESS.md`.
+- NOT store-ready: no app records in either store; Apple Bundle ID picker empty;
+  Paid Apps Agreement New/legal entity update and EU trader status outstanding;
+  RevenueCat has no real store provider and production public SDK keys absent.
+  Latest iOS build is a simulator binary, latest Android build an old preview
+  APK. No new build, TestFlight upload, store submission or mobile OTA performed.
+- Existing AdMob account is approved and payment profile complete. Created
+  PartyBot Android (`~6209477204`) and iOS (`~1614877640`) under public publisher
+  `9376144248169220`, plus Results Banner units Android `/8982231772` and
+  iOS `/3746216966`. Service explicitly confirmed both creations. Both apps
+  require review/store association; no real ad serving claimed.
+- There is still no ads SDK, placement or web tag in the app. Consent messages,
+  policy/disclosure changes, native integration and device tests remain work.
+  AdSense active product is AdMob only; web monetization is not enabled.
+- Published the exact account-provided `app-ads.txt` declaration, kept an Expo
+  public source and added explicit copy handling to `sync-web-build.js`.
+  `APP_VARIANT=expo-go npx expo export --platform web` and web sync PASS.
+  Export regenerated bundle references despite no application source changes;
+  saved a local generated patch/assets and restored only verified generated
+  outputs to the published source. An initial broad restore was rejected by
+  automatic review; a file-by-file verified, backed-up restore was approved.
+  Preserved exact immutable JS bytes rather than Windows checkout CRLF output.
+- Checks: TypeScript PASS; Jest 44 suites / 315 tests PASS; `node --check
+  sync-web-build.js` PASS; seller-declaration equality PASS; production config
+  guard correctly rejects missing RevenueCat keys. Physical devices, purchases,
+  ad impressions and store-specific testing are not verified by these checks.
+- Firebase Hosting only: `npx --yes firebase-tools deploy --only hosting
+  --project partyplay-8 --non-interactive` confirmed final release complete.
+  https://partybot.games/app-ads.txt and
+  https://partyplay-8.web.app/app-ads.txt each return 200, text/plain and the exact
+  verified declaration. Google's app-ads.txt crawl/approval remains pending and
+  requires store association. Main app JS remains byte-identical to the previous
+  live release: SHA-256
+  `0190355187192734ab478f364800a8705eee5c8648442a84c034e654d711fb2b`.
+- Native appVersion runtime 1.1.1 and Expo Go SDK57 runtime unchanged. Adding
+  an ads native module later requires a compatible new binary/runtime. No
+  backend deploy, persistent server or Git remote push. Browser proof and
+  sanitized-audit source logs remain ignored under `.security/` / `.expo/`.
+- Remaining owner inputs: accurate Apple legal/trader declarations and paid
+  agreement acceptance if using IAP, store credential/signing authorization
+  where requested, device testing, and distribution rights evidence for the
+  restored Whitney recording. No legal declarations were submitted in this batch.
+
 ## 2026-09-28 — touchable onboarding/auth fields and web Google sign-in
 
 - Recovery checkpoint: checkpoint/2026-09-28-before-auth-input-fix at c159c4e.

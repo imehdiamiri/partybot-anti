@@ -50,6 +50,13 @@ if (fs.existsSync(expoIndex)) {
   console.log('Copied expo index.html to website/public/index.html and app.html');
 }
 
+// Keep the AdMob seller declaration identical to the exported public asset.
+const appAdsSrc = path.join(expoDistDir, 'app-ads.txt');
+if (fs.existsSync(appAdsSrc)) {
+  fs.copyFileSync(appAdsSrc, path.join(websitePublicDir, 'app-ads.txt'));
+  console.log('Copied app-ads.txt to website/public/app-ads.txt');
+}
+
 // Copy favicon.ico if present
 const faviconSrc = path.join(expoDistDir, 'favicon.ico');
 const faviconDest = path.join(websitePublicDir, 'favicon.ico');
