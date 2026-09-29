@@ -1,5 +1,25 @@
 # Release log
 
+## 2026-09-29 — GitHub synchronization and cross-computer setup
+
+- Owner explicitly authorized synchronizing the existing origin
+  https://github.com/imehdiamiri/partybot-anti and keeping completed work current
+  for Mac/Windows continuation. Repository metadata confirms it is public.
+- Initial state: clean main at 3d05f5a, remote main 1bba36a; 107 local commits
+  ahead, zero behind after fetch. Recovery checkpoint:
+  checkpoint/2026-09-29-before-github-sync.
+- Added MAC_SETUP.md and empty environment templates; strengthened ignored
+  credential/signing patterns. Updated AGENTS.md with the owner's push authority
+  and native runtime 1.2.0. No app behavior or cloud release changed.
+- Pre-push scan of 3,357 outgoing text blobs found two private-key-shaped
+  RevenueCat values in 27 historical generated web bundles. Current source is
+  clean. Do not push the original unsanitized history/tags. Preserve a private
+  local Git bundle and sanitize outgoing history in a separate local clone.
+  Rotation/revocation of those legacy keys remains an account-owner action.
+- Historical commit IDs referenced by older release entries may change during
+  sanitization; release/checkpoint tag names remain the recovery interface.
+  Remote synchronization confirmation is recorded in a follow-up receipt.
+
 ## 2026-09-29 — remove unused Spicy catalog records
 
 - Owner requested removing Spicy. Checkpoint:

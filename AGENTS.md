@@ -15,8 +15,11 @@ User-facing updates are Persian; code and technical release records are English.
   containing commit/tag, commands/outcomes, deployed URLs, mobile update/build IDs,
   compatibility limits and unresolved blockers. Never claim a publish succeeded
   without service confirmation.
-- Git origin is https://github.com/imehdiamiri/partybot-anti. Remote push is pending
-  explicit destination confirmation following the 2026-09-05 auto-review block.
+- Git origin is https://github.com/imehdiamiri/partybot-anti. On 2026-09-29 the
+  owner authorized syncing this existing repository and keeping it current for
+  work across Windows and macOS. Push reviewed commits to this origin after each
+  completed batch; never push credentials or force-push. Fetch before work and
+  reconcile remote changes without discarding local work. See MAC_SETUP.md.
 - Recover using git revert or an isolated worktree at a checkpoint. Do not discard
   current work with reset --hard or force-push. Firebase and Expo releases require
   separate rollback/republish; a Git revert alone does not roll back cloud state.
@@ -37,7 +40,7 @@ User-facing updates are Persian; code and technical release records are English.
 - Expo Go preview is now supported separately on SDK 57: set APP_VARIANT=expo-go
   when running EAS Update, use branch/channel expo-go-sdk57 and environment preview.
   The dynamic config derives exposdk:57.0.0 only for this variant. Native custom
-  binaries continue using appVersion (1.1.0 after migration); never cross-publish.
+  binaries continue using appVersion (currently 1.2.0); never cross-publish.
   Google native login and real purchases are unavailable in Expo Go; email login
   and games can be previewed there. Keep the native-module guards intact.
 - Stop only for genuine missing account/signing/device input or blocked permissions;

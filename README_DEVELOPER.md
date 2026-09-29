@@ -1,5 +1,7 @@
 # PartyBot development
 
+For a new Mac or Windows checkout, start with [MAC_SETUP.md](MAC_SETUP.md).
+
 PartyBot uses Expo SDK 57, React Native 0.86, React 19, Reanimated 4 and Expo Router.
 The mobile client is in expo/, Firebase Cloud Functions in functions/, and the
 admin website and exported public pages in website/.
@@ -19,15 +21,16 @@ The current lint and store-readiness limitations are recorded in IOS_AUDIT.md.
 ## Releases
 
 Read AGENTS.md, IOS_RELEASE.md and RELEASE_LOG.md before publishing. Native runtime
-1.1.1 requires a new binary after removing unused native dependencies; do not send
-its updates to runtime 1.1.0. TestFlight uses the preview channel/environment with
+1.2.0 requires a new binary for Google Mobile Ads; do not send
+its updates to older native runtimes. TestFlight uses the preview channel/environment with
 store distribution. Production rejects unverified public purchase SDK keys.
 Expo Go remains a separate SDK57 channel and cannot validate native purchases.
 
 Web releases use a one-off Expo export, node sync-web-build.js, then Firebase Hosting.
 Never replace the checked-in security rules with public read/write rules. Select
 individual backend targets for scoped corrections. Do not run a persistent preview
-server, commit local credentials, or push Git without destination confirmation.
+server or commit local credentials. The owner authorized pushes to the existing
+origin on 2026-09-29; keep completed batches synchronized there.
 
 ## Configuration
 
