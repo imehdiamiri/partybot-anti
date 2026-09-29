@@ -1,5 +1,32 @@
 # Release log
 
+## 2026-09-29 — GitHub history sanitization incident / repair pending
+
+- Sanitization in an isolated clone completed: 108 outgoing commits processed,
+  111 recovery tags retained, final source tree exactly identical. Re-scan of
+  3,364 outgoing text blobs and filenames found no targeted private-key patterns,
+  credential files or files above GitHub's 100 MiB limit. Complete original
+  history is preserved in ignored .backups/pre-github-sanitize-2026-09-29.bundle.
+- Execution incident: Python text-mode stdin emitted CRLF to git update-ref,
+  causing the ref transaction to fail. The surrounding PowerShell invocation
+  did not stop on that native-command failure and ran its following push.
+  Remote main was observed at unsanitized b6b303e; the original tags were also
+  pushed. Treat the two legacy RevenueCat keys as exposed and revoke/rotate
+  them in the provider. No secret values are recorded in this document.
+- Stopped further publication, disclosed the incident to the owner and asked
+  for a specific one-time exception to AGENTS.md's no-force-push rule. Repair
+  requires atomic force-with-lease on affected refs, preserving concurrent-work
+  protection. No approval is inferred from elapsed time.
+- Owner explicitly approved the one-time force-with-lease replacement of main
+  and affected tags on 2026-09-29. Repair receipt follows verification.
+- Corrected local ref transaction to binary LF input; local main now uses the
+  verified sanitized history. Future dependent commands must use checked return
+  codes or separate invocations, never fall through into a push after failure.
+- Original checkpoint b6b303e became 0a0ac8b after sanitization; old commit hashes
+  in prior release notes refer to the private pre-sanitization backup. Named
+  release tags remain available in the cleaned history. No cloud app redeploy
+  or runtime change is part of this Git-only operation.
+
 ## 2026-09-29 — GitHub synchronization and cross-computer setup
 
 - Owner explicitly authorized synchronizing the existing origin
