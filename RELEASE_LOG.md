@@ -1,5 +1,41 @@
 # Release log
 
+## 2026-09-29 — remove unused Spicy catalog records
+
+- Owner requested removing Spicy. Checkpoint:
+  `checkpoint/2026-09-29-before-spicy-removal` at `a0f0475`.
+  Final source/receipt tag: `release/2026-09-29-remove-spicy`.
+- Traced the actual catalog export and corrected the preceding source-only
+  audit: Spicy records were already excluded by the ORIGINAL_CARDS filter,
+  so they were not playable or present in built-in Favorites lookup. Removed
+  all 422 unused records and the MLTSpicy enum/title from source, rather than
+  merely renaming/hiding a title. The active 2,888-card catalog is unchanged.
+  CONTENT_RIGHTS_REVIEW.md now records this distinction explicitly.
+- TypeScript PASS; all 45 Jest suites / 323 tests PASS, including catalog count,
+  translation coverage, favorite navigation, native consent and audio tests.
+  Web export/sync PASS. Live bundle verified free of `mlt-spicy-26` and its
+  removed strip-card prompt. No new dependency or native-runtime change.
+- Firebase Hosting-only deployment confirmed complete for partyplay-8.
+  https://partybot.games/ returns 200 and loads
+  `entry-1e8a65da0c97d47426d1006743f93638.js` (also verified 200).
+- Expo Go update confirmed on branch expo-go-sdk57, runtime exposdk:57.0.0:
+  group `3e26450d-5038-4796-997d-1c94c9c51410`, Android
+  `01a0edbb-ac28-719a-bf53-1743b5b4860e`, iOS
+  `01a0edbb-ac28-7720-b5e1-cdc75b4e5600`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/3e26450d-5038-4796-997d-1c94c9c51410
+- Native preview update confirmed on branch preview, runtime 1.2.0 only:
+  group `74ffe2e9-cc7c-4b2f-a240-bf20bdd30502`, Android
+  `01a0edbc-1388-777a-a8fa-7150cf616110`, iOS
+  `01a0edbc-1388-7d45-a2ee-5270bc046286`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/74ffe2e9-cc7c-4b2f-a240-bf20bdd30502
+  Verified preview channel maps to preview branch. Old native 1.1.x runtimes
+  do not receive this incompatible SDK/runtime. Android build
+  `33cbf3ca-8f9f-409f-b427-aa438a86cf20` remains IN_QUEUE at last check;
+  apply the 1.2.0 preview update when testing that binary. iOS signing and store
+  setup/production credentials remain outstanding as in RELEASE_READINESS.md.
+- No Git remote push, backend deployment, live-ad interaction, persistent
+  server or store submission. Credentials and local service logs remain ignored.
+
 ## 2026-09-29 — advertising integration and iOS music removal
 
 - Recovery checkpoint: `checkpoint/2026-09-29-before-ads-integration` at

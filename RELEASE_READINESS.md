@@ -120,8 +120,8 @@ association with supported store listings and Google's crawl still remain.
 
 ## Checks and references
 
-- TypeScript: PASS. Jest: 45 suites / 322 tests PASS, then targeted consent suite 8/8 PASS
-  after adding the privacy-form race regression (existing renderer warnings).
+- TypeScript: PASS. Jest: 45 suites / 323 tests PASS after the Spicy source cleanup
+  (existing renderer warnings).
 - Production guard: PASS, missing RevenueCat public keys rejected.
 - Web export, sync, script syntax and seller declaration equality: PASS.
 - No native device, sandbox purchase or ad impression test performed.
