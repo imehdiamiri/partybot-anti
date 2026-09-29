@@ -25,6 +25,7 @@ import { useEconomyStore } from '@/src/store/useEconomyStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { AppConstants } from '@/src/constants/AppConstants';
 import { isWeb } from '@/src/utils/platform';
+import { AdsPrivacyButton } from '@/src/components/ads/AdsPrivacyButton';
 
 // Platform-safe BlurView
 let BlurViewComponent: any = null;
@@ -420,6 +421,7 @@ export default function ProfileScreen() {
         <Ionicons name="arrow-forward" size={14} color={Colors.secondary} />
       </TouchableOpacity>
 
+      <AdsPrivacyButton />
       <TouchableOpacity style={styles.prefRow} onPress={() => Linking.openURL(AppConstants.URLs.termsOfService)}>
         <View style={styles.prefLeft}>
           <Ionicons name="document-text" size={20} color={Colors.white} />

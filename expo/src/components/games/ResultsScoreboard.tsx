@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Share, Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useReplayGuide } from './GameStartGuide';
+import { AdBanner } from '../ads/AdBanner';
 
 /**
  * Shared modern final scoreboard primitive used across mini-games.
@@ -99,6 +100,7 @@ export function ResultsScoreboard({
         <Text style={styles.name}>Share</Text>
       </TouchableOpacity>}
     </View>
+    <AdBanner />
   </View>;
 }
 const styles = StyleSheet.create({

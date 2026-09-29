@@ -2,7 +2,7 @@
   "expo": {
     "name": "PartyBot",
     "slug": "expo-app",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": [
@@ -75,8 +75,14 @@
         {
           "ios": {
             "extraPods": [
-              { "name": "GoogleUtilities", "modular_headers": true },
-              { "name": "RecaptchaInterop", "modular_headers": true }
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              },
+              {
+                "name": "RecaptchaInterop",
+                "modular_headers": true
+              }
             ]
           }
         }
@@ -102,11 +108,25 @@
       "expo-asset",
       "expo-sharing",
       "expo-status-bar",
-      ["expo-audio", {
-        "microphonePermission": "PartyBot uses the microphone to record voice clips for Reverse Singing. Recordings stay on your device.",
-        "enableBackgroundPlayback": false,
-        "enableBackgroundRecording": false
-      }]
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "PartyBot uses the microphone to record voice clips for Reverse Singing. Recordings stay on your device.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-9376144248169220~6209477204",
+          "iosAppId": "ca-app-pub-9376144248169220~1614877640",
+          "delayAppMeasurementInit": true,
+          "skAdNetworkItems": [
+            "cstr6suwn9.skadnetwork"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

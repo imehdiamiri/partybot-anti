@@ -1,4 +1,5 @@
 import { GAME_HINTS } from './GameHints';
+import { whitneyAvailable } from '@/src/services/drumMusic';
 
 const MODE_HINTS: Record<string, Record<string, { title: string; tip: string }>> = {
   pass_guess: {
@@ -25,7 +26,7 @@ const MODE_HINTS: Record<string, Record<string, { title: string; tip: string }>>
 
 export function getGameHint(gameId: string, config: Record<string, any> = {}, mode?: string) {
   const base = GAME_HINTS[gameId];
-  const selected = mode ?? ({
+  const selected = gameId === 'drum_challenge' && !whitneyAvailable ? 'metronome' : mode ?? ({
     imposter: config.gameStyle ?? 'discussion', memory_path: config.gameMode ?? 'timeRace',
     drum_challenge: config.drumMode ?? 'whitney', draw_rush: config.conceptMode ?? 'preset',
     pass_guess: 'classic',

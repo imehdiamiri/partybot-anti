@@ -21,6 +21,7 @@ import { BrowserRecordingPlayback } from '@/src/utils/browserRecordingPlayback';
 import { Asset } from 'expo-asset';
 import { DrumIllustration } from './GameIllustrations';
 import { metronomePlan, metronomeError } from '@/src/utils/metronomeChallenge';
+import { whitneyAudio, whitneyAvailable } from '@/src/services/drumMusic';
 
 interface Props { session: GameSession; }
 
@@ -35,7 +36,7 @@ type DrumMode = 'whitney' | 'metronome';
 
 const MODES = {
   whitney: {
-    audio: require('@/assets/sounds/whitney_raw.wav'),
+    audio: whitneyAudio,
     beatTime: 9860, // Restored recording: first drum attack at 9.86 s.
     title: 'Whitney Houston',
     desc: 'Catch the beat after the pause!',
@@ -54,7 +55,7 @@ const METRONOME_TICK_AUDIO = require('@/assets/sounds/metronome_challenge.wav');
 export function DrumChallengeSession({ session }: Props) {
   const players = session.players;
   const registerSkip = useRegisterSkip();
-  const modeKey: DrumMode = (session.gameConfig?.drumMode === 'metronome') ? 'metronome' : 'whitney';
+  const modeKey: DrumMode = (!whitneyAvailable || session.gameConfig?.drumMode === 'metronome') ? 'metronome' : 'whitney';
   const modeConfig = MODES[modeKey];
   const metronomeRhythm = session.gameConfig?.metronomeRhythm || '4/4';
 

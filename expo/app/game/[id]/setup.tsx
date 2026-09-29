@@ -1,4 +1,5 @@
 import { METRONOME_RHYTHMS, MetronomeRhythm } from '@/src/utils/metronomeChallenge';
+import { whitneyAvailable } from '@/src/services/drumMusic';
 import { Colors } from '@/src/theme/Colors';
 import { DIFFICULTIES } from '@/src/constants/EyeSightDifficulty';
 import { useState, useEffect } from 'react';
@@ -109,7 +110,7 @@ export default function GameSetupScreen() {
   const [drConceptMode, setDrConceptMode] = useState<'preset'|'freeDraw'>('preset');
 
   // ─── Drum Challenge state ───
-  const [drumMode, setDrumMode] = useState<'whitney'|'metronome'>('whitney');
+  const [drumMode, setDrumMode] = useState<'whitney'|'metronome'>(whitneyAvailable ? 'whitney' : 'metronome');
   const metronomeCycles = 4;
   const [metronomeRhythm, setMetronomeRhythm] = useState<MetronomeRhythm>('4/4');
 
@@ -655,7 +656,7 @@ export default function GameSetupScreen() {
               {([
                 { id: 'whitney', title: 'Whitney Houston', sub: 'Catch the beat after the pause', icon: 'mic.fill', color: Colors.green },
                 { id: 'metronome', title: 'Metronome', sub: 'Pure internal timing test', icon: 'metronome', color: '#AF52DE' }
-              ] as const).map(d => {
+              ] as const).filter(d => whitneyAvailable || d.id !== 'whitney').map(d => {
                 const sel = drumMode === d.id;
                 return (
                   <TouchableOpacity key={d.id} onPress={() => setDrumMode(d.id)}

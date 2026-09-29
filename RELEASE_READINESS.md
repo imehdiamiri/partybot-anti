@@ -20,8 +20,8 @@ It is not a physical-device acceptance test or a store approval.
 | RevenueCat / 8partyplay | Apps page only offers Test Store and new store configuration | Connect both real stores; configure products, offerings, entitlement, store credentials, public SDK keys and sandbox purchase/restore verification |
 | EAS production | Firebase/Google public settings present; neither platform RevenueCat public key present | Current production config correctly refuses to build without `appl_` / `goog_` public keys; do not bypass this guard |
 | AdMob account | **Your account is approved**; payment profile complete | App-level readiness approval is still separate |
-| AdMob apps | Created PartyBot Android and iOS, each with one active banner unit; both **Requires review / Limited ad serving / Add store to lift limit** | Store association, app-ads.txt crawl/verification, SDK and consent integration, test-device verification |
-| AdSense | Account open, **Active products: AdMob** only; no Sites product shown | Web monetization is not activated; activate/approve the appropriate web product before adding live ad tags |
+| AdMob apps | Created PartyBot Android and iOS, each with one active banner unit; both **Requires review / Limited ad serving / Add store to lift limit** | Store association, app-ads.txt crawl/verification, new native binary and test-device verification; SDK/UMP integration now implemented |
+| AdSense | AdSense activated; partybot.games ownership verified; **Getting ready / Review requested** | Wait for Google site approval; published Google CMP and display slot 1116184196 configured |
 
 The Google Play 12-testers/14-consecutive-days rule applies to personal accounts
 created after November 13, 2023. The account is personal, but its creation date
@@ -56,10 +56,17 @@ Public configuration identifiers (not authentication secrets):
 | Android | `ca-app-pub-9376144248169220~6209477204` | `ca-app-pub-9376144248169220/8982231772` |
 | iOS | `ca-app-pub-9376144248169220~1614877640` | `ca-app-pub-9376144248169220/3746216966` |
 
-The units are reserved for a potential results-screen placement, away from
-active game controls. Creating them does **not** implement or enable ads in the
-app. There is currently no Mobile Ads SDK, ad component or web ad tag in the
-source. No interstitial/rewarded inventory or currency rewards were introduced.
+Native Google Mobile Ads 17.2.0 and web AdSense are integrated. Banner placements
+are below Games, Tools and results content, in document flow and separated from
+controls. No interstitial/rewarded interruptions. Native requests use NPA and PG
+maximum content rating; no IDFA permission is requested. Development/preview
+builds use Google test units; production uses the real units above. Expo Go
+cannot display native ads and remains guarded. Native version/runtime is 1.2.0.
+
+Web slot `1116184196` uses publisher `ca-pub-9376144248169220`. Auto ads are off.
+The official AdSense tag loads Google's published CMP; explicit placements wait
+for a settled eligible consent response. Unknown/denied consent, no-fill and
+blocked scripts do not block gameplay. Profile provides privacy choices.
 
 The exact publisher-provided seller declaration is in `expo/public/app-ads.txt`
 and `website/public/app-ads.txt`, and the web sync script preserves it:
@@ -73,27 +80,25 @@ default domain). Use `https://partybot.games` as the developer/marketing website
 in both store listings. Publishing this file is not AdMob verification:
 association with supported store listings and Google's crawl still remain.
 
-## Required implementation before live ads
+## Advertising launch gates still open
 
-1. Integrate a compatible Google Mobile Ads native SDK/config plugin. Keep web
-   and Expo Go guards. A native dependency requires a new compatible binary and
-   runtime; never send this as an OTA to the existing 1.1.1 binaries.
-2. Implement consent before initialization/ad requests, required privacy-options
-   reopening, cancellation/error/no-fill handling and suitable audience flags.
-   AdMob Privacy & messaging currently has no configured European/US message.
-   Use a certified consent flow where required; determine tracking behavior and
-   ATT applicability before finalizing iOS permissions and store disclosures.
-3. Update privacy disclosures together with actual behavior. The current policy
-   expressly says no third-party advertising and no cross-app tracking. Do not
-   enable a new advertising data flow while retaining contradictory statements.
-4. Test with Google test ad units/test devices, including consent accept/reject,
-   offline/no-fill, rotation, safe areas, audio/recording and game transitions.
-   Never click live ads as a developer. Only then activate the actual unit IDs.
-5. Web ads use a separate approved web product such as AdSense/H5 Games Ads;
-   these native ad unit IDs cannot simply be pasted into the React web UI.
-6. Do not promise an impression for every user: consent, regional restrictions,
-   no-fill, connectivity, account/app approval and browser blocking can prevent
-   ads. Gameplay should remain usable when an ad cannot be served.
+- AdMob European consent message **Published** for both apps. AdSense European
+  message **Published** for partybot.games, with Do not consent available.
+- Public privacy policy, `/ads.txt`, `/app-ads.txt` and ownership meta tag are
+  deployed. Google confirmed ownership and accepted the web review request.
+- Android preview 1.2.0 build `33cbf3ca-8f9f-409f-b427-aa438a86cf20` is queued.
+  This is an APK with test ads, not a Play release or verified ad impression.
+- iOS new signed binary still requires store identifier/team/signing setup.
+  Old 1.1.1 binaries must not receive the new native runtime by OTA.
+- Production RevenueCat guard remains: valid store SDK keys/providers are
+  missing. Production builds/real-ad device testing are not completed.
+- Consent/device/no-fill/rotation and recording coexistence need installed
+  iPhone/Android acceptance testing. Web logged-out onboarding loaded without
+  ads; an authenticated live impression has not been verified.
+- Complete accurate audience, App Privacy and Data Safety disclosures. Review
+  additional regional privacy obligations before enabling broad store release.
+- No guarantee of an ad for every user: Google approval, consent, network,
+  geography, inventory and ad blockers affect serving.
 
 ## Other release gates
 
@@ -106,15 +111,17 @@ association with supported store listings and Google's crawl still remain.
 - `expo/assets/sounds/whitney_raw.wav` is the restored Whitney recording.
   Tool foley has a CC0 source ledger; no distribution license evidence for the
   Whitney recording was found in the audited source ledger/release notes.
-  Owner must confirm rights or provide a licensed replacement before store
-  submission. This audit did not remove the requested recording or certify rights.
+  The iOS mode and bundled recording are now excluded; Android/web retain it
+  pending owner decision. See CONTENT_RIGHTS_REVIEW.md for remaining rights,
+  art-provenance and mature-card rating findings.
 - Existing Firebase Hosting already exists. The emailed provisioning change for
   newly created projects does not require recreating `partyplay-8` or migrating
   this site's hosting. No backend deployment or Git remote push was performed.
 
 ## Checks and references
 
-- TypeScript: PASS. Jest: 44 suites / 315 tests PASS (existing renderer warnings).
+- TypeScript: PASS. Jest: 45 suites / 322 tests PASS, then targeted consent suite 8/8 PASS
+  after adding the privacy-form race regression (existing renderer warnings).
 - Production guard: PASS, missing RevenueCat public keys rejected.
 - Web export, sync, script syntax and seller declaration equality: PASS.
 - No native device, sandbox purchase or ad impression test performed.

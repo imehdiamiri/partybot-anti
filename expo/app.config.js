@@ -15,7 +15,10 @@ module.exports = ({ config }) => {
   if (process.env.APP_VARIANT === 'production' && invalid.length) {
     throw new Error(`Production requires verified public RevenueCat SDK keys: ${invalid.join(', ')}. Secret keys must never be embedded in the app.`);
   }
+  const configured = { ...config, extra: { ...config.extra,
+    adsTestMode: process.env.APP_VARIANT !== 'production',
+  } };
   return process.env.APP_VARIANT === 'expo-go'
-    ? { ...config, runtimeVersion: { policy: 'sdkVersion' } }
-    : config;
+    ? { ...configured, runtimeVersion: { policy: 'sdkVersion' } }
+    : configured;
 };

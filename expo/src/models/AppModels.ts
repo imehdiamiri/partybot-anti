@@ -1,5 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import { Platform } from 'react-native';
+import { whitneyAvailable } from '@/src/services/drumMusic';
 export enum GameMode {
   singleDevice = 'singleDevice',
   multiDevice = 'multiDevice',
@@ -261,7 +262,9 @@ export const Games: Record<string, GameType> = {
   drumChallenge: {
     id: 'drum_challenge',
     name: 'Drum Challenge',
-    shortDescription: 'Whitney Houston Drum Challenge — tap the drum at the EXACT moment the beat drops. Closest to 0 ms wins.',
+    shortDescription: whitneyAvailable
+      ? 'Whitney Houston Drum Challenge — tap the drum at the EXACT moment the beat drops. Closest to 0 ms wins.'
+      : 'Keep the rhythm in your head, then tap on the next beat. Closest to 0 ms wins.',
     minPlayers: 1,
     maxPlayers: 30,
     unlockCostStars: 0,

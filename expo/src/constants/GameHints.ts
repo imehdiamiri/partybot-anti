@@ -96,7 +96,7 @@ export const GAME_HINTS: Record<string, { icon: string; title: string; tip: stri
   drum_challenge: {
     icon: 'music.note',
     title: 'How Drum Challenge Works',
-    tip: 'Listen to the music and follow the build-up. | Anticipate the drum hit and tap at that exact moment. | Smaller timing errors earn a better result.',
+    tip: 'Listen carefully to the rhythm. | Anticipate the next beat and tap at that exact moment. | Smaller timing errors earn a better result.',
     accent: '#FF2E93',
   },
 };

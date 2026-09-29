@@ -1,5 +1,56 @@
 # Release log
 
+## 2026-09-29 — advertising integration and iOS music removal
+
+- Recovery checkpoint: `checkpoint/2026-09-29-before-ads-integration` at
+  `70e3dfe`. Batch source/receipt tag: `release/2026-09-29-ads-ios-music`.
+- Added Google Mobile Ads 17.2.0, Android/iOS app IDs and config plugin; native
+  appVersion/runtime bumped to 1.2.0. Kept Expo Go native-module guards and SDK57
+  runtime separate. Production RevenueCat key guard remains intact.
+- Consent-gated native banners below Games, Tools and results; UMP gather,
+  cached-consent/error handling, privacy reopening/revocation, no-fill handling.
+  Native NPA requests, PG maximum content rating; preview/dev use test units.
+  No interstitial/rewarded ads, no ads during active gameplay/auth/onboarding.
+- Activated AdSense web product in the existing approved publisher account;
+  created display unit `1116184196`. Published native/web Google European
+  consent messages with a first-screen Do not consent option. Web auto ads off;
+  explicit banner requests wait for Google's settled TCF decision. Profile has
+  revocation access. Updated privacy disclosures and added `/ads.txt`.
+- AdSense service confirmed site ownership and `Getting ready / Review
+  requested` for partybot.games. This is not final approval or an impression.
+  AdMob apps still require store association/review. No live ads clicked.
+- iOS excludes Whitney mode via a platform module with no recording import;
+  old saved mode values fall back to Metronome. Setup, hints and catalog match.
+  iOS Expo export succeeded; assetmap contains no `whitney_raw`. Android/web
+  remain unchanged for that recording pending the owner's scope decision.
+  Content/license/age-rating findings recorded in CONTENT_RIGHTS_REVIEW.md.
+- Checks: TypeScript PASS; Jest 45 suites / 322 tests PASS; follow-up consent
+  regression suite 8/8 PASS after privacy-start race protection; diff check PASS.
+  Web export/sync and iOS export PASS. Installed-device ads are not yet tested.
+- Firebase Hosting only: `npx firebase-tools deploy --only hosting --project
+  partyplay-8 --non-interactive` confirmed release complete. Live
+  https://partybot.games and https://partyplay-8.web.app. HTTP checks confirmed
+  home/ads.txt 200, exact seller declaration, updated policy and AdSense meta.
+  Published web entry: `entry-7cfcec88e137b7ad84de92ca049b801f.js`.
+  Browser loaded logged-out onboarding without an ad/crash; authenticated ad
+  impression not tested. No persistent local server or backend deployment.
+- Expo Go: `APP_VARIANT=expo-go eas update --branch expo-go-sdk57 --environment
+  preview` confirmed published runtime `exposdk:57.0.0`, group
+  `9cf898f2-4c16-4692-b1c9-ecb5b628788b`; iOS update
+  `01a0edb3-4d6d-7cd7-81c3-3c2fb2567c4f`, Android update
+  `01a0edb3-4d6d-7730-bc84-dbfa26f3c37d`. Native ads unavailable in Expo Go.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/9cf898f2-4c16-4692-b1c9-ecb5b628788b
+- Android preview build accepted by EAS with existing remote keystore, version
+  1.2.0: `33cbf3ca-8f9f-409f-b427-aa438a86cf20`, latest checked `IN_QUEUE`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/33cbf3ca-8f9f-409f-b427-aa438a86cf20
+  No completed APK, production build or store submission claimed. New iOS
+  signing/app-record setup and production RevenueCat/store credentials remain
+  blocked on genuine account input. AdSense approval and real-device checks
+  remain outstanding; details in RELEASE_READINESS.md.
+- Evidence screenshots in ignored `.security/ads-integration/`; CLI logs in
+  ignored `expo/.expo/`. No credentials added, no remote Git push. Releases used
+  the reviewed dirty working tree based on 70e3dfe, finalized by this batch tag.
+
 ## 2026-09-29 — store readiness audit and AdMob account preparation
 
 - Recovery checkpoint: `checkpoint/2026-09-29-release-admob-audit` at `0db35b2`.

@@ -20,5 +20,10 @@ test('Whitney mode preserves the original recording and scores its audible drum 
   expect(rms(9.86, 9.91)).toBeGreaterThan(0.15);
   const source = fs.readFileSync(path.resolve(__dirname, '../components/games/DrumChallengeSession.tsx'), 'utf8');
   expect(source).toContain('beatTime: 9860');
-  expect(source).toContain('sounds/whitney_raw.wav');
+  const androidWeb = fs.readFileSync(path.resolve(__dirname, '../services/drumMusic.ts'), 'utf8');
+  const ios = fs.readFileSync(path.resolve(__dirname, '../services/drumMusic.ios.ts'), 'utf8');
+  expect(androidWeb).toContain('sounds/whitney_raw.wav');
+  expect(ios).not.toContain('require(');
+  expect(ios).toContain('whitneyAvailable = false');
+  expect(source).toContain('!whitneyAvailable');
 });
