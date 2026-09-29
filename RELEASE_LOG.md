@@ -1,5 +1,40 @@
 # Release log
 
+## 2026-09-30 — Bounded concurrency and security benchmark
+
+- Baseline/checkpoint: `1699b17e6c69277fb41f0431cdd843c980f5a2e9`,
+  `checkpoint/2026-09-30-before-benchmark`. Batch tag:
+  `audit/2026-09-30-concurrency-benchmark`.
+- Added repeatable emulator-only 100/1,000-client workloads, adversarial payload
+  probes, and a finite 22-request read-only Hosting probe. Report and reviewed JSON:
+  `docs/benchmarks/2026-09-30.md`, `docs/benchmarks/2026-09-30-results.json`.
+- Final 30-second scenarios: 1,050 / 10,500 operation groups, zero workload errors,
+  100/100 and 1,000/1,000 final state recipients. Guest action p95 45 / 166 ms;
+  three-action host drain p95 108 / 559 ms. Local emulators, not production or
+  physical-device capacity certification. Initial emulator INTERNAL_ERROR is
+  disclosed; an earlier batched-drain run is not substituted for final metrics.
+- Checks: `firebase-tools emulators:exec --only database,firestore --config
+  firebase.security.json --project demo-partybot-benchmark "node
+  functions/benchmark-suite.cjs"` completed both final load scenarios and probes;
+  initial Jest config discovery failed. Fixed runner and ran `--checks-only`
+  against those isolated emulators: 75 backend/rules tests PASS. Expo `npm test`:
+  45 suites / 323 tests PASS. Script syntax and diff checks PASS.
+- `node scripts/benchmark-live.cjs`: 22/22 HTTP 200; homepage warm median 91.5 ms,
+  p95 246.1 ms; first fetch 1,630 ms. Main JS 10.57 MB decoded / 1.48 MB Brotli.
+  Read-only Google API checks confirmed billing enabled and 12 ACTIVE functions,
+  each max 20 instances, concurrency 80, min 0. No cloud settings changed.
+- `npm audit --omit=dev`: zero high/critical; backend 15 moderate, Expo 49 moderate.
+  Confirmed local payload limit bypasses, missing reviewed App Check enforcement,
+  broad room listeners/scans and absent browser hardening headers are documented
+  follow-ups. Previous legacy key revocation remains unverified. No claim that
+  all security issues are fixed or that 1,000 production users are certified.
+- All test-created Java emulator processes were identified and stopped after
+  checks. No permanent server, live test users, billable load campaign, app changes
+  or cloud deployments. Existing live URL https://partybot.games unchanged;
+  mobile build/update IDs unchanged, native runtime 1.2.0 / Expo Go SDK 57 unchanged.
+- Commit/tag are pushed normally to the existing origin after review; no history
+  rewriting or private raw logs/credentials are included in this batch.
+
 ## 2026-09-29 — GitHub synchronization verified
 
 - User approved one-time atomic force-with-lease history repair. GitHub accepted

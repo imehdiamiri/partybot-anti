@@ -1,0 +1,704 @@
+{
+  "localDate": "2026-09-30",
+  "sourceCommit": "1699b17e6c69277fb41f0431cdd843c980f5a2e9",
+  "workload": {
+    "at": "2026-09-29T23:38:23.356Z",
+    "environment": "local RTDB emulator; not production capacity certification",
+    "machine": {
+      "platform": "win32",
+      "node": "v22.16.0",
+      "cpu": "Intel(R) Core(TM) i9-10900K CPU @ 3.70GHz",
+      "cores": 20,
+      "totalMemoryGB": 31.9
+    },
+    "scenarios": [
+      {
+        "users": 100,
+        "rooms": 25,
+        "connectedClientsVerified": 100,
+        "setupMs": 476,
+        "durationMs": 30005,
+        "operations": 1050,
+        "operationsPerSecond": 34.99,
+        "latency": {
+          "createRoom": {
+            "count": 25,
+            "p50Ms": 152.52,
+            "p95Ms": 157.15,
+            "p99Ms": 157.28,
+            "maxMs": 157.28
+          },
+          "joinRoom": {
+            "count": 75,
+            "p50Ms": 155.76,
+            "p95Ms": 182.34,
+            "p99Ms": 185.17,
+            "maxMs": 185.17
+          },
+          "heartbeat": {
+            "count": 600,
+            "p50Ms": 23.03,
+            "p95Ms": 55.47,
+            "p99Ms": 63.78,
+            "maxMs": 65.61
+          },
+          "action": {
+            "count": 225,
+            "p50Ms": 23.65,
+            "p95Ms": 44.96,
+            "p99Ms": 46.5,
+            "maxMs": 47.26
+          },
+          "drainActions": {
+            "count": 75,
+            "p50Ms": 92.11,
+            "p95Ms": 107.63,
+            "p99Ms": 108.65,
+            "maxMs": 108.65
+          },
+          "stateBroadcast": {
+            "count": 150,
+            "p50Ms": 10.09,
+            "p95Ms": 16.52,
+            "p99Ms": 17.57,
+            "maxMs": 18.06
+          }
+        },
+        "waveLateness": {
+          "count": 6,
+          "p50Ms": 3.42,
+          "p95Ms": 14.41,
+          "p99Ms": 14.41,
+          "maxMs": 14.41
+        },
+        "errors": [],
+        "security": [
+          {
+            "name": "anonymous room read",
+            "denied": true
+          },
+          {
+            "name": "outsider room read",
+            "denied": true
+          },
+          {
+            "name": "guest state overwrite",
+            "denied": true
+          },
+          {
+            "name": "wallet forgery",
+            "denied": true
+          },
+          {
+            "name": "foreign action",
+            "denied": true
+          }
+        ],
+        "finalVersionRecipients": 100,
+        "snapshots": 5804,
+        "applicationSnapshotBytes": 9426796,
+        "loadGeneratorPeakRssMB": 108.9
+      },
+      {
+        "users": 1000,
+        "rooms": 250,
+        "connectedClientsVerified": 1000,
+        "setupMs": 1938.4,
+        "durationMs": 30005.8,
+        "operations": 10500,
+        "operationsPerSecond": 349.93,
+        "latency": {
+          "createRoom": {
+            "count": 250,
+            "p50Ms": 50.97,
+            "p95Ms": 65.38,
+            "p99Ms": 66.26,
+            "maxMs": 66.57
+          },
+          "joinRoom": {
+            "count": 750,
+            "p50Ms": 71.29,
+            "p95Ms": 89.33,
+            "p99Ms": 104.38,
+            "maxMs": 105.84
+          },
+          "heartbeat": {
+            "count": 6000,
+            "p50Ms": 167.86,
+            "p95Ms": 211.45,
+            "p99Ms": 230.55,
+            "maxMs": 235.86
+          },
+          "action": {
+            "count": 2250,
+            "p50Ms": 131.04,
+            "p95Ms": 166.46,
+            "p99Ms": 177.12,
+            "maxMs": 179.94
+          },
+          "drainActions": {
+            "count": 750,
+            "p50Ms": 510.91,
+            "p95Ms": 558.74,
+            "p99Ms": 563.93,
+            "maxMs": 565.35
+          },
+          "stateBroadcast": {
+            "count": 1500,
+            "p50Ms": 57.13,
+            "p95Ms": 81.51,
+            "p99Ms": 84.78,
+            "maxMs": 87.38
+          }
+        },
+        "waveLateness": {
+          "count": 6,
+          "p50Ms": 7.6,
+          "p95Ms": 13.73,
+          "p99Ms": 13.73,
+          "maxMs": 13.73
+        },
+        "errors": [],
+        "security": [
+          {
+            "name": "anonymous room read",
+            "denied": true
+          },
+          {
+            "name": "outsider room read",
+            "denied": true
+          },
+          {
+            "name": "guest state overwrite",
+            "denied": true
+          },
+          {
+            "name": "wallet forgery",
+            "denied": true
+          },
+          {
+            "name": "foreign action",
+            "denied": true
+          }
+        ],
+        "finalVersionRecipients": 1000,
+        "snapshots": 58004,
+        "applicationSnapshotBytes": 95568496,
+        "loadGeneratorPeakRssMB": 313.7
+      }
+    ]
+  },
+  "hosting": {
+    "at": "2026-09-29T23:34:32.172Z",
+    "origin": "https://partybot.games",
+    "results": [
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 1617.1,
+        "totalMs": 1629.7,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/_expo/static/js/web/entry-1e8a65da0c97d47426d1006743f93638.js",
+        "status": 200,
+        "ttfbMs": 62.9,
+        "totalMs": 385.8,
+        "decodedBytes": 10566810,
+        "headers": {
+          "cache-control": "public, max-age=31536000, immutable",
+          "content-encoding": "br",
+          "content-length": "1483912",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 96.9,
+        "totalMs": 102.4,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 312.6,
+        "totalMs": 315.2,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 50.6,
+        "totalMs": 52.1,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 85.7,
+        "totalMs": 90.2,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 49.5,
+        "totalMs": 54.9,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 82.7,
+        "totalMs": 87.3,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 49.8,
+        "totalMs": 52.2,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 244.9,
+        "totalMs": 246.1,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 48.8,
+        "totalMs": 50.3,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 88.8,
+        "totalMs": 91.5,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 50.6,
+        "totalMs": 54.9,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 82.9,
+        "totalMs": 89.7,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 52.5,
+        "totalMs": 56.1,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 87.4,
+        "totalMs": 93.2,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 51.4,
+        "totalMs": 55.1,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 232.9,
+        "totalMs": 238.4,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 49.7,
+        "totalMs": 55.4,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 83.2,
+        "totalMs": 87.9,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/privacy",
+        "status": 200,
+        "ttfbMs": 49.3,
+        "totalMs": 54.1,
+        "decodedBytes": 17310,
+        "headers": {
+          "cache-control": "max-age=3600",
+          "content-encoding": "br",
+          "content-length": "4417",
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      },
+      {
+        "route": "/",
+        "status": 200,
+        "ttfbMs": 88.2,
+        "totalMs": 94.7,
+        "decodedBytes": 48299,
+        "headers": {
+          "cache-control": "no-cache, no-store, must-revalidate",
+          "content-encoding": "br",
+          "content-length": null,
+          "strict-transport-security": "max-age=31556926",
+          "content-security-policy": null,
+          "x-content-type-options": null,
+          "x-frame-options": null
+        }
+      }
+    ]
+  },
+  "securityProbes": [
+    {
+      "name": "turnData accepts 201 children despite documented 200 cap",
+      "accepted": true
+    },
+    {
+      "name": "turnData nested string bypasses direct 4096 character cap",
+      "accepted": true
+    }
+  ],
+  "cloud": {
+    "at": "2026-09-29T23:39:06.185Z",
+    "billingEnabled": true,
+    "functions": [
+      {
+        "name": "recordHostMigration",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "ensureInviteCode",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "blockUser",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "searchUsers",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "reportUser",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "syncRevenueCat",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "sweepStaleRooms",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "claimDailyReward",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "unblockUser",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "deleteAccount",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "bootstrapFirstAdmin",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      },
+      {
+        "name": "redeemInvite",
+        "state": "ACTIVE",
+        "memory": "256Mi",
+        "cpu": "1",
+        "concurrency": 80,
+        "minInstances": 0,
+        "maxInstances": 20
+      }
+    ]
+  },
+  "audits": {
+    "functions": {
+      "info": 0,
+      "low": 0,
+      "moderate": 15,
+      "high": 0,
+      "critical": 0,
+      "total": 15
+    },
+    "expo": {
+      "info": 0,
+      "low": 0,
+      "moderate": 49,
+      "high": 0,
+      "critical": 0,
+      "total": 49
+    }
+  },
+  "tests": {
+    "app": 323,
+    "backendAndRules": 75
+  },
+  "initialAttempt": {
+    "outcome": "aborted",
+    "error": "RTDB emulator INTERNAL_ERROR during 100-client join; cause not established"
+  },
+  "limitations": [
+    "30-second steady workload per scenario",
+    "Local emulator, synthetic authentication, no real devices or production load",
+    "No authentication-provider, purchases, ads, cold-start or internet-latency load coverage"
+  ]
+}
