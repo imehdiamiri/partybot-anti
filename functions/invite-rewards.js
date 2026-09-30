@@ -91,11 +91,15 @@ async function settleInvite(db, uid, code, inviterUid, inviteeReward, inviterRew
   const completed = await transact(userRef, user => {
     if (!user) return null;
     const saved = resumableClaim(user, code);
-    if (!saved || saved.receiptId !== claim.receiptId) return;
+    // A callback can start with an incomplete local cache even after reservation.
+    // A no-op value forces server hash validation; aborting here would mistake
+    // stale cache for a missing account during concurrent retries.
+    if (!saved || saved.receiptId !== claim.receiptId) return user;
     user.inviteReward.status = 'complete';
     return user;
   });
-  if (!completed.committed || resumableClaim(completed.snapshot.val(), code)?.status !== 'complete') {
+  const finalClaim = resumableClaim(completed.snapshot.val(), code);
+  if (!completed.committed || finalClaim?.receiptId !== claim.receiptId || finalClaim?.status !== 'complete') {
     throw new HttpsError('failed-precondition', 'Invite account is unavailable.');
   }
   return { credited, inviterCredited: payment.committed ? inviterReward : 0 };

@@ -389,6 +389,31 @@ describe('Invite payout recovery', () => {
     expect((await admin.database().ref(`users/${inviter}/inviteStats/totalInvites`).get()).val()).toBe(1);
   });
 
+  test('completion validates a stale SDK cache against the server instead of aborting', async () => {
+    const db = admin.database();
+    const originalRef = db.ref.bind(db);
+    let calls = 0;
+    jest.spyOn(db, 'ref').mockImplementation(path => {
+      const ref = originalRef(path);
+      if (path === `users/${uid}`) {
+        const transaction = ref.transaction.bind(ref);
+        ref.transaction = async (update, ...args) => {
+          if (++calls === 2) {
+            const stale = { wallet: { balance: 10 } };
+            // Model RTDB: undefined aborts immediately; a value gets checked
+            // against the server, whose reservation differs from this cache.
+            if (update(stale) === undefined) return { committed: false, snapshot: { val: () => stale } };
+          }
+          return transaction(update, ...args);
+        };
+      }
+      return ref;
+    });
+    await expect(testEnv.wrap(functions.redeemInvite)(request)).resolves.toEqual({ credited: 10, inviterCredited: 30 });
+    expect((await originalRef(`users/${uid}/inviteReward/status`).get()).val()).toBe('complete');
+    expect((await originalRef(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
+  });
+
   test('retry uses the bound inviter if the public registry has changed', async () => {
     interruptPayment(false);
     const redeem = testEnv.wrap(functions.redeemInvite);

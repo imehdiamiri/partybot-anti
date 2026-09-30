@@ -2,6 +2,15 @@
 
 ## 2026-09-30 — GitHub Actions setup (verification in progress)
 
+- Run 36698583497 passed app TypeScript and all 323 app tests, but caught
+  vulnerable brace-expansion patches in the clean lockfile and a stale-cache
+  invite completion race. Updated only brace-expansion patch versions; lockfile
+  production audit now has zero high/critical findings (17 moderate remain).
+  Completion now validates stale cache against the server and checks the exact
+  receipt; added a deterministic emulator regression. CI verification pending.
+- Owner approved the Expo Developer robot partybot-github-ci, whose access
+  covers the account's projects. Its dedicated token is stored only as the
+  mobile-preview environment secret EXPO_TOKEN; no plaintext token in source.
 - Initial run 36697698070 exposed fresh-checkout TypeScript errors for the web-only
   touchAction property and an intermittent concurrent invite retry failure. Web
   gesture CSS is now platform-scoped and typed explicitly. Invite transactions
