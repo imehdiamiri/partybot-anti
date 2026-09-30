@@ -1,0 +1,143 @@
+name: PartyBot CI
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'expo/**'
+      - 'functions/**/*.js'
+      - 'functions/package*.json'
+      - 'website/**'
+      - 'database.rules.json'
+      - 'firestore.rules'
+      - 'firebase*.json'
+      - 'sync-web-build.js'
+      - 'scripts/ci/**'
+      - '.github/workflows/**'
+      - '!expo/dist/**'
+      - '!website/public/_expo/**'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+    inputs:
+      deploy_web:
+        description: Publish the tested web artifact (main only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  CI: 'true'
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+          cache-dependency-path: expo/package-lock.json
+      - run: node scripts/ci/source-guard.cjs
+      - run: npm ci
+        working-directory: expo
+      - run: npm run typecheck
+        working-directory: expo
+      - run: npm test -- --runInBand
+        working-directory: expo
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: expo
+      - name: Configure public web client
+        run: node scripts/ci/web-config.cjs
+        env:
+          EXPO_PUBLIC_CONFIG: ${{ vars.EXPO_PUBLIC_CONFIG }}
+      - run: npx expo export --platform web
+        working-directory: expo
+        env:
+          APP_VARIANT: preview
+      - run: node sync-web-build.js
+      - run: node scripts/ci/web-artifact.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: web-${{ github.sha }}
+          path: website/public
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+        working-directory: functions
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: functions
+      - name: Unit and database authorization tests (no load tests)
+        run: npx --yes firebase-tools@15.31.0 emulators:exec --only database,firestore --config firebase.security.json --project demo-partybot-ci "node functions/run-jest.js"
+        env:
+          DATABASE_EMULATOR_PORT: '9014'
+
+  deploy-web:
+    needs: [app, backend]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      vars.WEB_DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: web-production
+    concurrency:
+      group: partybot-web-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.22.0'
+      - name: Reject superseded revisions
+        run: node scripts/ci/current-main.cjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node scripts/ci/prepare-deploy.cjs
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: web-${{ github.sha }}
+          path: website/public
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: partyplay-8
+          workload_identity_provider: ${{ vars.FIREBASE_WIF_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Deploy the tested artifact (Hosting only)
+        run: npx --yes firebase-tools@15.31.0 deploy --only hosting --project partyplay-8 --non-interactive
+      - name: Verify deployed revision
+        run: node scripts/ci/verify-live.cjs

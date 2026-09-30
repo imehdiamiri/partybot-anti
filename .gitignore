@@ -47,3 +47,6 @@ website/security-audit.json
 
 # Local offline Git history backups
 /.backups/
+
+# Short-lived Google GitHub Actions credentials
+gha-creds-*.json

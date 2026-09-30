@@ -20,6 +20,12 @@ User-facing updates are Persian; code and technical release records are English.
   work across Windows and macOS. Push reviewed commits to this origin after each
   completed batch; never push credentials or force-push. Fetch before work and
   reconcile remote changes without discarding local work. See MAC_SETUP.md.
+- CI/CD is documented in CI_CD.md. Reuse successful GitHub Actions checks for the
+  exact unchanged commit instead of repeating full local suites. Diagnose only
+  failed jobs; do not introduce AI-powered CI steps or automatic polling agents.
+- The owner excluded 100/1,000-user benchmarks from automation on 2026-09-30.
+  Do not add load tests to CI, deployment, or schedules, or rerun them unless
+  explicitly requested. Keep ordinary unit and authorization regression tests.
 - Recover using git revert or an isolated worktree at a checkpoint. Do not discard
   current work with reset --hard or force-push. Firebase and Expo releases require
   separate rollback/republish; a Git revert alone does not roll back cloud state.

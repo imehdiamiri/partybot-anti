@@ -1,5 +1,25 @@
 # Release log
 
+## 2026-09-30 — GitHub Actions setup (verification in progress)
+
+- Checkpoint: `checkpoint/2026-09-30-before-ci` at b73ae1a. Added main/PR CI,
+  source guard, TypeScript/app tests, high/critical dependency audit, isolated
+  Firebase authorization tests, one-off web export/artifact and Hosting-only
+  deployment. No load/100/1,000-client benchmark is called or scheduled.
+- Added manual mobile update workflow with exact-commit CI check, distinct
+  SDK 57 Expo Go vs native preview runtime checks, and fail-closed native build
+  compatibility. No automatic native build/store submission or AI step.
+- GitHub confirmed Actions enabled, public web configuration variable installed,
+  and web-production/mobile-preview environments restricted to main.
+- Cloud IAM setup was blocked by automatic approval review pending explicit owner
+  approval for the scoped Hosting service account/Workload Identity roles. Web
+  deployment remains disabled until approved and verified. Expo browser login/token
+  remains required; no token is in source. No cloud publication claimed here.
+- Workflow YAML parse and JS syntax checks PASS. GitHub execution receipts and
+  final deployment status will be recorded after the first real run.
+- Existing https://partybot.games release and mobile build/update IDs unchanged
+  by preparation. See CI_CD.md for operational instructions and limits.
+
 ## 2026-09-30 — Bounded concurrency and security benchmark
 
 - Baseline/checkpoint: `1699b17e6c69277fb41f0431cdd843c980f5a2e9`,

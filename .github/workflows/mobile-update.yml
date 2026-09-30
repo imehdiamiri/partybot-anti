@@ -1,0 +1,53 @@
+name: Mobile update
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: Separate preview runtime
+        type: choice
+        options: [expo-go-sdk57, native-preview]
+        default: expo-go-sdk57
+      publish:
+        description: Publish after compatibility checks (false = inspect only)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: partybot-mobile-${{ inputs.track }}
+  cancel-in-progress: false
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main'
+    environment: mobile-preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+      GH_TOKEN: ${{ github.token }}
+      UPDATE_TRACK: ${{ inputs.track }}
+      PUBLISH_UPDATE: ${{ inputs.publish }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.22.0'
+      - run: node scripts/ci/current-main.cjs
+      - name: Require passing CI for this exact commit
+        run: node scripts/ci/require-ci.cjs
+      - name: Require Expo credential
+        run: node -e "if(!process.env.EXPO_TOKEN) throw new Error('Set EXPO_TOKEN in the mobile-preview GitHub environment. Never put it in source.')"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+        working-directory: expo
+      - run: npm install --global eas-cli@24.8.0
+      - name: Check runtime and optionally publish
+        run: node scripts/ci/mobile-update.cjs
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
