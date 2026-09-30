@@ -40,12 +40,14 @@ Repository variables:
   Workload Identity provider and Hosting deployment service account identifiers.
 
 Environments `web-production` and `mobile-preview` are restricted to `main`.
-`mobile-preview` needs an **EXPO_TOKEN** secret. Create a dedicated, revocable token
-in Expo and save it directly in GitHub environment secrets, never source/chat.
+`mobile-preview` has an **EXPO_TOKEN** secret for the owner-approved
+`partybot-github-ci` Expo robot, created on 2026-09-30. The robot has Developer
+access to the account's projects, not Admin access. Revoke its dedicated token in
+Expo if CI access must be removed; never put replacement tokens in source/chat.
 The workflow uses EAS environment `preview`; native store configuration/signing
 and production RevenueCat requirements remain unchanged.
 
-Web uses short-lived GitHub OIDC credentials, not a downloaded private key. Proposed
+Web uses short-lived GitHub OIDC credentials, not a downloaded private key. Its
 trust is restricted to repository ID 1239119509, owner ID 43704086, main, and the
 exact `.github/workflows/ci.yml` workflow. Hosting service account roles are
 `roles/firebasehosting.admin` and `roles/serviceusage.serviceUsageConsumer` on
@@ -75,3 +77,24 @@ App/backend jobs use npm caches. PR test runs cancel when superseded; main relea
 are serialized so a publish is not interrupted mid-deployment. No permanent server
 is started. Dependency installation and emulator startup execute in disposable
 GitHub runners. CI success is not a real-device UI/audio/purchase certification.
+
+## Activation evidence (2026-09-30)
+
+- Expo Go publication through GitHub succeeded:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/36700078616.
+  Update group `542ceade-24de-4439-bfe5-f2d1ab183409` contains Android and iOS
+  updates with runtime `exposdk:57.0.0`; custom native runtimes were untouched.
+- CI and real Hosting deployment passed at `d893d88`:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/36699633501.
+  323 app tests and 76 backend/authorization tests passed. High/critical production
+  dependency gates passed; 17 moderate Expo dependency findings remain, so this is
+  not a claim that the dependency tree has zero advisories.
+- Native compatibility inspection run 36700109899 correctly refused to publish.
+  Latest finished preview builds were Android 1.1.0
+  (`d5f6f57b-a73a-4ec2-861e-04911080adb3`) and iOS 1.0.0
+  (`c32e47c5-92dc-4a57-8430-7f2fca5fe8f3`), while current appVersion is 1.2.0.
+  New compatible preview binaries are required before native OTA; this does not
+  block the separate Expo Go SDK 57 track or web deployment.
+- Documentation-only commits skip automatic CI. Before publishing mobile from
+  such a new commit, manually run PartyBot CI on main; the exact-SHA guard will
+  explain this requirement rather than silently reusing a different revision.

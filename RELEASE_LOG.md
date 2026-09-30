@@ -1,16 +1,36 @@
 # Release log
 
-## 2026-09-30 — GitHub Actions setup (verification in progress)
+## 2026-09-30 — GitHub Actions activation
 
+- Batch completion tag: `release/2026-09-30-ci-cd`. Final receipt/documentation
+  commit does not change app source and intentionally does not retrigger CI.
+- Mobile workflow 36700078616 successfully published Expo Go SDK 57 through
+  the robot credential: group `542ceade-24de-4439-bfe5-f2d1ab183409`, Android
+  `01a0f1c8-b050-752f-90f1-b998a5a52262`, iOS
+  `01a0f1c8-b050-7f1b-aab4-24659b9d1d7e`, runtime `exposdk:57.0.0`.
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/36700078616.
+  Expo Go native login/purchases remain unavailable; no native runtime crossover.
 - Run 36698583497 passed app TypeScript and all 323 app tests, but caught
   vulnerable brace-expansion patches in the clean lockfile and a stale-cache
   invite completion race. Updated only brace-expansion patch versions; lockfile
   production audit now has zero high/critical findings (17 moderate remain).
   Completion now validates stale cache against the server and checks the exact
-  receipt; added a deterministic emulator regression. CI verification pending.
+  receipt; added a deterministic emulator regression. Run 36699633501 passed:
+  323 app tests, 76 backend/authorization tests, TypeScript, dependency gates,
+  one-off web export, OIDC Hosting deployment and live revision verification.
+- Verified source: d893d88e997751228141dbbaade8d2bdec7b2812. GitHub run:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/36699633501.
+  Live URL: https://partybot.games. The separate scoped command
+  `firebase deploy --only functions:redeemInvite --project partyplay-8 --non-interactive`
+  also received Firebase's successful update confirmation for us-central1.
 - Owner approved the Expo Developer robot partybot-github-ci, whose access
   covers the account's projects. Its dedicated token is stored only as the
   mobile-preview environment secret EXPO_TOKEN; no plaintext token in source.
+- Native inspect-only run 36700109899 authenticated successfully and refused
+  incompatible OTA. Latest finished preview binaries: Android 1.1.0, build
+  d5f6f57b-a73a-4ec2-861e-04911080adb3; iOS 1.0.0, build
+  c32e47c5-92dc-4a57-8430-7f2fca5fe8f3. Current appVersion is 1.2.0, so new
+  compatible binaries are required. No native OTA/build/store submission made.
 - Initial run 36697698070 exposed fresh-checkout TypeScript errors for the web-only
   touchAction property and an intermittent concurrent invite retry failure. Web
   gesture CSS is now platform-scoped and typed explicitly. Invite transactions
@@ -30,14 +50,10 @@
   compatibility. No automatic native build/store submission or AI step.
 - GitHub confirmed Actions enabled, public web configuration variable installed,
   and web-production/mobile-preview environments restricted to main.
-- Cloud IAM setup was blocked by automatic approval review pending explicit owner
-  approval for the scoped Hosting service account/Workload Identity roles. Web
-  deployment remains disabled until approved and verified. Expo browser login/token
-  remains required; no token is in source. No cloud publication claimed here.
-- Workflow YAML parse and JS syntax checks PASS. GitHub execution receipts and
-  final deployment status will be recorded after the first real run.
-- Existing https://partybot.games release and mobile build/update IDs unchanged
-  by preparation. See CI_CD.md for operational instructions and limits.
+- Initial IAM approval block was resolved by the owner's explicit approval;
+  the actual CI OIDC authentication and Hosting deployment both passed.
+- Workflow YAML parse and JS syntax checks PASS. No native binary or store
+  submission is produced by these workflows. See CI_CD.md for operating limits.
 
 ## 2026-09-30 — Bounded concurrency and security benchmark
 
