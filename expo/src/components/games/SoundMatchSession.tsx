@@ -1,5 +1,6 @@
 import { GameSlider, GameActionButton, GameControlCard, MatchPreview } from './GameControls';
 import { GameDesign as D } from '@/src/theme/GameDesign';
+import { webSliderGestureStyle } from '@/src/theme/webGestureStyle';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
 import { MatchStudio } from './MatchStudio';
@@ -996,7 +997,7 @@ const st = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   vSliderTrackContainer: {
-    touchAction: 'none',
+    ...webSliderGestureStyle,
     width: 60,
     justifyContent: 'center',
     alignItems: 'center',

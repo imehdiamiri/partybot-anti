@@ -2,6 +2,16 @@
 
 ## 2026-09-30 — GitHub Actions setup (verification in progress)
 
+- Initial run 36697698070 exposed fresh-checkout TypeScript errors for the web-only
+  touchAction property and an intermittent concurrent invite retry failure. Web
+  gesture CSS is now platform-scoped and typed explicitly. Invite transactions
+  disable speculative local events so concurrent Admin SDK reads cannot see a
+  temporary null inviter while server transaction retries resolve. The existing
+  concurrency regression is retained; no failing tests were removed. Local
+  TypeScript check PASS; next GitHub run verifies the backend change.
+- Owner subsequently approved the exact Hosting IAM setup. Google confirmed the
+  service account, restricted Workload Identity provider and scoped roles; GitHub
+  WEB_DEPLOY_ENABLED is now true. No private service-account key was generated.
 - Checkpoint: `checkpoint/2026-09-30-before-ci` at b73ae1a. Added main/PR CI,
   source guard, TypeScript/app tests, high/critical dependency audit, isolated
   Firebase authorization tests, one-off web export/artifact and Hosting-only

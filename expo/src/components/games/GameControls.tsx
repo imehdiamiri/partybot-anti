@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { useSliderDrag } from '@/src/hooks/useSliderDrag';
 import { GameDesign as D } from '@/src/theme/GameDesign';
+import { webSliderGestureStyle } from '@/src/theme/webGestureStyle';
 
 export const CompactGameContext = createContext(false);
 export const useCompactGame = () => useContext(CompactGameContext);
@@ -88,6 +89,6 @@ const s = StyleSheet.create({
   labelCompact: { width: 72, paddingHorizontal: 0 },
   label: { color: D.text, fontSize: 13, fontWeight: '600' },
   value: { color: D.muted, fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] },
-  trackTouch: { height: D.touchSize, justifyContent: 'center', touchAction: 'none' },
+  trackTouch: { height: D.touchSize, justifyContent: 'center', ...webSliderGestureStyle },
   thumb: { position: 'absolute', top: 6, width: 32, height: 32, marginLeft: -16, borderRadius: 16, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D6DDE8' },
 });

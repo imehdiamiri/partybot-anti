@@ -1,6 +1,7 @@
 import { GameSlider, GameActionButton, GameControlCard, MatchPreview } from './GameControls';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors, Typography } from '@/src/theme/Colors';
+import { webSliderGestureStyle } from '@/src/theme/webGestureStyle';
 import { MatchStudio } from './MatchStudio';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, TouchableOpacity, GestureResponderEvent, ScrollView, useWindowDimensions } from 'react-native';
@@ -615,7 +616,7 @@ export const st = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
   sliderTrackContainer: {
-    touchAction: 'none',
+    ...webSliderGestureStyle,
     height: 44,
     width: '100%',
     justifyContent: 'center',

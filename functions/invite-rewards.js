@@ -28,6 +28,8 @@ function record(value) {
 
 async function transact(ref, update) {
   let validationError;
+  // Do not expose speculative null/payment values to concurrent reads on the
+  // shared Admin SDK connection while the server resolves transaction retries.
   const result = await ref.transaction(value => {
     validationError = undefined;
     try { return update(value); } catch (error) {
@@ -36,7 +38,7 @@ async function transact(ref, update) {
       validationError = error;
       return undefined;
     }
-  });
+  }, undefined, false);
   if (validationError) throw validationError;
   return result;
 }

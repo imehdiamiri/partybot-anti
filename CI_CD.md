@@ -35,7 +35,7 @@ Repository variables:
   are excluded. Public Firebase client configuration is not an authorization secret;
   backend rules still enforce access.
 - `WEB_DEPLOY_ENABLED`: `true` enables the tested main deployment; `false` runs CI
-  without cloud mutation. The initial setup leaves it false until IAM is approved.
+  without cloud mutation. Enabled after the owner's explicit IAM approval.
 - `FIREBASE_WIF_PROVIDER`, `FIREBASE_DEPLOY_SERVICE_ACCOUNT`: approved Google
   Workload Identity provider and Hosting deployment service account identifiers.
 
@@ -49,7 +49,7 @@ Web uses short-lived GitHub OIDC credentials, not a downloaded private key. Prop
 trust is restricted to repository ID 1239119509, owner ID 43704086, main, and the
 exact `.github/workflows/ci.yml` workflow. Hosting service account roles are
 `roles/firebasehosting.admin` and `roles/serviceusage.serviceUsageConsumer` on
-`partyplay-8`. IAM creation requires the owner's explicit approval. It does not
+`partyplay-8`. The owner explicitly approved this IAM setup on 2026-09-30. It does not
 authorize backend/rules deployment. Existing Hosting site is reused; this workflow
 does not provision new Firebase projects or new Hosting sites.
 
