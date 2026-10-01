@@ -11,14 +11,18 @@
   pushes keep regression gates but skip the static web build and Hosting deploy.
   Mixed/configuration/unknown changes still build web; manual runs remain available.
 - Local checks: 3 deployment-scope regressions PASS; workflow YAML parse PASS;
-  git diff --check PASS. Actual GitHub run receipt will be recorded after completion.
+  git diff --check PASS. Final code revision 2be3ad601f3dc0dedefc36a1cf73ef6d6963fde4
+  passed GitHub run 36881485792: scope, app and backend checks, web export,
+  Hosting deployment and live revision verification. Receipt:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/36881485792.
 - Run 36880869310 passed scope routing and 323 app tests, but production audits
   caught gRPC advisories in both dependency trees. Patched backend gRPC 1.14.4
   to 1.14.5 and narrowly overrode Firestore's Node gRPC dependency to 1.13.6
   (upstream patched same-major release; Firebase itself is not downgraded).
   App install audit now has moderate findings only. This dependency change is
   not sent OTA to existing native binaries; cloud backend packages remain unchanged
-  until a separately scoped function release. CI verification follows below.
+  until a separately scoped function release. High/critical production audit
+  gates now pass; moderate advisories remain. No claim of zero vulnerabilities.
 - Scaling limits documented: room sweeper full-tree read and activity/delete race,
   host-client game coordination, unverified cloud quotas/scaling settings/backups.
   No 100/1,000-user load test or new backend deployment authorization was added.
