@@ -9,12 +9,17 @@
   per-room transaction that rechecks expiration before deletion.
 - Added ordinary emulator regressions for activity resuming after the query and
   pagination/wraparound; retained all TTL tests. No load benchmarks.
-- Syntax and whitespace checks passed. GitHub tests and scoped
-  functions:sweepStaleRooms publication pending confirmation.
+- Syntax and whitespace checks passed. GitHub run 36884025697 passed on
+  8e2704b7bb7ab6fd22f51123144cbc049dcb9003: 78 backend tests, app tests,
+  TypeScript and production dependency gates. Web export/deploy correctly skipped.
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/36884025697.
+- `firebase deploy --only functions:sweepStaleRooms --project partyplay-8
+  --non-interactive` received successful update confirmation in us-central1.
+  The production cleanup job was not manually triggered for testing.
 - First CI run exposed empty SDK transaction-cache handling: returning undefined
   aborted valid expiry deletions. The callback now validates the cached value
   against the server and counts only committed actual expiry deletions. Existing
-  TTL and new pagination regressions are retained; verification reruns in CI.
+  TTL and new pagination regressions are retained and passed in the final CI run.
 - No client schema/runtime change; no Hosting or EAS publication intended.
   Page limits bound room count, not individual room bytes; backlog expiry may
   span multiple scheduled runs. Existing database rules deny client metrics writes.
