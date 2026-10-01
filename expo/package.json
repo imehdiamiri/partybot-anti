@@ -77,5 +77,10 @@
       ]
     }
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "1.13.6"
+    }
+  }
 }
