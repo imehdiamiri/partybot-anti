@@ -27,8 +27,14 @@ async function sweepStaleRoomsLogic(db, now = Date.now(), { pageSize = 100, maxP
       if (!expired(child.val(), now)) continue;
       // The query is only a candidate list. Re-check server state atomically:
       // resumed activity/status changes must survive an earlier stale snapshot.
-      const result = await child.ref.transaction(room => expired(room, now) ? null : undefined, undefined, false);
-      if (result.committed) removed++;
+      let deleted = false;
+      const result = await child.ref.transaction(room => {
+        deleted = expired(room, now);
+        // The first callback may see an empty SDK cache. Returning its value
+        // forces server hash validation; undefined would abort before retrying.
+        return deleted ? null : room;
+      }, undefined, false);
+      if (result.committed && deleted) removed++;
     }
     cursor = entries.length === pageSize ? entries[entries.length - 1].key : null;
     // Persist only after the page finishes. A crash replays a bounded page;

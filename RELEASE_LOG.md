@@ -11,6 +11,10 @@
   pagination/wraparound; retained all TTL tests. No load benchmarks.
 - Syntax and whitespace checks passed. GitHub tests and scoped
   functions:sweepStaleRooms publication pending confirmation.
+- First CI run exposed empty SDK transaction-cache handling: returning undefined
+  aborted valid expiry deletions. The callback now validates the cached value
+  against the server and counts only committed actual expiry deletions. Existing
+  TTL and new pagination regressions are retained; verification reruns in CI.
 - No client schema/runtime change; no Hosting or EAS publication intended.
   Page limits bound room count, not individual room bytes; backlog expiry may
   span multiple scheduled runs. Existing database rules deny client metrics writes.
