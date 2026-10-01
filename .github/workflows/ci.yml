@@ -37,7 +37,25 @@ env:
   PUPPETEER_SKIP_DOWNLOAD: 'true'
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      web: ${{ steps.scope.outputs.web }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.22.0'
+      - run: node --test scripts/ci/deployment-scope.test.cjs
+      - id: scope
+        run: node scripts/ci/deployment-scope.cjs
+
   app:
+    needs: scope
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -59,16 +77,21 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
         working-directory: expo
       - name: Configure public web client
+        if: needs.scope.outputs.web == 'true'
         run: node scripts/ci/web-config.cjs
         env:
           EXPO_PUBLIC_CONFIG: ${{ vars.EXPO_PUBLIC_CONFIG }}
       - run: npx expo export --platform web
+        if: needs.scope.outputs.web == 'true'
         working-directory: expo
         env:
           APP_VARIANT: preview
       - run: node sync-web-build.js
+        if: needs.scope.outputs.web == 'true'
       - run: node scripts/ci/web-artifact.cjs
+        if: needs.scope.outputs.web == 'true'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: needs.scope.outputs.web == 'true'
         with:
           name: web-${{ github.sha }}
           path: website/public
@@ -102,9 +125,10 @@ jobs:
           DATABASE_EMULATOR_PORT: '9014'
 
   deploy-web:
-    needs: [app, backend]
+    needs: [scope, app, backend]
     if: >-
       github.ref == 'refs/heads/main' &&
+      needs.scope.outputs.web == 'true' &&
       vars.WEB_DEPLOY_ENABLED == 'true' &&
       (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy_web))
     runs-on: ubuntu-latest

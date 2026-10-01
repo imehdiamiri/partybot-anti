@@ -1,5 +1,23 @@
 # Release log
 
+## 2026-10-01 — Independent deployment boundaries
+
+- Starting checkpoint: `checkpoint/2026-10-01-before-runtime-isolation` at ea493e6.
+  Batch tag: `release/2026-10-01-runtime-isolation`.
+- Reviewed the actual managed runtimes and documented ownership, dependency
+  manifests, persistent state, independent release targets and recovery in CI_CD.md.
+  No Docker/Redis/Kubernetes runtime or persistent local server was introduced.
+- Added conservative before/after change classification to CI. Backend/rules-only
+  pushes keep regression gates but skip the static web build and Hosting deploy.
+  Mixed/configuration/unknown changes still build web; manual runs remain available.
+- Local checks: 3 deployment-scope regressions PASS; workflow YAML parse PASS;
+  git diff --check PASS. Actual GitHub run receipt will be recorded after completion.
+- Scaling limits documented: room sweeper full-tree read and activity/delete race,
+  host-client game coordination, unverified cloud quotas/scaling settings/backups.
+  No 100/1,000-user load test or new backend deployment authorization was added.
+- Mobile runtime/dependencies and update IDs unchanged. No EAS release or backend
+  function/rules deployment in this batch. Web URL remains https://partybot.games.
+
 ## 2026-09-30 — GitHub Actions activation
 
 - Batch completion tag: `release/2026-09-30-ci-cd`. Final receipt/documentation
