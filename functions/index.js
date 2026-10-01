@@ -52,10 +52,6 @@ const STAR_PACKS = {
 const PREMIUM_ENTITLEMENT = 'Premium';
 const LIFETIME_PRODUCT_IDS = ['lifetime', 'partybot_lifetime'];
 
-// Room TTLs (ms). Sweeper deletes anything past these thresholds.
-const ROOM_TTL_WAITING_MS = 30 * 60 * 1000;     // 30 min waiting → GC
-const ROOM_TTL_PLAYING_MS = 6 * 60 * 60 * 1000;  // 6h playing → GC
-const ROOM_TTL_CLOSED_MS  = 5 * 60 * 1000;       // 5 min closed → GC
 
 // ──────────────────────── Rate-limit helper ────────────────────────
 
@@ -454,60 +450,7 @@ exports.searchUsers = onCall({ cors: true }, async (request) => {
  * or another player promotes via host migration. The sweeper only deletes
  * rooms that have actually gone silent past their TTL.
  */
-async function sweepStaleRoomsLogic(db, now = Date.now()) {
-  const roomsRef = db.ref('rooms');
-  const snap = await roomsRef.once('value');
-  if (!snap.exists()) return { removed: 0 };
-
-  const updates = {};
-  let removed = 0;
-  snap.forEach((child) => {
-    const room = child.val() || {};
-    // Ensure we check all activity indicators: lastActivityAt, createdAt, and active turn updates
-    const last = Math.max(
-      typeof room.lastActivityAt === 'number' ? room.lastActivityAt : 0,
-      typeof room.createdAt === 'number' ? room.createdAt : 0,
-      typeof room.gameState?.lastUpdatedAt === 'number' ? room.gameState.lastUpdatedAt : 0
-    );
-
-    // If timestamp is completely absent or 0, do not delete prematurely unless explicitly marked closed
-    if (last <= 0 && room.status !== 'closed') return;
-
-    const status = room.status || 'waiting';
-    let ttl = ROOM_TTL_WAITING_MS;
-    if (status === 'playing') ttl = ROOM_TTL_PLAYING_MS;
-    else if (status === 'closed') ttl = ROOM_TTL_CLOSED_MS;
-
-    if (now - last > ttl) {
-      updates[child.key] = null;
-      removed++;
-    }
-  });
-
-  // Batch updates in chunks of 500 for scale safety
-  const updateKeys = Object.keys(updates);
-  if (updateKeys.length > 0) {
-    for (let i = 0; i < updateKeys.length; i += 500) {
-      const chunk = {};
-      for (const k of updateKeys.slice(i, i + 500)) {
-        chunk[k] = null;
-      }
-      await roomsRef.update(chunk);
-    }
-  }
-
-  const day = new Date(now).toISOString().split('T')[0];
-  await db.ref(`metrics/sweeper/${day}`).transaction((v) => {
-    const m = v || { runs: 0, removed: 0, lastRunAt: 0 };
-    m.runs = (m.runs || 0) + 1;
-    m.removed = (m.removed || 0) + removed;
-    m.lastRunAt = now;
-    return m;
-  });
-
-  console.log(`sweepStaleRooms: removed ${removed} room(s).`);
-  return { removed };
-}
+const { sweepStaleRoomsLogic } = require('./room-sweeper');
 
 exports.sweepStaleRoomsLogic = sweepStaleRoomsLogic;
 exports.sweepStaleRooms = onSchedule('every 10 minutes', async () => {

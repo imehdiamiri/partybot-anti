@@ -163,13 +163,14 @@ instances does not by itself make every game independent of the host device.
 Existing reconnection and host-migration code is relevant to device failure;
 physical-device failover was not re-tested in this batch.
 
-Known growth concern: sweepStaleRoomsLogic reads the entire rooms tree before
-its chunked deletes. Chunking writes does not bound read size. Before large room
-counts, introduce a durable indexed expiry field and bounded queries, with
-transactional revalidation against resumed activity before deleting rooms. The
-current read-then-delete design can race with a room becoming active again.
-This review documents that separate backend correction; it does not silently
-change room deletion behavior as part of a CI routing change.
+Room cleanup now reads key-ordered pages of at most 100 rooms and visits at most
+500 rooms per scheduled invocation. A server-only cursor in metrics persists
+progress across runs and wraps after the end, so active rooms cannot permanently
+hide later candidates. Deletion rechecks activity and status in a per-room
+transaction. A crash can repeat a page safely. This bounds room count per read,
+not bytes for an individual room. Expiry is eventual: large backlogs take multiple
+10-minute runs. An indexed expiry queue remains a future optimization if observed
+volume warrants it; no schema migration is required by this correction.
 
 Connection count, write frequency, listener scope, query/index behavior, database
 quotas and external RevenueCat latency can become bottlenecks independently of

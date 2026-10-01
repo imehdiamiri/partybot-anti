@@ -714,6 +714,57 @@ describe('Account Deletion Ownership-Safe Cleanup', () => {
 });
 
 describe('Multiplayer Stale Room Sweeper', () => {
+  test('resumed activity after the candidate read survives cleanup', async () => {
+    const db = admin.database();
+    const now = Date.now();
+    const room = db.ref('rooms/resumed');
+    await room.set({ status: 'waiting', createdAt: now - 3600000 });
+    const originalRef = db.ref.bind(db);
+    jest.spyOn(db, 'ref').mockImplementation(path => {
+      const ref = originalRef(path);
+      if (path === 'rooms') {
+        const order = ref.orderByKey.bind(ref);
+        ref.orderByKey = () => {
+          const query = order();
+          const limit = query.limitToFirst.bind(query);
+          query.limitToFirst = count => {
+            const bounded = limit(count);
+            const once = bounded.once.bind(bounded);
+            bounded.once = async (...args) => {
+              const snapshot = await once(...args);
+              await room.update({ lastActivityAt: now });
+              return snapshot;
+            };
+            return bounded;
+          };
+          return query;
+        };
+      }
+      return ref;
+    });
+    const result = await functions.sweepStaleRoomsLogic(db, now);
+    expect(result.removed).toBe(0);
+    expect((await room.get()).val().lastActivityAt).toBe(now);
+  });
+
+  test('bounded pages resume past active rooms and wrap for newly inserted earlier keys', async () => {
+    const db = admin.database();
+    const now = Date.now();
+    await db.ref('rooms').set({
+      a: { status: 'playing', createdAt: now },
+      b: { status: 'playing', createdAt: now },
+      c: { status: 'waiting', createdAt: now - 3600000 },
+    });
+    const bounds = { pageSize: 2, maxPages: 1 };
+    expect(await functions.sweepStaleRoomsLogic(db, now, bounds)).toEqual({ scanned: 2, removed: 0 });
+    expect((await db.ref('metrics/roomSweeperCursor').get()).val()).toBe('b');
+    await db.ref('rooms/aa').set({ status: 'waiting', createdAt: now - 3600000 });
+    expect(await functions.sweepStaleRoomsLogic(db, now, bounds)).toEqual({ scanned: 1, removed: 1 });
+    expect((await db.ref('metrics/roomSweeperCursor').get()).exists()).toBe(false);
+    expect(await functions.sweepStaleRoomsLogic(db, now, bounds)).toEqual({ scanned: 2, removed: 1 });
+    expect((await db.ref('rooms/a').get()).exists()).toBe(true);
+  });
+
   test('sweepStaleRooms: removes expired waiting, playing, and closed rooms based on TTL', async () => {
     const now = Date.now();
 

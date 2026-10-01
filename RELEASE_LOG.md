@@ -1,5 +1,20 @@
 # Release log
 
+## 2026-10-01 — Bounded, transactional room cleanup
+
+- Checkpoint: `checkpoint/2026-10-01-before-room-sweeper` at 130d6e7.
+  Completion tag: `release/2026-10-01-room-sweeper`.
+- Replaced full-tree room scan and unconditional batch deletion with key-ordered
+  pages (100 rooms, at most 5 pages/run), durable server-only progress and a
+  per-room transaction that rechecks expiration before deletion.
+- Added ordinary emulator regressions for activity resuming after the query and
+  pagination/wraparound; retained all TTL tests. No load benchmarks.
+- Syntax and whitespace checks passed. GitHub tests and scoped
+  functions:sweepStaleRooms publication pending confirmation.
+- No client schema/runtime change; no Hosting or EAS publication intended.
+  Page limits bound room count, not individual room bytes; backlog expiry may
+  span multiple scheduled runs. Existing database rules deny client metrics writes.
+
 ## 2026-10-01 — Independent deployment boundaries
 
 - Starting checkpoint: `checkpoint/2026-10-01-before-runtime-isolation` at ea493e6.
