@@ -1,5 +1,29 @@
 # Release log
 
+### October 7 dependency follow-up
+
+- Source fix: 46a7ad33d13f51157843113a3cf8af873636815e; GitHub CI
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/37581577251 passed
+  TypeScript and 324 app tests, then failed both production dependency gates.
+  Hosting publication correctly did not run.
+- EAS accepted Android preview build 13cf32fb-802a-4d1e-9549-0fccd22fefd6,
+  version/runtime 1.2.0, from 46a7ad3; status IN_PROGRESS at inspection.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/13cf32fb-802a-4d1e-9549-0fccd22fefd6
+  Submission/queueing is not proof of a successful APK or device acceptance.
+- Updated only compatible transitive lockfile entries: backend proxy-addr 2.0.8,
+  express 4.22.3, body-parser 1.20.8, qs 6.16.0; app compression 1.8.2,
+  shell-quote 1.12.0 and source-map-js 1.2.2. No SDK downgrade/forced major update.
+  Backend production audit now passes its high/critical gate (8 moderate remain).
+- Expo production audit still fails: upstream braces and node-forge advisories
+  have no patched versions as of October 7. 23 high and 12 moderate package
+  findings include propagated dependency reports, not 35 independent root flaws.
+  https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
+  https://github.com/advisories/GHSA-86w9-cpqp-85rv
+  No audit exclusion, threshold weakening or unsupported vendor patch was added.
+  Web/EAS OTA publishing remains blocked by the existing exact-commit CI gate.
+- Owner input requested for Apple login and Android/web Whitney distribution
+  rights/removal. These inputs are still pending. No policy attestation submitted.
+
 ## 2026-10-07 — Android ads build repair and placement review
 
 - Starting checkpoint: `checkpoint/2026-10-07-release-readiness` at 60bb10f.

@@ -4,6 +4,15 @@
 
 This section supersedes the historical September 29 statuses below.
 
+- Release pipeline: source 46a7ad3 passed 324 app tests but newly reported
+  dependency advisories stopped CI/Hosting. Compatible backend patches remove
+  the critical proxy-addr finding; compatible Expo tooling patches remove three
+  root findings. Unpatched braces/node-forge advisories still block the app audit.
+  No audit bypass or production publication is claimed.
+- New Android preview build `13cf32fb-802a-4d1e-9549-0fccd22fefd6` was accepted
+  by EAS from 46a7ad3, version 1.2.0. IN_PROGRESS at the initial inspection;
+  it is a test-ad APK profile, not a Play Store AAB.
+
 - AdSense console still says **Your account wasn't approved / Meet AdSense
   program policies**. No specific rejection reason is supplied. A resubmission
   has not been made or represented as approved.
