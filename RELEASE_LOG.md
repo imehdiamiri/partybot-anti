@@ -1,5 +1,27 @@
 # Release log
 
+### October 7 backend publication receipt
+
+- Dependency source: `6b5a1dee5ad15a5de523e074f5e6086daeac41c8`.
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/37582147482:
+  324 app tests and 78 backend/authorization tests passed. Backend audit passed;
+  app audit failed on the recorded upstream advisories; Hosting skipped.
+- Firebase confirmed successful update of all 12 explicit existing targets:
+  recordHostMigration, claimDailyReward, redeemInvite, ensureInviteCode,
+  syncRevenueCat, searchUsers, sweepStaleRooms, reportUser, blockUser,
+  unblockUser, deleteAccount and bootstrapFirstAdmin, Node 22/us-central1.
+  Used `firebase deploy --only functions:NAME,... --project partyplay-8
+  --non-interactive`. Shared dependency lockfile fix; no endpoint/schema change,
+  no database/rules/Hosting deploy, no production user actions executed for tests.
+- Local `npm test` backend attempt could not fetch the CLI under sandbox network
+  permissions; no emulator remained. Successful exact-source CI emulator tests
+  provide verification instead. Local TypeScript and 9 targeted ads/prebuild tests
+  passed after lockfile changes. Targeted source guard and diff checks passed.
+- Remaining backend production audit findings: 8 moderate. App: unpatched
+  braces/node-forge root advisories and moderate findings; not a zero-risk claim.
+  Native preview was built from earlier 46a7ad3, before tooling lockfile follow-up.
+  It is not a production candidate for this updated dependency source.
+
 ### October 7 dependency follow-up
 
 - Source fix: 46a7ad33d13f51157843113a3cf8af873636815e; GitHub CI

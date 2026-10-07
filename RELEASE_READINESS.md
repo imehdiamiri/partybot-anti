@@ -4,6 +4,10 @@
 
 This section supersedes the historical September 29 statuses below.
 
+- Backend security lockfile update from 6b5a1de was published successfully to
+  all 12 named existing functions in us-central1 after 78 authorization/unit
+  regressions passed in GitHub CI 37582147482. No database/rules deploy.
+
 - Release pipeline: source 46a7ad3 passed 324 app tests but newly reported
   dependency advisories stopped CI/Hosting. Compatible backend patches remove
   the critical proxy-addr finding; compatible Expo tooling patches remove three
