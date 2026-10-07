@@ -1,4 +1,3 @@
-import { AdBanner } from '@/src/components/ads/AdBanner';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Platform, LayoutChangeEvent, useWindowDimensions } from 'react-native';
@@ -194,7 +193,6 @@ export default function GamesScreen() {
             <OtherFunListView />
           </View>
         )}
-        <AdBanner />
       </ScrollView>
     </View>
   );

@@ -1,4 +1,36 @@
-# Release and advertising readiness — 2026-09-29
+# Release and advertising readiness
+
+## Current follow-up — 2026-10-07
+
+This section supersedes the historical September 29 statuses below.
+
+- AdSense console still says **Your account wasn't approved / Meet AdSense
+  program policies**. No specific rejection reason is supplied. A resubmission
+  has not been made or represented as approved.
+- Failed Android preview 1.2.0 build `33cbf3ca-8f9f-409f-b427-aa438a86cf20`
+  failed while evaluating Google Mobile Ads: missing `googleMobileAdsJson`.
+  Explicitly selecting `androidSdk: classic` through the official Expo plugin
+  generates `RNGMA_ANDROID_BACKEND=classic`, avoiding that absent-property path.
+  Plugin introspection verifies the application ID and delayed measurement too.
+- Ads now appear below game instructions, rather than Games/Tools navigation
+  grids or the final scoreboard. Consent and Expo Go guards remain in place;
+  preview uses test units, production requires a new compatible binary.
+- Apple login has expired; owner-assisted sign-in is required before checking
+  app records, agreements and signing. No store submission is confirmed.
+- AdMob account approval is separate from each app's review and store linking.
+  October 5 verified both apps still Require review / Limited ad serving, with
+  no store association. Google Play had no app record on that date.
+- Production remains blocked by store/RevenueCat configuration and installed
+  device acceptance. Historical simulator artifacts are not physical iOS builds.
+- The Whitney recording still ships on Android/web without license evidence
+  in the repository. Resolve those distribution rights or remove the recording
+  before attesting that the entire site meets publisher policies. iOS excludes it.
+- Moving ad placements is a concrete policy-risk correction, not proof of the
+  reason for Google's rejection or a guarantee of approval. Original art provenance
+  and accurate account/store declarations still need owner verification.
+
+References: https://support.google.com/publisherpolicies/answer/11112688
+and https://support.google.com/adsense/answer/48182?hl=en.
 
 ## Decision
 

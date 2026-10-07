@@ -1,4 +1,3 @@
-import { AdBanner } from '@/src/components/ads/AdBanner';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
@@ -113,7 +112,6 @@ export default function ToolsScreen() {
             </View>
           </View>
         </View>
-        <AdBanner />
       </ScrollView>
     </View>
   );

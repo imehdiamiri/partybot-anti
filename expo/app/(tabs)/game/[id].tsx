@@ -1,4 +1,5 @@
 import { Colors } from '@/src/theme/Colors';
+import { AdBanner } from '@/src/components/ads/AdBanner';
 import { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, ActivityIndicator, Dimensions, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -303,7 +304,8 @@ export default function GameDetailScreen() {
             ))}
           </View>
         </View>
-        
+        {/* Keep ads with the game's instructions, away from navigation/results. */}
+        <AdBanner />
       </ScrollView>
     </View>
   );

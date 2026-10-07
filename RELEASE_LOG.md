@@ -1,5 +1,27 @@
 # Release log
 
+## 2026-10-07 — Android ads build repair and placement review
+
+- Starting checkpoint: `checkpoint/2026-10-07-release-readiness` at 60bb10f.
+  Source tag: `release/2026-10-07-ads-build-fix` (publication receipt follows).
+- Inspected actual failed EAS build 33cbf3ca-8f9f-409f-b427-aa438a86cf20.
+  AdMob Gradle evaluation accessed a missing googleMobileAdsJson property.
+  Selected the classic Android backend using the supported Expo plugin option;
+  no vendored dependency patch or production guard bypass.
+- Removed banners from Games/Tools navigation grids and final scoreboards.
+  Placement is now below game instructions, separated from play controls.
+  Native test-mode, Expo Go and certified web-consent guards are preserved.
+- Local TypeScript, 8 consent regressions and the new Android prebuild regression
+  passed. Actual plugin introspection confirms RNGMA_ANDROID_BACKEND=classic,
+  AdMob application ID and delayed measurement. Source guard and diff check pass.
+  An initial isolated regression fixture lacked projectRoot; corrected and passed.
+- New native configuration requires a new compatible binary; no OTA is sent to
+  existing native installations. CI/deploy and Android build outcomes pending.
+  No backend deployment, store submission or load benchmark in this batch.
+- AdSense rechecked October 7: account still rejected with a generic program-policy
+  notice. No resubmission/attestation made while content rights remain unresolved.
+  Apple session expired; owner sign-in requested. See RELEASE_READINESS.md.
+
 ## 2026-10-01 — Bounded, transactional room cleanup
 
 - Checkpoint: `checkpoint/2026-10-01-before-room-sweeper` at 130d6e7.
