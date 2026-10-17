@@ -16,6 +16,15 @@
 - This is a web configuration release; native Google login, Firebase databases,
   rules, functions and mobile binaries are unchanged. Deployment and browser
   account-chooser confirmation will be recorded after service success.
+- CI run 39064526404 reproduced the known concurrent invite completion failure.
+  Recovery checkpoint before the isolated source repair:
+  `checkpoint/2026-10-17-before-invite-ci-repair` at `301e1b8`.
+  The reward helper now confirms persisted receipt state when a concurrent SDK
+  transaction returns an incomplete/noncommitted snapshot, still rejecting
+  deleted accounts and mismatched receipts. Added deterministic stale-response
+  and deleted-account regressions with exactly-once balance assertions. Backend
+  source is prepared/tested in CI only; no functions/rules deployment is included
+  in the web-domain release.
 
 ### October 17: purple 8 / white Playo artwork revision
 

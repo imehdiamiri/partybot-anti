@@ -414,6 +414,36 @@ describe('Invite payout recovery', () => {
     expect((await originalRef(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
   });
 
+  test.each([false, true])('completion confirms server state after stale transaction response (account deleted: %s)', async deleted => {
+    const db = admin.database();
+    const originalRef = db.ref.bind(db);
+    let calls = 0;
+    jest.spyOn(db, 'ref').mockImplementation(path => {
+      const ref = originalRef(path);
+      if (path === `users/${uid}`) {
+        const transaction = ref.transaction.bind(ref);
+        ref.transaction = async (...args) => {
+          const result = await transaction(...args);
+          if (++calls !== 2) return result;
+          if (deleted) await originalRef(path).remove();
+          return { committed: false, snapshot: { val: () => null } };
+        };
+      }
+      return ref;
+    });
+    const redeem = testEnv.wrap(functions.redeemInvite);
+    if (deleted) {
+      await expect(redeem(request)).rejects.toMatchObject({ code: 'failed-precondition' });
+      expect((await originalRef(`users/${uid}`).get()).exists()).toBe(false);
+    } else {
+      await expect(redeem(request)).resolves.toEqual({ credited: 10, inviterCredited: 30 });
+      await expect(redeem(request)).resolves.toEqual({ credited: 0, inviterCredited: 0 });
+      expect((await originalRef(`users/${uid}/wallet/balance`).get()).val()).toBe(10);
+    }
+    expect((await originalRef(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
+    expect((await originalRef(`users/${inviter}/inviteStats/totalInvites`).get()).val()).toBe(1);
+  });
+
   test('retry uses the bound inviter if the public registry has changed', async () => {
     interruptPayment(false);
     const redeem = testEnv.wrap(functions.redeemInvite);

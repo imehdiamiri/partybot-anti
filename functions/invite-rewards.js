@@ -98,8 +98,14 @@ async function settleInvite(db, uid, code, inviterUid, inviteeReward, inviterRew
     user.inviteReward.status = 'complete';
     return user;
   });
-  const finalClaim = resumableClaim(completed.snapshot.val(), code);
+  let finalClaim = resumableClaim(completed.snapshot.val(), code);
   if (!completed.committed || finalClaim?.receiptId !== claim.receiptId || finalClaim?.status !== 'complete') {
+    // Concurrent transactions on the shared SDK connection can return an older
+    // local snapshot, even when another retry has completed the same receipt.
+    // Confirm persisted state before treating that response as a deleted account.
+    finalClaim = resumableClaim((await userRef.get()).val(), code);
+  }
+  if (finalClaim?.receiptId !== claim.receiptId || finalClaim?.status !== 'complete') {
     throw new HttpsError('failed-precondition', 'Invite account is unavailable.');
   }
   return { credited, inviterCredited: payment.committed ? inviterReward : 0 };
