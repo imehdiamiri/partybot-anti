@@ -1,3 +1,5 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Redirect, useRouter, Stack } from 'expo-router';
@@ -48,18 +50,9 @@ function NativeJoinLobbyScreen() {
     <View style={styles.container}>
       <AppBackgroundView variant="simple" />
       
-      <Stack.Screen 
-        options={{
-          title: 'Join Room',
-          headerShown: true,
-          headerTransparent: Platform.OS === 'ios',
-          headerBlurEffect: 'dark',
-          headerStyle: Platform.OS === 'android' ? { backgroundColor: '#0D0D14' } : undefined,
-          headerTintColor: 'white',
-          headerLargeTitle: false,
-          headerBackTitle: 'Back',
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenHeader title="Join Room" maxWidth={SCREEN_LAYOUT.form} leftLabel="Back" leftIcon="chevron.left"
+        onLeftPress={() => { if (router.canGoBack()) router.back(); else router.replace('/'); }} />
 
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
@@ -116,16 +109,7 @@ function NativeJoinLobbyScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  headerButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontFamily: 'Viral-Black', fontSize: 20, color: 'white' },
-  scrollContent: { padding: 16, paddingBottom: 40, gap: 16 },
+  scrollContent: { maxWidth: SCREEN_LAYOUT.form, width: '100%', alignSelf: 'center', padding: 16, paddingBottom: 40, gap: 16 },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,

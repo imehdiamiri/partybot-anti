@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GameDefinition, GameMode, GameModeDetails, getPlayerCountText } from '@/src/models/AppModels';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -15,6 +15,7 @@ if (Platform.OS === 'ios') {
 interface GameCardViewProps {
   game: GameDefinition;
   isLocked?: boolean;
+  compact?: boolean;
 }
 
 /** iOS: vivid translucent gradient (Liquid Glass language). */
@@ -82,15 +83,17 @@ const getAccentColor = (accentName: string): string => {
 };
 
 export const GameCardView: React.FC<GameCardViewProps> = ({ game, isLocked = false }) => {
+  const { width, fontScale } = useWindowDimensions();
+  const compact = Platform.OS !== 'web' && (width < 380 || fontScale > 1.15);
   if (Platform.OS === 'android') {
-    return <AndroidGameCard game={game} isLocked={isLocked} />;
+    return <AndroidGameCard game={game} isLocked={isLocked} compact={compact} />;
   }
-  return <IOSGameCard game={game} isLocked={isLocked} />;
+  return <IOSGameCard game={game} isLocked={isLocked} compact={compact} />;
 };
 
 /* ───────────────────────── iOS (Liquid Glass) ───────────────────────── */
 
-const IOSGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
+const IOSGameCard: React.FC<GameCardViewProps> = ({ game, isLocked, compact }) => {
   const colors = getIOSGradient(game.accentName);
   const accentColor = getAccentColor(game.accentName);
 
@@ -100,18 +103,20 @@ const IOSGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
 
       <View style={iosStyles.content}>
         <View style={iosStyles.spacerTop} />
-        <Text style={iosStyles.title} numberOfLines={2} adjustsFontSizeToFit>
+        <Text testID="library-card-title" style={[iosStyles.title, compact && { fontSize: 16, lineHeight: 20, minHeight: 40 }]} numberOfLines={2} adjustsFontSizeToFit>
           {game.id.name}
         </Text>
         <View style={iosStyles.spacerMiddle1} />
-        {game.id.id === 'drum_challenge' ? <DrumIcon size={52} color="rgba(255, 255, 255, 0.95)" /> : <IconSymbol name={game.id.symbolName as any} size={52} color="rgba(255, 255, 255, 0.95)" />}
+        <View testID="library-card-icon" style={{ width: compact ? 36 : 52, height: compact ? 36 : 52, flexShrink: 0, alignItems: 'center', justifyContent: 'center' }}>
+          {game.id.id === 'drum_challenge' ? <DrumIcon size={compact ? 36 : 52} color="rgba(255, 255, 255, 0.95)" /> : <IconSymbol name={game.id.symbolName as any} size={compact ? 36 : 52} color="rgba(255, 255, 255, 0.95)" />}
+        </View>
         <View style={iosStyles.spacerMiddle2} />
 
         <View style={iosStyles.modesContainer}>
           {(Platform.OS === 'web' ? [GameMode.singleDevice] : game.id.supportedModes).map((mode) => {
             const modeDetails = GameModeDetails[mode];
             return (
-              <View key={mode} style={iosStyles.modePill}>
+              <View key={mode} testID="library-card-mode" style={[iosStyles.modePill, compact && { width: 18, height: 18 }]}>
                 <IconSymbol name={modeDetails.icon as any} size={14} color="rgba(255,255,255,0.85)" />
               </View>
             );
@@ -141,7 +146,7 @@ const IOSGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
 
 /* ──────────────────── Android (Material 3 Expressive) ──────────────────── */
 
-const AndroidGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
+const AndroidGameCard: React.FC<GameCardViewProps> = ({ game, isLocked, compact }) => {
   const p = getAndroidPalette(game.accentName);
 
   return (
@@ -170,7 +175,7 @@ const AndroidGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
           <View style={androidStyles.spacerTop} />
 
           <Text
-            style={[androidStyles.title, { color: p.onSurface }]}
+            style={[androidStyles.title, { color: p.onSurface }, compact && { fontSize: 16, lineHeight: 20, minHeight: 40 }]}
             numberOfLines={2}
             adjustsFontSizeToFit
           >
@@ -180,8 +185,8 @@ const AndroidGameCard: React.FC<GameCardViewProps> = ({ game, isLocked }) => {
           <View style={androidStyles.spacerMiddle1} />
 
           {/* Filled tonal icon disc — Material 3 hero shape */}
-          <View style={[androidStyles.iconDisc, { backgroundColor: p.chipBg, borderColor: p.containerEdge }]}>
-            {game.id.id === 'drum_challenge' ? <DrumIcon size={44} color={p.primary} /> : <IconSymbol name={game.id.symbolName as any} size={44} color={p.primary} />}
+          <View style={[androidStyles.iconDisc, { backgroundColor: p.chipBg, borderColor: p.containerEdge }, compact && { width: 40, height: 40, borderRadius: 20 }]}>
+            {game.id.id === 'drum_challenge' ? <DrumIcon size={compact ? 30 : 44} color={p.primary} /> : <IconSymbol name={game.id.symbolName as any} size={compact ? 30 : 44} color={p.primary} />}
           </View>
 
           <View style={androidStyles.spacerMiddle2} />
@@ -226,7 +231,7 @@ const iosStyles = StyleSheet.create({
   spacerTop: { flex: 1, minHeight: 8 },
   title: {
     fontFamily: 'Viral-Black', fontSize: 20, fontWeight: 'bold', color: 'white',
-    textAlign: 'center', minHeight: 24,
+    textAlign: 'center', minHeight: 48, lineHeight: 24, flexShrink: 0,
     textShadowColor: 'rgba(0, 0, 0, 0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
   },
   spacerMiddle1: { flex: 0.7, minHeight: 6 },
@@ -277,7 +282,7 @@ const androidStyles = StyleSheet.create({
     fontWeight: '800' as const,
     textAlign: 'center',
     letterSpacing: 0.2,
-    minHeight: 22,
+    minHeight: 48, lineHeight: 24, flexShrink: 0,
   },
   spacerMiddle1: { flex: 0.6, minHeight: 6 },
   spacerMiddle2: { flex: 0.5, minHeight: 4 },

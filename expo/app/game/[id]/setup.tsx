@@ -1,3 +1,5 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { METRONOME_RHYTHMS, MetronomeRhythm } from '@/src/utils/metronomeChallenge';
 import { whitneyAvailable } from '@/src/services/drumMusic';
 import { Colors } from '@/src/theme/Colors';
@@ -298,45 +300,17 @@ export default function GameSetupScreen() {
     <View style={st.container}>
       <AppBackgroundView />
       
-      <Stack.Screen 
-        options={{
-          title: `${game.name} — Setup`,
-          headerShown: true,
-          headerTransparent: Platform.OS === 'ios',
-          headerBlurEffect: 'dark',
-          headerStyle: Platform.OS === 'android' ? { backgroundColor: '#0D0D14' } : undefined,
-          headerTintColor: 'white',
-          headerTitleStyle: { fontFamily: 'Viral-Black', fontSize: 20 },
-          headerBackVisible: false,
-          headerLeft: () => (
-            <TouchableOpacity 
-              testID="setup-back-btn"
-              accessibilityRole="button"
-              onPress={() => { 
-                if (Platform.OS !== 'web' && router.canGoBack()) { 
-                  router.back(); 
-                } else { 
-                  router.replace(`/game/${id}` as any); 
-                } 
-              }}
-              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 8,
-                paddingVertical: 6,
-              }}
-            >
-              <IconSymbol name="chevron.left" size={18} color="#007AFF" />
-              <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '400', marginLeft: 2 }}>Back</Text>
-            </TouchableOpacity>
-          ),
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenHeader title={game.name} subtitle="Setup" maxWidth={SCREEN_LAYOUT.form}
+        leftLabel="Back" leftIcon="chevron.left" leftTestID="setup-back-btn"
+        onLeftPress={() => {
+          if (Platform.OS !== 'web' && router.canGoBack()) router.back();
+          else router.replace(`/game/${id}` as any);
+        }} />
 
       <ScrollView 
-        style={st.scrollView}
-        contentContainerStyle={[st.scrollContent, { paddingTop: Platform.OS === 'android' ? 16 : 0 }]} 
+        testID="setup-scroll" style={st.scrollView}
+        contentContainerStyle={[st.scrollContent, { paddingTop: 12 }]}
         keyboardShouldPersistTaps="handled"
         contentInsetAdjustmentBehavior="automatic"
       >
@@ -704,7 +678,7 @@ export default function GameSetupScreen() {
 
       {/* Bottom Start Button */}
       <View style={[st.bottomBar, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
-        <View style={st.bottomBarContent}>
+        <View testID="setup-footer" style={st.bottomBarContent}>
           <SetupStartButton subtitle={getSubtitle()} onPress={handleStart} />
         </View>
       </View>
@@ -719,7 +693,7 @@ const st = StyleSheet.create({
   errorText: { color: 'white', fontSize: 17, fontWeight: 'bold', marginBottom: 20 },
   backBtn: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 },
   backBtnTx: { color: 'white', fontWeight: 'bold' },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 120, gap: 14, maxWidth: 680, width: '100%', alignSelf: 'center' },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 24, gap: 14, maxWidth: SCREEN_LAYOUT.form, width: '100%', alignSelf: 'center' },
   errorLabel: { color: Colors.red, fontSize: 13, marginTop: 4 },
 
   // SurfaceCard style matching iOS
@@ -764,13 +738,13 @@ const st = StyleSheet.create({
 
   // Bottom bar
   bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 16, paddingTop: 16,
+    flexShrink: 0,
+    paddingTop: 16,
     backgroundColor: 'rgba(0,0,0,0.8)',
     borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)',
   },
   bottomBarContent: {
-    maxWidth: 680, width: '100%', alignSelf: 'center',
+    maxWidth: SCREEN_LAYOUT.form, width: '100%', alignSelf: 'center', paddingHorizontal: 16,
   },
   imposterCard: {
     marginTop: 10, padding: 14, borderRadius: 16,

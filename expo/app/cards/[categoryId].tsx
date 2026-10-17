@@ -1,3 +1,5 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import React from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
@@ -30,37 +32,12 @@ export default function CardsDeckScreen() {
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity 
-          testID="cards-back-btn"
-          accessibilityRole="button"
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 8,
-            paddingVertical: 6,
-          }} 
-          onPress={() => { 
-            if (Platform.OS !== 'web' && router.canGoBack()) { 
-              router.back(); 
-            } else { 
-              router.replace('/tools' as any); 
-            } 
-          }}
-        >
-          <IconSymbol name="chevron.left" size={18} color={category.accentColor} />
-          <Text style={{ color: category.accentColor, fontSize: 17, fontWeight: '400', marginLeft: 2 }}>Back</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.headerTitleContainer}>
-          <View style={[styles.iconWrapper, { backgroundColor: category.accentColor + '20' }]}>
-            <IconSymbol name={category.icon as any} size={14} color={category.accentColor} />
-          </View>
-          <Text style={styles.titleText}>{category.title}</Text>
-        </View>
-        
-        <View style={{ width: 38 }} />
-      </View>
+      <ScreenHeader title={category.title} maxWidth={SCREEN_LAYOUT.form}
+        leftLabel="Back" leftIcon="chevron.left" leftColor={category.accentColor}
+        leftTestID="cards-back-btn" onLeftPress={() => {
+          if (Platform.OS !== 'web' && router.canGoBack()) router.back();
+          else router.replace('/tools' as any);
+        }} />
 
       <CardsDeckRenderer categoryId={categoryId as any} />
     </View>
@@ -71,33 +48,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    zIndex: 10,
-    width: '100%',
-    maxWidth: 680,
-    alignSelf: 'center',
-  },
-  headerTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  iconWrapper: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleText: {
-    fontFamily: 'Viral-Black',
-    fontSize: 20,
-    color: 'white',
   },
 });

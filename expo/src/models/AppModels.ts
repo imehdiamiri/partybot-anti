@@ -350,13 +350,13 @@ const baseGamesDefinitions: GameDefinition[] = [
   { id: Games.colorMatch, accentName: 'green' },
   { id: Games.soundMatch, accentName: 'pink' },
   // ── Premium games ──
-  { id: Games.tenTangle, accentName: 'purple' },
   { id: Games.memoryPath, accentName: 'orange' },
-  { id: Games.passGuess, accentName: 'yellow' },
   { id: Games.tapInOrder, accentName: 'teal' },
   { id: Games.colorTrap, accentName: 'red' },
   { id: Games.drawRush, accentName: 'blue' },
   { id: Games.spinBottle, accentName: 'purple' },
+  { id: Games.passGuess, accentName: 'yellow' },
+  { id: Games.tenTangle, accentName: 'purple' },
 ];
 
 export const GamesDefinitions: GameDefinition[] = baseGamesDefinitions;

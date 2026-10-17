@@ -1,3 +1,4 @@
+import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { Colors } from '@/src/theme/Colors';
 import { useState, useEffect } from 'react';
@@ -130,7 +131,7 @@ export default function FriendsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View testID="page-toolbar" style={[styles.header, screenLayout.toolbar]}>
           <Text style={styles.title}>Friends</Text>
           <View style={{ flex: 1 }} />
           {requests.length > 0 && !isWeb && (
@@ -143,7 +144,7 @@ export default function FriendsScreen() {
               <Text style={styles.notificationText}>{requests.length}</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => router.push('/profile')} activeOpacity={0.85}>
+          <TouchableOpacity testID="friends-profile-btn" accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/profile')} activeOpacity={0.85}>
             <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
               <IconSymbol name="person.crop.circle" size={22} color="white" />
             </LiquidGlass>
@@ -513,8 +514,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    maxWidth: 680,
+    paddingHorizontal: SCREEN_LAYOUT.gutter,
+    maxWidth: SCREEN_LAYOUT.form,
     width: '100%',
     alignSelf: 'center',
   },
@@ -546,8 +547,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   profileButton: {
-    width: 40,
-    height: 40,
+    width: SCREEN_LAYOUT.touchTarget,
+    height: SCREEN_LAYOUT.touchTarget,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,5 +1,34 @@
 # Release log
 
+### October 17: shared navigation geometry and library ordering
+
+- Recovery checkpoint: `checkpoint/2026-10-17-before-layout-standardization`
+  at `1842a43`. Source tag: `8playo-shared-layout-2026-10-17`.
+- Centralized screen widths/gutters and a shared, safe-inset-aware navigation
+  header for game details/setup/sessions, tools, card decks, lobbies, profile,
+  invitations and purchase details. Titles remain centered with asymmetric
+  actions. Setup Back, cards and Start now share one frame on wide web screens;
+  the Start footer reserves height outside its scroller instead of overlaying it.
+- Aligned the visible wordmark letters and profile control to the library edges
+  by framing the existing PNG's alpha bounds. Approved logo artwork is unchanged.
+  Shared tab toolbar spacing and 44-point navigation/player controls; narrow
+  player toolbars wrap and inputs no longer push removal buttons outside cards.
+- Compact narrow library card typography/icons prevents clipped two-line titles.
+  Pass & Guess and Ten Tangle now occupy the last two entries, in that order,
+  using the same stable IDs and gameplay configuration on every platform.
+- Local `npm run typecheck` and `git diff --check` passed. One-off web export
+  succeeded. Offline Chrome review passed six viewports (320x568, 390x844,
+  844x390, 768x1024, 1440x900, 2560x1440): 57 setup/viewport cases, all tool/card
+  headers, library alignment/title bounds and 32 session exit/cancel flows.
+  Mock identity only; no real account, persistent server or load benchmark.
+  Screenshots inspected at narrow phone and desktop widths. Quick-add chips also
+  use 44-point targets; that final style-only adjustment passed TypeScript.
+- CI/deployment receipts will follow service confirmation. These JavaScript UI
+  changes introduce no native dependency/configuration/runtime changes. Browser
+  review is not physical iOS/Android, keyboard or accessibility certification.
+  Existing iOS signing/matching-binary blocker remains; native OTA guard is intact.
+  No backend, Firebase rules, OAuth settings or app-store submission in this batch.
+
 ### October 17: verified branded Google account chooser and Hosting delivery
 
 - Published source `d58b3f424c31db946f9a74a787d70621872a4cde` passed CI and

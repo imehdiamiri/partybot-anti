@@ -1,3 +1,5 @@
+import { ScreenHeader } from '@/src/components/ScreenHeader';
+import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, BackHandler, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useFocusEffect, useNavigation } from 'expo-router';
@@ -105,7 +107,6 @@ export default function GameSessionScreen() {
         {/* Header */}
         <SessionHeader
           gameName={activeSession.game.name}
-          paddingTop={insets.top + 10}
           onExit={handleExit}
         />
 
@@ -115,9 +116,8 @@ export default function GameSessionScreen() {
   );
 }
 
-function SessionHeader({ gameName, paddingTop, onExit }: {
+function SessionHeader({ gameName, onExit }: {
   gameName: string;
-  paddingTop: number;
   onExit: () => void;
 }) {
   const { skipHandler, skipPlayerName, skipLabel } = useSkipState();
@@ -146,37 +146,15 @@ function SessionHeader({ gameName, paddingTop, onExit }: {
   };
 
   return (
-    <View style={[styles.header, { paddingTop }]}>
+    <View style={styles.header}>
       {dialog}
-      <View style={styles.headerInner}>
-        <TouchableOpacity 
-          onPress={confirmExit}
-          testID="session-exit-button"
-          accessibilityRole="button"
-          style={styles.headerSideButton}
-        >
-          <IconSymbol name="xmark" size={14} color="#007AFF" />
-          <Text style={styles.headerSideText}>Exit</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{gameName}</Text>
-
-        {skipHandler ? (
-          <TouchableOpacity
-            onPress={handleSkip}
-            testID="session-skip-button"
-            accessibilityLabel={skipLabel}
-            accessibilityRole="button"
-            style={styles.headerSideButton}
-          >
-            <Text numberOfLines={1} style={[styles.headerSideText, { color: '#CFD5E3' }]}>Skip</Text>
-            <IconSymbol name="forward.fill" size={18} color="#CFD5E3" />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.headerSpacer} />
-        )}
-      </View>
-      <GameActivityBanner />
+      <ScreenHeader title={gameName} leftLabel="Exit" leftIcon="xmark"
+        leftTestID="session-exit-button" onLeftPress={confirmExit}
+        rightLabel={skipHandler ? 'Skip' : undefined} rightIcon={skipHandler ? 'forward.fill' : undefined}
+        rightTestID="session-skip-button" onRightPress={skipHandler ? handleSkip : undefined}
+        rightAccessibilityLabel={skipLabel}
+        rightColor="#CFD5E3" />
+      <View style={[screenLayout.frame, { maxWidth: SCREEN_LAYOUT.content }]}><GameActivityBanner /></View>
     </View>
   );
 }
@@ -187,42 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   header: {
-    paddingHorizontal: 16,
     paddingBottom: 10,
     zIndex: 10,
-  },
-  headerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    maxWidth: 720,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  headerSideButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    width: 80,
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  headerSideText: {
-    color: '#007AFF',
-    fontSize: 17,
-    fontWeight: '400',
-  },
-  headerSpacer: {
-    width: 80,
-    height: 44,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: 'Viral-Black',
-    color: 'white',
-    fontSize: 17,
   },
 });

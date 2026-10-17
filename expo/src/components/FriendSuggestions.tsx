@@ -53,6 +53,8 @@ export function FriendSuggestions({
           <TouchableOpacity
             key={friend.id}
             style={styles.chip}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ${friend.name}`}
             activeOpacity={0.65}
             onPress={() => onSelectFriend(friend.name)}
           >
@@ -73,7 +75,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 18,
+    paddingHorizontal: 0,
     marginBottom: 6,
   },
   label: {
@@ -84,10 +86,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   scroll: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     gap: 6,
   },
   chip: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,

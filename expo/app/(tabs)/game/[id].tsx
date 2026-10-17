@@ -1,3 +1,5 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { Colors } from '@/src/theme/Colors';
 import { AdBanner } from '@/src/components/ads/AdBanner';
 import { useState, useCallback, useEffect } from 'react';
@@ -129,26 +131,11 @@ export default function GameDetailScreen() {
     <View style={styles.container}>
       <AppBackgroundView />
       
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity 
-          testID="game-detail-back-btn"
-          accessibilityRole="button"
-          onPress={() => {
-            if (Platform.OS !== 'web' && router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/(tabs)' as any);
-            }
-          }}
-          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-          style={styles.backButtonCustom}
-        >
-          <IconSymbol name="chevron.left" size={18} color="#007AFF" />
-          <Text style={styles.backButtonCustomText}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitleCustom}>{game.name}</Text>
-        <View style={{ width: 60 }} />
-      </View>
+      <ScreenHeader title={game.name} leftLabel="Back" leftIcon="chevron.left"
+        leftTestID="game-detail-back-btn" onLeftPress={() => {
+          if (Platform.OS !== 'web' && router.canGoBack()) router.back();
+          else router.replace('/(tabs)' as any);
+        }} />
 
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
@@ -337,52 +324,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  backButtonCustom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-  },
-  backButtonCustomText: {
-    color: '#007AFF',
-    fontSize: 17,
-    fontWeight: '400',
-    marginLeft: 2,
-  },
-  headerTitleCustom: {
-    fontFamily: 'Viral-Black',
-    color: 'white',
-    fontSize: 17,
-    flex: 1,
-    textAlign: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-    maxWidth: 720,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    fontFamily: 'Viral-Black',
-    color: 'white',
-    fontSize: 20,
-  },
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 40,
     gap: 16,
-    maxWidth: 720,
+    maxWidth: SCREEN_LAYOUT.content,
     width: '100%',
     alignSelf: 'center',
   },

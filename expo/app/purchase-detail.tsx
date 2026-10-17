@@ -1,3 +1,5 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { Colors } from '@/src/theme/Colors';
 import { useMemo } from 'react';
 import {
@@ -99,12 +101,7 @@ export default function PurchaseDetailScreen() {
     return (
       <View style={styles.container}>
         <AppBackgroundView />
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity onPress={safeBack} style={styles.closeBtn}>
-            <IconSymbol name="xmark" size={14} color="#007AFF" />
-            <Text style={styles.closeBtnText}>Close</Text>
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader title="Store" leftLabel="Close" leftIcon="xmark" onLeftPress={safeBack} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 }}>
           <IconSymbol name="sparkles" size={48} color={Colors.yellow} />
           <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold', textAlign: 'center' }}>
@@ -128,12 +125,7 @@ export default function PurchaseDetailScreen() {
     return (
       <View style={styles.container}>
         <AppBackgroundView />
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity onPress={safeBack} style={styles.closeBtn}>
-            <IconSymbol name="xmark" size={14} color="#007AFF" />
-            <Text style={styles.closeBtnText}>Close</Text>
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader title="Store" leftLabel="Close" leftIcon="xmark" onLeftPress={safeBack} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
           {isLoading && <ActivityIndicator color="#fff" />}
           <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center' }}>
@@ -187,15 +179,10 @@ export default function PurchaseDetailScreen() {
     <View style={styles.container}>
       <AppBackgroundView />
 
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={safeBack} style={styles.closeBtn}>
-          <IconSymbol name="xmark" size={14} color="#007AFF" />
-          <Text style={styles.closeBtnText}>Close</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader title="Store" leftLabel="Close" leftIcon="xmark" onLeftPress={safeBack} />
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 50, paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: 16, paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -270,17 +257,7 @@ export default function PurchaseDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    zIndex: 10,
-  },
-  closeBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 6 },
-  closeBtnText: { color: '#007AFF', fontSize: 17, fontWeight: '400', marginLeft: 4 },
-  scroll: { paddingHorizontal: 20 },
+  scroll: { paddingHorizontal: 16, maxWidth: SCREEN_LAYOUT.content, width: '100%', alignSelf: 'center' },
   hero: { alignItems: 'center', marginBottom: 24 },
   iconCircle: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center' },
   heroTitle: { fontSize: 28, fontWeight: '800', color: '#fff', marginBottom: 4 },

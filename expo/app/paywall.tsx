@@ -1,4 +1,6 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
 import { Colors } from '@/src/theme/Colors';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -288,11 +290,8 @@ function NativePaywallScreen() {
       <AppBackgroundView />
 
       {/* Navigation Bar */}
-      <View style={[styles.navBar, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.closeButton} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}>
-          <IconSymbol name="xmark.circle.fill" size={28} color="rgba(255,255,255,0.6)" />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader title="Store" leftLabel="Close" leftIcon="xmark"
+        onLeftPress={() => { if (router.canGoBack()) router.back(); else router.replace('/'); }} />
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -417,23 +416,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  navBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    zIndex: 10,
-  },
-  closeButton: {
-    padding: 4,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    width: '100%', maxWidth: SCREEN_LAYOUT.content, alignSelf: 'center',
+    paddingHorizontal: 16,
     paddingTop: 12,
     gap: 22,
   },

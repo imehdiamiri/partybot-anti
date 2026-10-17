@@ -1,3 +1,5 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import React, { useState } from 'react';
 import {
   View,
@@ -504,47 +506,9 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <AppBackgroundView />
       
-      <Stack.Screen 
-        options={{
-          headerShown: !isWeb,
-          title: "Profile",
-          headerTransparent: Platform.OS === 'ios',
-          headerBlurEffect: 'systemThinMaterialDark',
-          headerStyle: Platform.OS === 'android' ? { backgroundColor: '#0D0D14' } : undefined,
-          headerTitleStyle: { fontFamily: 'Viral-Black', fontSize: 20, color: Colors.white },
-          headerRight: () => (
-            <TouchableOpacity 
-              onPress={() => safeBack()} 
-              style={{ 
-                marginRight: Platform.OS === 'ios' ? 0 : 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 8,
-                paddingVertical: 6,
-              }}
-            >
-              <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>Done</Text>
-            </TouchableOpacity>
-          ),
-          headerBackVisible: false,
-        }}
-      />
-
-      {isWeb && (
-        <View style={styles.webHeaderWrapper}>
-          <View style={styles.webHeaderInner}>
-            <Text style={styles.headerTitle}>Profile</Text>
-            <TouchableOpacity 
-              onPress={() => safeBack()} 
-              style={styles.headerDoneBtn}
-              accessibilityRole="button"
-              testID="profile-done-button"
-            >
-              <Text style={styles.headerDoneText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenHeader title="Profile" maxWidth={SCREEN_LAYOUT.content} rightLabel="Done"
+        rightTestID="profile-done-button" onRightPress={safeBack} />
 
       <ScrollView 
         testID="profile-scroll-view"
@@ -615,54 +579,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.black,
   },
-  webHeaderWrapper: {
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.whiteOverlay8,
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  webHeaderInner: {
-    width: '100%',
-    maxWidth: 760,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    position: 'relative',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.whiteOverlay8,
-  },
-  headerTitle: {
-    fontFamily: 'Viral-Black',
-    color: Colors.white,
-    fontSize: 20,
-  },
-  headerDoneBtn: {
-    position: 'absolute',
-    right: 16,
-    top: 14,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  headerDoneText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
   scrollContent: {
     padding: 16,
     gap: 14,
     width: '100%',
-    maxWidth: 760,
+    maxWidth: SCREEN_LAYOUT.content,
     alignSelf: 'center',
   },
   surfaceCard: {

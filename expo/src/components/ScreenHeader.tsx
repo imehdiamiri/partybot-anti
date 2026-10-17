@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { createElement } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 
 interface ScreenHeaderProps {
   title: string;
+  subtitle?: string;
   leftLabel?: string;
   leftIcon?: string;
   onLeftPress?: () => void;
@@ -12,54 +14,82 @@ interface ScreenHeaderProps {
   rightIcon?: string;
   onRightPress?: () => void;
   rightColor?: string;
+  leftColor?: string;
+  maxWidth?: number;
+  leftTestID?: string;
+  rightTestID?: string;
+  rightAccessibilityLabel?: string;
+  includeTopInset?: boolean;
 }
 
 export function ScreenHeader({
   title,
+  subtitle,
   leftLabel,
   leftIcon,
   onLeftPress,
   rightLabel,
   rightIcon,
   onRightPress,
-  rightColor = 'white'
+  rightColor = 'white',
+  leftColor = '#007AFF',
+  maxWidth = SCREEN_LAYOUT.content,
+  leftTestID,
+  rightTestID,
+  rightAccessibilityLabel,
+  includeTopInset = true,
 }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const narrowNative = Platform.OS !== 'web' && width < 400;
+  const slotWidth = narrowNative ? 64 : SCREEN_LAYOUT.headerSlot;
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+    <View style={{ paddingTop: (includeTopInset ? insets.top : 0) + 8, paddingBottom: 10 }}>
+    {Platform.OS === 'web' ? createElement('style', null, `
+      @media (max-width: 399px) {
+        [data-testid="screen-header"] > :first-child,
+        [data-testid="screen-header"] > :last-child { width: 64px !important; }
+        [data-testid="screen-header-title"] { font-size: 16px !important; line-height: 21px !important; }
+      }
+    `) : null}
+    <View testID="screen-header" style={[screenLayout.frame, styles.header, { maxWidth }]}>
       {/* Left button slot */}
       {onLeftPress ? (
-        <TouchableOpacity onPress={onLeftPress} style={styles.leftButton} accessibilityRole="button" accessibilityLabel={leftLabel || "Back"}>
-          {leftIcon ? <IconSymbol name={leftIcon as any} size={18} color="#007AFF" /> : null}
+        <TouchableOpacity testID={leftTestID} onPress={onLeftPress} style={[styles.leftButton, { width: slotWidth }]} accessibilityRole="button" accessibilityLabel={leftLabel || "Back"}>
+          {leftIcon ? <IconSymbol name={leftIcon as any} size={18} color={leftColor} /> : null}
           {leftLabel ? (
-            <Text style={[styles.leftButtonText, leftIcon ? { marginLeft: 2 } : null]}>
+            <Text style={[styles.leftButtonText, { color: leftColor }, leftIcon ? { marginLeft: 2 } : null]} numberOfLines={1}>
               {leftLabel}
             </Text>
           ) : null}
         </TouchableOpacity>
       ) : (
-        <View style={styles.leftButton} />
+        <View style={[styles.leftButton, { width: slotWidth }]} />
       )}
 
       {/* Title */}
-      <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>
+      <View style={styles.titleSlot}>
+      <Text testID="screen-header-title" style={[styles.headerTitle, narrowNative && { fontSize: 16, lineHeight: 21 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
         {title}
       </Text>
+      {subtitle ? <Text style={styles.headerSubtitle} numberOfLines={1}>{subtitle}</Text> : null}
+      </View>
 
       {/* Right button slot */}
       {onRightPress ? (
-        <TouchableOpacity onPress={onRightPress} style={styles.rightButton} accessibilityRole="button" accessibilityLabel={rightLabel || rightIcon}>
+        <TouchableOpacity testID={rightTestID} onPress={onRightPress} style={[styles.rightButton, { width: slotWidth }]} accessibilityRole="button" accessibilityLabel={rightAccessibilityLabel || rightLabel || rightIcon}>
           {rightIcon ? <IconSymbol name={rightIcon as any} size={18} color={rightColor} /> : null}
           {rightLabel ? (
-            <Text style={[styles.rightButtonText, { color: rightColor }, rightIcon ? { marginLeft: 2 } : null]}>
+            <Text style={[styles.rightButtonText, { color: rightColor }, rightIcon ? { marginLeft: 2 } : null]} numberOfLines={1}>
               {rightLabel}
             </Text>
           ) : null}
         </TouchableOpacity>
       ) : (
-        <View style={styles.rightButton} />
+        <View style={[styles.rightButton, { width: slotWidth }]} />
       )}
+    </View>
     </View>
   );
 }
@@ -69,23 +99,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
   },
   leftButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 76,
+    width: SCREEN_LAYOUT.headerSlot,
     flexShrink: 0,
-    minHeight: 44,
+    minHeight: SCREEN_LAYOUT.touchTarget,
     justifyContent: 'flex-start',
   },
   rightButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 76,
+    width: SCREEN_LAYOUT.headerSlot,
     flexShrink: 0,
-    minHeight: 44,
+    minHeight: SCREEN_LAYOUT.touchTarget,
     justifyContent: 'flex-end',
   },
   leftButtonText: {
@@ -99,11 +127,14 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontWeight: '500',
   },
+  titleSlot: { flex: 1, minWidth: 0, marginHorizontal: 8, alignItems: 'center' },
+  headerSubtitle: { color: '#A8AFBF', fontSize: 12, lineHeight: 17, textAlign: 'center' },
   headerTitle: {
     fontFamily: 'Viral-Black',
-    fontSize: 20,
+    fontSize: 18,
+    lineHeight: 23,
     color: 'white',
     textAlign: 'center',
-    flex: 1,
+    width: '100%',
   },
 });

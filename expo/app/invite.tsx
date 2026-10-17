@@ -1,3 +1,4 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Share } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 60, paddingBottom: 16 },
   closeBtn: { width: 44, height: 44, alignItems: 'flex-start', justifyContent: 'center' },
   headerTitle: { color: '#fff', fontSize: 17, fontWeight: '600' },
-  scrollContent: { padding: 16, paddingBottom: 40, gap: 20 },
+  scrollContent: { width: '100%', maxWidth: SCREEN_LAYOUT.content, alignSelf: 'center', padding: 16, paddingBottom: 40, gap: 20 },
   
   heroCard: { padding: 20, borderRadius: 20 },
   heroHeader: { flexDirection: 'row', gap: 12, marginBottom: 24 },

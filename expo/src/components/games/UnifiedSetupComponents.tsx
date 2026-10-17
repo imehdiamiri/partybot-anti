@@ -29,7 +29,7 @@ export function SetupPlayersSection({
   onShufflePlayers
 }: SetupPlayersSectionProps) {
   return (
-    <View style={styles.card}>
+    <View testID="setup-players-card" style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.titleContainer}>
           <IconSymbol name="person.2.fill" size={16} color={Colors.green} />
@@ -88,6 +88,8 @@ export function SetupPlayersSection({
             />
             <TouchableOpacity
               style={styles.clearPlayerBtn}
+              accessibilityRole="button"
+              accessibilityLabel={`${playerCount > minPlayers ? 'Remove' : 'Clear'} player ${index + 1}`}
               onPress={() => {
                 if (playerCount > minPlayers) {
                   if (onRemovePlayer) {
@@ -106,7 +108,7 @@ export function SetupPlayersSection({
                 }
               }}
             >
-              <IconSymbol name="xmark" size={10} color="rgba(255,255,255,0.5)" />
+              <View style={styles.clearPlayerIcon}><IconSymbol name="xmark" size={10} color="rgba(255,255,255,0.5)" /></View>
             </TouchableOpacity>
           </View>
         ))}
@@ -221,6 +223,8 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -239,9 +243,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   stepperButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -277,11 +281,19 @@ const styles = StyleSheet.create({
   },
   playerInput: {
     flex: 1,
+    minWidth: 0,
     color: 'white',
     fontSize: 15,
     fontWeight: '500',
   },
   clearPlayerBtn: {
+    flexShrink: 0,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearPlayerIcon: {
     width: 22,
     height: 22,
     borderRadius: 11,

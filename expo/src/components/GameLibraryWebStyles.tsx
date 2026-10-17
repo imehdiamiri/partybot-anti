@@ -10,6 +10,13 @@ export const GAME_LIBRARY_CSS = `
   gap: 12px;
 }
 [data-testid="games-grid"] > div { min-width: 0; }
+@media (max-width: 379px) {
+  [data-testid="library-card-title"] { font-size: 16px !important; line-height: 20px !important; min-height: 40px !important; }
+  [data-testid="library-card-icon"] { width: 36px !important; height: 36px !important; }
+  [data-testid="library-card-icon"] > * { font-size: 36px !important; }
+  [data-testid="library-card-icon"] svg { width: 36px !important; height: 36px !important; }
+  [data-testid="library-card-mode"] { width: 18px !important; height: 18px !important; }
+}
 @media (min-width: 612px) {
   [data-testid="games-grid"] { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 }

@@ -1,3 +1,4 @@
+import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
@@ -30,12 +31,12 @@ export default function ToolsScreen() {
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}>
         
         {/* Header */}
-        <View style={styles.header}>
+        <View testID="page-toolbar" style={[styles.header, screenLayout.toolbar]}>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Tools</Text>
           </View>
           <View style={{ flex: 1 }} />
-          <TouchableOpacity testID="tools-profile-btn" accessibilityRole="button" onPress={() => router.push('/profile')} activeOpacity={0.85}>
+          <TouchableOpacity testID="tools-profile-btn" accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/profile')} activeOpacity={0.85}>
             <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
               <IconSymbol name="person.crop.circle" size={22} color="white" />
             </LiquidGlass>
@@ -123,8 +124,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    maxWidth: 900,
+    paddingHorizontal: SCREEN_LAYOUT.gutter,
+    maxWidth: SCREEN_LAYOUT.tools,
     width: '100%',
     alignSelf: 'center',
   },
@@ -149,8 +150,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   profileButton: {
-    width: 44,
-    height: 44,
+    width: SCREEN_LAYOUT.touchTarget,
+    height: SCREEN_LAYOUT.touchTarget,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,3 +1,5 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
+import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { Colors } from '@/src/theme/Colors';
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
@@ -71,23 +73,10 @@ function NativeCreateLobbyScreen({ id }: { id: string }) {
       <Stack.Screen options={{ headerShown: false }} />
       <AppBackgroundView />
       
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity 
-          onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} 
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 8,
-            paddingVertical: 6,
-          }}
-        >
-          <IconSymbol name="chevron.left" size={18} color="#007AFF" />
-          <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '400', marginLeft: 2 }}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{game.name} — Setup</Text>
-        <View style={styles.headerButton} />
-      </View>
+      <ScreenHeader title={game.name} subtitle="Create Room" maxWidth={SCREEN_LAYOUT.form}
+        leftLabel="Back" leftIcon="chevron.left" onLeftPress={() => {
+          if (router.canGoBack()) router.back(); else router.replace('/');
+        }} />
 
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
@@ -134,16 +123,7 @@ function NativeCreateLobbyScreen({ id }: { id: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  headerButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontFamily: 'Viral-Black', fontSize: 20, color: 'white' },
-  scrollContent: { padding: 16, paddingBottom: 40, gap: 16 },
+  scrollContent: { maxWidth: SCREEN_LAYOUT.form, width: '100%', alignSelf: 'center', padding: 16, paddingBottom: 40, gap: 16 },
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   errorText: { fontSize: 17, color: 'white', marginBottom: 20 },
   heroSection: {

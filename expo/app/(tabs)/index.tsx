@@ -1,3 +1,5 @@
+import { BrandWordmark } from '@/src/components/BrandWordmark';
+import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Platform, LayoutChangeEvent, useWindowDimensions } from 'react-native';
@@ -21,7 +23,7 @@ export default function GamesScreen() {
   const { width: windowWidth } = useWindowDimensions();
 
   // Constrain by maxWidth 1200 and paddingHorizontal 16 (32 total)
-  const maxInnerWidth = Math.min(windowWidth, 1200) - 32;
+  const maxInnerWidth = Math.min(windowWidth, SCREEN_LAYOUT.library) - SCREEN_LAYOUT.gutter * 2;
   const [measuredWidth, setMeasuredWidth] = useState<number>(0);
   const [selectedLibraryTab, setSelectedLibraryTab] = useState<'Games' | 'Ideas'>('Games');
   const [selectedModeFilter, setSelectedModeFilter] = useState<GameMode | null>(null);
@@ -53,7 +55,7 @@ export default function GamesScreen() {
     numCols = 2;
     gridGap = 12;
   }
-  const columnWidth = Math.max(140, Math.floor((effectiveWidth - (numCols - 1) * gridGap - 0.5) / numCols));
+  const columnWidth = Math.max(1, Math.floor((effectiveWidth - (numCols - 1) * gridGap - 0.5) / numCols));
 
   return (
     <View style={styles.container}>
@@ -63,9 +65,9 @@ export default function GamesScreen() {
         ref={scrollViewRef}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}
       >
-        <View style={styles.header}>
+        <View testID="page-toolbar" style={[styles.header, screenLayout.toolbar]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image testID="home-logo-img" source={require('@/assets/images/8playo-logo.png')} style={styles.logoImage} resizeMode="contain" />
+            <BrandWordmark testID="home-logo-img" />
           </View>
           <View style={{ flex: 1 }} />
           {Platform.OS !== 'web' && (
@@ -76,7 +78,7 @@ export default function GamesScreen() {
               </LiquidGlass>
             </TouchableOpacity>
           )}
-          <TouchableOpacity testID="home-profile-btn" accessibilityRole="button" onPress={() => router.push('/profile')} activeOpacity={0.85}>
+          <TouchableOpacity testID="home-profile-btn" accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/profile')} activeOpacity={0.85}>
             <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
               <IconSymbol name="person.crop.circle" size={22} color="white" />
             </LiquidGlass>
@@ -204,8 +206,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    maxWidth: 1200,
+    paddingHorizontal: SCREEN_LAYOUT.gutter,
+    maxWidth: SCREEN_LAYOUT.library,
     width: '100%',
     alignSelf: 'center',
   },
@@ -241,8 +243,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   profileButton: {
-    width: 40,
-    height: 40,
+    width: SCREEN_LAYOUT.touchTarget,
+    height: SCREEN_LAYOUT.touchTarget,
     justifyContent: 'center',
     alignItems: 'center',
   },

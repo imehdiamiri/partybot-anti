@@ -1,3 +1,4 @@
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
 import { Colors } from '@/src/theme/Colors';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator, Share } from 'react-native';
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   headerButtonRight: { width: 80, height: 44, justifyContent: 'center', alignItems: 'flex-end' },
   headerTitle: { fontFamily: 'Viral-Black', fontSize: 20, color: 'white' },
   leaveText: { color: Colors.red, fontSize: 15, fontWeight: '500' },
-  scrollContent: { padding: 16, paddingBottom: 40, gap: 16 },
+  scrollContent: { width: '100%', maxWidth: SCREEN_LAYOUT.content, alignSelf: 'center', padding: 16, paddingBottom: 40, gap: 16 },
   
   roomCard: {
     backgroundColor: 'rgba(52, 199, 89, 0.1)',
