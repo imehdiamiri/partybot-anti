@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 /**
- * PartyBot — Unified design tokens
+ * 8Playo — Unified design tokens
  * iOS: Liquid Glass (translucent stacks on top of mesh background)
  * Android: Material 3 Expressive (elevated tonal surfaces)
  */

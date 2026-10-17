@@ -45,7 +45,7 @@ function LoginForm() {
   return (
     <form onSubmit={submit} className="card p-8 w-full max-w-sm space-y-4">
       <div>
-        <div className="text-xl font-semibold">PartyBot Admin</div>
+        <div className="text-xl font-semibold">8Playo Admin</div>
         <div className="text-sm text-muted mt-1">Sign in with your Firebase admin account</div>
       </div>
       <input

@@ -72,7 +72,7 @@ export default function Shell({ email, children }: { email: string; children: Re
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <div className="text-base font-semibold">PartyBot Admin</div>
+        <div className="text-base font-semibold">8Playo Admin</div>
         <form action={actionSignOut}>
           <button type="submit" className="text-xs text-muted hover:text-white">
             Sign out
@@ -96,7 +96,7 @@ export default function Shell({ email, children }: { email: string; children: Re
         } lg:translate-x-0`}
       >
         <div className="flex items-center justify-between mb-6 px-2">
-          <div className="text-lg font-semibold">PartyBot Admin</div>
+          <div className="text-lg font-semibold">8Playo Admin</div>
           <button
             aria-label="Close menu"
             onClick={() => setOpen(false)}

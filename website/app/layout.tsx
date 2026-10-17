@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "PartyBot Admin",
-  description: "PartyBot admin dashboard",
+  title: "8Playo Admin",
+  description: "8Playo admin dashboard",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

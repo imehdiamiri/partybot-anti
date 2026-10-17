@@ -1,13 +1,15 @@
+import { AppConstants } from '@/src/constants/AppConstants';
+
 export function redirectSystemPath({
   path,
 }: { path: string; initial: boolean }) {
   try {
     if (path.startsWith('/') && !path.startsWith('//')) return path;
     const url = new URL(path);
-    if (url.protocol === 'https:' && ['partybot.games', 'www.partybot.games'].includes(url.hostname)) {
+    if (url.protocol === 'https:' && AppConstants.Invite.allowedHosts.includes(url.hostname)) {
       return url.pathname + url.search;
     }
-    if (url.protocol === 'partybot:') {
+    if (url.protocol === 'eightplayo:' || url.protocol === 'partybot:') {
       return `/${url.hostname}${url.pathname}`.replace(/\/{2,}/g, '/') + url.search;
     }
     if (url.protocol === 'invite:') {

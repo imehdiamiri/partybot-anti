@@ -1,10 +1,10 @@
-# Continue PartyBot on another computer
+# Continue 8Playo on another computer
 
 ## Get the current source
 
 ```sh
-git clone https://github.com/imehdiamiri/partybot-anti.git PartyBot
-cd PartyBot
+git clone https://github.com/imehdiamiri/partybot-anti.git 8Playo
+cd 8Playo
 git status
 git log -3 --oneline
 ```

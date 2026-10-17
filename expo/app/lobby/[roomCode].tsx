@@ -93,7 +93,7 @@ function NativeLobbyScreen() {
     if (!roomCode) return;
     try {
       await Share.share({
-        message: `Join my PartyBot game! Room code: ${roomCode}`,
+        message: `Join my 8Playo game! Room code: ${roomCode}`,
       });
     } catch (e) {
       console.log('share cancelled', e);

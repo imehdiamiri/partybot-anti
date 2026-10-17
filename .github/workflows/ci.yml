@@ -1,4 +1,4 @@
-name: PartyBot CI
+name: 8Playo CI
 
 on:
   push:
@@ -135,7 +135,7 @@ jobs:
     timeout-minutes: 15
     environment: web-production
     concurrency:
-      group: partybot-web-production
+      group: 8playo-web-production
       cancel-in-progress: false
     permissions:
       contents: read

@@ -45,8 +45,8 @@ const ART_LOCAL = {
   hero: require('@/assets/images/onboarding/onboarding-4.png'),
 } as const;
 
-export const PARTYBOT_LOGO_URL = null; // kept for compat, logo is now text-based
-export const PARTYBOT_MASCOT_URL = require('@/assets/images/onboarding/onboarding-4.png');
+export const BRAND_LOGO_URL = null; // kept for compat, logo is now text-based
+export const BRAND_MASCOT_URL = require('@/assets/images/onboarding/onboarding-4.png');
 
 type PageTheme = {
   accent: string;
@@ -69,7 +69,7 @@ const THEMES: PageTheme[] = [
   {
     accent: Colors.green,
     glow: ['rgba(48, 209, 88, 0.5)', 'rgba(50, 173, 230, 0.25)', 'rgba(0, 0, 0, 0)'],
-    eyebrow: 'ENTER PARTYBOT',
+    eyebrow: 'ENTER 8PLAYO',
     title: "We came to\nblow up\nthe room",
     subtitle: 'Quick, loud party games — ready in seconds.',
     art: ART_LOCAL.party,
@@ -293,7 +293,7 @@ export default function OnboardingScreen() {
           {THEMES.map((theme, i) => (
             <View key={i} style={[styles.page, { width, paddingTop: insets.top + 16 }]}>
               <View style={styles.brandRow}>
-                  <Image source={require('@/assets/images/partybot-logo.png')} style={styles.brandLogo} resizeMode="contain" />
+                  <Image source={require('@/assets/images/8playo-logo.png')} style={styles.brandLogo} resizeMode="contain" />
                 </View>
 
                 <View style={[styles.stageContainer, i === 2 && keyboardVisible && { flex: 0, minHeight: 160 }]}>

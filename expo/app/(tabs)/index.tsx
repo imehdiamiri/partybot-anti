@@ -65,7 +65,7 @@ export default function GamesScreen() {
       >
         <View style={styles.header}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image testID="home-logo-img" source={require('@/assets/images/partybot-logo.png')} style={styles.logoImage} resizeMode="contain" />
+            <Image testID="home-logo-img" source={require('@/assets/images/8playo-logo.png')} style={styles.logoImage} resizeMode="contain" />
           </View>
           <View style={{ flex: 1 }} />
           {Platform.OS !== 'web' && (

@@ -583,7 +583,7 @@ export default function ColorMatchGame() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-6 text-center text-xs text-gray-600">
-        <p>© PlayVirals - Color Match Web Edition</p>
+        <p>© 8Playo - Color Match Web Edition</p>
       </footer>
     </main>
   );

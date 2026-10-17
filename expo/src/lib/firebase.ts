@@ -1,5 +1,5 @@
 /**
- * Firebase — Canonical realtime backend for PartyBot.
+ * Firebase — Canonical realtime backend for 8Playo.
  *
  * Services initialized:
  *  - Auth (with AsyncStorage persistence on RN)

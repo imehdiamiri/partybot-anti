@@ -346,7 +346,7 @@ export const useFriendsStore = create<FriendsState>()(
 
       getInviteShareMessage: () => {
         const code = get().inviteCode;
-        return `Join me on PartyBot 🎮 — use my invite code ${code} to get +10 ★: https://www.partybot.games/invite?code=${code}`;
+        return `Join me on 8Playo 🎮 — use my invite code ${code} to get +10 ★: https://8playo.com/invite?code=${code}`;
       },
     }),
     {

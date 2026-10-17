@@ -17,8 +17,8 @@ export function AdBanner() {
     let active = true; let listener: number | undefined; let registered = false;
     // AdSense delivers the published Google CMP through its official tag.
     // Auto ads are disabled in the account; no placement is queued before consent.
-    if (!document.getElementById('partybot-adsense')) {
-      const script = document.createElement('script'); script.id = 'partybot-adsense'; script.async = true;
+    if (!document.getElementById('8playo-adsense')) {
+      const script = document.createElement('script'); script.id = '8playo-adsense'; script.async = true;
       script.crossOrigin = 'anonymous';
       script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`;
       document.head.appendChild(script);
@@ -48,9 +48,9 @@ export function AdBanner() {
       if (!active || target.dataset.adsbygoogleStatus) return;
       try { ((window as AdWindow).adsbygoogle ??= []).push({}); } catch { setFailed(true); }
     };
-    let script = document.getElementById('partybot-adsense') as HTMLScriptElement | null;
+    let script = document.getElementById('8playo-adsense') as HTMLScriptElement | null;
     if (!script) {
-      script = document.createElement('script'); script.id = 'partybot-adsense'; script.async = true;
+      script = document.createElement('script'); script.id = '8playo-adsense'; script.async = true;
       script.crossOrigin = 'anonymous';
       script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`;
       document.head.appendChild(script);

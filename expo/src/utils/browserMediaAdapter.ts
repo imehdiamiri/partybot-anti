@@ -2,7 +2,7 @@ import { normalizeVoiceChannels } from './voiceGain';
 import { isWeb } from './platform';
 
 /**
- * Browser-safe Media & Audio Adapter for PlayBot Expo Web.
+ * Browser-safe Media & Audio Adapter for 8Playo Expo Web.
  *
  * Rules:
  * 1. NEVER access `window`, `navigator`, `AudioContext`, or `MediaRecorder` at module evaluation time.

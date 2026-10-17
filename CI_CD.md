@@ -1,8 +1,8 @@
-# PartyBot CI/CD
+# 8Playo CI/CD
 
 ## Workflows
 
-- **PartyBot CI** runs on relevant pushes to `main`, pull requests, and manual
+- **8Playo CI** runs on relevant pushes to `main`, pull requests, and manual
   dispatch. Documentation-only and historical benchmark changes do not trigger it.
   It checks tracked source for targeted credential patterns, runs TypeScript and
   app tests, audits production dependency trees at high/critical severity, exports
@@ -101,7 +101,7 @@ GitHub runners. CI success is not a real-device UI/audio/purchase certification.
   New compatible preview binaries are required before native OTA; this does not
   block the separate Expo Go SDK 57 track or web deployment.
 - Documentation-only commits skip automatic CI. Before publishing mobile from
-  such a new commit, manually run PartyBot CI on main; the exact-SHA guard will
+  such a new commit, manually run 8Playo CI on main; the exact-SHA guard will
   explain this requirement rather than silently reusing a different revision.
 
 ## Runtime boundaries and scale review (2026-10-01)

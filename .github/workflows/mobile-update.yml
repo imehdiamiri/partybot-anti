@@ -15,7 +15,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: partybot-mobile-${{ inputs.track }}
+  group: 8playo-mobile-${{ inputs.track }}
   cancel-in-progress: false
 jobs:
   update:

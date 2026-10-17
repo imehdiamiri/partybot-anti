@@ -242,7 +242,7 @@ export default function GameCatalog() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-                PlayVirals
+                8Playo
               </h1>
               <p className="text-[10px] text-purple-400 font-medium uppercase tracking-wider">Party Games</p>
             </div>
@@ -415,7 +415,7 @@ export default function GameCatalog() {
               <p className="text-xs text-gray-400 leading-relaxed mb-6">
                 {selectedGame.description}
                 <br/><br/>
-                This game requires multiplayer synchronization, microphone input, or advanced hardware features only available in the official PlayVirals app.
+                This game requires multiplayer synchronization, microphone input, or advanced hardware features only available in the official 8Playo app.
               </p>
 
               {/* Play Store buttons */}
@@ -442,7 +442,7 @@ export default function GameCatalog() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-12 text-center text-xs text-gray-500 mt-20">
-        <p className="mb-4">© {new Date().getFullYear()} PlayVirals. All rights reserved.</p>
+        <p className="mb-4">© {new Date().getFullYear()} 8Playo. All rights reserved.</p>
         <div className="flex justify-center gap-6">
           <Link href="/privacy" className="hover:text-gray-300">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-gray-300">Terms of Service</Link>

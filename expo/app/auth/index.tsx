@@ -76,7 +76,7 @@ export default function AuthScreen() {
           >
             {/* Hero Section */}
             <View style={styles.heroSection}>
-              <Image source={require('@/assets/images/partybot-logo.png')} style={{ width: 220, height: 52 }} resizeMode="contain" />
+              <Image source={require('@/assets/images/8playo-logo.png')} style={{ width: 220, height: 52 }} resizeMode="contain" />
               <Text style={styles.appSubtitle}>
                 Create an account or sign in,{'\n'}earn rewards & play with friends
               </Text>

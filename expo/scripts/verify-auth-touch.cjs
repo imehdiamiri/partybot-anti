@@ -28,7 +28,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     await page.setRequestInterception(true);
     page.on('request', request => {
       const url = new URL(request.url());
-      if (url.hostname !== 'partybot.games') return void request.abort();
+      if (url.hostname !== '8playo.com') return void request.abort();
       let file = path.resolve(root, '.' + (decodeURIComponent(url.pathname) === '/' ? '/index.html' : decodeURIComponent(url.pathname)));
       if (!file.startsWith(root + path.sep)) return void request.abort();
       if (!fs.existsSync(file) && !path.extname(file)) file += '.html';
@@ -38,7 +38,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     });
     const narrow=process.env.REVIEW_WIDTH==='320';
     await page.setViewport({width:narrow?320:390,height:narrow?568:844,isMobile:true,hasTouch:true});
-    await page.goto('https://partybot.games/game/color_match/setup', { waitUntil: 'networkidle0' });
+    await page.goto('https://8playo.com/game/color_match/setup', { waitUntil: 'networkidle0' });
     await page.waitForSelector('[data-testid="onboarding-continue"]');
     assert.equal(await page.$('[data-testid="setup-start-button"]'), null, 'deep links cannot bypass onboarding');
     await wait(800);

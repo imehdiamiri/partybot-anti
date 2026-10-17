@@ -50,9 +50,9 @@ export function ResultsScoreboard({
   const share = async () => {
     try {
       await Share.share({ message: [
-        `${winner ? winner.name + ' won' : 'Finished'} ${shareGameName} on PartyBot!`,
+        `${winner ? winner.name + ' won' : 'Finished'} ${shareGameName} on 8Playo!`,
         winner ? 'Score: ' + winner.primary : '',
-        'Play with friends → https://partybot.games',
+        'Play with friends → https://8playo.com',
       ].filter(Boolean).join('\n') });
     } catch {}
   };

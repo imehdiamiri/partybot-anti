@@ -55,7 +55,7 @@ export default function InviteScreen() {
     if (!code) return;
     try {
       await Share.share({
-        message: `Join me on PartyBot! Use my invite code: ${code} to get +10 Stars when you sign up.`,
+        message: `Join me on 8Playo! Use my invite code: ${code} to get +10 Stars when you sign up.`,
       });
     } catch (error) {
       console.log(error);

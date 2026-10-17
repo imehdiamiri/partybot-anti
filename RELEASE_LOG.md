@@ -1,5 +1,37 @@
 # Release log
 
+### October 17: 8Playo rebrand source and domain configuration
+
+- Source checkpoint: `checkpoint/2026-10-17-before-8playo` at `f5fee26`.
+  Completed source batch is identified by tag `8playo-rebrand-source-2026-10-17`.
+- Replaced active app/web branding, sharing URLs, legal page branding, icons,
+  splash and onboarding artwork. Wordmark preserves the previous style with
+  purple 8/final o and white Play. Canonical URL: https://8playo.com.
+- Source native version is now 1.3.0 because icons, associated domains and URI
+  schemes changed. Existing package/bundle IDs, purchases, Firebase/EAS projects,
+  persistent storage and legacy incoming links remain compatible. New scheme is
+  `eightplayo` (URI schemes cannot start with a digit). No incompatible 1.2.0 OTA.
+- GoDaddy confirmed A @ = 199.36.158.100, TXT @ = hosting-site=partyplay-8,
+  CNAME www = partyplay-8.web.app. Firebase confirmed custom domain setup for
+  8playo.com; both root and www certificate issuance remains pending inspection.
+  www redirects to root. Auth authorized domains include both new hosts; Google
+  sign-in public project name was saved as 8Playo. Old hosts remain supported.
+- Owner declined paid mailbox and then deferred forwarding setup. The approved
+  existing contact address is info@digiget.com. No mailbox purchase, forwarding
+  account creation or MX mutation was performed.
+- Validation: TypeScript passed; nativeIntent/homeGridHydration passed (2 suites,
+  16 tests), and one-off `APP_VARIANT=preview expo export --platform web` passed
+  (91 static routes). No persistent development server or load benchmark.
+- Publication remains blocked by existing dependency gate: production app audit
+  reports 23 high / 12 moderate findings propagated from upstream braces and
+  node-forge advisories. Registry latest remains braces 3.0.3 / node-forge 1.4.0;
+  neither root advisory has a patched compatible version. No gate bypass added.
+  Last confirmed live Hosting release remains October 1 (652718); this source
+  batch is not a claimed web or mobile deployment. New native builds are required.
+- Prior Android preview build 13cf32fb-802a-4d1e-9549-0fccd22fefd6 is now FINISHED,
+  version 1.2.0, from older source 46a7ad3. It does not contain this rebrand and is
+  not a production store release. No new build/update ID exists for this batch.
+
 ### October 7 backend publication receipt
 
 - Dependency source: `6b5a1dee5ad15a5de523e074f5e6086daeac41c8`.
