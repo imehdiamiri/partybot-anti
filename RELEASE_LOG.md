@@ -1,5 +1,31 @@
 # Release log
 
+### October 17: dependency security fixes and robot-free release preparation
+
+- Recovery checkpoint: `checkpoint/2026-10-17-before-dependency-fix` at `68b2a7e`.
+  Source batch tag: `8playo-security-robotfree-2026-10-17`.
+- No patched official braces/node-forge release exists for the recorded root
+  advisories. Added private, licensed local source forks with minimal fixes:
+  bounded brace/paren/AST recursion and strict nested RSA DigestAlgorithm
+  element/NULL validation. Provenance and patch scope: `expo/vendor/SECURITY_PATCHES.md`.
+  Registry audit does not cover private source; mandatory CI regression tests
+  supplement the unchanged production high/critical audit gate, without waivers.
+- Clean lock generation and `npm ci --ignore-scripts` succeeded. SDK remains 57;
+  Expo Router and React test renderer are pinned to compatible SDK/React versions.
+  Compatible transitive updates also remove current development high/critical
+  reports. Production audit: 0 high/critical, 18 moderate propagated findings.
+- Seven security tests passed, including crafted malformed RSA signatures,
+  deeply nested patterns under upstream's length cap, external/cyclic ASTs,
+  transitive caller resolution and real Expo certificate signing/verification.
+  Earlier local full app suite passed 329 tests; final exact-source CI is pending.
+- Removed robot from icon/favicons and all three affected onboarding scenes;
+  preserved typography-only wordmark/splash with purple 8/o. Removed obsolete
+  duplicate mascot asset directory. Android adaptive art uses safe-area padding.
+  Asset prompts and canonical paths are recorded in `BRANDING.md`.
+- Version/runtime 1.3.0 requires new native binaries; existing Android preview
+  is 1.2.0, iOS simulator is 1.1.1. No incompatible OTA or store release is claimed.
+  Web/Expo release receipts will be recorded only after service confirmation.
+
 ### October 17: 8Playo rebrand source and domain configuration
 
 - Source commit `6f663fb3036d3bcfb8c172b6c4bde5267ac79ae1` and both recovery/rebrand

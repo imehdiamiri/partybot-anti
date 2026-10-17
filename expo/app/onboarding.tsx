@@ -46,7 +46,7 @@ const ART_LOCAL = {
 } as const;
 
 export const BRAND_LOGO_URL = null; // kept for compat, logo is now text-based
-export const BRAND_MASCOT_URL = require('@/assets/images/onboarding/onboarding-4.png');
+export const BRAND_HERO_URL = require('@/assets/images/onboarding/onboarding-4.png');
 
 type PageTheme = {
   accent: string;

@@ -72,6 +72,9 @@ jobs:
         working-directory: expo
       - run: npm run typecheck
         working-directory: expo
+      - name: Verify vendored security fixes against exploit regressions
+        run: node --test scripts/security-forks.test.cjs
+        working-directory: expo
       - run: npm test -- --runInBand
         working-directory: expo
       - run: npm audit --omit=dev --audit-level=high
