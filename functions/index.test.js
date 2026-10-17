@@ -414,6 +414,36 @@ describe('Invite payout recovery', () => {
     expect((await originalRef(`users/${inviter}/wallet/balance`).get()).val()).toBe(37);
   });
 
+  test('aborted reservation resumes the persisted receipt instead of a speculative losing receipt', async () => {
+    const db = admin.database();
+    const originalRef = db.ref.bind(db);
+    let injected = false;
+    jest.spyOn(db, 'ref').mockImplementation(path => {
+      const ref = originalRef(path);
+      if (path === `users/${uid}`) {
+        const transaction = ref.transaction.bind(ref);
+        ref.transaction = async (...args) => {
+          if (injected) return transaction(...args);
+          injected = true;
+          const result = await transaction(...args);
+          const stale = result.snapshot.val();
+          stale.inviteReward.receiptId = '00000000-0000-4000-8000-000000000000';
+          // Model another caller's winning commit plus this caller's aborted,
+          // speculative response; only the persisted receipt may be paid.
+          return { committed: false, snapshot: { val: () => stale } };
+        };
+      }
+      return ref;
+    });
+    await expect(testEnv.wrap(functions.redeemInvite)(request)).resolves.toEqual({ credited: 0, inviterCredited: 30 });
+    const user = (await originalRef(`users/${uid}`).get()).val();
+    const payer = (await originalRef(`users/${inviter}`).get()).val();
+    expect(user.wallet.balance).toBe(10);
+    expect(user.inviteReward.status).toBe('complete');
+    expect(Object.keys(payer.inviteRewardReceipts)).toEqual([user.inviteReward.receiptId]);
+    expect(payer.wallet.balance).toBe(37);
+  });
+
   test.each([false, true])('completion confirms server state after stale transaction response (account deleted: %s)', async deleted => {
     const db = admin.database();
     const originalRef = db.ref.bind(db);

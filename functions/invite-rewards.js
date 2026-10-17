@@ -59,7 +59,10 @@ async function settleInvite(db, uid, code, inviterUid, inviteeReward, inviterRew
     u.inviteReward = { version: 1, code, inviterUid, receiptId, status: 'pending', at: now };
     return u;
   });
-  const claim = resumableClaim(reserved.snapshot.val(), code);
+  // An aborted reservation can expose another speculative local transaction.
+  // Resume only the reservation confirmed by the server, never its cached ID.
+  const reservedUser = reserved.committed ? reserved.snapshot.val() : (await userRef.get()).val();
+  const claim = resumableClaim(reservedUser, code);
   if (!claim) throw new HttpsError('failed-precondition', 'You already redeemed an invite code.');
   const credited = reserved.committed ? inviteeReward : 0;
   if (claim.status === 'complete') return { credited, inviterCredited: 0 };

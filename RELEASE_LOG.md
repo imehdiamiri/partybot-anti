@@ -25,6 +25,11 @@
   and deleted-account regressions with exactly-once balance assertions. Backend
   source is prepared/tested in CI only; no functions/rules deployment is included
   in the web-domain release.
+- Follow-up diagnosis also covers aborted reservations exposing speculative
+  losing receipt IDs: resume only the server-confirmed reservation. Added an
+  exact-receipt payment regression. Focused local Emulator tests passed 16/16;
+  five isolated repeats of the existing four-call concurrency regression passed.
+  Emulators shut down after each run; no real backend data or load benchmark.
 
 ### October 17: purple 8 / white Playo artwork revision
 
