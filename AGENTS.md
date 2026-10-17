@@ -36,8 +36,8 @@ User-facing updates are Persian; code and technical release records are English.
   Firebase project partyplay-8 and existing Expo project
   b7949f49-aef7-4963-9d95-5eb35280136e (owner imehdiamiri).
 - Web: one-off Expo export, node sync-web-build.js, then Firebase Hosting only.
-  The new canonical domain is https://8playo.com (DNS configured October 17;
-  certificate issuance and rebrand publication must be verified separately).
+  The canonical domain is https://8playo.com (DNS/HTTPS confirmed October 17;
+  rebrand source publication remains blocked by the recorded dependency gate).
   Preserve incoming legacy partybot.games links. Deploy backend targets only for an actual
   scoped backend correction, explicitly selecting that target.
 - Mobile: inspect existing channels/builds first, then publish compatible updates.

@@ -2,6 +2,15 @@
 
 ### October 17: 8Playo rebrand source and domain configuration
 
+- Source commit `6f663fb3036d3bcfb8c172b6c4bde5267ac79ae1` and both recovery/rebrand
+  tags were pushed successfully to the existing origin. Exact-source CI receipt:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/39049567995.
+  Source guard, TypeScript, all 329 app tests (46 suites), scope checks and backend
+  checks passed. The app production dependency audit failed and Hosting correctly
+  skipped publication; no successful CI/deployment is claimed.
+- Firebase project display name and Android/iOS/Web Client app nicknames now
+  use 8Playo; the console confirmed the saved names. Project/app identifiers are
+  unchanged. Public Google sign-in project name is confirmed as 8Playo.
 - Source checkpoint: `checkpoint/2026-10-17-before-8playo` at `f5fee26`.
   Completed source batch is identified by tag `8playo-rebrand-source-2026-10-17`.
 - Replaced active app/web branding, sharing URLs, legal page branding, icons,
@@ -13,8 +22,10 @@
   `eightplayo` (URI schemes cannot start with a digit). No incompatible 1.2.0 OTA.
 - GoDaddy confirmed A @ = 199.36.158.100, TXT @ = hosting-site=partyplay-8,
   CNAME www = partyplay-8.web.app. Firebase confirmed custom domain setup for
-  8playo.com; both root and www certificate issuance remains pending inspection.
-  www redirects to root. Auth authorized domains include both new hosts; Google
+  8playo.com. Root and www now show Connected; public HTTPS GET returned 200,
+  and https://www.8playo.com resolves to https://8playo.com/. This serves the
+  existing October 1 content until a successful publication. Auth authorized
+  domains include both new hosts; Google
   sign-in public project name was saved as 8Playo. Old hosts remain supported.
 - Owner declined paid mailbox and then deferred forwarding setup. The approved
   existing contact address is info@digiget.com. No mailbox purchase, forwarding
