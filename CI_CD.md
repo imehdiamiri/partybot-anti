@@ -39,6 +39,12 @@ Repository variables:
   Google web client ID from the existing project. Private keys and RevenueCat keys
   are excluded. Public Firebase client configuration is not an authorization secret;
   backend rules still enforce access.
+- Web `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN` is `8playo.com`. The web-config guard
+  rejects the legacy domain. Keep `https://8playo.com` and
+  `https://8playo.com/__/auth/handler` on the existing Google web OAuth client,
+  and 8playo.com in Firebase Auth authorized domains. Hosting serves the reserved
+  `/__/auth` helpers directly; do not rewrite them to the app or remove old
+  OAuth redirect entries while older clients may still use them.
 - `WEB_DEPLOY_ENABLED`: `true` enables the tested main deployment; `false` runs CI
   without cloud mutation. Enabled after the owner's explicit IAM approval.
 - `FIREBASE_WIF_PROVIDER`, `FIREBASE_DEPLOY_SERVICE_ACCOUNT`: approved Google

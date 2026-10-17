@@ -5,6 +5,9 @@ for (const name of names) {
   if (typeof config[name] !== 'string' || !config[name] || /[\r\n]/.test(config[name])) throw new Error(`Missing/invalid public client configuration: ${name}`);
 }
 if (config.EXPO_PUBLIC_FIREBASE_PROJECT_ID !== 'partyplay-8') throw new Error('Unexpected Firebase project');
+// Keep Google's account chooser on the verified public brand domain.
+// Its /__/auth/handler must also remain registered on the existing OAuth client.
+if (config.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN !== '8playo.com') throw new Error('Web authentication must use 8playo.com');
 // Allowlist public client configuration only. Private and RevenueCat keys cannot enter this export.
 fs.writeFileSync('expo/.env.local', names.map(n => `${n}=${JSON.stringify(config[n])}`).join('\n') + '\n');
 console.log('Public web client configuration installed; values omitted.');

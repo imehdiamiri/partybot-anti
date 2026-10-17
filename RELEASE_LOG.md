@@ -1,5 +1,22 @@
 # Release log
 
+### October 17: custom Google sign-in domain
+
+- Recovery checkpoint: `checkpoint/2026-10-17-before-auth-domain` at `252802e`.
+  Source release tag: `8playo-google-auth-domain-2026-10-17`.
+- Google Cloud confirmed OAuth client saved for the existing web client:
+  added origin `https://8playo.com` and redirect
+  `https://8playo.com/__/auth/handler`. Existing client, secret and legacy
+  entries retained; no new scopes or accounts were created.
+- Firebase Auth settings confirm 8playo.com and www.8playo.com are authorized.
+  The custom domain's reserved /__/auth/handler and /__/auth/iframe return 200.
+- GitHub EXPO_PUBLIC_CONFIG now contains authDomain 8playo.com; other public
+  fields preserved. Local ignored environment overrides match. The web-config
+  guard rejects the old domain to prevent regressions in future exports.
+- This is a web configuration release; native Google login, Firebase databases,
+  rules, functions and mobile binaries are unchanged. Deployment and browser
+  account-chooser confirmation will be recorded after service success.
+
 ### October 17: purple 8 / white Playo artwork revision
 
 - Recovery: `checkpoint/2026-10-17-before-white-wordmark` at `32eab0e`.
