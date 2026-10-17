@@ -1,5 +1,31 @@
 # Release log
 
+### October 17: shared layout delivery receipt
+
+- Source `bf0e0008aa8eb4fddecd4813031cc6474f09c453` passed app/backend
+  gates and Hosting deployment without a retry:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/39068280605.
+- https://8playo.com/ci-release.json confirms the same source, entry
+  `entry-11c66516ec74dbd84d0f3cf4d4f6de38.js`, SHA-256
+  `d57262645ef67f7bd0878e5fd65c411e946293b68cc7f8fcf05f4d546cb49dbc`.
+- Reloaded the real Chrome site with the owner's existing session. The library
+  visibly ends with Pass & Guess and Ten Tangle; the wordmark/profile align to
+  the library edges. Opened Drum Challenge Setup and confirmed its centered
+  header and Back/Start/content frame. No gameplay/account data was changed.
+  Live screenshots were saved under ignored expo/.expo and shown in the chat.
+- Expo Go SDK 57 publication succeeded for the exact tested source:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/39068503573.
+  EAS update:view confirms group `6b771745-d607-4f32-9711-fffae18dd7b8`,
+  runtime `exposdk:57.0.0`, created 2026-10-17T20:56:25Z. iOS update ID
+  `01a14ba6-cdab-70af-99a9-006f44657bb9`; Android update ID
+  `01a14ba6-cdab-7dcb-8db5-619e1233e00a`. Dashboard:
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/6b771745-d607-4f32-9711-fffae18dd7b8
+  Native installed binaries/store submissions remain unchanged; physical-device
+  UI acceptance and the existing iOS signing blocker remain separate.
+- Delivery tag: `8playo-shared-layout-delivered-2026-10-17`. Code/checkpoint tags
+  and receipts are on origin. Rollback requires republishing the reverted source
+  separately to Hosting and the matching Expo runtime.
+
 ### October 17: shared navigation geometry and library ordering
 
 - Recovery checkpoint: `checkpoint/2026-10-17-before-layout-standardization`
