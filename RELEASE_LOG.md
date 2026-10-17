@@ -13,8 +13,25 @@
 - Local export reached asset persistence but hit Windows EPERM creating an
   existing dist route directory; no release was made from that partial export.
   Reuse the clean GitHub CI artifact for Hosting publication instead.
-- Web/mobile publication receipts will be recorded after service confirmation.
-  Launcher/splash changes need new native binaries; OTA cannot replace installed
+- Published source: `d5e5376c7c4d0000661db58a98a9addd47623d10`.
+  CI + Hosting succeeded: https://github.com/imehdiamiri/partybot-anti/actions/runs/39060847778.
+  Initial backend run had one concurrent invite-retry failure (77/78 passed).
+  Retried only failed jobs for the unchanged source: backend and all dependent
+  checks passed. No test suppression or backend source/deployment change.
+  This intermittent backend test remains a separate reliability concern.
+- Live https://8playo.com/ci-release.json confirms source d5e5376 and entry
+  `entry-0b934148b100155949cc6248c5a0b041.js`. Browser review confirmed white
+  Playo in the header/final hero and the unchanged editable page-3 name form.
+  Review used a temporary unsaved display name; no user account was created.
+- Expo Go publication succeeded for Android and iOS, `exposdk:57.0.0`, separate
+  branch/channel `expo-go-sdk57`, update group `d27bb821-0c5b-4034-8d50-69f3577300e6`.
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/39061335985.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/d27bb821-0c5b-4034-8d50-69f3577300e6
+- Android preview build accepted: `1d2a14cc-cc25-4948-a51c-09050e332fed`, source
+  d5e5376, 1.3.0 / versionCode 2, remote existing keystore reused. Last observed
+  IN_PROGRESS; no completed artifact or store submission claimed at this entry.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/1d2a14cc-cc25-4948-a51c-09050e332fed
+- Launcher/splash changes need new native binaries; OTA cannot replace installed
   launcher icons. iOS signing is still unconfirmed; last noninteractive retry
   failed credential validation (remote build number advanced to 5, no build ID).
 
