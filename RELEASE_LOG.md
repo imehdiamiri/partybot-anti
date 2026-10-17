@@ -1,5 +1,48 @@
 # Release log
 
+### October 17: 8Playo delivery receipts
+
+- Web source `95e4170c3ee05068e7fd615973665ea769719b47` passed all CI/deploy jobs:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/39052482199.
+  https://8playo.com/ci-release.json confirms that commit, entry
+  `entry-fc774364d0bd9d9124af139ec2a04f43.js`, SHA-256
+  `bba5e84f6034f6809729b3e552b3733cffa38ebbe97e64e03b9292d143e9200a`.
+  Browser confirms the managed 8Playo title. Live privacy/terms return 200,
+  contain 8Playo and approved info@digiget.com; inactive mailbox is absent.
+  The deployed 8playo-icon.png exactly matches the robot-free source bytes.
+- Expo Go publication succeeded for Android and iOS, runtime `exposdk:57.0.0`,
+  branch/channel `expo-go-sdk57`, source `e7744bd1b823a973c3a9ac499587ac974f0dd50d`:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/39052239103.
+  Confirmed update group: `8c27f6db-1778-43e6-a188-b0b1bb53e8da`.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/8c27f6db-1778-43e6-a188-b0b1bb53e8da
+  Web-only title follow-up does not change native behavior. Expo Go still lacks
+  native Google login/real purchases; no incompatible custom-binary OTA sent.
+- Android preview build `4173092b-d29e-43c1-ad33-afb434e150b5` is FINISHED,
+  source e7744bd, version/runtime 1.3.0, versionCode 2, package com.partybot.
+  APK manifest independently confirms application label 8Playo/version 1.3.0;
+  apksigner verification succeeded. Artifact SHA-256:
+  `227c57db852c15eed21216ab6ce7bef609d4741ccc86f26fc8d8e6b6646755fd`.
+  https://expo.dev/artifacts/eas/h_irRz1dSIVOV3LWyargsa7eUC23f9qp9ODGI_W383E.apk
+  This is an internal preview APK with preview configuration, not a Google Play
+  store submission or a claimed physical-device acceptance test.
+- Expo project display name is confirmed as 8Playo. Removed its legacy robot
+  dashboard avatar; app icon assets themselves are included in the APK/update.
+  Dashboard upload of a custom avatar was unavailable because browser local-file
+  access is disabled; no broad browser file permission was enabled.
+- Independent iOS binary remains blocked by missing provisioning credentials.
+  Both internal and TestFlight noninteractive attempts failed at credential
+  setup. The owner has an interactive EAS iOS credentials window for Apple login
+  and signing setup. No iOS build ID, TestFlight submission or Store release is
+  claimed. Existing simulator 1.1.1 is not a compatible 1.3.0 release binary.
+- Build-upload hygiene: root `.easignore` now excludes local `.security` reports
+  and caches. Official EAS Ignore engine confirms exclusion, while retaining
+  required Firebase native client configs and patched vendor source. This
+  packaging/docs follow-up changes no tested app/backend runtime code.
+- Source guard passed; production audit remains 0 high/critical, 18 moderate.
+  Private forks require ongoing review; npm audit alone does not assess their
+  source. Mandatory exploit tests and provenance remain committed. No load tests,
+  security threshold weakening, backend deployment or persistent server.
+
 ### October 17: successful web publication and browser title follow-up
 
 - Source `e7744bd1b823a973c3a9ac499587ac974f0dd50d` passed full CI and deployed

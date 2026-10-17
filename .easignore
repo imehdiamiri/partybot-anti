@@ -38,3 +38,4 @@ GoogleService-Info.plist
 !expo/google-services.json
 !expo/GoogleService-Info.plist
 /.backups/
+/.security/

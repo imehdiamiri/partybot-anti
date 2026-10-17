@@ -36,8 +36,8 @@ User-facing updates are Persian; code and technical release records are English.
   Firebase project partyplay-8 and existing Expo project
   b7949f49-aef7-4963-9d95-5eb35280136e (owner imehdiamiri).
 - Web: one-off Expo export, node sync-web-build.js, then Firebase Hosting only.
-  The canonical domain is https://8playo.com (DNS/HTTPS confirmed October 17;
-  rebrand source publication remains blocked by the recorded dependency gate).
+  The canonical domain is https://8playo.com (DNS/HTTPS and 8Playo web release
+  confirmed October 17; exact web/mobile source receipts are in RELEASE_LOG.md).
   Preserve incoming legacy partybot.games links. Deploy backend targets only for an actual
   scoped backend correction, explicitly selecting that target.
 - Mobile: inspect existing channels/builds first, then publish compatible updates.
@@ -48,8 +48,9 @@ User-facing updates are Persian; code and technical release records are English.
 - Expo Go preview is now supported separately on SDK 57: set APP_VARIANT=expo-go
   when running EAS Update, use branch/channel expo-go-sdk57 and environment preview.
   The dynamic config derives exposdk:57.0.0 only for this variant. Native custom
-  binaries continue using appVersion (source now 1.3.0; existing 1.2.0 binaries
-  require separate compatibility handling); never cross-publish.
+  binaries continue using appVersion (source/Android preview now 1.3.0;
+  independent iOS signing is still pending). Never cross-publish to older
+  1.2.0/1.1.1 binaries.
   Google native login and real purchases are unavailable in Expo Go; email login
   and games can be previewed there. Keep the native-module guards intact.
 - Stop only for genuine missing account/signing/device input or blocked permissions;
