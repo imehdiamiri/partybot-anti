@@ -1,5 +1,29 @@
 # Release log
 
+### October 18: continuous card text layout during stack promotion
+
+- Recovery checkpoint: `checkpoint/2026-10-18-before-card-text-animation` at
+  `59e45c4`. Source tag: `8playo-card-text-motion-2026-10-18`.
+- Fixed a visible text jump in Tools prepared-card decks: background cards
+  omitted the language toolbar/translation, then inserted them only when promoted
+  to the front. Their centered text area consequently shrank at animation end.
+  Every visible CardFace now retains identical content geometry, including the
+  selected translation and toolbar, before/during/after promotion. Stable card
+  keys preserve the existing text node; no extra delayed layout or fade hides it.
+- Background language controls stay disabled, unfocusable and hidden from
+  accessibility; only the front translation announces changes. Existing swipe
+  timing, reduced-motion handling, filtering, shuffle and navigation are retained.
+- `npm run typecheck`, one-off web export and `git diff --check` passed.
+  `node scripts/verify-card-motion.cjs` passed 36 promotions over six built-in
+  decks, English/Persian and 320x568, 390x844, 1440x900 viewports. It samples
+  text layout each animation frame, verifies stable node identity/geometry and
+  promotion, selected translation preview and inactive background controls.
+  Mock identity/local export only, no real account, server or load benchmark.
+  Screenshot inspected at phone width. Browser checks do not certify physical
+  iOS/Android rendering; no native dependency/config/runtime change is included.
+- CI, Hosting and compatible Expo Go receipts follow after service confirmation.
+  Installed mobile/store builds remain separate; iOS signing remains pending.
+
 ### October 17: shared layout delivery receipt
 
 - Source `bf0e0008aa8eb4fddecd4813031cc6474f09c453` passed app/backend

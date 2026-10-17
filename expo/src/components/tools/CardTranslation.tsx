@@ -15,10 +15,11 @@ export function translatedCard(cardId: string, language: CardLanguage): string |
   return bank[cardId]?.[language];
 }
 
-export function CardLanguageButtons({ selected, onSelect }: { selected: CardLanguage | null; onSelect: (language: CardLanguage | null) => void }) {
+export function CardLanguageButtons({ selected, onSelect, active = true }: { selected: CardLanguage | null; onSelect: (language: CardLanguage | null) => void; active?: boolean }) {
   return <View style={styles.languages}>
     {CARD_LANGUAGES.map(language => <Pressable key={language.code}
-      testID={`card-language-${language.code}`} accessibilityRole="radio"
+      testID={active ? `card-language-${language.code}` : undefined} accessibilityRole="radio"
+      disabled={!active} focusable={active} tabIndex={active ? 0 : -1}
       accessibilityLabel={`Translate to ${language.label}`} accessibilityState={{ checked: selected === language.code }}
       onPress={() => onSelect(selected === language.code ? null : language.code)}
       style={[styles.language, selected === language.code && styles.selected]}>
@@ -26,13 +27,13 @@ export function CardLanguageButtons({ selected, onSelect }: { selected: CardLang
     </Pressable>)}
   </View>;
 }
-export function CardTranslationText({ cardId, language }: { cardId: string; language: CardLanguage | null }) {
+export function CardTranslationText({ cardId, language, active = true }: { cardId: string; language: CardLanguage | null; active?: boolean }) {
   if (!language) return null;
   const text = translatedCard(cardId, language);
   const rtl = CARD_LANGUAGES.find(l => l.code === language)?.rtl;
   return <View style={styles.translation}>
     {text && <Text style={styles.note}>Translation · preview</Text>}
-    <Text testID="card-translation-text" accessibilityLiveRegion="polite"
+    <Text testID={active ? 'card-translation-text' : undefined} accessibilityLiveRegion={active ? 'polite' : 'none'}
       style={[styles.text, { writingDirection: rtl ? 'rtl' : 'ltr' }]}>
       {text || 'Offline translations are available for built-in cards only.'}
     </Text>

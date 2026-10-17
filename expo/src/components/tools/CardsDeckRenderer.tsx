@@ -345,7 +345,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             ]}
             {...panResponder.panHandlers}
           >
-            <CardFace card={card} category={category} language={language} onLanguage={setLanguage} />
+            <CardFace card={card} category={category} language={language} onLanguage={setLanguage} active />
             <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampLike, { opacity: nextOpacity }]}>
               <Text style={styles.stampText}>NEXT</Text>
             </Animated.View>
@@ -399,6 +399,10 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       return (
         <Animated.View
           key={card.id}
+          testID={`stack-card-${offset}`}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          aria-hidden
           style={[
             styles.cardStyle,
             {
@@ -416,7 +420,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
           ]}
           pointerEvents="none"
         >
-          <CardFace card={card} category={category} />
+          <CardFace card={card} category={category} language={language} onLanguage={setLanguage} />
         </Animated.View>
       );
     }).reverse();
@@ -538,19 +542,21 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   );
 }
 
-function CardFace({ card, category, language = null, onLanguage }: { card: PartyCard, category: any; language?: CardLanguage | null; onLanguage?: (language: CardLanguage | null) => void }) {
+function CardFace({ card, category, language, onLanguage, active = false }: { card: PartyCard; category: any; language: CardLanguage | null; onLanguage: (language: CardLanguage | null) => void; active?: boolean }) {
   return (
-    <View style={styles.cardContainer}>
+    <View style={styles.cardContainer} testID={`card-face-${card.id}`}>
       <View style={[styles.cardAccent, { backgroundColor: category.accentColor }]} />
       <View style={styles.cardCorner}>
         <View style={[styles.cornerDot, { backgroundColor: category.accentColor }]} />
         <Text style={styles.cornerText}>{card.subtype.toUpperCase()}</Text>
       </View>
       <ScrollView style={{ flex: 1, zIndex: 2 }} contentContainerStyle={styles.cardContent} nestedScrollEnabled>
-        <Text testID={onLanguage ? 'card-english-text' : undefined} style={styles.cardText}>{card.text}</Text>
-        {onLanguage && <CardTranslationText cardId={card.id} language={language} />}
+        <Text testID={active ? 'card-english-text' : `card-preview-text-${card.id}`} style={styles.cardText}>{card.text}</Text>
+        <CardTranslationText cardId={card.id} language={language} active={active} />
       </ScrollView>
-      {onLanguage && <CardLanguageButtons selected={language} onSelect={onLanguage} />}
+      {/* Keep the same content/controls mounted behind the front card: adding
+          this row only on promotion would shrink the text area and snap it up. */}
+      <CardLanguageButtons selected={language} onSelect={onLanguage} active={active} />
       <View style={styles.cardFooter}>
         <IconSymbol name="chevron.left" size={12} color="rgba(0,0,0,0.3)" />
         <Text style={styles.cardFooterText}>left: next · right: previous</Text>
