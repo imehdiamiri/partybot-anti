@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { Stack } from 'expo-router';
+import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useRef } from 'react';
 import { AppState, AppStateStatus, View } from 'react-native';
@@ -149,6 +150,7 @@ export default function RootLayout() {
 
   return (
     <RootErrorBoundary>
+      <Head><title>8Playo — Party Games with Friends</title></Head>
       {!isInitialized || !settingsReady || (!fontsLoaded && !fontError && !isWeb) ? (
         <View style={{ flex: 1, backgroundColor: 'black' }} />
       ) : (

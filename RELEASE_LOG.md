@@ -1,5 +1,22 @@
 # Release log
 
+### October 17: successful web publication and browser title follow-up
+
+- Source `e7744bd1b823a973c3a9ac499587ac974f0dd50d` passed full CI and deployed
+  Hosting successfully: https://github.com/imehdiamiri/partybot-anti/actions/runs/39051884177.
+  Live https://8playo.com/ci-release.json confirms this commit and entry
+  `entry-8bec59a4388c9804b5bd3aca74898969.js`, SHA-256
+  `de859ed2033e1054ad58db18a33842cad5358437df5d3f71d0c2c15f1be575f8`.
+  Live onboarding visually confirms robot-free art and purple 8/o wordmark.
+- Live browser inspection found Expo Router's empty managed title preceding the
+  static HTML title. Moved the title into Router Head at the root layout so SSR
+  and hydration use the same non-empty brand title. No native config change.
+- Mobile workflow for e7744bd is in progress. Android 1.3.0 preview build
+  4173092b-d29e-43c1-ad33-afb434e150b5 was accepted (not yet a successful APK).
+  Internal and TestFlight iOS attempts require interactive signing setup; no
+  suitable provisioning credentials were available. Apple setup was handed to
+  the owner in an interactive EAS credentials window. No store submission.
+
 ### October 17: dependency security fixes and robot-free release preparation
 
 - Recovery checkpoint: `checkpoint/2026-10-17-before-dependency-fix` at `68b2a7e`.

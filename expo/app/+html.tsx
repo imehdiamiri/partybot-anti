@@ -5,7 +5,6 @@ export default function Root({ children }: PropsWithChildren) {
   return <html lang="en">
     <head>
       <meta charSet="utf-8" />
-      <title>8Playo — Party Games with Friends</title>
       <meta name="description" content="Play quick party games with friends on 8Playo. Memory, timing, color and sound challenges, plus tools for your next get-together." />
       <meta name="application-name" content="8Playo" />
       <link rel="icon" type="image/png" href="/8playo-icon.png" />
