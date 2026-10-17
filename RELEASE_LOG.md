@@ -1,5 +1,23 @@
 # Release log
 
+### October 17: purple 8 / white Playo artwork revision
+
+- Recovery: `checkpoint/2026-10-17-before-white-wordmark` at `32eab0e`.
+  Source release tag: `8playo-white-wordmark-2026-10-17`.
+- Built-in imagegen edited the canonical wordmark, opaque app icon and final
+  onboarding hero: only numeral 8 stays purple; all of Playo is white. Exported
+  header/web copies, splash, adaptive foreground and favicons from those images.
+  Prompt set and canonical paths are recorded in BRANDING.md.
+- The owner cancelled the onboarding page-3 badge redesign before publication;
+  its existing name form and illustration remain byte-for-byte unchanged.
+- Local export reached asset persistence but hit Windows EPERM creating an
+  existing dist route directory; no release was made from that partial export.
+  Reuse the clean GitHub CI artifact for Hosting publication instead.
+- Web/mobile publication receipts will be recorded after service confirmation.
+  Launcher/splash changes need new native binaries; OTA cannot replace installed
+  launcher icons. iOS signing is still unconfirmed; last noninteractive retry
+  failed credential validation (remote build number advanced to 5, no build ID).
+
 ### October 17: 8Playo delivery receipts
 
 - Web source `95e4170c3ee05068e7fd615973665ea769719b47` passed all CI/deploy jobs:
