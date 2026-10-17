@@ -1,5 +1,31 @@
 # Release log
 
+### October 18: card motion web delivery receipt
+
+- Final source `02829297ebdd69918a5d36f06517215945e435d0` passed full CI and
+  Hosting: https://github.com/imehdiamiri/partybot-anti/actions/runs/39071273672.
+  This manual full-web run superseded cancelled duplicate backend-only push run
+  39071273920. All app/backend gates passed; no assertion or security gate removed.
+- https://8playo.com/ci-release.json confirms source above, entry
+  `entry-5f8808152cb26f5ef44c955a3397c9cc.js`, SHA-256
+  `e4134e655cecf08df0eb6da4e0ad47751724c39988feaf816b2d3b84662b2a39`.
+- Live Chrome Talk deck: next preview and promoted front card retained identical
+  card ID, text offsetTop 234, text height 112 and text area height 546. Clicked
+  Next and verified the result; screenshot saved locally and shown in chat.
+  Offline regression separately sampled 36 English/Persian promotions at three
+  viewport sizes. No physical-device acceptance or store update is claimed.
+- Expo Go publication succeeded for the same final source through workflow
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/39071649965.
+  Group `6a4f70e9-07cf-404e-bd66-d7d045adb0a7`, runtime `exposdk:57.0.0`;
+  iOS `01a14bcf-ba59-703d-b3f1-b7a91cadde79`, Android
+  `01a14bcf-ba59-716f-9d14-fb6c2ca0994c`, confirmed by EAS update:view.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/6a4f70e9-07cf-404e-bd66-d7d045adb0a7
+- Delivery tag: `8playo-card-motion-delivered-2026-10-18`; source/checkpoint and
+  release records synced to origin. Git rollback alone does not roll back
+  Hosting or Expo updates: republish the reverted source to each matching runtime.
+  No production Cloud Functions/rules were deployed; the test timeout affects
+  only the local/CI emulator regression. Native signing blocker is unchanged.
+
 ### October 18: continuous card text layout during stack promotion
 
 - Release CI 39070838157 passed the app gate but the unchanged RevenueCat
