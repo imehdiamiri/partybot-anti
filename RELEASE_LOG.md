@@ -1,5 +1,35 @@
 # Release log
 
+### October 17: verified branded Google account chooser and Hosting delivery
+
+- Published source `d58b3f424c31db946f9a74a787d70621872a4cde` passed CI and
+  Hosting: https://github.com/imehdiamiri/partybot-anti/actions/runs/39065493949.
+  App/backend checks succeeded, including 81 backend regressions. The initial
+  post-deploy receipt check observed a previous CDN revision; only the failed
+  deployment job was rerun using the same tested artifact, then verification
+  succeeded. No security gate was bypassed or weakened.
+- https://8playo.com/ci-release.json confirms this source and entry
+  `entry-3c95c12c29d0f937eb93deb46e3367e2.js`, SHA-256
+  `51a9b4faedb7863fe0e043376c71682f19e44ac86a54ebde4a6f1e2a26335a14`.
+- Opened Google sign-in from the newly deployed /auth page. The real account
+  chooser visibly displays `to continue to 8playo.com`; its redirect_uri and
+  app_domain point to 8playo.com. No account selection, consent or completed
+  authentication was performed. Screenshot capture of the popup timed out;
+  browser DOM/accessibility verified the visible label. Saved OAuth settings
+  screenshot confirms the new origin/handler and was shown in the chat.
+- Source-only invite concurrency repair was checked locally (16 focused tests,
+  plus five prior four-call repeats) and in CI. No Cloud Functions or rules were
+  deployed: that isolated backend correction still needs its own scoped release.
+  Web release did not alter installed mobile binaries or Expo Go updates.
+- Prior Android icon build `1d2a14cc-cc25-4948-a51c-09050e332fed` is now confirmed
+  FINISHED (1.3.0 preview, source d5e5376). Download:
+  https://expo.dev/artifacts/eas/WBMgktOIPg1RqGawbLr4l0fV-DjU4bMDZV0VoL0VBxk.apk
+  No Play submission or physical-device acceptance is claimed. iOS independent
+  signing remains pending owner completion; unrelated to the web domain change.
+- Delivery tag: `8playo-google-auth-delivered-2026-10-17`. Checkpoints and source
+  commits remain available on origin for rollback; OAuth/client environment and
+  Hosting require their own rollback, not only a Git revert.
+
 ### October 17: custom Google sign-in domain
 
 - Recovery checkpoint: `checkpoint/2026-10-17-before-auth-domain` at `252802e`.
