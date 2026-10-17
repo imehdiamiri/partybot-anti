@@ -338,7 +338,9 @@ describe('RevenueCat Sync & Concurrency', () => {
 
     // Sum of credited across calls must be exactly 250 (50 + 200)
     expect(res1.credited + res2.credited).toBe(250);
-  });
+    // RTDB retries contested transactions with backoff; a shared CI emulator can
+    // exceed Jest's 5s default. Keep exact balance/receipt assertions above.
+  }, 20000);
 });
 
 describe('Invite payout recovery', () => {

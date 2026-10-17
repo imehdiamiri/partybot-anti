@@ -2,6 +2,15 @@
 
 ### October 18: continuous card text layout during stack promotion
 
+- Release CI 39070838157 passed the app gate but the unchanged RevenueCat
+  transaction-conflict emulator regression exceeded Jest's default 5s limit
+  twice (initial job 117507930825, targeted retry 117508758887). Both failures
+  are timeouts, not assertion failures. Isolated checkpoint:
+  `checkpoint/2026-10-18-before-ci-contention-timeout` at `4db0d3b`.
+  Give only this multi-transaction contention test 20s for RTDB retry backoff;
+  all exact balance, receipt and per-call credit assertions remain unchanged.
+  No production backend code/configuration or test skipping was introduced.
+
 - Recovery checkpoint: `checkpoint/2026-10-18-before-card-text-animation` at
   `59e45c4`. Source tag: `8playo-card-text-motion-2026-10-18`.
 - Fixed a visible text jump in Tools prepared-card decks: background cards
