@@ -1,5 +1,34 @@
 # Release log
 
+### October 21: store records and public support/deletion preparation
+
+- Checkpoint `checkpoint/2026-10-21-before-store-setup` at 2aee8b2; fetched origin,
+  clean tree and zero divergence before the batch. Work recorded in STORE_RELEASE.md.
+- Registered Apple explicit App ID com.partybot / 8Playo under 9R9TPVS9UL, with
+  Associated Domains and Sign in with Apple matching existing native config.
+  Created App Store Connect app 6825284815 / SKU 8playo-ios. Saved version 1.3.0
+  listing text, Games / Casual, subtitle and privacy URL. Prepare for Submission,
+  manual release; no review submission or store publication claimed.
+- Developer account shows Program License Agreement Accepted October 21; this
+  task did not accept it. Connect stale agreement warning cleared after reload.
+- Prepared Google Play create form (8Playo, available com.partybot, Game, Free,
+  English U.S.) and requested owner approval for its three formal declarations.
+  Prepared RevenueCat iOS form; Save rejects absent IAP P8/key ID/issuer.
+- EAS metadata confirms no current physical iOS store binary. TestFlight signing
+  workflow reached Apple password prompt; owner login/2FA requested directly in
+  terminal. Preview APK remains 09edb25b-c6aa-4872-b579-6cccdf7ec618, test ads,
+  not an AAB. No new native build/OTA or RevenueCat guard bypass.
+- Added accessible static support and external account-deletion instruction pages
+  with active info@digiget.com contact, ownership verification and subscription
+  cancellation distinction. No account deletion is performed by opening a page.
+  Hosting publication is pending CI service confirmation at this source commit;
+  current app web/mobile receipts below remain valid. No backend/rules deployment.
+- Checks before commit: git diff --check and source guard. Reuse CI for actual
+  export/Hosting confirmation; no new app-specific test or load benchmark added.
+- Pending: owner Play declarations, iOS signing login, store purchase credentials,
+  ratings/privacy/review access and EU trader information, device screenshots and
+  acceptance, testing/store review, then verified store URLs for AdMob linking.
+
 ### October 21: AdMob app readiness and native consent branding
 
 - Recovery checkpoint: `checkpoint/2026-10-21-before-admob-readiness` at

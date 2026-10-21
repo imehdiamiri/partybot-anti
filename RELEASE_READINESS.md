@@ -1,5 +1,22 @@
 # Release and advertising readiness
 
+## Store preparation — 2026-10-21
+
+Created iOS App Store Connect app **6825284815** (8Playo, com.partybot,
+DIGIGET LTD) after registering its explicit App ID and existing capabilities.
+Version 1.3.0 is Prepare for Submission; basic metadata/category/privacy URL
+saved. Updated Developer Program License Agreement is shown as accepted today
+in the developer account; stale Connect warning cleared after reload. This
+supersedes the earlier No Apps/unsigned-agreement observations below.
+
+Google Play create form is prepared but requires owner's three formal
+declarations. EAS iOS signing reached Apple password prompt; owner must complete
+login/2FA directly. No current physical iOS store binary or Play AAB exists.
+RevenueCat still requires real store credentials/products. No store review or
+AdMob store association is claimed. See STORE_RELEASE.md for the current
+records, public listing values and remaining dependencies. New support/deletion
+instruction pages await a confirmed Hosting receipt in RELEASE_LOG.md.
+
 ## AdMob follow-up — 2026-10-21
 
 - Both existing Android and iOS records still show **Requires review / Limited

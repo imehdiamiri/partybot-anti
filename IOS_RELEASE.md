@@ -1,4 +1,19 @@
-# PartyBot iOS release
+# 8Playo iOS release
+
+## October 21, 2026 update
+
+This section supersedes historical notes below. Source version/runtime is 1.3.0.
+Registered explicit `com.partybot` under DIGIGET LTD with Associated Domains and
+Sign in with Apple. Created App Store Connect app **6825284815**, SKU `8playo-ios`.
+Version 1.3.0 is Prepare for Submission; English metadata and privacy URL saved,
+manual release selected. Updated Program License Agreement shows Accepted
+October 21 in the developer account; the stale Connect warning cleared on reload.
+
+EAS still has no current physical iOS store build. Signing configuration reached
+the Apple password prompt; owner must complete login/2FA directly. No signing
+completion, TestFlight upload or review submission is claimed. RevenueCat needs
+the actual In-App Purchase key/issuer, products and sandbox verification. Keep
+the production guard. See STORE_RELEASE.md for current records and next steps.
 
 ## Confirmed account and application
 
@@ -34,8 +49,8 @@ npx eas-cli build --platform ios --profile testflight --non-interactive --no-wai
 ```
 
 Record the returned build ID and verify FINISHED before submitting. Never select
-an old SDK54 simulator artifact. Submission must target the confirmed PartyBot
-App Store Connect app ID; that numeric ID has not yet been established.
+an old SDK54 simulator artifact. Submission must target the confirmed 8Playo
+App Store Connect app ID `6825284815`.
 
 ## Remaining external prerequisites
 
