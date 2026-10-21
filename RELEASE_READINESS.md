@@ -1,5 +1,36 @@
 # Release and advertising readiness
 
+## AdMob follow-up — 2026-10-21
+
+- Both existing Android and iOS records still show **Requires review / Limited
+  ad serving / Add store to lift limit**, with no associated store/package ID.
+  Each retains its one active banner. Renamed both records from PartyBot to
+  8Playo; application IDs remain `~6209477204` (Android) and `~1614877640` (iOS)
+  under publisher `pub-9376144248169220`, matching the existing native config.
+- Policy Center reports **No current issues**. This does not override the
+  separate app-readiness/store-link requirement or certify real impressions.
+- Published the existing European message as **8Playo advertising privacy**,
+  confirmed Published / 2 apps / October 21. Both selected apps have privacy URL
+  `https://8playo.com/privacy`. Consent, Manage options and Do not consent remain
+  On; Close remains Off. No new purposes/vendors or unrelated app changes.
+- Public `https://8playo.com/app-ads.txt` returned HTTP 200 with the correct
+  DIRECT seller entry. Public availability is not Google crawl verification.
+  AdMob's app-ads.txt tab shows **No ad requests with app-ads.txt yet / No data
+  to display**, so no crawler or real-impression success is confirmed.
+- Google Play account still shows **Create your first app**. After the owner
+  signed in, App Store Connect / DIGIGET LTD shows **No Apps**, an updated Apple
+  Developer Program License Agreement requiring Account Holder acceptance,
+  and a trader-status requirement for EU distribution. Neither store currently
+  provides an app page to link in AdMob. No app-level review submission or
+  store approval is claimed; publishing/listing and correct store association
+  must precede the next AdMob readiness review step.
+- Android preview and TestFlight profiles intentionally use Google test units;
+  only the production variant selects the existing real banner IDs. Expo Go
+  cannot load native ads. UMP, Expo Go, runtime and production purchase guards
+  remain intact. Current production signing/store/RevenueCat and physical-device
+  acceptance blockers remain separate. This follow-up changes console metadata
+  and documentation only; no new web/native build or OTA is needed or claimed.
+
 ## Current advertising follow-up — 2026-10-21
 
 Latest located AdSense email is October 5, "Action needed: Your AdSense

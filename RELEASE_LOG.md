@@ -1,5 +1,35 @@
 # Release log
 
+### October 21: AdMob app readiness and native consent branding
+
+- Recovery checkpoint: `checkpoint/2026-10-21-before-admob-readiness` at
+  5f6aba2. Delivery tag: `8playo-admob-readiness-2026-10-21`.
+- Audited live AdMob Android/iOS records, banner units and Policy Center.
+  Renamed both existing PartyBot records to 8Playo without changing IDs/units.
+  Both remain Requires review / Limited ad serving / Add store to lift limit;
+  no store association. Policy Center says No current issues, which is separate
+  from app-readiness approval. Unrelated 888 Friends record was untouched.
+- Corrected both native CMP privacy URLs to https://8playo.com/privacy and
+  published the existing message as "8Playo advertising privacy". Google confirms
+  Published / 2 apps / Oct 21. Consent/Manage/Do not consent retained On, Close
+  Off; no consent-purpose/vendor expansion. Delivery may take up to one hour.
+- Google Play still has no apps. Owner-assisted Apple login succeeded; DIGIGET
+  LTD Apps also shows No Apps. Apple additionally requires Account Holder
+  acceptance of its updated Developer Program License Agreement and EU trader
+  status. No agreement accepted, store record fabricated or app approval claimed.
+- Checks: public app-ads.txt HTTP 200 and correct seller; matched live app/banner
+  IDs against existing config; confirmed preview/TestFlight test-ad selection,
+  production-only real units and Expo Go/UMP guards. UI screenshots saved locally
+  and shown in chat. No code/runtime/dependency changes, so no repeated app test
+  suite, export, backend deployment or new mobile build/update in this batch.
+  Existing web https://8playo.com and mobile receipts in the preceding entry
+  remain current. `git diff --check` passed before commit.
+  AdMob's app-ads.txt tab reports No ad requests with app-ads.txt yet / No data
+  to display; no verified crawler status or real impression is claimed.
+- Blockers: real store listings and association, app-ads.txt discovery/verification,
+  app review, production signing/purchase configuration and installed-device
+  acceptance. Do not replace test units in preview just to trigger live ads.
+
 ### October 21: music-free web/Expo Go and AdSense review request
 
 - Source ec9f8a67178ae8702e715e06d576f95aabf172ca passed app/backend gates
