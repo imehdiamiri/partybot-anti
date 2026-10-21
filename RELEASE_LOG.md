@@ -1,5 +1,32 @@
 # Release log
 
+### October 21: confirmed store-support web release and Apple IAP handoff
+
+- Source ea23df9e6786c190dfc30aace5afafe030a427b3 passed all existing app/backend
+  gates and Hosting: https://github.com/imehdiamiri/partybot-anti/actions/runs/39585694057.
+  Live https://8playo.com/ci-release.json confirms that commit, unchanged app entry
+  entry-c6b6bc994e9cf787f79cb266a05ab519.js and SHA-256
+  e61056327c759e74c7369db49d498a79aab5c881301a2d3b74acbf8cfa5b1a5b.
+- https://8playo.com/support/ and https://8playo.com/delete-account/ both returned
+  HTTP 200 with correct content and working cross-links in browser inspection.
+  Support page visually checked; iOS listing Support URL saved to the live page.
+  Screenshots saved locally and shown in chat. No backend/rules or mobile publish.
+- Owner explicitly approved creating the team IAP key and sharing its P8 only
+  with the existing RevenueCat project. Apple confirms 8Playo RevenueCat key
+  Active / Downloaded October 21. The owner then confirmed the downloaded file
+  location; exact filename/size verified without reading private contents.
+- Automatic download-event observation timed out. Chrome internal Downloads URL
+  was blocked by browser security; no alternate browser/CDP workaround used.
+  Owner supplied its location instead. RevenueCat file chooser then timed out;
+  provided official Chrome extension file-upload permission instructions and
+  owner file-selection alternative. Provider save/upload is NOT confirmed.
+- Google Play legal declarations still await owner approval. EAS iOS login still
+  awaits owner password/2FA in the prepared terminal. No real store binary,
+  App Review submission, public store URL, AdMob association or app approval.
+- Receipt checks: git diff --check; CI success reused without repeating suites.
+  Delivery tag: 8playo-store-preparation-2026-10-21. Private P8 remains outside
+  Git in the owner's Downloads; no credential contents in code or release records.
+
 ### October 21: store records and public support/deletion preparation
 
 - Checkpoint `checkpoint/2026-10-21-before-store-setup` at 2aee8b2; fetched origin,

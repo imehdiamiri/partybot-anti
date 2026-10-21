@@ -15,7 +15,10 @@ login/2FA directly. No current physical iOS store binary or Play AAB exists.
 RevenueCat still requires real store credentials/products. No store review or
 AdMob store association is claimed. See STORE_RELEASE.md for the current
 records, public listing values and remaining dependencies. New support/deletion
-instruction pages await a confirmed Hosting receipt in RELEASE_LOG.md.
+instruction pages are published (CI/Hosting 39585694057; HTTP 200 confirmed).
+Owner-approved Apple IAP key is created/downloaded; RevenueCat upload remains
+pending Chrome file-upload permission or owner file selection. No key contents
+were put in code or chat. Store linking and approval remain outstanding.
 
 ## AdMob follow-up — 2026-10-21
 

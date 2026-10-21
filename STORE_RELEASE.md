@@ -17,7 +17,13 @@
   English (U.S.). Owner approval requested for Developer Program Policies,
   Play App Signing Terms of Service and US export compliance before Create.
 - RevenueCat `da5545b5` has no real provider. iOS form prepared; Save rejects
-  missing In-App Purchase P8 / key ID / issuer. No provider creation claimed.
+  missing In-App Purchase P8 / key ID / issuer. Owner subsequently approved
+  generating its dedicated Apple IAP key and uploading it only to this project.
+  Apple confirms **8Playo RevenueCat** Active / Downloaded October 21. Owner
+  confirmed the P8 is in Downloads; exact-file metadata verified without reading
+  its contents. Automated file chooser timed out; Chromium upload guidance
+  requires Allow access to file URLs or owner selection of the file. No key
+  contents entered code/chat/Git; no provider creation claimed yet.
 - EAS: Android preview APK `09edb25b-c6aa-4872-b579-6cccdf7ec618` FINISHED,
   1.3.0 / 2. Latest finished iOS `a8fb65ac-1aa5-4750-8243-038b7e31306e` is
   simulator-only, 1.1.1 / 3. Neither is a current store release artifact.
@@ -39,9 +45,10 @@
 | Support email | info@digiget.com |
 | Category / language | Games / Casual; English (U.S.) |
 
-Support/deletion pages are prepared in this batch. Replace the iOS homepage
-support URL with the dedicated support URL only after verifying live publication.
-Keep the developer website on 8playo.com for AdMob app-ads.txt discovery.
+Support/deletion pages are live: CI/Hosting 39585694057 succeeded from ea23df9;
+both paths returned HTTP 200 and were checked in the browser. Updated the iOS
+support URL to the dedicated live page and saved. Keep the developer website
+on 8playo.com for AdMob app-ads.txt discovery.
 
 ## Remaining sequence
 
