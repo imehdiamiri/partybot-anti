@@ -1,5 +1,31 @@
 # Release log
 
+### October 21: AdSense follow-up and unlicensed music removal
+
+- Latest located email: October 5, "Action needed: Your AdSense application".
+  Live AdSense pub-9376144248169220 console still reports account not approved /
+  meet program policies with a resubmit checkbox; no specific violation supplied.
+- Owner explicitly confirmed no license and authorized removal on Android/web
+  as well as iOS. Recovery: `checkpoint/2026-10-21-before-adsense-music-removal`
+  at c5c6978. Source tag: `8playo-unlicensed-music-removal-2026-10-21`.
+- Disabled the commercial mode on every platform, removed original source WAV,
+  checked-in legacy Hosting WAV and downloader. Current game keeps locally
+  synthesized Metronome. Old session settings safely fall back; guides/catalog
+  now describe the rhythm/silent-bars mechanic. Historical Git remains recoverable.
+- Added actual Hosting artifact filename/hash rejection before deployment to
+  prevent an old or renamed commercial recording from reappearing. This does not
+  erase cached assets or old installed binaries; compatible replacement/update
+  distribution remains separate from source removal and any store submission.
+- `npm run typecheck` passed. Focused Jest: 4 suites / 26 tests passed. Initial
+  sandbox transform-cache rename EPERM ran zero tests; reran outside that cache
+  restriction successfully. One-off web export succeeded; all 28 exported audio
+  assets scanned with no retired filename/original recording SHA-256.
+  `git diff --check` passed. No load benchmark or backend/rules change.
+- Public ads.txt/app-ads.txt HTTP 200 and seller ID match; privacy/terms HTTP 200
+  and current brand/contact match. Correcting these readiness risks is not proof
+  of Google's rejection reason or a guarantee of approval. Deployment, Expo Go,
+  replacement Android build and AdSense submission receipts follow confirmation.
+
 ### October 18: card motion web delivery receipt
 
 - Final source `02829297ebdd69918a5d36f06517215945e435d0` passed full CI and

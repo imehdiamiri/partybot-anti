@@ -1,5 +1,23 @@
 # Release and advertising readiness
 
+## Current advertising follow-up — 2026-10-21
+
+Latest located AdSense email is October 5, "Action needed: Your AdSense
+application". Live console still reports "Your account wasn't approved" and
+"Meet AdSense program policies" without a specific violation. This is an
+account rejection, not AdMob app approval or proof of a particular content issue.
+
+The owner confirmed no Whitney music license and authorized removing the mode
+from Android/web too. Current source excludes the original recording on every
+platform, retains Metronome and upgrades old session settings safely. Source
+also removes the checked-in legacy Hosting audio and downloader. An artifact
+check rejects the original recording even if renamed. Publication, resubmission
+and Android binary receipts follow in RELEASE_LOG.md after service confirmation.
+Public 8playo.com ads.txt/app-ads.txt and privacy/terms returned HTTP 200 with the
+expected seller ID or current brand/contact. These are readiness corrections,
+not a guarantee of AdSense approval. Historical store/signing/consent limitations
+below still apply unless superseded by newer release evidence.
+
 ## Current follow-up — 2026-10-07
 
 This section supersedes the historical September 29 statuses below.

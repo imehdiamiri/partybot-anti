@@ -1,4 +1,18 @@
-# Content and store review — 2026-09-29
+# Content and store review
+
+## October 21, 2026 — superseding music decision
+
+The owner confirmed there is no distribution license and authorized removal
+from web and Android too. The original recording, old checked-in Hosting copy
+and legacy commercial-music downloader have been removed from current source.
+All platforms disable the retired mode; saved legacy settings use Metronome.
+Exported Hosting assets are checked by filename and original audio SHA-256
+before upload. Exact release/build receipts are recorded in RELEASE_LOG.md.
+Older installed apps and browser caches are not remotely erased by a new
+commit or release. New Android distribution must use the replacement binary;
+no incompatible native OTA or claim of blanket content clearance is made.
+
+## Historical September 29 review
 
 This is a repository and release-risk audit, not a legal clearance or a guarantee
 of App Store / Google Play approval. No license documents for commercial music

@@ -26,7 +26,7 @@ test.each(['whitney','metronome'])('Drum %s plays one web hit for an accepted ta
  const {playWebDrumHit}=require('@/src/utils/browserMediaAdapter'); playWebDrumHit.mockClear();
  await act(async()=>{screen=create(React.createElement(DrumChallengeSession,{session:{players:[{id:'a',displayName:'Alice'}],gameConfig:{drumMode}}}));});
  await act(async()=>screen.root.findByType('Ready').props.onReady());
- if(drumMode==='metronome') await act(async()=>jest.advanceTimersByTime(require('@/src/utils/metronomeChallenge').metronomePlan('4/4').audibleMs));
+ await act(async()=>jest.advanceTimersByTime(require('@/src/utils/metronomeChallenge').metronomePlan('4/4').audibleMs));
  const tap=screen.root.findByProps({testID:'drum-challenge-tap-btn'}).props.onPress;
  await act(async()=>{tap();tap();});
  expect(playWebDrumHit).toHaveBeenCalledTimes(1);
@@ -55,7 +55,7 @@ test.each(['4/4','3/4','6/8','8/8'])('Metronome %s waits through listening and s
  expect(jest.getTimerCount()).toBe(0);
  jest.useRealTimers();
 });
-test('Drum plays the web track and credits three auto-finished attempts per player',async()=>{
+test('Drum defaults to metronome and credits three auto-finished attempts per player without a music track',async()=>{
  jest.useFakeTimers(); let screen; globalThis.drumPlayCalls=0;
  const press=async id=>act(async()=>screen.root.findByProps({testID:id}).props.onPress());
  await act(async()=>{screen=create(React.createElement(DrumChallengeSession,{session:{players:[{id:'a',displayName:'Alice'},{id:'b',displayName:'Bob'}]}}));});
@@ -69,7 +69,7 @@ test('Drum plays the web track and credits three auto-finished attempts per play
   if(player===0) await act(async()=>screen.root.findByType('Complete').props.onReady());
  }
  expect(screen.root.findByType('Scoreboard').props.entries).toHaveLength(2);
- expect(globalThis.drumPlayCalls).toBe(6);
+ expect(globalThis.drumPlayCalls).toBe(0);
  await act(async()=>screen.unmount()); jest.useRealTimers();
 });
 test('Imposter ties have an explicit escape outcome; final vote can change it',()=>{

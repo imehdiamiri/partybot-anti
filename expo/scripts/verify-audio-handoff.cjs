@@ -79,15 +79,14 @@ const assert = require('assert');
     }
     await page.setViewport({width:393,height:852,isMobile:true,hasTouch:true,deviceScaleFactor:1});
     await page.goto('https://layout.invalid/game/drum_challenge/setup',{waitUntil:'networkidle0'});
-    assert((await page.content()).includes('Whitney Houston'));
+    assert(!(await page.content()).includes('Whitney Houston'));
     await click('setup-start-button'); await click('game-guide-start');
     await click('game-ready-button');
-    await page.waitForFunction(()=>window.playedClips.some(clip=>clip.duration===12));
-    await page.screenshot({path:'.expo/whitney-playing.png'});
+    await page.screenshot({path:'.expo/metronome-playing.png'});
     await click('session-exit-button');
     await click('action-confirm');
-    await page.waitForFunction(()=>window.stoppedClips.includes(12));
-    console.log('Whitney mode: original recording plays and confirmed Exit stops it PASS');
+    assert(!(await page.evaluate(()=>window.playedClips.some(clip=>clip.duration===12))));
+    console.log('Metronome only: no retired commercial recording is played PASS');
     for (const [tool,button,duration,loop] of [['bottle','bottle-spin-btn',1.3,false],['dice','dice-roll-btn',1.35,false],['wheel','wheel-spin-btn',.18,false]]) {
       await page.goto('https://layout.invalid/'+tool,{waitUntil:'networkidle0'});
       await click(button);

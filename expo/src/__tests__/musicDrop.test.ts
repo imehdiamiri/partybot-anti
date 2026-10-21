@@ -1,29 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-import { createHash } from 'crypto';
+import { whitneyAvailable, whitneyAudio } from '../services/drumMusic';
+import { getGameHint } from '../constants/GameModeHints';
 
-test('Whitney mode preserves the original recording and scores its audible drum attack', () => {
-  const wav = fs.readFileSync(path.resolve(__dirname, '../../assets/sounds/whitney_raw.wav'));
-  expect(createHash('sha256').update(wav).digest('hex')).toBe('96d64b877cf3658ef0cbf95db82c2c89d51d26a172ba2e74e5abea6060d6669d');
-  expect(wav.toString('ascii', 0, 4)).toBe('RIFF');
-  const rate = wav.readUInt32LE(24);
-  expect(rate).toBe(22050);
-  expect(wav.readUInt32LE(40)).toBe(rate * 12 * 2);
-  const rms = (start: number, end: number) => {
-    let total = 0; let count = 0;
-    for (let i = Math.floor(start * rate); i < Math.floor(end * rate); i++) {
-      total += (wav.readInt16LE(44 + i * 2) / 32768) ** 2; count++;
-    }
-    return Math.sqrt(total / count);
-  };
-  expect(rms(9.80, 9.86)).toBeLessThan(0.02);
-  expect(rms(9.86, 9.91)).toBeGreaterThan(0.15);
-  const source = fs.readFileSync(path.resolve(__dirname, '../components/games/DrumChallengeSession.tsx'), 'utf8');
-  expect(source).toContain('beatTime: 9860');
-  const androidWeb = fs.readFileSync(path.resolve(__dirname, '../services/drumMusic.ts'), 'utf8');
+test('retired commercial recording is absent and old sessions use the metronome', () => {
+  expect(whitneyAvailable).toBe(false);
+  expect(whitneyAudio).toBeNull();
+  expect(fs.existsSync(path.resolve(__dirname, '../../assets/sounds/whitney_raw.wav'))).toBe(false);
+  expect(getGameHint('drum_challenge', { drumMode: 'whitney' }).title).toContain('Metronome');
+  expect(getGameHint('drum_challenge').title).toContain('Metronome');
+  expect(fs.existsSync(path.resolve(__dirname, '../../assets/sounds/metronome_challenge.wav'))).toBe(true);
   const ios = fs.readFileSync(path.resolve(__dirname, '../services/drumMusic.ios.ts'), 'utf8');
-  expect(androidWeb).toContain('sounds/whitney_raw.wav');
   expect(ios).not.toContain('require(');
   expect(ios).toContain('whitneyAvailable = false');
-  expect(source).toContain('!whitneyAvailable');
 });

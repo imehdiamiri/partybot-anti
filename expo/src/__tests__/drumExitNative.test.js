@@ -26,7 +26,7 @@ const makeSound=()=>({unloadAsync:jest.fn(async()=>{}),playAsync:jest.fn(async()
 const session={players:[{id:'a',displayName:'Alice'}],gameConfig:{drumMode:'whitney'}};
 beforeEach(()=>{jest.useFakeTimers();jest.clearAllMocks();Audio.Sound.createAsync.mockReset();});
 afterEach(()=>jest.useRealTimers());
-test('exiting Drum Challenge unloads the active native track and cancels the attempt timer',async()=>{
+test('exiting a legacy Drum session unloads metronome sounds and cancels attempt timers',async()=>{
  const sounds=[]; Audio.Sound.createAsync.mockImplementation(async()=>{const sound=makeSound();sounds.push(sound);return {sound};});
  let screen;await act(async()=>{screen=create(React.createElement(DrumChallengeSession,{session}));});
  await act(async()=>screen.root.findByType('Ready').props.onReady());
@@ -45,7 +45,7 @@ test('a native drum preload resolving after Exit is released instead of retained
  expect(sound.playAsync).not.toHaveBeenCalled();
  expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(1);
 });
-test('exiting during music loading prevents delayed playback',async()=>{
+test('exiting during metronome loading prevents delayed playback',async()=>{
  let resolve;const sounds=[makeSound(),makeSound(),makeSound()];
  Audio.Sound.createAsync.mockResolvedValueOnce({sound:sounds[0]}).mockResolvedValueOnce({sound:sounds[1]}).mockImplementationOnce(()=>new Promise(r=>resolve=r));
  let screen;await act(async()=>{screen=create(React.createElement(DrumChallengeSession,{session}));});

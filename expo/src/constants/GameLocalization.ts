@@ -87,9 +87,9 @@ export const GameInstructions: Record<string, string[]> = {
     "The drawer judges each guess. Correct guesses earn points!"
   ],
   drum_challenge: [
-    "A music clip plays with a dramatic build-up and a long pause.",
-    "After the silence, a drum beat drops at an unexpected moment.",
-    "Tap the drum on screen at the EXACT moment you feel the beat!",
+    "Listen to four bars of your chosen rhythm. The accented click starts each group.",
+    "When the clicks stop, count four more complete bars in your head.",
+    "Tap the drum on the first beat AFTER those four silent bars.",
     "Your timing is measured in milliseconds — closest to 0 ms wins.",
     "Each player gets 3 attempts. Best attempt counts."
   ],
