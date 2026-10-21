@@ -1,5 +1,51 @@
 # Release log
 
+### October 21: music-free web/Expo Go and AdSense review request
+
+- Source ec9f8a67178ae8702e715e06d576f95aabf172ca passed app/backend gates
+  and Hosting: https://github.com/imehdiamiri/partybot-anti/actions/runs/39579422315.
+  Live https://8playo.com/ci-release.json confirms entry
+  entry-c6b6bc994e9cf787f79cb266a05ab519.js, SHA-256
+  e61056327c759e74c7369db49d498a79aab5c881301a2d3b74acbf8cfa5b1a5b.
+  Removed legacy music URL returns HTTP 404; live Setup shows Metronome only.
+  Artifact guard also rejected the original bytes under a renamed fixture and
+  accepted synthesized Metronome. No backend/rules/store deployment.
+- Expo Go succeeded: workflow 39579897530, group
+  aff41de3-4c2b-4b8b-9ea1-f07e4fc94688, runtime exposdk:57.0.0. EAS confirms
+  iOS 01a15de1-5d5a-7fa1-938e-43760d084981 and Android
+  01a15de1-5d5a-7c97-999b-aae9524473c0, 2026-10-21T09:53:33Z.
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/aff41de3-4c2b-4b8b-9ea1-f07e4fc94688
+- Existing Android preview 1d2a14cc was inspected first. Replacement signed
+  preview APK build 09edb25b-c6aa-4872-b579-6cccdf7ec618 was accepted from the
+  music-free source, 1.3.0 / versionCode 2, now FINISHED. APK:
+  https://expo.dev/artifacts/eas/jkXJ16rEx1UJWf7ThYa_6ysh4xDzQX5aldtmZ1N2n1I.apk
+  Downloaded APK (142822476 bytes): all 28 audio entries checked, no retired name
+  or original recording SHA-256. APK SHA-256
+  610b1b720032701c968ba7bee8944c4139df2b8338947692558d406e2ed8ed85.
+  Preview/test-ad APK, not a Play Store release. Native runtime/dependencies
+  unchanged. Old installed binaries require installing the replacement; no
+  incompatible OTA, physical-device acceptance or store approval is claimed.
+- Initial policy attestation/resubmit attempt was blocked by automatic approval
+  review; no submission occurred then. The owner subsequently explicitly approved
+  the exact policy checkbox and resubmission in chat. After approval, resubmission
+  succeeded; added current domain 8playo.com, verified the deployed exact meta tag,
+  and Google confirmed site ownership. Requested site review; console now shows
+  Getting ready and Review requested. This is submission confirmation, not ads
+  approval. Legacy partybot.games record retained and not resubmitted/deleted.
+- Updated the existing published European consent message to "8Playo web
+  advertising privacy". Included 8playo.com alongside the retained legacy domain;
+  both site display names are 8Playo and privacy URLs are https://8playo.com/privacy.
+  Consent/Manage options/Do not consent remain On; optimization remains Off.
+  Google confirmed Published / 2 sites / October 21. Transient Google editor
+  event-bus loading error cleared after reloading. No privacy/security guard
+  disabled, new consent purposes or partners added. Google notes message delivery
+  may take up to one hour; an actual visitor CMP/ad impression is not certified.
+- Live screenshots saved locally and shown in chat. Approval remains with Google;
+  review request does not activate guaranteed ad serving. Ads.txt HTTP 200/seller
+  matches; crawler status initially Not found for the newly added site, so no
+  claim that Google's ads.txt crawl is already complete. iOS signing/store gates
+  remain separate. Delivery tag: 8playo-adsense-review-delivered-2026-10-21.
+
 ### October 21: AdSense follow-up and unlicensed music removal
 
 - Latest located email: October 5, "Action needed: Your AdSense application".

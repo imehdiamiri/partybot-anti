@@ -3,20 +3,29 @@
 ## Current advertising follow-up — 2026-10-21
 
 Latest located AdSense email is October 5, "Action needed: Your AdSense
-application". Live console still reports "Your account wasn't approved" and
-"Meet AdSense program policies" without a specific violation. This is an
-account rejection, not AdMob app approval or proof of a particular content issue.
+application". Initial console inspection reported "Your account wasn't approved"
+and "Meet AdSense program policies" without a specific violation. After the
+owner's explicit policy-attestation approval, resubmitted the account, added
+8playo.com, verified site ownership and requested review. Google now confirms
+"Getting ready / Review requested". This is not approval or proof of the prior
+rejection's specific cause. The retained legacy site was not resubmitted.
 
 The owner confirmed no Whitney music license and authorized removing the mode
 from Android/web too. Current source excludes the original recording on every
 platform, retains Metronome and upgrades old session settings safely. Source
 also removes the checked-in legacy Hosting audio and downloader. An artifact
 check rejects the original recording even if renamed. Publication, resubmission
-and Android binary receipts follow in RELEASE_LOG.md after service confirmation.
+and Android binary receipts are confirmed in RELEASE_LOG.md. Music-free web and
+Expo Go are published; replacement Android preview APK is FINISHED and its 28
+audio entries contain no retired recording. Old installed binaries must update.
 Public 8playo.com ads.txt/app-ads.txt and privacy/terms returned HTTP 200 with the
 expected seller ID or current brand/contact. These are readiness corrections,
 not a guarantee of AdSense approval. Historical store/signing/consent limitations
-below still apply unless superseded by newer release evidence.
+below still apply unless superseded by newer release evidence. The existing
+European consent message is now Published for both domains under the 8Playo
+name, with the current privacy URL and Do not consent retained. Google's ads.txt
+crawler status was initially Not found for the new site despite the live file
+being present; do not claim that crawl or an ad impression is already verified.
 
 ## Current follow-up — 2026-10-07
 
