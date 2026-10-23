@@ -23,10 +23,29 @@
   OS temp-cache rename EPERM before tests; workspace-local ignored cache passed.
   Live /__/auth/{iframe,iframe.js,handler} returned HTTP 200 and correct types,
   not app HTML; no Hosting rewrites or Firebase Auth server changes required.
-- CI/export/Hosting and deployed UI receipts pending service confirmation for
-  this source commit. Target https://8playo.com; no backend/rules, store build
-  or mobile OTA publication. Full Google account acceptance requires a real
-  Google session; a mocked auth test is not an end-to-end OAuth certification.
+- Source e7d84c96e69b25b7a774a09e3a06d0352de7828e passed scope, backend,
+  app and Hosting jobs: https://github.com/imehdiamiri/partybot-anti/actions/runs/40006295589.
+  CI reused for the exact source: typecheck, full Jest, dependency audits,
+  authorization/security regressions, Expo web export and artifact validation.
+  Hosting-only deploy and deployed-revision verification both succeeded.
+- Live https://8playo.com/ci-release.json confirms that source, entry
+  entry-cd1506e156652da5fc304d8a49ae2fcd.js and SHA-256
+  f4837661f99b44deab7e57f1a0c6be48101b22bab839d1b26d9358f089e2734f.
+  Auth page and Firebase handler returned HTTP 200; live HTML contains dark
+  theme metadata/CSS. Browser computed HTML/body/root backgrounds are rgb(8,8,15)
+  with dark color-scheme; no horizontal overflow at 1280 and 390 CSS pixels.
+- Real Google sign-in verified end-to-end in the available in-app browser:
+  signed out the test session, clicked Google, reached Google's account picker
+  showing 8playo.com, selected the existing account, and returned to the games
+  library without manual reload. Chrome also loaded the authenticated library.
+  No credentials, OAuth response codes or state values recorded in release files.
+- Live UI smoke checks covered library, Tools, profile, game detail/setup and
+  Color Match at 390x844, including dragging Hue (180 to 252), submitting a match,
+  final standings and confirmed exit. No captured console errors. Screenshots
+  saved locally in ignored .security and shown in chat. This is representative
+  web coverage, not certification of every game or physical Safari/Android.
+  No backend/rules, store binary or mobile OTA publication in this batch.
+  Receipt tag: 8playo-web-auth-fix-2026-10-23.
 
 ### October 21: confirmed store-support web release and Apple IAP handoff
 
