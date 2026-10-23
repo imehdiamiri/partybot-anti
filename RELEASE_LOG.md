@@ -17,11 +17,35 @@
   Native apps bypass it. Added manifest, standalone Apple metadata and branded
   install icon; no service worker or offline/auth response caching introduced.
 - TypeScript passed; focused install/auth regression suites passed 19 tests.
-  CI/export/Hosting and deployed browser acceptance receipts pending.
+  Source 8cc1625e4854ea687deec5b69bc8624e3f88fb17 passed all CI jobs and
+  Hosting-only deployment: https://github.com/imehdiamiri/partybot-anti/actions/runs/40009239610.
+  Live https://8playo.com/ci-release.json confirms that source, entry
+  entry-a0ae27c19d8a0deda71a1d1d1c95383b.js, SHA-256
+  7e9409fe6eb823b9a9ae2c6a33d7efe3c0d759397e4137eb7b5b499bb90e14ba.
+- Live manifest is HTTP 200 / application/manifest+json with correct standalone
+  display/name and both icons HTTP 200. Guide checked at 390x844: iOS manual
+  steps and Continue visible; skipping persists across reload. Physical OS
+  installation and a browser-provided install prompt have not been certified.
+- On the same deployed artifact's default Firebase Hosting origin, isolated from
+  canonical-domain settings, completed pages 1/2/3, entered Web QA and reached
+  signup directly from page 3. Google is before email, 60px tall; no horizontal
+  overflow at 390px. Screenshots saved locally in ignored .security and shown
+  in chat. No account created or existing profile settings erased.
+- Repeated real Google login on canonical 8playo.com using the new button:
+  account picker showed the canonical domain, existing account selection returned
+  to the games library, install guide did not interrupt the return, and no
+  console errors were captured. Temporary responsive viewport override reset.
+- Automatic approval review rejected an attempted separate Expo Go publication:
+  it interpreted the current request as web-only and required fresh mobile
+  release authorization. No bypass or mobile publication occurred. Asked owner
+  explicitly; web work and the successful Hosting release are unaffected.
+  Mobile authorization is still pending; no native binary/runtime change made.
 - AdSense still Getting ready / Review requested; ads.txt now Authorized.
   AdMob Android/iOS still Requires review / Limited / Add store to lift limit.
   No newer matching approval email found. No advertising account mutations.
   Details and remaining store dependencies in RELEASE_READINESS.md.
+- Receipt tag: 8playo-web-install-onboarding-2026-10-23. Physical iOS/Android
+  installation remains a device acceptance check, not a claimed browser result.
 
 ### October 23: web Google sign-in recovery and dark browser canvas
 

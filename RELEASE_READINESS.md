@@ -16,6 +16,10 @@
   below game instructions. Preview/TestFlight use test units; Expo Go has no
   native ad module. Production real IDs remain behind the production variant.
   No ad click or impression success is claimed; no advertising settings changed.
+- Live AdMob Policy Center remains No current issues; 8Playo advertising privacy
+  is Published for 2 apps. Public ads.txt and app-ads.txt both return HTTP 200
+  with the configured DIRECT seller. AdSense request timestamp remains October
+  21, 12:57; Google displays a usual few days, occasionally 2–4 weeks review time.
 
 ## Store preparation — 2026-10-21
 
