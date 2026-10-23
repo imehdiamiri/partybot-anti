@@ -7,6 +7,8 @@ export default function Root({ children }: PropsWithChildren) {
       <meta charSet="utf-8" />
       <meta name="description" content="Play quick party games with friends on 8Playo. Memory, timing, color and sound challenges, plus tools for your next get-together." />
       <meta name="application-name" content="8Playo" />
+      <meta name="theme-color" content="#08080F" />
+      <meta name="color-scheme" content="dark" />
       <link rel="icon" type="image/png" href="/8playo-icon.png" />
       <link rel="apple-touch-icon" href="/8playo-icon.png" />
       <meta name="apple-mobile-web-app-title" content="8Playo" />
@@ -17,7 +19,11 @@ export default function Root({ children }: PropsWithChildren) {
       <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
       <ScrollViewStyleReset />
       <style dangerouslySetInnerHTML={{ __html: `
-        html, body, #root { touch-action: pan-x pan-y !important; }
+        html, body, #root {
+          touch-action: pan-x pan-y !important;
+          background-color: #08080F;
+          color-scheme: dark;
+        }
         html { -webkit-text-size-adjust: 100%; }
         input, textarea, select { font-size: max(16px, 1em) !important; }
       ` }} />

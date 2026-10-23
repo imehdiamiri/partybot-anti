@@ -1,5 +1,33 @@
 # Release log
 
+### October 23: web Google sign-in recovery and dark browser canvas
+
+- Checkpoint `checkpoint/2026-10-23-before-web-auth-fix` at feafcce; fetched origin,
+  clean tree, zero divergence. Reproduced the live Google button leaving a blocking
+  Signing in overlay without opening an account picker in the available browser.
+- Web now starts Google authentication in the same tab with Firebase redirect
+  APIs, preserving the verified same-domain authDomain 8playo.com. A session-only
+  boolean marks returning flows; ordinary email/password initialization does not
+  load Google's resolver. Firebase's authenticated state remains authoritative;
+  no fabricated user, guest bypass, token logging or OAuth scope expansion.
+- Bound redirect start/result waits to 25 seconds with actionable errors and
+  preserved email sign-in. Added Back to sign in during web busy state; reload
+  aborts pending navigation/helper work rather than leaving it behind a spinner.
+  Native Google sign-in is unchanged. Web form uses a centered readable width.
+- Set an opaque dark HTML/body/root canvas, browser theme/color-scheme metadata
+  and dark web navigation theme to prevent light system-theme/transparent-root
+  exposure above screens and during route changes. Native theme choice unchanged.
+- TypeScript passed. Focused auth regressions: 17 tests passed (same-tab start,
+  return restoration, no helper on ordinary startup, storage rejection, stalled
+  helper recovery, late rejection and email fallback). Initial Jest run hit an
+  OS temp-cache rename EPERM before tests; workspace-local ignored cache passed.
+  Live /__/auth/{iframe,iframe.js,handler} returned HTTP 200 and correct types,
+  not app HTML; no Hosting rewrites or Firebase Auth server changes required.
+- CI/export/Hosting and deployed UI receipts pending service confirmation for
+  this source commit. Target https://8playo.com; no backend/rules, store build
+  or mobile OTA publication. Full Google account acceptance requires a real
+  Google session; a mocked auth test is not an end-to-end OAuth certification.
+
 ### October 21: confirmed store-support web release and Apple IAP handoff
 
 - Source ea23df9e6786c190dfc30aace5afafe030a427b3 passed all existing app/backend

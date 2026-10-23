@@ -9,8 +9,6 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithCredential,
-  signInWithPopup,
-  browserPopupRedirectResolver,
 } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
@@ -18,6 +16,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { auth, syncUserProfile, setUserOnline } from '../lib/firebase';
 import { isWeb } from '../utils/platform';
+import { finishGoogleRedirect, googleSignInError, hasPendingGoogleRedirect, startGoogleRedirect } from '../services/webGoogleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -111,6 +110,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
     });
+
+    // Only a returning Google flow needs the resolver. Ordinary email/password
+    // startup must not wait for Google's helper iframe or third-party scripts.
+    if (isWeb && hasPendingGoogleRedirect()) {
+      set({ isBusy: true, errorMessage: null });
+      finishGoogleRedirect(auth).catch(error => {
+        set({ errorMessage: googleSignInError(error) });
+      }).finally(() => set({ isBusy: false }));
+    }
 
     // Return unsubscribe for cleanup if needed
     return unsubscribe;
@@ -212,25 +220,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (get().isBusy) return;
       set({ isBusy: true, errorMessage: null });
       try {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        const { user } = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
-        set({
-          currentUser: user,
-          authAccount: {
-            id: user.uid,
-            username: user.displayName ?? user.email?.split('@')[0] ?? 'Player',
-            email: user.email ?? undefined,
-            provider: 'google',
-          },
-        });
+        await startGoogleRedirect(auth);
       } catch (error: any) {
         if (!['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(error.code)) {
-          set({ errorMessage: error.code === 'auth/popup-blocked'
-            ? 'Allow pop-ups for this site, then tap Continue with Google again.'
-            : error.code === 'auth/account-exists-with-different-credential'
-              ? 'This email already has an account. Sign in with its existing method first.'
-              : 'Google sign-in could not finish. Please try again or use your email and password.' });
+          set({ errorMessage: googleSignInError(error) });
         }
       } finally {
         set({ isBusy: false });

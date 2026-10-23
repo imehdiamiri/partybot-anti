@@ -155,7 +155,7 @@ export default function RootLayout() {
         <View style={{ flex: 1, backgroundColor: 'black' }} />
       ) : (
         <ResponsiveWebContainer>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={isWeb || colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack screenOptions={{ headerShown: false, statusBarStyle: 'light', gestureEnabled: false, fullScreenGestureEnabled: false }}>
               <Stack.Protected guard={!registered && !hasCompletedOnboarding}>
                 <Stack.Screen name="onboarding" options={{ headerShown: false }} />

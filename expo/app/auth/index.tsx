@@ -21,6 +21,7 @@ import { Colors, Typography } from '../../src/theme/Colors';
 import { AppBackgroundView } from '../../src/components/AppBackgroundView';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { AppConstants } from '../../src/constants/AppConstants';
+import { clearPendingGoogleRedirect } from '../../src/services/webGoogleAuth';
 
 // Platform-safe BlurView (conditional require, iOS only)
 let BlurView: any = null;
@@ -230,6 +231,22 @@ export default function AuthScreen() {
               <View style={styles.progressContainer}>
                 <ActivityIndicator size="large" color={Colors.white} />
                 <Text style={styles.busyText}>Signing in…</Text>
+                {Platform.OS === 'web' && (
+                  <TouchableOpacity
+                    testID="auth-cancel"
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to sign in"
+                    style={styles.cancelSignIn}
+                    onPress={() => {
+                      clearPendingGoogleRedirect();
+                      // Reload aborts a pending helper/navigation; merely clearing
+                      // the spinner would leave the old sign-in running behind it.
+                      window.location.reload();
+                    }}
+                  >
+                    <Text style={styles.cancelSignInText}>Back to sign in</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           )}
@@ -246,6 +263,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     flexGrow: 1,
+    ...(Platform.OS === 'web' ? { width: '100%' as const, maxWidth: 520, alignSelf: 'center' as const } : {}),
   },
   closeRow: {
     flexDirection: 'row',
@@ -481,5 +499,15 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 14,
     fontWeight: '500',
+  },
+  cancelSignIn: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  cancelSignInText: {
+    color: Colors.blue,
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

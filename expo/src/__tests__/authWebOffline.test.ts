@@ -47,7 +47,8 @@ jest.mock('firebase/auth', () => ({
   createUserWithEmailAndPassword: jest.fn(),
   signOut: jest.fn(),
   onAuthStateChanged: jest.fn(),
-  signInWithPopup: jest.fn(),
+  signInWithRedirect: jest.fn(),
+  getRedirectResult: jest.fn(),
   browserPopupRedirectResolver: 'web-popup-resolver',
   GoogleAuthProvider: Object.assign(jest.fn().mockImplementation(() => ({ setCustomParameters: jest.fn() })), { credential: jest.fn() }),
   OAuthProvider: jest.fn().mockImplementation(() => ({
@@ -67,6 +68,7 @@ jest.mock('../utils/platform', () => ({
 }));
 
 import { useAuthStore } from '../store/useAuthStore';
+import { GOOGLE_SIGN_IN_TIMEOUT_MS, hasPendingGoogleRedirect } from '../services/webGoogleAuth';
 
 const firebaseAuth = jest.requireMock('firebase/auth');
 const registeredUser = { uid: 'registered-user', email: 'newhost@partygames.app', isAnonymous: false, displayName: null, providerData: [{ providerId: 'password' }] };
@@ -74,6 +76,16 @@ const registeredUser = { uid: 'registered-user', email: 'newhost@partygames.app'
 describe('Web real account authentication', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const values = new Map<string, string>();
+    Object.defineProperty(global, 'window', { configurable: true, value: {
+      sessionStorage: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+        removeItem: (key: string) => values.delete(key),
+      },
+    } });
+    firebaseAuth.signInWithRedirect.mockReset();
+    firebaseAuth.getRedirectResult.mockReset();
     useAuthStore.setState({ currentUser: null, authAccount: null, isBusy: false, isInitialized: false, errorMessage: null });
     firebaseAuth.createUserWithEmailAndPassword.mockResolvedValue({ user: registeredUser });
     firebaseAuth.signInWithEmailAndPassword.mockResolvedValue({ user: registeredUser });
@@ -124,22 +136,71 @@ describe('Web real account authentication', () => {
     expect(useAuthStore.getState().authAccount).toBeNull();
   });
 
-  test('Google web sign-in uses the Firebase popup and stores the real account', async () => {
-    firebaseAuth.signInWithPopup.mockResolvedValueOnce({user:registeredUser});
+  afterEach(() => { jest.useRealTimers(); });
+
+  test('Google web sign-in starts a same-tab redirect without fabricating a signed-in user', async () => {
+    firebaseAuth.signInWithRedirect.mockResolvedValueOnce(undefined);
     await useAuthStore.getState().signInWithGoogle();
-    expect(firebaseAuth.signInWithPopup).toHaveBeenCalledWith({}, expect.any(Object), 'web-popup-resolver');
-    expect(useAuthStore.getState().authAccount?.provider).toBe('google');
-    expect(useAuthStore.getState().currentUser).toBe(registeredUser);
+    expect(firebaseAuth.signInWithRedirect).toHaveBeenCalledWith({}, expect.any(Object), 'web-popup-resolver');
+    expect(hasPendingGoogleRedirect()).toBe(true);
+    expect(useAuthStore.getState().currentUser).toBeNull();
     expect(useAuthStore.getState().isBusy).toBe(false);
   });
 
-  test.each(['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/popup-blocked'])('Google %s releases the form for another attempt', async code => {
-    firebaseAuth.signInWithPopup.mockRejectedValueOnce({code});
+  test.each(['auth/unauthorized-domain', 'auth/account-exists-with-different-credential'])('Google %s releases the form with an actionable error', async code => {
+    firebaseAuth.signInWithRedirect.mockRejectedValueOnce({code});
     await useAuthStore.getState().signInWithGoogle();
     expect(useAuthStore.getState().isBusy).toBe(false);
     expect(useAuthStore.getState().currentUser).toBeNull();
-    if(code==='auth/popup-blocked') expect(useAuthStore.getState().errorMessage).toContain('Allow pop-ups');
-    else expect(useAuthStore.getState().errorMessage).toBeNull();
+    expect(hasPendingGoogleRedirect()).toBe(false);
+    expect(useAuthStore.getState().errorMessage).toBeTruthy();
+  });
+
+  test('a stalled Google helper times out and permits email sign-in; late failures are handled', async () => {
+    jest.useFakeTimers();
+    let failHelper!: (reason: unknown) => void;
+    firebaseAuth.signInWithRedirect.mockReturnValueOnce(new Promise((_resolve, reject) => { failHelper = reject; }));
+    const pending = useAuthStore.getState().signInWithGoogle();
+    expect(useAuthStore.getState().isBusy).toBe(true);
+    await jest.advanceTimersByTimeAsync(GOOGLE_SIGN_IN_TIMEOUT_MS);
+    await pending;
+    expect(useAuthStore.getState().isBusy).toBe(false);
+    expect(hasPendingGoogleRedirect()).toBe(false);
+    expect(useAuthStore.getState().errorMessage).toContain('did not finish');
+    await useAuthStore.getState().signIn('Player', 'secret123');
+    failHelper({ code: 'auth/network-request-failed' });
+    await Promise.resolve();
+    expect(useAuthStore.getState().currentUser).toBe(registeredUser);
+    expect(useAuthStore.getState().errorMessage).toBeNull();
+  });
+
+  test('ordinary initialization does not invoke Google redirect helpers', () => {
+    firebaseAuth.onAuthStateChanged.mockImplementation((_auth: unknown, callback: Function) => { callback(null); return jest.fn(); });
+    useAuthStore.getState().initialize();
+    expect(firebaseAuth.getRedirectResult).not.toHaveBeenCalled();
+  });
+
+  test('a returning redirect is consumed and Firebase auth state unlocks the app', async () => {
+    firebaseAuth.signInWithRedirect.mockResolvedValueOnce(undefined);
+    await useAuthStore.getState().signInWithGoogle();
+    const googleUser = { ...registeredUser, providerData: [{ providerId: 'google.com' }] };
+    let authCallback!: Function;
+    firebaseAuth.onAuthStateChanged.mockImplementation((_auth: unknown, callback: Function) => { authCallback = callback; callback(null); return jest.fn(); });
+    firebaseAuth.getRedirectResult.mockImplementationOnce(async () => { authCallback(googleUser); return { user: googleUser }; });
+    useAuthStore.getState().initialize();
+    await jest.useRealTimers();
+    await new Promise(resolve => setImmediate(resolve));
+    expect(hasPendingGoogleRedirect()).toBe(false);
+    expect(useAuthStore.getState().authAccount?.provider).toBe('google');
+    expect(useAuthStore.getState().isBusy).toBe(false);
+  });
+
+  test('blocked session storage does not start OAuth or lock the form', async () => {
+    window.sessionStorage.setItem = () => { throw new Error('storage blocked'); };
+    await useAuthStore.getState().signInWithGoogle();
+    expect(firebaseAuth.signInWithRedirect).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().isBusy).toBe(false);
+    expect(useAuthStore.getState().errorMessage).toContain('save the sign-in session');
   });
 
   test('signInWithApple() sets informational message without calling Apple auth or Firebase', async () => {
