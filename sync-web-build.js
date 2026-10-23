@@ -51,7 +51,7 @@ if (fs.existsSync(expoIndex)) {
 }
 
 // Keep the AdMob seller declaration identical to the exported public asset.
-for (const name of ['app-ads.txt', 'ads.txt']) {
+for (const name of ['app-ads.txt', 'ads.txt', 'manifest.webmanifest', '8playo-icon.png', '8playo-install-icon.png']) {
   const src = path.join(expoDistDir, name);
   if (fs.existsSync(src)) {
     fs.copyFileSync(src, path.join(websitePublicDir, name));

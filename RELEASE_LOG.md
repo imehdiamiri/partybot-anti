@@ -1,5 +1,28 @@
 # Release log
 
+### October 23: Google-first sign-in, web installation guide and shorter onboarding
+
+- Checkpoint checkpoint/2026-10-23-before-google-button-ads at 7f13895 after
+  clean status, fetch and zero divergence. Enlarged Google sign-in to a 60px
+  white button using the official unmodified color G asset, ahead of email.
+  Email remains directly below a labeled divider; shared errors remain visible.
+  Preserved Google redirect recovery and the iOS Apple option.
+- Onboarding now has three pages: original first two pages, then the name
+  entry combined with personalized ready-to-play copy and the final action.
+  Name validation/persistence, friends synchronization and signup routing remain.
+- Added a first-visit web installation guide before onboarding/sign-in with
+  selectable iPhone/iPad, Android and computer instructions, an optional browser
+  install prompt only when supported, and Continue in browser. Seen preference
+  survives reload; standalone mode and returning Google flows skip the guide.
+  Native apps bypass it. Added manifest, standalone Apple metadata and branded
+  install icon; no service worker or offline/auth response caching introduced.
+- TypeScript passed; focused install/auth regression suites passed 19 tests.
+  CI/export/Hosting and deployed browser acceptance receipts pending.
+- AdSense still Getting ready / Review requested; ads.txt now Authorized.
+  AdMob Android/iOS still Requires review / Limited / Add store to lift limit.
+  No newer matching approval email found. No advertising account mutations.
+  Details and remaining store dependencies in RELEASE_READINESS.md.
+
 ### October 23: web Google sign-in recovery and dark browser canvas
 
 - Checkpoint `checkpoint/2026-10-23-before-web-auth-fix` at feafcce; fetched origin,

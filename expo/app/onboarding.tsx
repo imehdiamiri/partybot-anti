@@ -35,8 +35,8 @@ import { Colors } from '@/src/theme/Colors';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { useFriendsStore } from '@/src/store/useFriendsStore';
 
-const PAGES = [0, 1, 2, 3] as const;
-type PageIndex = 0 | 1 | 2 | 3;
+const PAGES = [0, 1, 2] as const;
+type PageIndex = 0 | 1 | 2;
 
 const ART_LOCAL = {
   bored: require('@/assets/images/onboarding/onboarding-1.png'),
@@ -79,17 +79,10 @@ const THEMES: PageTheme[] = [
     glow: ['rgba(10, 132, 255, 0.55)', 'rgba(94, 92, 230, 0.3)', 'rgba(0, 0, 0, 0)'],
     eyebrow: "WHAT'S YOUR NAME?",
     title: 'Slap your\nname on it',
-    subtitle: 'This is going on the leaderboard, so spell it right.',
+    subtitle: 'Your leaderboard name is ready. Pick your first game and own the room.',
     art: ART_LOCAL.portrait,
   },
-  {
-    accent: Colors.orange,
-    glow: ['rgba(255, 159, 10, 0.55)', 'rgba(255, 55, 95, 0.3)', 'rgba(0, 0, 0, 0)'],
-    eyebrow: 'SUIT UP',
-    title: 'Ready to\nown the room?',
-    subtitle: 'Drop the first game and watch the room light up.',
-    art: ART_LOCAL.hero,
-  },
+
 ];
 
 /** Glassy hero stage with accent glow behind the artwork. */
@@ -141,54 +134,6 @@ function ArtStage({ active, art, accent, glow }: { active: boolean; art: any; ac
   );
 }
 
-function HeroStage({ active }: { active: boolean }) {
-  const float = useSharedValue(0);
-  const enter = useSharedValue(0);
-
-  useEffect(() => {
-    if (active) {
-      enter.value = withSpring(1, { damping: 14, stiffness: 120 });
-      float.value = withRepeat(
-        withSequence(withTiming(1, { duration: 1800 }), withTiming(0, { duration: 1800 })),
-        -1,
-        true,
-      );
-    } else {
-      enter.value = withTiming(0, { duration: 180 });
-      float.value = 0;
-    }
-  }, [active, enter, float]);
-
-  const frameStyle = useAnimatedStyle(() => ({
-    opacity: enter.value,
-    transform: [
-      { scale: interpolate(enter.value, [0, 1], [0.92, 1], Extrapolate.CLAMP) },
-    ],
-  }));
-
-  const artStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: interpolate(float.value, [0, 1], [-8, 4], Extrapolate.CLAMP) },
-    ],
-  }));
-
-  return (
-    <Animated.View style={[styles.stageWrap, frameStyle]}>
-      <View style={[styles.glowOrb, { shadowColor: Colors.orange }]}>
-        <LinearGradient
-          colors={['rgba(255, 159, 10, 0.55)', 'rgba(255, 55, 95, 0.3)', 'rgba(0, 0, 0, 0)']}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0.5, y: 0.5 }}
-          end={{ x: 1, y: 1 }}
-        />
-      </View>
-      <Animated.View style={[styles.artHolder, artStyle]}>
-        <Image source={ART_LOCAL.hero} style={styles.artImage} resizeMode="contain" />
-      </Animated.View>
-    </Animated.View>
-  );
-}
-
 function IndicatorBar({ index, scrollX, accent, width }: { index: number; scrollX: SharedValue<number>; accent: string; width: number }) {
   const animatedStyle = useAnimatedStyle(() => ({
     width: interpolate(scrollX.value, [(index - 1) * width, index * width, (index + 1) * width], [8, 28, 8], Extrapolate.CLAMP),
@@ -224,7 +169,7 @@ export default function OnboardingScreen() {
     scrollX.value = x;
     const page = Math.round(x / width);
     if (Math.abs(x - page * width) < 2) {
-      setCurrentPage(Math.max(0, Math.min(3, page)) as PageIndex);
+      setCurrentPage(Math.max(0, Math.min(PAGES.length - 1, page)) as PageIndex);
     }
   }, [scrollX, width]);
 
@@ -239,7 +184,7 @@ export default function OnboardingScreen() {
 
   const goNext = useCallback(() => {
     Keyboard.dismiss();
-    if (currentPage < 3) goToPage((currentPage + 1) as PageIndex);
+    if (currentPage < PAGES.length - 1) goToPage((currentPage + 1) as PageIndex);
   }, [currentPage, goToPage]);
 
   const goBack = useCallback(() => {
@@ -271,7 +216,7 @@ export default function OnboardingScreen() {
   }, [name, router, setHasCompletedOnboarding, setPlayerName, goToPage]);
 
   const isNameValid = name.trim().length >= 2;
-  const onLastPage = currentPage === 3;
+  const onLastPage = currentPage === 2;
   const activeAccent = THEMES[currentPage].accent;
 
   return (
@@ -297,9 +242,7 @@ export default function OnboardingScreen() {
                 </View>
 
                 <View style={[styles.stageContainer, i === 2 && keyboardVisible && { flex: 0, minHeight: 160 }]}>
-                  {i === 3
-                    ? <HeroStage active={currentPage === 3} />
-                    : i === 2
+                  {i === 2
                       ? <NameSticker active={currentPage === 2} name={name} setName={setName} inputRef={inputRef} accent={theme.accent} />
                       : <ArtStage active={currentPage === i} art={theme.art} accent={theme.accent} glow={theme.glow} />}
                 </View>
@@ -307,8 +250,8 @@ export default function OnboardingScreen() {
                 {!(i === 2 && keyboardVisible) && (
                   <CopyBlock
                     active={currentPage === i}
-                    eyebrow={i === 3 && name.trim() ? `READY, ${name.trim().toUpperCase()}?` : theme.eyebrow}
-                    title={i === 3 && name.trim() ? `Let's go,\n${name.trim()}` : theme.title}
+                    eyebrow={i === 2 && name.trim().length >= 2 ? 'READY TO PLAY' : theme.eyebrow}
+                    title={i === 2 && name.trim().length >= 2 ? `Let's go,\n${name.trim()}` : theme.title}
                     subtitle={theme.subtitle}
                     accent={theme.accent}
                   />
@@ -349,14 +292,14 @@ export default function OnboardingScreen() {
               ]}
             >
               <LinearGradient
-                colors={[activeAccent, THEMES[Math.min(3, currentPage + 1)].accent]}
+                colors={[activeAccent, THEMES[Math.min(PAGES.length - 1, currentPage + 1)].accent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
               <View style={styles.ctaInner}>
                 <Text style={styles.ctaText}>
-                  {onLastPage ? "Create Account" : currentPage === 2 ? (isNameValid ? 'Looks Good' : 'Type your name') : 'Continue'}
+                  {onLastPage ? (isNameValid ? "Let’s play" : "Type your name") : "Continue"}
                 </Text>
                 <IconSymbol name={onLastPage ? 'gamecontroller.fill' : 'chevron.right'} size={18} color="#fff" />
               </View>

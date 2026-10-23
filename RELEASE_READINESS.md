@@ -1,5 +1,22 @@
 # Release and advertising readiness
 
+## Advertising follow-up — 2026-10-23
+
+- Live AdSense 8playo.com remains Getting ready / Review requested. Site ownership
+  is verified and ads.txt has advanced to Authorized. This is crawler/seller
+  authorization, not final site approval or proof of impressions.
+- Live AdMob Android and iOS remain Requires review / Limited ad serving /
+  Add store to lift limit. Both retain one active banner and no associated
+  store/package ID. Existing store publication/signing blockers still prevent
+  legitimate store association; no placeholder URL or false approval submitted.
+- Latest matching AdSense/AdMob email in the owner's primary and business
+  accounts is still the October 5 AdSense action-needed message. No newer
+  approval email was located. Console state takes precedence over that old mail.
+- Code retains consent-gated web AdSense and native adaptive banner placements
+  below game instructions. Preview/TestFlight use test units; Expo Go has no
+  native ad module. Production real IDs remain behind the production variant.
+  No ad click or impression success is claimed; no advertising settings changed.
+
 ## Store preparation — 2026-10-21
 
 Created iOS App Store Connect app **6825284815** (8Playo, com.partybot,

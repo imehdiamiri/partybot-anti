@@ -28,6 +28,7 @@ import { Observability } from '@/src/services/Observability';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
 import { isWeb } from '@/src/utils/platform';
 import { ResponsiveWebContainer } from '@/src/components/ResponsiveWebContainer';
+import { WebInstallGate } from '@/src/components/WebInstallGate';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -151,6 +152,7 @@ export default function RootLayout() {
   return (
     <RootErrorBoundary>
       <Head><title>8Playo — Party Games with Friends</title></Head>
+      <WebInstallGate>
       {!isInitialized || !settingsReady || (!fontsLoaded && !fontError && !isWeb) ? (
         <View style={{ flex: 1, backgroundColor: 'black' }} />
       ) : (
@@ -186,6 +188,7 @@ export default function RootLayout() {
           </ThemeProvider>
         </ResponsiveWebContainer>
       )}
+      </WebInstallGate>
     </RootErrorBoundary>
   );
 }

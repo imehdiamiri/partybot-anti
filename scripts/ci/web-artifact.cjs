@@ -7,7 +7,7 @@ const match = html.match(/src="(\/_expo\/static\/js\/web\/entry-[^"\s]+\.js)"/);
 if (!match) throw new Error('Exported entry bundle missing');
 const entry = path.resolve(root, '.' + match[1]);
 if (!entry.startsWith(root + path.sep) || !fs.existsSync(entry)) throw new Error('Entry outside artifact or missing');
-for (const file of ['app.html', 'privacy.html', 'terms.html', 'app-ads.txt', 'ads.txt']) {
+for (const file of ['app.html', 'privacy.html', 'terms.html', 'app-ads.txt', 'ads.txt', 'manifest.webmanifest', '8playo-icon.png', '8playo-install-icon.png']) {
   if (!fs.existsSync(path.join(root, file))) throw new Error(`Missing required route/asset: ${file}`);
 }
 // Fail closed if an older checked-in or renamed commercial recording leaks

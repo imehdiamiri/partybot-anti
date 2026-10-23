@@ -83,6 +83,47 @@ export default function AuthScreen() {
               </Text>
             </View>
 
+            {/* Social Buttons */}
+            <View style={styles.socialBlock}>
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={styles.socialBtn}
+                  disabled={isBusy}
+                  onPress={() => signInWithApple().catch(() => {})}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-apple" size={20} color={Colors.white} />
+                  <Text style={styles.socialBtnText}>Continue with Apple</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={[styles.googleBtn, isBusy && styles.primaryBtnDisabled]}
+                disabled={isBusy}
+                testID="auth-google"
+                accessibilityRole="button"
+                accessibilityLabel="Continue with Google"
+                onPress={() => signInWithGoogle().catch(() => {})}
+                activeOpacity={0.7}
+              >
+                <Image source={require('@/assets/images/google-g.png')} style={styles.googleIcon} resizeMode="contain" accessible={false} />
+                <Text style={styles.googleBtnText}>Continue with Google</Text>
+              </TouchableOpacity>
+            </View>
+            {errorMessage && (
+              <View style={styles.errorRow} accessibilityRole="alert">
+                <Ionicons name="alert-circle" size={14} color={Colors.red} />
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            )}
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or continue with email</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             {/* Form Card */}
             <View style={styles.formCard}>
               <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: 24, overflow: 'hidden' }]}>
@@ -132,13 +173,6 @@ export default function AuthScreen() {
                 </View>
               </View>
 
-              {errorMessage && (
-                <View style={styles.errorRow}>
-                  <Ionicons name="alert-circle" size={14} color={Colors.red} />
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                </View>
-              )}
-
               {/* Primary Action */}
               <TouchableOpacity
                 style={[styles.primaryBtn, (!username || !password || isBusy) && styles.primaryBtnDisabled]}
@@ -169,43 +203,6 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </View>
 
-            <>
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Social Buttons */}
-            <View style={styles.socialBlock}>
-              {Platform.OS === 'ios' && (
-                <TouchableOpacity
-                  style={styles.socialBtn}
-                  disabled={isBusy}
-                  onPress={() => signInWithApple().catch(() => {})}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="logo-apple" size={20} color={Colors.white} />
-                  <Text style={styles.socialBtnText}>Continue with Apple</Text>
-                </TouchableOpacity>
-              )}
-
-              <TouchableOpacity
-                style={styles.socialBtn}
-                disabled={isBusy}
-                testID="auth-google"
-                accessibilityRole="button"
-                accessibilityLabel="Continue with Google"
-                onPress={() => signInWithGoogle().catch(() => {})}
-                activeOpacity={0.7}
-              >
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#4285F4' }}>G</Text>
-                <Text style={styles.socialBtnText}>Continue with Google</Text>
-              </TouchableOpacity>
-            </View>
-
-            </>
             {/* Legal */}
             <View style={styles.footerSection}>
               <View style={styles.legalRow}>
@@ -421,9 +418,31 @@ const styles = StyleSheet.create({
   // ─── Social ───
   socialBlock: {
     gap: 10,
-    marginBottom: 32,
+    marginBottom: 20,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 60,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#747775',
+    borderWidth: 1,
+    gap: 12,
+  },
+  googleIcon: { width: 24, height: 24 },
+  googleBtnText: {
+    color: '#1F1F1F',
+    fontSize: 18,
+    fontWeight: '600',
+    flexShrink: 1,
+    textAlign: 'center',
   },
   socialBtn: {
+    minHeight: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
