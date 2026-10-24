@@ -20,8 +20,24 @@
   decode-uri-component/uuid dependency advisories remain (Expo 9, backend 8);
   no forced SDK/Firebase major upgrade or audit suppression. Backend runtime
   deployment is outside this Expo Go batch and is not claimed.
-- Release CI and Expo Go service receipts pending. Target only expo-go-sdk57 /
-  exposdk:57.0.0 / existing Expo project b7949f49-aef7-4963-9d95-5eb35280136e.
+- Corrected source c889e05a8a403d4c0ced33e3dcfa6c5c567f9dc9 passed all CI
+  gates and the existing Hosting pipeline: https://github.com/imehdiamiri/partybot-anti/actions/runs/40086603056.
+  Live web receipt confirms this source with unchanged entry-a0ae27c19d8a0deda71a1d1d1c95383b.js
+  and SHA-256 7e9409fe6eb823b9a9ae2c6a33d7efe3c0d759397e4137eb7b5b499bb90e14ba.
+- Mobile workflow 40086865263 succeeded and EAS confirmed the owner-approved
+  publication: https://github.com/imehdiamiri/partybot-anti/actions/runs/40086865263.
+  Branch/channel expo-go-sdk57; runtime exposdk:57.0.0; preview environment;
+  project b7949f49-aef7-4963-9d95-5eb35280136e. Group
+  a1e1047f-6590-4dc3-a01a-cd5dfe67376b; Android update
+  01a16d84-13c8-777d-b5ee-281286352453; iOS update
+  01a16d84-13c8-7c33-bc01-a65976cb96bc. Existing channel mapping and SDK were
+  inspected by the workflow before publishing. Exact source CI reused.
+- Independently requested the live channel manifests for both platforms using
+  Expo Updates protocol 1: HTTP 200, matching update IDs and exposdk:57.0.0.
+  Initial legacy protocol 0 probe returned 406; current protocol verified the
+  actual release. No signed asset URLs or credential contents printed/saved.
+  Physical phone acceptance remains unverified. Receipt tag:
+  8playo-expo-go-2026-10-24.
   Google native login, real ads and purchases still require a custom binary;
   email login/games and UI are available in Expo Go. Web-only install guide
   remains bypassed by native apps. No store submission or old-runtime OTA.
