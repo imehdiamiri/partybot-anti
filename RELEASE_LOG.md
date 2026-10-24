@@ -1,5 +1,31 @@
 # Release log
 
+### October 24: owner-approved Expo Go publication and release-gate corrections
+
+- Owner explicitly approved publishing the Google-first sign-in and three-page
+  onboarding to Expo Go SDK 57, resolving the prior web-only approval rejection.
+  Clean main 0674887, origin fetched, zero divergence; checkpoint
+  checkpoint/2026-10-24-before-expo-go-release preserved before the batch.
+- Existing mobile workflow requires successful CI on the exact current main.
+  Manual checks-only CI 40086065301 passed 334 app tests but failed new high
+  dependency advisories in both audits; no publication was attempted through
+  a bypass. Zod advisory scope was updated October 23; body-parser was patched
+  upstream October 22. Failed-job logs inspected rather than rerunning tests.
+- Scoped Expo CLI's Zod resolution to official 4.6.7 without changing SDK 57,
+  Router/native package versions or custom binary runtimes. Added plugin/output
+  validation and command-schema acceptance/rejection regressions to the existing
+  security test step; all 8 security compatibility tests passed locally.
+- Updated functions body-parser lock resolution 1.20.8 to compatible 1.20.9.
+  Both npm audit --omit=dev --audit-level=high now pass. Moderate upstream
+  decode-uri-component/uuid dependency advisories remain (Expo 9, backend 8);
+  no forced SDK/Firebase major upgrade or audit suppression. Backend runtime
+  deployment is outside this Expo Go batch and is not claimed.
+- Release CI and Expo Go service receipts pending. Target only expo-go-sdk57 /
+  exposdk:57.0.0 / existing Expo project b7949f49-aef7-4963-9d95-5eb35280136e.
+  Google native login, real ads and purchases still require a custom binary;
+  email login/games and UI are available in Expo Go. Web-only install guide
+  remains bypassed by native apps. No store submission or old-runtime OTA.
+
 ### October 23: Google-first sign-in, web installation guide and shorter onboarding
 
 - Checkpoint checkpoint/2026-10-23-before-google-button-ads at 7f13895 after

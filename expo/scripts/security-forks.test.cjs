@@ -5,6 +5,32 @@ const { createRequire } = require('node:module');
 const braces = require('braces');
 const forge = require('node-forge');
 
+test('patched CLI validator retains Expo plugin and command schema behavior', () => {
+ const expoRequire = createRequire(require.resolve('expo/package.json'));
+ const cliEntry = expoRequire.resolve('@expo/cli/package.json');
+ const cliRequire = createRequire(cliEntry);
+ assert.equal(cliRequire('zod/package.json').version, '4.6.7');
+ const path = require('node:path');
+ const base = path.dirname(cliEntry);
+ const { PluginSchema, DevToolsPluginOutputSchema } = require(path.join(base, 'build/src/start/server/DevToolsPlugin.schema.js'));
+ const { createMCPDevToolsExtensionSchema } = require(path.join(base, 'build/src/start/server/createMCPDevToolsExtensionSchema.js'));
+ const plugin = PluginSchema.parse({ packageName: 'test-plugin', packageRoot: '/test',
+  cliExtensions: { description: 'test', entryPoint: './test.js', commands: [
+   { name: 'inspect', title: 'Inspect', environments: ['cli','mcp'], parameters: [
+    { name: 'count', type: 'number' }, { name: 'enabled', type: 'confirm' }, { name: 'label', type: 'text' },
+   ] },
+  ] },
+ });
+ assert.equal(PluginSchema.safeParse({packageName:''}).success, false);
+ const schema = createMCPDevToolsExtensionSchema(plugin);
+ assert.deepEqual(schema.parse({command:'inspect', count:2, enabled:true, label:'test'}),
+  {command:'inspect', count:2, enabled:true, label:'test'});
+ for (const invalid of [{command:'unknown'}, {command:'inspect', count:'2'}, {command:'inspect', extra:true}])
+  assert.equal(schema.safeParse(invalid).success, false);
+ assert.equal(DevToolsPluginOutputSchema.safeParse([{type:'text',text:'ok',level:'info'}]).success,true);
+ assert.equal(DevToolsPluginOutputSchema.safeParse([{type:'audio',url:'not-a-url'}]).success,false);
+});
+
 test('all installed callers resolve to reviewed local forks', () => {
  for (const name of ['braces', 'node-forge']) {
   const pkg = require(name + '/package.json');
