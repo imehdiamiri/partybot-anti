@@ -2,10 +2,11 @@ import { installDevice, needsInstallGuide } from '../services/webInstall';
 
 describe('web installation entry policy', () => {
   it('shows first-visit browser guidance without blocking future visits or Google return', () => {
-    expect(needsInstallGuide(false, false, false)).toBe(true);
-    expect(needsInstallGuide(false, true, false)).toBe(false);
-    expect(needsInstallGuide(true, false, false)).toBe(false);
-    expect(needsInstallGuide(false, false, true)).toBe(false);
+    expect(needsInstallGuide(false, false, false, false)).toBe(false);
+    expect(needsInstallGuide(false, false, false, true)).toBe(true);
+    expect(needsInstallGuide(false, true, false, true)).toBe(false);
+    expect(needsInstallGuide(true, false, false, true)).toBe(false);
+    expect(needsInstallGuide(false, false, true, true)).toBe(false);
   });
   it('recognizes iPad desktop user agents and provides the correct manual instructions', () => {
     expect(installDevice('Mozilla iPhone Safari', 1)).toBe('ios');

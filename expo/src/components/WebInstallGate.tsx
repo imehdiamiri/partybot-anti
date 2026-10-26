@@ -1,3 +1,4 @@
 import React, { PropsWithChildren } from 'react';
 // Native apps are already installed.
-export function WebInstallGate({ children }: PropsWithChildren) { return <>{children}</>; }
+export type WebInstallGateProps = PropsWithChildren<{ onboardingComplete: boolean; settingsReady: boolean }>;
+export function WebInstallGate({ children }: WebInstallGateProps) { return <>{children}</>; }

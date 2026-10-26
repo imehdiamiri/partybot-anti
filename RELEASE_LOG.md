@@ -1,5 +1,23 @@
 # Release log
 
+### October 26: minimal install guidance after onboarding
+
+- Clean main c2ce7ae, fetched origin, zero divergence; checkpoint
+  checkpoint/2026-10-26-before-post-onboarding-install preserved before changes.
+- Moved the web Home Screen guide after onboarding completion and before
+  sign-in. Gate waits for settings hydration and reacts when onboarding
+  finishes; native apps still bypass it. Existing guide dismissal key retained,
+  and standalone/Google redirect-return paths continue to skip installation UI.
+- Removed the large preview panel, promotional headline and extended step copy.
+  Minimal guide shows the app icon, direct heading, two short device instructions
+  and Continue in browser. Eligible browser install prompts are captured during
+  onboarding but only requested after onboarding and an explicit user tap.
+- TypeScript passed. Six focused regression tests passed, including actual
+  component transitions, hydration, persistent dismissal, Google return and
+  deferring an early browser install event. No new dependency/runtime changes.
+- CI/Hosting and live browser receipts pending. Target https://8playo.com.
+  Web-only installation behavior; no mobile OTA, backend or store publication.
+
 ### October 24: owner-approved Expo Go publication and release-gate corrections
 
 - Owner explicitly approved publishing the Google-first sign-in and three-page

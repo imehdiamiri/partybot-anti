@@ -152,7 +152,7 @@ export default function RootLayout() {
   return (
     <RootErrorBoundary>
       <Head><title>8Playo — Party Games with Friends</title></Head>
-      <WebInstallGate>
+      <WebInstallGate onboardingComplete={hasCompletedOnboarding} settingsReady={settingsReady}>
       {!isInitialized || !settingsReady || (!fontsLoaded && !fontError && !isWeb) ? (
         <View style={{ flex: 1, backgroundColor: 'black' }} />
       ) : (
