@@ -18,8 +18,24 @@
 - TypeScript passed. Six focused regression tests passed, including actual
   component transitions, hydration, persistent dismissal, Google return and
   deferring an early browser install event. No new dependency/runtime changes.
-- Initial revision 3a9b049 superseded by this additional owner-directed
-  simplification. CI/Hosting and live browser receipts pending. Target https://8playo.com.
+- Initial revision 3a9b049 passed CI/Hosting 40307569131, then was superseded by
+  the additional owner-directed simplification. Final source
+  f6cdfbb5d4b062dd03da8441836d37c4addf2326 passed all CI gates and Hosting:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/40308107694.
+- Live https://8playo.com/ci-release.json confirms the final source, entry
+  entry-f39352f32f6bae826eacc3925c67c235.js and SHA-256
+  70cdfff96f12a967f2abe5b8ad5eb8d40a9f3ce82c2e61ade25704f4aa96400b.
+- Tested the same deployed artifact on the fresh default Hosting origin
+  partyplay-8.firebaseapp.com to preserve existing canonical-domain preferences:
+  onboarding appeared first, all 3 pages completed with a local test name, then
+  guide showed Tap Share / Add to Home Screen. Not now opened signup at
+  /auth?mode=signup; reload retained dismissal. No account created.
+- Guide visually checked at 390x844 with a temporary iPhone user-agent override
+  (browser emulation, not physical Safari): large icons, no device labels/tabs,
+  no horizontal overflow or captured console errors. Screenshot saved locally
+  in ignored .security and shown in chat. User-agent and viewport overrides reset.
+  Physical Home Screen installation remains unverified. Receipt tag:
+  8playo-minimal-install-guide-2026-10-26.
   Web-only installation behavior; no mobile OTA, backend or store publication.
 
 ### October 24: owner-approved Expo Go publication and release-gate corrections
