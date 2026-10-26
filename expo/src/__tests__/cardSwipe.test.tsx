@@ -90,6 +90,9 @@ test('left then right promotes the exact incoming card without changing its face
   const previous = card('previous-card');
   expect(previous).toBe(first);
   expect(faceID(previous)).toBe('card-face-a');
+  expect(pose(previous).transform[0]).toEqual({ translateX: -22 });
+  expect(pose(previous).opacity).toBe(1);
+  expect(previous.props.style[1].zIndex).toBeLessThan(card('front-card').props.style[1].zIndex);
   const next = card('stack-card-1');
   const nextRest = pose(next);
   // Drag toward Previous before releasing. The following card must recede,
@@ -123,7 +126,21 @@ test('cancelled right drags retain the current card, and first-card right drags 
   await finish();
   expect(card('front-card')).toBe(current);
   expect(faceID(current)).toBe('card-face-b');
+  expect(pose(card('previous-card')).opacity).toBe(1);
+  expect(pose(card('previous-card')).transform[0]).toEqual({ translateX: -22 });
+});
+
+test('left swipes expose only the next face, without previous-card text bleeding through', async () => {
+  await press('deck-next-button'); await finish();
+  const next = card('stack-card-1');
+  expect(faceID(next)).toBe('card-face-c');
+  await act(async () => card('front-card').props.onPanResponderMove(null, { dx: -245, dy: 0 }));
   expect(pose(card('previous-card')).opacity).toBe(0);
+  expect(pose(next).opacity).toBe(1);
+  await act(async () => card('front-card').props.onPanResponderRelease(null, { dx: -245, dy: 0 }));
+  await finish();
+  expect(card('front-card')).toBe(next);
+  expect(faceID(card('front-card'))).toBe('card-face-c');
 });
 
 test('rapid navigation is locked until animation completes, then exhausted decks can go back', async () => {

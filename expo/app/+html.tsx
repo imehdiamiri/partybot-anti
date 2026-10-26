@@ -13,7 +13,7 @@ export default function Root({ children }: PropsWithChildren) {
       <link rel="apple-touch-icon" href="/8playo-icon.png" />
       <meta name="apple-mobile-web-app-title" content="8Playo" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black" />
       <link rel="manifest" href="/manifest.webmanifest" />
       <meta property="og:site_name" content="8Playo" />
       <meta property="og:title" content="8Playo — Party Games with Friends" />

@@ -154,11 +154,14 @@ export default function RootLayout() {
       <Head><title>8Playo — Party Games with Friends</title></Head>
       <WebInstallGate onboardingComplete={hasCompletedOnboarding} settingsReady={settingsReady}>
       {!isInitialized || !settingsReady || (!fontsLoaded && !fontError && !isWeb) ? (
-        <View style={{ flex: 1, backgroundColor: 'black' }} />
+        <View style={{ flex: 1, backgroundColor: '#08080F' }} />
       ) : (
         <ResponsiveWebContainer>
           <ThemeProvider value={isWeb || colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false, statusBarStyle: 'light', gestureEnabled: false, fullScreenGestureEnabled: false }}>
+            <Stack screenOptions={{ headerShown: false, statusBarStyle: 'light', gestureEnabled: false, fullScreenGestureEnabled: false,
+              contentStyle: { backgroundColor: '#08080F' },
+              scrollEdgeEffects: { top: 'hidden', bottom: 'hidden', left: 'hidden', right: 'hidden' },
+            }}>
               <Stack.Protected guard={!registered && !hasCompletedOnboarding}>
                 <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               </Stack.Protected>

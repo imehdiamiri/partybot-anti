@@ -1,5 +1,29 @@
 # Release log
 
+### October 26: keep card navigation inside the deck and remove edge fades
+
+- Owner reported that the offscreen previous-card entrance changed the intended
+  animation and that the top fade remained in browser/app mode. Fetched origin,
+  zero divergence; checkpoint/2026-10-26-before-card-stack-revision at f8bd9e8.
+- Previous and next cards now rest on opposite sides of the same fan. Right
+  swipes uncover/promote the previous face from inside the deck while the
+  outgoing card follows the swipe. No previous card enters from outside the
+  viewport. Stable keyed text/translation nodes remain in place. Made faces
+  opaque and hide the previous neighbor as soon as a left drag begins, avoiding
+  text from multiple cards blending through the incoming face.
+- Changed installed-web-app Apple status-bar metadata from black-translucent
+  to black, matched the responsive shell/loading/navigation surfaces to
+  #08080F, and explicitly disabled native-stack scroll edge effects on all
+  edges using the already-installed Screens API (iOS 26+). No new native
+  module, SDK, app version, signing or dependency configuration changes.
+  Browser-owned chrome cannot be removed by page CSS. Physical Safari/PWA and
+  native effect behavior are not certified by desktop browser emulation.
+- TypeScript passed. Four actual-renderer swipe regressions passed, covering
+  in-deck placement/stack order, unchanged face/text/translation identity,
+  promotion geometry, opaque incoming faces, cancelled drags, rapid input and
+  exhausted-deck recovery. Prior navigation boundary tests remain unchanged.
+  Full CI, final web receipt and acceptance checks pending below.
+
 ### October 26: crisp web headers, circular profile controls and bidirectional cards
 
 - Started from clean main/origin a0de92b after fetch and zero divergence;
@@ -23,10 +47,17 @@
   continuity, translation node retention, cancelled drags, rapid input and
   returning from an exhausted deck. Initial Jest runs could not rename the
   sandbox's temporary cache; rerun with ignored .security/jest-ui cache passed.
-  Targeted source guard passed; full CI and Hosting receipt pending below.
+  Targeted source guard passed. Source f8bd9e8d6b9a0bd1d176075bd857931e010705f1
+  passed CI and Hosting: https://github.com/imehdiamiri/partybot-anti/actions/runs/40312336549.
+  Live receipt confirmed entry-c525268c67ddf5b4227d717a50922d33.js, SHA-256
+  8036652e5fd9f6ab1b812a511d580316caf30c81e8244ac62d71be32e1a97406.
+  Deployed Tools profile measured 44x44px, radius 22, no shadow/filter/backdrop,
+  no horizontal document overflow at 390x844; profile opens and Done returns.
+  Browser frame sampling was inconclusive (restricted evaluator, later CDP
+  action race); no frame-by-frame live-browser pass is claimed.
 - No dependencies, native configuration, backend or runtime changes. This batch
   publishes web only; shared source fixes need a separate compatible mobile
-  publication. Source/deployment and browser acceptance receipts follow after CI.
+  publication. Superseded by the owner-directed in-deck animation revision above.
 
 ### October 26: minimal install guidance after onboarding
 

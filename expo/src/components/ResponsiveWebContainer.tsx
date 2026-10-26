@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: '#050508',
+    backgroundColor: '#08080F',
     overflow: 'hidden',
     // @ts-ignore
     overflowAnchor: 'none',

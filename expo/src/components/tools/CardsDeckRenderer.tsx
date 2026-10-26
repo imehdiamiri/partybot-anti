@@ -30,13 +30,13 @@ if (Platform.OS === 'ios') {
 const SWIPE_OUT_DURATION = 420;
 
 function stackPose(offset: number) {
-  const direction = offset % 2 === 0 ? 1 : -1;
+  const direction = offset % 2 === 0 ? -1 : 1;
   return {
     x: offset === 0 ? 0 : direction * 22 * offset,
     y: 6 * offset,
     scale: 1 - 0.04 * offset,
     rotate: offset === 0 ? '0deg' : `${direction * (4 + offset * 1.5)}deg`,
-    opacity: 1 - 0.12 * offset,
+    opacity: 1,
   };
 }
 
@@ -252,12 +252,6 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
-  const prevOpacity = position.x.interpolate({
-    inputRange: [0, swipeThreshold],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
   const renderFilters = () => {
     const content = (
       <View style={styles.filtersInner}>
@@ -327,27 +321,32 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       if (offset < -1 || offset > VISIBLE_BEHIND) return null;
       const active = offset === 0;
       const previous = offset === -1;
-      // A right swipe brings the actual previous card in from the left and
-      // returns this card to the stack. Never promote the next card and then
-      // replace its text with the previous card at the end of the animation.
-      const rest = previous ? stackPose(0) : stackPose(offset);
+      // Both neighbors live inside the fan: previous on the left, next on the
+      // right. A right swipe promotes the existing previous face from the fan,
+      // without an offscreen entrance or replacing another card's text.
+      const rest = previous ? { ...stackPose(1), x: -22, rotate: '-5.5deg' } : stackPose(offset);
       const forward = previous ? rest : offset === 0
         ? { ...rest, x: -swipeOutDistance, rotate: '-12deg' }
         : stackPose(offset - 1);
-      const backward = previous ? rest : stackPose(offset + 1);
+      const backward = previous ? stackPose(0) : active
+        ? { ...rest, x: swipeOutDistance, rotate: '12deg' }
+        : stackPose(offset + 1);
       const interpolate = <T extends number | string,>(a: T, b: T, c: T) => position.x.interpolate<T>({
         inputRange: [-swipeOutDistance, 0, swipeOutDistance],
         outputRange: [a, b, c] as number[] | string[],
         extrapolate: 'clamp',
       });
-      const translateX = previous
-        ? interpolate(-swipeOutDistance, -swipeOutDistance, 0)
-        : interpolate(forward.x, rest.x, backward.x);
+      const translateX = interpolate(forward.x, rest.x, backward.x);
       const top = interpolate(forward.y, rest.y, backward.y);
       const scale = interpolate(forward.scale, rest.scale, backward.scale);
-      const cardRotate = previous ? interpolate('-12deg', '-12deg', '0deg')
-        : interpolate(forward.rotate, rest.rotate, backward.rotate);
-      const opacity = previous ? prevOpacity : interpolate(forward.opacity, rest.opacity, backward.opacity);
+      const cardRotate = interpolate(forward.rotate, rest.rotate, backward.rotate);
+      // Hide the other neighbor before the departing face uncovers its text.
+      // Opaque faces avoid ghosted text from deeper cards showing through.
+      const opacity = previous ? position.x.interpolate({
+        inputRange: [-swipeOutDistance, -1, 0, swipeOutDistance],
+        outputRange: [0, 0, 1, 1],
+        extrapolate: 'clamp',
+      }) : interpolate(forward.opacity, rest.opacity, backward.opacity);
 
       return (
         <Animated.View
@@ -367,7 +366,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
                 { scale },
                 { rotate: cardRotate },
               ],
-              zIndex: previous ? 100 : active ? 99 : 50 - offset,
+              zIndex: previous ? 98 : active ? 99 : 50 - offset,
               opacity,
             },
           ]}
