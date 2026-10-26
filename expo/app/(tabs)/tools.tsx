@@ -1,3 +1,4 @@
+import { ProfileButton } from '@/src/components/ProfileButton';
 import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useState } from 'react';
@@ -14,7 +15,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
-import { LiquidGlass } from '@/src/components/LiquidGlass';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategoriesList, ALL_CARDS } from '@/src/models/CardModels';
 import { PartyToolsSection } from '@/src/components/tools/PartyToolsSection';
@@ -28,7 +28,7 @@ export default function ToolsScreen() {
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}>
+      <ScrollView testID="tools-scroll" contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}>
         
         {/* Header */}
         <View testID="page-toolbar" style={[styles.header, screenLayout.toolbar]}>
@@ -36,11 +36,7 @@ export default function ToolsScreen() {
             <Text style={styles.headerTitle}>Tools</Text>
           </View>
           <View style={{ flex: 1 }} />
-          <TouchableOpacity testID="tools-profile-btn" accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/profile')} activeOpacity={0.85}>
-            <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
-              <IconSymbol name="person.crop.circle" size={22} color="white" />
-            </LiquidGlass>
-          </TouchableOpacity>
+          <ProfileButton testID="tools-profile-btn" onPress={() => router.push('/profile')} />
         </View>
 
         {/* Tools Section */}
@@ -121,7 +117,7 @@ export default function ToolsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: '#08080F',
   },
   scrollContent: {
     paddingHorizontal: SCREEN_LAYOUT.gutter,
@@ -146,12 +142,6 @@ const styles = StyleSheet.create({
   bookmarkButton: {
     width: 44,
     height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileButton: {
-    width: SCREEN_LAYOUT.touchTarget,
-    height: SCREEN_LAYOUT.touchTarget,
     alignItems: 'center',
     justifyContent: 'center',
   },

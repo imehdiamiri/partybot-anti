@@ -1,3 +1,4 @@
+import { ProfileButton } from '@/src/components/ProfileButton';
 import { BrandWordmark } from '@/src/components/BrandWordmark';
 import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
@@ -62,6 +63,7 @@ export default function GamesScreen() {
       <GameLibraryWebStyles />
       <AppBackgroundView />
       <ScrollView
+        testID="library-scroll"
         ref={scrollViewRef}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}
       >
@@ -78,16 +80,12 @@ export default function GamesScreen() {
               </LiquidGlass>
             </TouchableOpacity>
           )}
-          <TouchableOpacity testID="home-profile-btn" accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/profile')} activeOpacity={0.85}>
-            <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
-              <IconSymbol name="person.crop.circle" size={22} color="white" />
-            </LiquidGlass>
-          </TouchableOpacity>
+          <ProfileButton testID="home-profile-btn" onPress={() => router.push('/profile')} />
         </View>
 
         {/* Library Tabs (Games | Ideas) */}
         <View style={styles.libraryTabsContainer}>
-          <LiquidGlass variant="high" radius={30} style={styles.libraryTabsWrapperOuter} shadow>
+          <View style={styles.libraryTabsWrapperOuter}>
             <View style={styles.libraryTabsInner}>
               <TouchableOpacity
                 testID="tab-library-games"
@@ -108,7 +106,7 @@ export default function GamesScreen() {
                 <Text style={selectedLibraryTab === 'Ideas' ? styles.libraryTabTextActive : styles.libraryTabText}>Ideas</Text>
               </TouchableOpacity>
             </View>
-          </LiquidGlass>
+          </View>
         </View>
 
         {selectedLibraryTab === 'Games' ? (
@@ -203,7 +201,7 @@ export default function GamesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: '#08080F',
   },
   scrollContent: {
     paddingHorizontal: SCREEN_LAYOUT.gutter,
@@ -231,6 +229,7 @@ const styles = StyleSheet.create({
     width: 140,
   },
   joinButton: {
+    minHeight: SCREEN_LAYOUT.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -242,19 +241,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  profileButton: {
-    width: SCREEN_LAYOUT.touchTarget,
-    height: SCREEN_LAYOUT.touchTarget,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   libraryTabsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 20,
   },
   libraryTabsWrapperOuter: {
-    borderRadius: 30,
+    backgroundColor: '#171923',
+    borderWidth: 1,
+    borderColor: '#303542',
+    borderRadius: 26,
     padding: 4,
     maxWidth: 260,
     width: '100%',
@@ -263,6 +259,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   libraryTab: {
+    minHeight: 44,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -273,11 +270,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   libraryTabActive: {
-    backgroundColor: 'rgba(10, 132, 255, 0.95)',
-    shadowColor: Colors.blue,
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    backgroundColor: '#0A84FF',
   },
   libraryTabText: {
     color: 'rgba(255,255,255,0.6)',

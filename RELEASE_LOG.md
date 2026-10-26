@@ -1,5 +1,33 @@
 # Release log
 
+### October 26: crisp web headers, circular profile controls and bidirectional cards
+
+- Started from clean main/origin a0de92b after fetch and zero divergence;
+  checkpoint/2026-10-26-before-ui-chrome-fix preserves the prior release.
+- Owner identified the haze in a phone browser. Removed diffuse shadows and
+  glossy layers from the upper Games/Ideas and Friends selectors; made page
+  backgrounds and shared game/tool headers opaque #08080F. Contained document
+  overscroll on web. Browser-owned address/status-bar rendering is outside the
+  page; no claim of physical Safari verification or native scroll-edge changes.
+- Replaced three duplicated 44px/radius-20 profile controls with one flat 44px
+  circle (radius 22), explicit focus styling and accessibility labels. Upper
+  selectors now have 44px touch targets; related toolbar targets were aligned.
+- Found the right-swipe card defect: both directions advanced the next-card
+  preview, then a right swipe committed the previous index, replacing the text.
+  Previous cards now enter from the left while the current/following cards
+  recede. Keyed card faces, English text and translations stay mounted through
+  promotion. First-card right drags stay still; cancelled drags and transition
+  locking preserve navigation bounds and stable deck order.
+- TypeScript and git diff --check passed. Eight focused card navigation/swipe
+  tests passed, including actual renderer identity and animation endpoint
+  continuity, translation node retention, cancelled drags, rapid input and
+  returning from an exhausted deck. Initial Jest runs could not rename the
+  sandbox's temporary cache; rerun with ignored .security/jest-ui cache passed.
+  Targeted source guard passed; full CI and Hosting receipt pending below.
+- No dependencies, native configuration, backend or runtime changes. This batch
+  publishes web only; shared source fixes need a separate compatible mobile
+  publication. Source/deployment and browser acceptance receipts follow after CI.
+
 ### October 26: minimal install guidance after onboarding
 
 - Clean main c2ce7ae, fetched origin, zero divergence; checkpoint

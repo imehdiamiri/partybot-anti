@@ -1,3 +1,4 @@
+import { ProfileButton } from '@/src/components/ProfileButton';
 import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { Colors } from '@/src/theme/Colors';
@@ -7,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
-import { LiquidGlass } from '@/src/components/LiquidGlass';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 import { useFriendsStore } from '@/src/store/useFriendsStore';
@@ -125,7 +125,7 @@ export default function FriendsScreen() {
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      <ScrollView 
+      <ScrollView testID="friends-scroll"
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: tabContentBottom(insets.bottom) }]}
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
@@ -144,11 +144,7 @@ export default function FriendsScreen() {
               <Text style={styles.notificationText}>{requests.length}</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity testID="friends-profile-btn" accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/profile')} activeOpacity={0.85}>
-            <LiquidGlass variant="mid" radius={20} style={styles.profileButton} shadow={false}>
-              <IconSymbol name="person.crop.circle" size={22} color="white" />
-            </LiquidGlass>
-          </TouchableOpacity>
+          <ProfileButton testID="friends-profile-btn" onPress={() => router.push('/profile')} />
         </View>
 
         {/* Quick Join — compact hero (mobile only) */}
@@ -171,13 +167,17 @@ export default function FriendsScreen() {
 
         {/* Segmented tab bar — pill style matching Games screen */}
         <View style={styles.libraryTabsContainer}>
-          <LiquidGlass variant="high" radius={30} style={styles.libraryTabsWrapperOuter} shadow>
+          <View style={styles.libraryTabsWrapperOuter}>
             <View style={styles.libraryTabsInner}>
               {tabs.map((t) => {
                 const active = activeTab === t.key;
                 return (
                   <TouchableOpacity
                     key={t.key}
+                    testID={`friends-segment-${t.key}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.label}
+                    accessibilityState={{ selected: active }}
                     style={[styles.libraryTab, active && styles.libraryTabActive]}
                     onPress={() => setActiveTab(t.key)}
                     activeOpacity={0.85}
@@ -193,7 +193,7 @@ export default function FriendsScreen() {
                 );
               })}
             </View>
-          </LiquidGlass>
+          </View>
         </View>
 
         {/* ── OFFLINE TAB ── */}
@@ -511,7 +511,7 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: '#08080F',
   },
   scrollContent: {
     paddingHorizontal: SCREEN_LAYOUT.gutter,
@@ -531,6 +531,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   notificationBadge: {
+    minHeight: SCREEN_LAYOUT.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -545,12 +546,6 @@ const styles = StyleSheet.create({
     color: Colors.orange,
     fontSize: 12,
     fontWeight: 'bold',
-  },
-  profileButton: {
-    width: SCREEN_LAYOUT.touchTarget,
-    height: SCREEN_LAYOUT.touchTarget,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 
   // Hero
@@ -607,7 +602,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   libraryTabsWrapperOuter: {
-    borderRadius: 30,
+    backgroundColor: '#171923',
+    borderWidth: 1,
+    borderColor: '#303542',
+    borderRadius: 26,
     padding: 4,
     width: '100%',
   },
@@ -616,6 +614,7 @@ const styles = StyleSheet.create({
   },
   libraryTab: {
     flex: 1,
+    minHeight: SCREEN_LAYOUT.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -625,11 +624,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   libraryTabActive: {
-    backgroundColor: 'rgba(10, 132, 255, 0.95)',
-    shadowColor: Colors.blue,
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    backgroundColor: '#0A84FF',
   },
   libraryTabText: {
     color: 'rgba(255,255,255,0.6)',

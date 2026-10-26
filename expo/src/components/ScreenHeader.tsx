@@ -45,7 +45,7 @@ export function ScreenHeader({
   const slotWidth = narrowNative ? 64 : SCREEN_LAYOUT.headerSlot;
 
   return (
-    <View style={{ paddingTop: (includeTopInset ? insets.top : 0) + 8, paddingBottom: 10 }}>
+    <View style={{ paddingTop: (includeTopInset ? insets.top : 0) + 8, paddingBottom: 10, backgroundColor: '#08080F' }}>
     {Platform.OS === 'web' ? createElement('style', null, `
       @media (max-width: 399px) {
         [data-testid="screen-header"] > :first-child,

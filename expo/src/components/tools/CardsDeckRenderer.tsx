@@ -29,6 +29,17 @@ if (Platform.OS === 'ios') {
 
 const SWIPE_OUT_DURATION = 420;
 
+function stackPose(offset: number) {
+  const direction = offset % 2 === 0 ? 1 : -1;
+  return {
+    x: offset === 0 ? 0 : direction * 22 * offset,
+    y: 6 * offset,
+    scale: 1 - 0.04 * offset,
+    rotate: offset === 0 ? '0deg' : `${direction * (4 + offset * 1.5)}deg`,
+    opacity: 1 - 0.12 * offset,
+  };
+}
+
 interface Props {
   categoryId: CardCategory;
 }
@@ -77,6 +88,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
   const [deck, setDeck] = useState<PartyCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
   const deckLengthRef = useRef<number>(0);
   const position = useRef(new Animated.ValueXY()).current;
   const [shuffleVersion, setShuffleVersion] = useState(0);
@@ -142,10 +155,11 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_e, g) => !transitionRef.current && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+      onPanResponderGrant: () => { if (!transitionRef.current) position.stopAnimation(); },
       onPanResponderTerminationRequest: () => false,
       onPanResponderMove: (_event, gesture) => {
         if (transitionRef.current) return;
-        position.setValue({ x: gesture.dx, y: 0 });
+        position.setValue({ x: currentIndexRef.current === 0 ? Math.min(0, gesture.dx) : gesture.dx, y: 0 });
       },
       onPanResponderRelease: (_event, gesture) => {
         const threshold = swipeThresholdRef.current;
@@ -233,11 +247,6 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     toggleCard(currentCard.id);
   };
 
-  const rotate = position.x.interpolate({
-    inputRange: [-swipeOutDistance, 0, swipeOutDistance],
-    outputRange: ['-12deg', '0deg', '12deg'],
-  });
-
   const nextOpacity = position.x.interpolate({
     inputRange: [-swipeThreshold, 0],
     outputRange: [1, 0],
@@ -313,96 +322,40 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
     const VISIBLE_BEHIND = 3;
 
-    // Create an interpolated value representing the swipe progress from 0 to 1
-    // Swiping right or left should animate the stack forward smoothly.
-    const swipeProgress = position.x.interpolate({
-          inputRange: [-swipeOutDistance, 0, swipeOutDistance],
-          outputRange: [1, 0, 1],
-          extrapolate: 'clamp',
-        });
-
     return deck.map((card, index) => {
       const offset = index - currentIndex;
-      if (offset < 0 || offset > VISIBLE_BEHIND) return null;
-
-      if (offset === 0) {
-        return (
-          <Animated.View
-            key={card.id}
-            testID="front-card"
-            style={[
-              styles.cardStyle,
-              {
-                width: cardWidth,
-                height: cardHeight,
-                zIndex: 99,
-                transform: [
-                  { translateX: position.x },
-                  { translateY: position.y },
-                  { rotate },
-                ],
-              },
-            ]}
-            {...panResponder.panHandlers}
-          >
-            <CardFace card={card} category={category} language={language} onLanguage={setLanguage} active />
-            <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampLike, { opacity: nextOpacity }]}>
-              <Text style={styles.stampText}>NEXT</Text>
-            </Animated.View>
-            <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampNope, { opacity: prevOpacity }]}>
-              <Text style={styles.stampText}>{currentIndex > 0 ? 'PREVIOUS' : 'FIRST CARD'}</Text>
-            </Animated.View>
-          </Animated.View>
-        );
-      }
-
-      // Stacked cards behind — animate to their next position as the front card is swiped
-      const startScale = 1 - 0.04 * offset;
-      const endScale = 1 - 0.04 * (offset - 1);
-
-      const startDirection = offset % 2 === 0 ? 1 : -1;
-      const endDirection = (offset - 1) % 2 === 0 ? 1 : -1;
-
-      const startTranslateX = startDirection * (22 * offset);
-      const endTranslateX = (offset - 1) === 0 ? 0 : endDirection * (22 * (offset - 1));
-
-      const startRotate = `${startDirection * (4 + offset * 1.5)}deg`;
-      const endRotate = (offset - 1) === 0 ? '0deg' : `${endDirection * (4 + (offset - 1) * 1.5)}deg`;
-
-      const startTop = 6 * offset;
-      const endTop = 6 * (offset - 1);
-
-      const startOpacity = 1 - 0.12 * offset;
-      const endOpacity = 1 - 0.12 * (offset - 1);
-
-      const scale = swipeProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [startScale, endScale],
+      if (offset < -1 || offset > VISIBLE_BEHIND) return null;
+      const active = offset === 0;
+      const previous = offset === -1;
+      // A right swipe brings the actual previous card in from the left and
+      // returns this card to the stack. Never promote the next card and then
+      // replace its text with the previous card at the end of the animation.
+      const rest = previous ? stackPose(0) : stackPose(offset);
+      const forward = previous ? rest : offset === 0
+        ? { ...rest, x: -swipeOutDistance, rotate: '-12deg' }
+        : stackPose(offset - 1);
+      const backward = previous ? rest : stackPose(offset + 1);
+      const interpolate = <T extends number | string,>(a: T, b: T, c: T) => position.x.interpolate<T>({
+        inputRange: [-swipeOutDistance, 0, swipeOutDistance],
+        outputRange: [a, b, c] as number[] | string[],
+        extrapolate: 'clamp',
       });
-      const translateX = swipeProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [startTranslateX, endTranslateX],
-      });
-      const cardRotate = swipeProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [startRotate, endRotate],
-      });
-      const top = swipeProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [startTop, endTop],
-      });
-      const opacity = swipeProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [startOpacity, endOpacity],
-      });
+      const translateX = previous
+        ? interpolate(-swipeOutDistance, -swipeOutDistance, 0)
+        : interpolate(forward.x, rest.x, backward.x);
+      const top = interpolate(forward.y, rest.y, backward.y);
+      const scale = interpolate(forward.scale, rest.scale, backward.scale);
+      const cardRotate = previous ? interpolate('-12deg', '-12deg', '0deg')
+        : interpolate(forward.rotate, rest.rotate, backward.rotate);
+      const opacity = previous ? prevOpacity : interpolate(forward.opacity, rest.opacity, backward.opacity);
 
       return (
         <Animated.View
           key={card.id}
-          testID={`stack-card-${offset}`}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          aria-hidden
+          testID={active ? 'front-card' : previous ? 'previous-card' : `stack-card-${offset}`}
+          accessibilityElementsHidden={!active}
+          importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
+          aria-hidden={!active}
           style={[
             styles.cardStyle,
             {
@@ -414,13 +367,17 @@ export function CardsDeckRenderer({ categoryId }: Props) {
                 { scale },
                 { rotate: cardRotate },
               ],
-              zIndex: 50 - offset,
+              zIndex: previous ? 100 : active ? 99 : 50 - offset,
               opacity,
             },
           ]}
-          pointerEvents="none"
+          pointerEvents={active ? 'auto' : 'none'}
+          {...(active ? panResponder.panHandlers : {})}
         >
-          <CardFace card={card} category={category} language={language} onLanguage={setLanguage} />
+          <CardFace card={card} category={category} language={language} onLanguage={setLanguage} active={active} />
+          {active && <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampLike, { opacity: nextOpacity }]}>
+            <Text style={styles.stampText}>NEXT</Text>
+          </Animated.View>}
         </Animated.View>
       );
     }).reverse();

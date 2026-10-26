@@ -28,6 +28,16 @@ export default function Root({ children }: PropsWithChildren) {
           color-scheme: dark;
         }
         html { -webkit-text-size-adjust: 100%; }
+        html, body { overscroll-behavior-y: none; }
+        [data-testid="library-scroll"],
+        [data-testid="tools-scroll"],
+        [data-testid="friends-scroll"] { overscroll-behavior-y: contain; }
+        [data-testid$="-profile-btn"]:focus-visible,
+        [data-testid^="friends-segment-"]:focus-visible,
+        [data-testid^="tab-library-"]:focus-visible {
+          outline: 2px solid #64B5FF;
+          outline-offset: 3px;
+        }
         input, textarea, select { font-size: max(16px, 1em) !important; }
       ` }} />
     </head>
