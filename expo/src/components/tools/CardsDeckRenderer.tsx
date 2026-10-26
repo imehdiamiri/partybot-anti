@@ -28,6 +28,13 @@ if (Platform.OS === 'ios') {
 }
 
 const SWIPE_OUT_DURATION = 420;
+// Stable fan silhouettes: clearly separate sheets without reordering them
+// when a real face is promoted. Keep the spread within narrow phone gutters.
+const DECK_BACK_POSES = [
+  { x: -9, y: 20, angle: '-4deg', scale: 0.96 },
+  { x: 9, y: 14, angle: '4deg', scale: 0.98 },
+  { x: 0, y: 8, angle: '-1deg', scale: 0.99 },
+];
 
 interface Props {
   categoryId: CardCategory;
@@ -124,7 +131,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const baseW = windowWidth > 0 ? windowWidth : 390;
   const baseH = windowHeight > 0 ? windowHeight : 844;
-  const maxCardHeight = Math.max(180, availableDeckHeight > 0 ? availableDeckHeight - 30 : baseH - 330);
+  const maxCardHeight = Math.max(180, availableDeckHeight > 0 ? availableDeckHeight - 64 : baseH - 364);
   // Intentional bounded portrait card with aspect ratio ~ 1 : 1.38, max width 460px on desktop
   const cardWidth = Math.min(baseW - 64, 460);
   const cardHeight = Math.min(cardWidth * 1.38, maxCardHeight);
@@ -307,12 +314,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     // the outgoing face and the real destination face move; no tail card is
     // inserted at a different visible position after the animation finishes.
     const layerCount = Math.min(3, deck.length - 1);
-    const backgrounds = Array.from({ length: layerCount }, (_, index) => (
+    const backgrounds = DECK_BACK_POSES.slice(0, layerCount).map((pose, index) => (
       <Animated.View key={`back-${index}`} testID={`deck-back-${index}`} pointerEvents="none"
         accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden
         style={[styles.cardStyle, {
           width: cardWidth, height: cardHeight, zIndex: index,
-          transform: [{ translateY: (layerCount - index) * 12 }, { scale: 1 - (layerCount - index) * 0.03 }],
+          transform: [{ translateX: pose.x }, { translateY: pose.y }, { rotate: pose.angle }, { scale: pose.scale }],
           opacity: currentIndex === deck.length - 1 ? position.x.interpolate({
             inputRange: [-swipeOutDistance, 0], outputRange: [0, 1], extrapolate: 'clamp',
           }) : 1,
@@ -507,10 +514,13 @@ function CardFace({ card, category, language, onLanguage, active = false }: { ca
       {/* Keep the same content/controls mounted behind the front card: adding
           this row only on promotion would shrink the text area and snap it up. */}
       <CardLanguageButtons selected={language} onSelect={onLanguage} active={active} />
-      <View style={styles.cardFooter}>
-        <IconSymbol name="chevron.left" size={12} color="rgba(0,0,0,0.3)" />
-        <Text style={styles.cardFooterText}>left: next · right: previous</Text>
-        <IconSymbol name="chevron.right" size={12} color="rgba(0,0,0,0.3)" />
+      <View style={styles.cardFooter} pointerEvents="none">
+        <View style={styles.swipeHint}>
+          <IconSymbol name="chevron.left" size={13} color="#535B6B" />
+          <IconSymbol name="hand.point.up.left.fill" size={18} color="#535B6B" />
+          <Text style={styles.cardFooterText}>Swipe to browse</Text>
+          <IconSymbol name="chevron.right" size={13} color="#535B6B" />
+        </View>
       </View>
       <View pointerEvents="none" style={styles.watermark}>
         <IconSymbol name={category.icon as any} size={140} color={category.accentColor + '0E'} />
@@ -647,8 +657,12 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   cardBack: {
-    backgroundColor: '#F2F2F2',
+    backgroundColor: '#E8ECF2',
     borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 5,
+    elevation: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -702,15 +716,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingBottom: 18,
+    paddingBottom: 12,
     zIndex: 3,
   },
+  swipeHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#EDF0F5',
+  },
   cardFooterText: {
-    fontSize: 10,
-    color: 'rgba(0,0,0,0.3)',
+    fontSize: 11,
+    color: '#535B6B',
     letterSpacing: 0.2,
-    textTransform: 'uppercase',
     fontWeight: '700',
   },
   watermark: {

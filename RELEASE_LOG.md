@@ -1,5 +1,19 @@
 # Release log
 
+### October 26: visible card stack and swipe affordance
+
+- Owner requested that the ready-card deck clearly show more cards behind it
+  and communicate that it can be swiped. Fetched clean main/origin 23e659a;
+  checkpoint/2026-10-26-before-visible-card-fan preserves the previous release.
+- Kept stable decorative layer identities and the existing continuous face
+  transition. Spread three card backs with small fixed alternating angles,
+  restrained shadows and extra vertical clearance. Added a legible hand/arrow
+  swipe hint inside every face; content layout remains identical on promotion.
+- Local TypeScript, six existing actual-renderer swipe regressions, diff check
+  and targeted source credential guard passed. No new dependencies, runtime,
+  backend or native configuration. Web/Home Screen scope only; no mobile OTA.
+- Publication and live responsive verification receipts follow after CI.
+
 ### October 26: continuous card motion with stable deck layers
 
 - Owner requested removing the remaining background-card snap at index commit.
