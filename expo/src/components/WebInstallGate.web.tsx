@@ -7,20 +7,6 @@ import type { WebInstallGateProps } from './WebInstallGate';
 
 type InstallPrompt = Event & { prompt(): Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> };
 type InstallStatus = { installed: boolean; seen: boolean; returningFromGoogle: boolean };
-const steps: Record<InstallDevice, { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[]> = {
-  ios: [
-    { icon: 'share-outline', text: 'In Safari, tap Share.' },
-    { icon: 'add-circle-outline', text: 'Add to Home Screen → Add.' },
-  ],
-  android: [
-    { icon: 'ellipsis-vertical', text: 'In Chrome, open the ⋮ menu.' },
-    { icon: 'add-circle-outline', text: 'Tap Add to Home screen or Install app.' },
-  ],
-  desktop: [
-    { icon: 'download-outline', text: 'Chrome / Edge: click Install in the address bar.' },
-    { icon: 'laptop-outline', text: 'Safari on Mac: File → Add to Dock.' },
-  ],
-};
 export function WebInstallGate({ children, onboardingComplete, settingsReady }: WebInstallGateProps) {
   const [status, setStatus] = useState<InstallStatus | null>(null);
   const [device, setDevice] = useState<InstallDevice>('ios');
@@ -69,43 +55,34 @@ export function WebInstallGate({ children, onboardingComplete, settingsReady }: 
   if (!needsInstallGuide(status.installed, status.seen, status.returningFromGoogle, onboardingComplete)) return <>{children}</>;
   return <ScrollView style={styles.canvas} contentContainerStyle={styles.page}>
     <Image source={require('@/assets/images/icon.png')} style={styles.appIcon} />
-    <Text accessibilityRole="header" style={styles.title}>Add to Home Screen</Text>
-    <Text style={styles.subtitle}>Open 8Playo like an app.</Text>
-    <View style={styles.devices}>
-      {(['ios', 'android', 'desktop'] as const).map(value => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: device === value }} onPress={() => setDevice(value)} style={[styles.device, device === value && styles.deviceSelected]}>
-        <Text style={[styles.deviceText, device === value && styles.deviceTextSelected]}>{value === 'ios' ? 'iPhone / iPad' : value === 'android' ? 'Android' : 'Computer'}</Text>
-      </Pressable>)}
-    </View>
+    <Text accessibilityRole="header" style={styles.title}>Add 8Playo</Text>
     <View style={styles.steps}>
-      {steps[device].map(step => <View key={step.text} style={styles.step}>
-        <Ionicons name={step.icon} size={22} color="#BAA2FF" />
-        <Text style={styles.stepText}>{step.text}</Text>
-      </View>)}
+      <View style={styles.step}>
+        <View style={styles.stepIcon}><Ionicons name={device === 'ios' ? 'share-outline' : 'ellipsis-horizontal'} size={34} color="#4FA9FF" /></View>
+        <Text style={styles.stepText}>{device === 'ios' ? 'Tap Share' : 'Open menu'}</Text>
+      </View>
+      <View style={styles.step}>
+        <View style={styles.stepIcon}><Ionicons name="add-circle-outline" size={34} color="#4FA9FF" /></View>
+        <Text style={styles.stepText}>{device === 'desktop' ? 'Install app' : 'Add to Home Screen'}</Text>
+      </View>
     </View>
     {!!hint && <Text accessibilityRole="alert" style={styles.hint}>{hint}</Text>}
     {prompt && device !== 'ios' && <Pressable testID="web-install" accessibilityRole="button" disabled={installing} onPress={install} style={styles.install}><Text style={styles.installText}>{installing ? 'Opening installer…' : 'Install 8Playo'}</Text></Pressable>}
-    <Pressable testID="web-install-continue" accessibilityRole="button" onPress={continueInBrowser} style={styles.continue}><Text style={styles.continueText}>Continue in browser →</Text></Pressable>
-    <Text style={styles.note}>Internet connection required.</Text>
+    <Pressable testID="web-install-continue" accessibilityRole="button" onPress={continueInBrowser} style={styles.continue}><Text style={styles.continueText}>Not now</Text></Pressable>
   </ScrollView>;
 }
 const styles = StyleSheet.create({
   canvas: { flex: 1, backgroundColor: '#08080F' },
   page: { flexGrow: 1, width: '100%', maxWidth: 420, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 32, alignItems: 'center' },
-  appIcon: { width: 64, height: 64, borderRadius: 16, marginBottom: 20 },
-  title: { color: '#FFF', fontFamily: 'Viral-Bold', fontSize: 25, lineHeight: 31, textAlign: 'center', marginBottom: 8 },
-  subtitle: { color: '#A6A6B5', fontSize: 15, lineHeight: 22, textAlign: 'center', marginBottom: 24 },
-  devices: { width: '100%', flexDirection: 'row', backgroundColor: '#171923', borderRadius: 12, padding: 4, marginBottom: 24 },
-  device: { flex: 1, minHeight: 44, justifyContent: 'center', borderRadius: 9, paddingHorizontal: 3 },
-  deviceSelected: { backgroundColor: '#37304B' },
-  deviceText: { color: '#A6A6B5', textAlign: 'center', fontSize: 12, fontWeight: '600' },
-  deviceTextSelected: { color: '#FFF' },
-  steps: { width: '100%', gap: 20, marginBottom: 28 },
+  appIcon: { width: 56, height: 56, borderRadius: 14, marginBottom: 16 },
+  title: { color: '#FFF', fontFamily: 'Viral-Bold', fontSize: 25, lineHeight: 31, textAlign: 'center', marginBottom: 32 },
+  steps: { width: '100%', gap: 20, marginBottom: 32 },
   step: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  stepText: { flex: 1, color: '#E0E0E8', fontSize: 15, lineHeight: 22 },
+  stepIcon: { width: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#10233B', borderWidth: 1, borderColor: '#22456D' },
+  stepText: { flex: 1, color: '#E0E0E8', fontSize: 17, fontWeight: '600', lineHeight: 24 },
   hint: { color: '#BAA2FF', fontSize: 13, textAlign: 'center', marginBottom: 12 },
   install: { width: '100%', minHeight: 52, backgroundColor: '#087AF5', alignItems: 'center', justifyContent: 'center', borderRadius: 14, marginBottom: 10 },
   installText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
   continue: { minHeight: 48, width: '100%', justifyContent: 'center', alignItems: 'center', borderRadius: 14, backgroundColor: '#1C202D' },
   continueText: { color: '#DCE1EF', fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  note: { color: '#757989', fontSize: 11, marginTop: 14 },
 });

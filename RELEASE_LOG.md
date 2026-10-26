@@ -9,13 +9,17 @@
   finishes; native apps still bypass it. Existing guide dismissal key retained,
   and standalone/Google redirect-return paths continue to skip installation UI.
 - Removed the large preview panel, promotional headline and extended step copy.
-  Minimal guide shows the app icon, direct heading, two short device instructions
-  and Continue in browser. Eligible browser install prompts are captured during
-  onboarding but only requested after onboarding and an explicit user tap.
+  Owner then requested one guide with no device selectors or platform names:
+  removed all tabs, enlarged the Share/menu and Add icons, and retained two
+  short action labels plus Not now. The appropriate browser control is detected
+  automatically; no iPhone/Android/computer labels appear in the interface.
+  Eligible browser install prompts are captured during onboarding but only
+  requested after onboarding and an explicit user tap.
 - TypeScript passed. Six focused regression tests passed, including actual
   component transitions, hydration, persistent dismissal, Google return and
   deferring an early browser install event. No new dependency/runtime changes.
-- CI/Hosting and live browser receipts pending. Target https://8playo.com.
+- Initial revision 3a9b049 superseded by this additional owner-directed
+  simplification. CI/Hosting and live browser receipts pending. Target https://8playo.com.
   Web-only installation behavior; no mobile OTA, backend or store publication.
 
 ### October 24: owner-approved Expo Go publication and release-gate corrections
