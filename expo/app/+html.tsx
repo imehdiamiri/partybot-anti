@@ -32,6 +32,12 @@ export default function Root({ children }: PropsWithChildren) {
         [data-testid="library-scroll"],
         [data-testid="tools-scroll"],
         [data-testid="friends-scroll"] { overscroll-behavior-y: contain; }
+        [data-testid="front-card"],
+        [data-testid="previous-card"],
+        [data-testid="stack-card-1"] {
+          will-change: transform, opacity;
+          backface-visibility: hidden;
+        }
         [data-testid$="-profile-btn"]:focus-visible,
         [data-testid^="friends-segment-"]:focus-visible,
         [data-testid^="tab-library-"]:focus-visible {

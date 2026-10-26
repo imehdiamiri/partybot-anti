@@ -1,5 +1,29 @@
 # Release log
 
+### October 26: continuous card motion with stable deck layers
+
+- Owner requested removing the remaining background-card snap at index commit.
+  Fetched clean main/origin b0a02d1; preserved checkpoint
+  checkpoint/2026-10-26-before-continuous-card-motion.
+- Replaced index-dependent fan offsets with stable, inert deck layers. Only
+  the outgoing face and real previous/next destination animate. Destinations
+  rise from within the stack and finish at the exact foreground transform;
+  the outgoing face fades before its hidden role changes. Background identities
+  and geometry remain unchanged across navigation; the last deck fades away
+  before the empty state appears. No incoming offscreen entrance, reordering
+  of exposed tail cards or substitution of another face's text.
+- Bounded real-face rendering to current plus immediate neighbors instead of
+  iterating the entire catalog for each transition. Kept one transform/opacity
+  timeline, enabled the native animation driver on existing native platforms,
+  and added targeted web compositor hints to those three faces. No new modules,
+  timers, layout animation, per-frame React updates or runtime changes.
+- TypeScript and diff checks passed. Six actual-renderer regressions passed;
+  new tests compare the identity, transform and opacity of every painted layer
+  immediately before/after a left and right commit, disallow newly appearing
+  tail layers, and check the last-deck fade. English/translation node retention,
+  cancelled swipes, rapid input, boundaries and exhausted-deck return retained.
+  Full CI/deployment and browser acceptance receipt pending below.
+
 ### October 26: keep card navigation inside the deck and remove edge fades
 
 - Owner reported that the offscreen previous-card entrance changed the intended
@@ -22,7 +46,19 @@
   in-deck placement/stack order, unchanged face/text/translation identity,
   promotion geometry, opaque incoming faces, cancelled drags, rapid input and
   exhausted-deck recovery. Prior navigation boundary tests remain unchanged.
-  Full CI, final web receipt and acceptance checks pending below.
+  Source b0a02d1181d90a3580c06ebce87e360d18080b04 passed all CI/deployment
+  gates after rerunning failed jobs: https://github.com/imehdiamiri/partybot-anti/actions/runs/40321303644.
+  Initial backend emulator transaction test timed out at 20s (80 others passed);
+  unchanged rerun passed. Firebase released successfully, but the immediate live
+  receipt check saw the prior CDN revision; independent recheck matched, and a
+  failed-job rerun completed green. No tests or release checks were suppressed.
+  Live receipt: entry-abe1551161ac568e14945195d825c672.js, SHA-256
+  dbfa7ec4b2caf1ef17a5840dca4c852f7e3246d44028a0bd569d4a03c38e5dd4.
+  At 390x844, actual mouse drags left/right returned to the identical original
+  English prompt; next/previous with Persian selected returned identical English
+  and Persian text. Profile/upper selector geometry also checked at 320/1280px.
+  Owner clarified app mode means installed Home Screen web app: no mobile OTA.
+  Physical status-bar appearance still unverified. Motion superseded above.
 
 ### October 26: crisp web headers, circular profile controls and bidirectional cards
 

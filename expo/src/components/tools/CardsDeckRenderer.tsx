@@ -29,17 +29,6 @@ if (Platform.OS === 'ios') {
 
 const SWIPE_OUT_DURATION = 420;
 
-function stackPose(offset: number) {
-  const direction = offset % 2 === 0 ? -1 : 1;
-  return {
-    x: offset === 0 ? 0 : direction * 22 * offset,
-    y: 6 * offset,
-    scale: 1 - 0.04 * offset,
-    rotate: offset === 0 ? '0deg' : `${direction * (4 + offset * 1.5)}deg`,
-    opacity: 1,
-  };
-}
-
 interface Props {
   categoryId: CardCategory;
 }
@@ -191,7 +180,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       toValue: { x, y: 0 },
       duration: reducedMotion.current ? 0 : SWIPE_OUT_DURATION,
       easing: Easing.inOut(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start(({ finished }) => {
       if (!finished || generation !== generationRef.current) return;
       setCurrentIndex(nextIndex);
@@ -204,7 +193,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       toValue: { x: 0, y: 0 },
       duration: reducedMotion.current ? 0 : 240,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   };
 
@@ -314,39 +303,43 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       );
     }
 
-    const VISIBLE_BEHIND = 3;
-
-    return deck.map((card, index) => {
-      const offset = index - currentIndex;
-      if (offset < -1 || offset > VISIBLE_BEHIND) return null;
+    // Fixed deck layers never get new offsets when the index commits. Only
+    // the outgoing face and the real destination face move; no tail card is
+    // inserted at a different visible position after the animation finishes.
+    const layerCount = Math.min(3, deck.length - 1);
+    const backgrounds = Array.from({ length: layerCount }, (_, index) => (
+      <Animated.View key={`back-${index}`} testID={`deck-back-${index}`} pointerEvents="none"
+        accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden
+        style={[styles.cardStyle, {
+          width: cardWidth, height: cardHeight, zIndex: index,
+          transform: [{ translateY: (layerCount - index) * 12 }, { scale: 1 - (layerCount - index) * 0.03 }],
+          opacity: currentIndex === deck.length - 1 ? position.x.interpolate({
+            inputRange: [-swipeOutDistance, 0], outputRange: [0, 1], extrapolate: 'clamp',
+          }) : 1,
+        }]}>
+        <CardBack category={category} />
+      </Animated.View>
+    ));
+    const first = Math.max(0, currentIndex - 1);
+    const faces = deck.slice(first, currentIndex + 2).map((card, relativeIndex) => {
+      const offset = first + relativeIndex - currentIndex;
       const active = offset === 0;
       const previous = offset === -1;
-      // Both neighbors live inside the fan: previous on the left, next on the
-      // right. A right swipe promotes the existing previous face from the fan,
-      // without an offscreen entrance or replacing another card's text.
-      const rest = previous ? { ...stackPose(1), x: -22, rotate: '-5.5deg' } : stackPose(offset);
-      const forward = previous ? rest : offset === 0
-        ? { ...rest, x: -swipeOutDistance, rotate: '-12deg' }
-        : stackPose(offset - 1);
-      const backward = previous ? stackPose(0) : active
-        ? { ...rest, x: swipeOutDistance, rotate: '12deg' }
-        : stackPose(offset + 1);
-      const interpolate = <T extends number | string,>(a: T, b: T, c: T) => position.x.interpolate<T>({
-        inputRange: [-swipeOutDistance, 0, swipeOutDistance],
-        outputRange: [a, b, c] as number[] | string[],
-        extrapolate: 'clamp',
+      // Both possible destinations rise from inside the deck. The other face
+      // stays invisible. Content and controls retain the same layout and key.
+      const inputRange = previous ? [0, swipeOutDistance] : [-swipeOutDistance, 0];
+      const top = position.x.interpolate({ inputRange, outputRange: previous ? [12, 0] : [0, 12], extrapolate: 'clamp' });
+      const scale = position.x.interpolate({ inputRange, outputRange: previous ? [0.97, 1] : [1, 0.97], extrapolate: 'clamp' });
+      const rotate = position.x.interpolate({
+        inputRange: [-swipeOutDistance, 0, swipeOutDistance], outputRange: ['-8deg', '0deg', '8deg'], extrapolate: 'clamp',
       });
-      const translateX = interpolate(forward.x, rest.x, backward.x);
-      const top = interpolate(forward.y, rest.y, backward.y);
-      const scale = interpolate(forward.scale, rest.scale, backward.scale);
-      const cardRotate = interpolate(forward.rotate, rest.rotate, backward.rotate);
-      // Hide the other neighbor before the departing face uncovers its text.
-      // Opaque faces avoid ghosted text from deeper cards showing through.
-      const opacity = previous ? position.x.interpolate({
-        inputRange: [-swipeOutDistance, -1, 0, swipeOutDistance],
-        outputRange: [0, 0, 1, 1],
-        extrapolate: 'clamp',
-      }) : interpolate(forward.opacity, rest.opacity, backward.opacity);
+      const opacity = active ? position.x.interpolate({
+        inputRange: [-swipeOutDistance, -swipeOutDistance * 0.7, 0, swipeOutDistance * 0.7, swipeOutDistance],
+        outputRange: [0, 1, 1, 1, 0], extrapolate: 'clamp',
+      }) : position.x.interpolate({
+        inputRange: previous ? [0, swipeOutDistance * 0.05] : [-swipeOutDistance * 0.05, 0],
+        outputRange: previous ? [0, 1] : [1, 0], extrapolate: 'clamp',
+      });
 
       return (
         <Animated.View
@@ -361,12 +354,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
               width: cardWidth,
               height: cardHeight,
               transform: [
-                { translateX },
-                { translateY: top },
-                { scale },
-                { rotate: cardRotate },
+                { translateX: active ? position.x : 0 },
+                { translateY: active ? 0 : top },
+                { scale: active ? 1 : scale },
+                { rotate: active ? rotate : '0deg' },
               ],
-              zIndex: previous ? 98 : active ? 99 : 50 - offset,
+              zIndex: active ? 10 : 5,
               opacity,
             },
           ]}
@@ -379,7 +372,8 @@ export function CardsDeckRenderer({ categoryId }: Props) {
           </Animated.View>}
         </Animated.View>
       );
-    }).reverse();
+    });
+    return [...backgrounds, ...faces];
   };
 
   const renderActionBar = () => {
