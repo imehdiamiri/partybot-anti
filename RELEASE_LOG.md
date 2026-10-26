@@ -22,7 +22,26 @@
   immediately before/after a left and right commit, disallow newly appearing
   tail layers, and check the last-deck fade. English/translation node retention,
   cancelled swipes, rapid input, boundaries and exhausted-deck return retained.
-  Full CI/deployment and browser acceptance receipt pending below.
+  Source 865f57ab96f6baab0e797a94b9b8fc0b2640daf2 passed every CI and Hosting
+  job on its first attempt: https://github.com/imehdiamiri/partybot-anti/actions/runs/40323700385.
+  Live https://8playo.com/ci-release.json confirms that source and
+  entry-b45aa26cace0c97bf7542b324aff490e.js, SHA-256
+  e2e1c963538097213387bcb29f0ebe7aa6e202e3fefe28d0fabbf24c35f34b8e.
+  Independently fetched the live JS bytes, verified their hash and the HTML
+  entry reference, in addition to the service-confirmed Hosting deployment.
+- Live Chromium checks at 390x844: actual left/right drags selected the expected
+  card and returned to the original English and Persian text. All three deck
+  layer matrices/opacities matched before/after both directions; compositor
+  hints applied. At 320x568 and 1280x800, no horizontal document overflow or
+  card/action overlap. Browser captured no console errors. Saved the final
+  Persian-card screenshot in ignored .security and shared it in chat; viewport
+  override reset. No physical-device frame-rate or Safari status-bar certification.
+- Owner confirmed app mode is the installed Home Screen website. Web-only
+  publication updates that site; no Expo Go/native OTA, store or backend deploy.
+  Apple status-bar metadata is black and theme/body are #08080F; the installed
+  page needs a fresh launch to pick up document changes. Native edge-effect
+  options remain source-only until a separate compatible mobile release.
+  Receipt tag: 8playo-card-motion-ui-2026-10-26.
 
 ### October 26: keep card navigation inside the deck and remove edge fades
 
