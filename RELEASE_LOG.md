@@ -12,7 +12,18 @@
 - Local TypeScript, six existing actual-renderer swipe regressions, diff check
   and targeted source credential guard passed. No new dependencies, runtime,
   backend or native configuration. Web/Home Screen scope only; no mobile OTA.
-- Publication and live responsive verification receipts follow after CI.
+- Source 44da535838fcc0033417fecf04db59ebfcb0c98f passed all CI/Hosting jobs:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/40325919376.
+  Live https://8playo.com/ci-release.json confirms that commit and
+  entry-cf618a1b8bbee25ebaa448a05fb6738b.js, SHA-256
+  ddc73d8c9c11f5c165548e97ad4f4f35b0a9267d6c0e6ca641d6d18964928838.
+- Live Chromium visual check at 390x844 confirmed the fan and legible swipe hint;
+  next/previous returned to the original face/text. Checked 320x568 and 1280x800:
+  no horizontal document overflow, exposed backs remain inside the viewport and
+  above navigation controls. Small screens retain internal text scrolling.
+  No captured console errors; viewport reset. Screenshot stored in ignored
+  .security/ui-card-fan-2026-10-26.png. Physical Safari/native not retested.
+  Receipt tag: 8playo-visible-card-fan-2026-10-26. No mobile update/build IDs.
 
 ### October 26: continuous card motion with stable deck layers
 
