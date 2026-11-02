@@ -50,6 +50,32 @@
   standalone security tests and all 354 app tests. Jest 30 additionally discovered
   the node:test .cjs suite, then rejected it as an empty Jest suite. Excluded only
   that file from Jest discovery; its dedicated CI security step stays mandatory.
+- Final source 6c71380f9c175206094d043e3b82e8664d0c3afe passed CI
+  41491186847: TypeScript, 51 app suites / 354 tests, 8 security-fork tests,
+  81 backend/authorization tests, runtime audit and verified static web export.
+  Firebase Hosting-only publication succeeded. Live https://8playo.com and
+  /ci-release.json confirm this revision; served entry
+  entry-b0ad6cba0a8dd057c3982b2a9670d2f6.js matches SHA-256
+  9b599a97858821ded9772fc555df6819d47460c03309adb6e01272eee0477558.
+  Live HTML includes root/hydration entry, safe-area CSS and one viewport meta;
+  entry/HTML both return HTTP 200. These HTTP checks do not replace device testing.
+- Mobile workflow 41491949566 reused successful CI for the same 6c71380 source.
+  EAS confirmed publication on expo-go-sdk58, preview environment, SDK 58.0.0 /
+  runtime exposdk:58.0.0, group 30caf7bd-274e-4dcb-88cd-10e23f617eb5:
+  iOS 01a19d56-026b-7d39-a454-905e6ba69671;
+  Android 01a19d56-026b-7474-a257-b42ae0c4b882.
+  Direct update-service checks returned the expected platform IDs, SDK/runtime
+  and HTTP 200 manifests; bundle range downloads returned HTTP 206 after applying
+  each manifest's assetRequestHeaders. Bare asset requests correctly require those
+  headers. No access-header values were logged or committed.
+- Open the new preview, not the historical SDK 57 Recent entry:
+  exp://u.expo.dev/b7949f49-aef7-4963-9d95-5eb35280136e?channel-name=expo-go-sdk58
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/updates/30caf7bd-274e-4dcb-88cd-10e23f617eb5
+  Release receipt tag: 8playo-sdk58-2026-11-02. Existing SDK 57 channels/binaries
+  remain unchanged. Expo Go cannot validate real purchases/native Google login;
+  native SDK 58 binaries require a separate build, with iOS signing still pending.
+  Runtime audit has 15 moderate findings and no high/critical; the full developer
+  dependency graph still reports 4 high findings. No load benchmarks were run.
 
 ### November 2: louder Reverse Singing replay on all supported platforms
 
