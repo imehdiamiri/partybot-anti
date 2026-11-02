@@ -4,6 +4,7 @@ import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { tabContentBottom } from '@/src/utils/mobileLayout';
 import { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Platform, LayoutChangeEvent, useWindowDimensions } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -28,7 +29,7 @@ export default function GamesScreen() {
   const [measuredWidth, setMeasuredWidth] = useState<number>(0);
   const [selectedLibraryTab, setSelectedLibraryTab] = useState<'Games' | 'Ideas'>('Games');
   const [selectedModeFilter, setSelectedModeFilter] = useState<GameMode | null>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
 
   useEffect(() => {
     if (params.defaultTab === 'Games') {

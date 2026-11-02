@@ -151,7 +151,7 @@ export default function OnboardingScreen() {
   const [name, setName] = useState<string>('');
   const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
   const scrollViewRef = useRef<Animated.ScrollView>(null);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const scrollX = useSharedValue(0);
 
   useEffect(() => {
@@ -334,7 +334,7 @@ function CopyBlock({ active, eyebrow, title, subtitle, accent }: { active: boole
   );
 }
 
-function NameSticker({ active, name, setName, inputRef, accent }: { active: boolean; name: string; setName: (s: string) => void; inputRef: React.RefObject<TextInput | null>; accent: string }) {
+function NameSticker({ active, name, setName, inputRef, accent }: { active: boolean; name: string; setName: (s: string) => void; inputRef: React.RefObject<React.ComponentRef<typeof TextInput> | null>; accent: string }) {
   return (
     <View style={styles.nameStickerWrap} pointerEvents={active ? 'auto' : 'none'}>
       <View pointerEvents="none" style={[styles.glowOrb, { shadowColor: accent }]}>

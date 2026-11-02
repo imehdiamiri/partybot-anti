@@ -5,8 +5,8 @@ on:
       track:
         description: Separate preview runtime
         type: choice
-        options: [expo-go-sdk57, native-preview]
-        default: expo-go-sdk57
+        options: [expo-go-sdk58, native-preview]
+        default: expo-go-sdk58
       publish:
         description: Publish after compatibility checks (false = inspect only)
         type: boolean

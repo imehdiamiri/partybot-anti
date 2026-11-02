@@ -120,7 +120,7 @@ export namespace Audio {
         const wav = pcm16ToWav(this.chunks, this.sampleRate, this.channels);
         normalizeVoiceWav(wav);
         const file = new File(Paths.cache, `reverse-${Date.now()}-${Math.random().toString(36).slice(2)}.wav`);
-        file.write(wav);
+        await file.write(wav);
         this.uri = file.uri;
       } finally { this.subscription?.remove(); this.stream.release(); this.chunks = []; }
     }

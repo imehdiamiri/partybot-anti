@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { CompactGameContext } from './GameControls';
 import { GameDesign as D } from '@/src/theme/GameDesign';
 
 export function MatchStudio({ kind, step, player, round, children, scrollEnabled = true }: {
   kind: 'color' | 'sound'; step: 0 | 1 | 2; player: string; round: string; children: React.ReactNode; scrollEnabled?: boolean;
 }) {
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const [height, setHeight] = useState(600);
   const compact = height < 500;
   useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [step]);

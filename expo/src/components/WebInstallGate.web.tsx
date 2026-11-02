@@ -53,7 +53,7 @@ export function WebInstallGate({ children, onboardingComplete, settingsReady }: 
   };
   if (!status || !settingsReady) return <View style={styles.canvas} />;
   if (!needsInstallGuide(status.installed, status.seen, status.returningFromGoogle, onboardingComplete)) return <>{children}</>;
-  return <ScrollView style={styles.canvas} contentContainerStyle={styles.page}>
+  return <ScrollView testID="web-safe-area-shell" style={styles.canvas} contentContainerStyle={styles.page}>
     <Image source={require('@/assets/images/icon.png')} style={styles.appIcon} />
     <Text accessibilityRole="header" style={styles.title}>Add 8Playo</Text>
     <View style={styles.steps}>

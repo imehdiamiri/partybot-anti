@@ -1,5 +1,43 @@
 # Release log
 
+### November 2: migrate preview to Expo Go SDK 58
+
+- Owner's iPhone reports Expo Go 58 cannot open our SDK 57 update. Fetched clean
+  main/origin 0806c36; checkpoint/2026-11-02-before-sdk58 preserves that source.
+  Used the official Expo 58 dependency matrix and Router migration guide:
+  https://expo.dev/changelog/sdk-58 and
+  https://docs.expo.dev/router/migrate/sdk-57-to-58/.
+- Upgraded Expo to 58.0.22, Router 58.0.29, RN 0.88.1, React/test renderer 19.3,
+  and matching Expo/native modules. Jest 30 matches Expo Doctor and ts-jest's
+  supported peers. No force/legacy-peer installs. Router 58 no longer depends on
+  query-string/decode-uri-component, so removed the unused decoder adapter and
+  its consumer tests. Existing relevant security overrides remain.
+- Native appVersion/runtime increases to 1.4.0; no SDK 58 OTA may reach 1.3.0 or
+  older binaries. Expo Go stays APP_VARIANT=expo-go with sdkVersion policy, now
+  exposdk:58.0.0. Created separate channel expo-go-sdk58
+  (01a19d43-3a99-7e54-88d8-4a2d4cbcdf0c), mapped to same-named branch
+  01a19d43-3924-71bf-b878-84e4e1807a1b; SDK 57/preview/production unchanged.
+  Updated the CI track selector/compatibility guard and current setup docs.
+- Await async File.write before exposing a recorded WAV URI; write failures
+  release capture and do not advertise a playable file. Migrated RN strict refs
+  and nullable AppState initialization. Replaced the removed beforeRemove event
+  with Router 58 usePreventRemove and explicitly disable it on confirmed Exit.
+  Existing disabled game swipe gestures remain intact.
+- Static web output remains static with synchronous web routes. Root HTML now
+  includes Router 58 document attributes/head/body nodes needed for hydration;
+  title remains in initial HTML. CSS safe-area env padding protects the web shell
+  and install guide because Router 58 no longer measures web insets in JS.
+- Local TypeScript and all 20 Expo Doctor checks pass; expo install --check is
+  clean. Runtime audit passes (15 moderate; no high/critical). Focused audio/native
+  reverse/card tests: 14 passed. New confirmed/cancelled Exit regression passes
+  after adding the loading indicator to its mock. Full final-source CI follows.
+- The previous audio APK is now FINISHED: Android build
+  d2442af2-3ef6-4d54-a2da-29cbbac70a25, source 7b0d682, SDK 57/runtime 1.3.0:
+  https://expo.dev/artifacts/eas/FdhwnoOnrQafXwfw6V8WzcPT_aygAul4pFli944uCYI.apk.
+  This is not an SDK 58 binary. Native iOS signing remains incomplete. No new
+  native build/store submission or backend deployment in this migration batch.
+  Final web/Expo Go receipts and device verification limits follow.
+
 ### November 2: louder Reverse Singing replay on all supported platforms
 
 - Owner requested louder original/reversed replay on every platform. Fetched

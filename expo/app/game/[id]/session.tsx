@@ -2,7 +2,7 @@ import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, BackHandler, Platform } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack, useFocusEffect, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect, usePreventRemove } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useActionConfirmation } from '@/src/components/ActionConfirmation';
@@ -26,15 +26,12 @@ export default function GameSessionScreen() {
   const { currentRoom } = useMultiplayerStore();
 
   const isExitingRef = useRef(false);
-  const navigation = useNavigation();
+  const disableRemovalPrevention = usePreventRemove(Platform.OS === 'web' && !!activeSession && !isExitingRef.current);
   useFocusEffect(useCallback(() => {
     // A game is left only through its explicit, confirmed Exit action.
     const back = BackHandler.addEventListener('hardwareBackPress', () => true);
-    const unsubscribe = Platform.OS === 'web' ? navigation.addListener('beforeRemove', event => {
-      if (!isExitingRef.current && useGameStore.getState().activeSession) event.preventDefault();
-    }) : () => {};
-    return () => { back.remove(); unsubscribe(); };
-  }, [navigation]));
+    return () => { back.remove(); };
+  }, []));
 
   useEffect(() => {
     if (isExitingRef.current) return;
@@ -94,6 +91,7 @@ export default function GameSessionScreen() {
     if (isExitingRef.current) return;
     isExitingRef.current = true;
     exitActiveSession();
+    disableRemovalPrevention();
     router.replace('/(tabs)');
   };
 

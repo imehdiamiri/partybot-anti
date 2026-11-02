@@ -82,7 +82,7 @@ export default function WheelToolScreen() {
 
   const rotation = useSharedValue<number>(0);
   const pointerColorIndex = useSharedValue<number>(-1);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const spinGeneration = useRef(0);
   const spinningRef = useRef(false);
   useFocusEffect(useCallback(() => () => {

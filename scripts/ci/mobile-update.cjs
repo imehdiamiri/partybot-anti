@@ -1,10 +1,10 @@
 const fs = require('node:fs');
 const { spawnSync, execFileSync } = require('node:child_process');
 const track = process.env.UPDATE_TRACK;
-if (!['expo-go-sdk57', 'native-preview'].includes(track)) throw new Error('Unknown update track');
-const expoGo = track === 'expo-go-sdk57';
+if (!['expo-go-sdk58', 'native-preview'].includes(track)) throw new Error('Unknown update track');
+const expoGo = track === 'expo-go-sdk58';
 process.env.APP_VARIANT = expoGo ? 'expo-go' : 'preview';
-const channel = expoGo ? 'expo-go-sdk57' : 'preview';
+const channel = expoGo ? 'expo-go-sdk58' : 'preview';
 function eas(args) {
   const result = spawnSync('eas', args, { cwd: 'expo', env: process.env, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
   if (result.status !== 0) throw new Error(`EAS ${args[0]} failed; verify the Expo account, channel and credentials.`);
@@ -18,7 +18,7 @@ if (!branches.some(b => b.name === channel)) throw new Error(`Channel ${channel}
 const config = JSON.parse(fs.readFileSync('expo/app.json', 'utf8')).expo;
 if (expoGo) {
   const pkg = JSON.parse(fs.readFileSync('expo/package.json', 'utf8'));
-  if (!/^[~^]?57\./.test(pkg.dependencies.expo)) throw new Error('Expo Go track only supports SDK 57');
+  if (!/^[~^]?58\./.test(pkg.dependencies.expo)) throw new Error('Expo Go track only supports SDK 58');
 } else {
   for (const platform of ['android', 'ios']) {
     const builds = eas(['build:list', '--platform', platform, '--build-profile', 'preview', '--status', 'finished', '--limit', '1', '--json', '--non-interactive']);

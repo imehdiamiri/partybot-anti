@@ -16,7 +16,7 @@ not transfer account sessions, Xcode installations or ignored credentials.
 
 ## Install dependencies and recover configuration
 
-Install Node.js compatible with the checked-in Expo SDK 57/RN 0.86 dependency
+Install Node.js 22.13+ (CI uses 22.22) for the checked-in Expo SDK 58/RN 0.88 dependency
 requirements, Git and Xcode with the iOS Simulator on macOS. Accept Xcode's
 license and install its requested components in Xcode as the account owner.
 Do not copy Windows node_modules onto macOS.
@@ -47,9 +47,10 @@ explicitly target `--project partyplay-8` because `.firebaserc` is local.
 
 ## iOS continuation
 
-Native version/runtime is 1.2.0. Google Mobile Ads needs a new compatible binary;
-Expo Go cannot test that SDK. Expo Go remains `expo-go-sdk57`, SDK57 runtime,
-with APP_VARIANT=expo-go. Do not mix these release tracks.
+SDK 58 native version/runtime is 1.4.0 and needs new compatible binaries.
+Google Mobile Ads cannot be tested in Expo Go. Expo Go uses `expo-go-sdk58`,
+runtime `exposdk:58.0.0`, with APP_VARIANT=expo-go. Old 1.3.0 binaries and the
+historical expo-go-sdk57 track remain separate; do not cross-publish updates.
 
 Inspect current EAS build/channel state before creating a build. Existing
 profiles in expo/eas.json include ios-simulator, preview and testflight. For

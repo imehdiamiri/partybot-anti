@@ -41,7 +41,9 @@ export function GameSlider({ label, value, min, max, onChange, onComplete, onDra
         aria-valuemin={min} aria-valuemax={max} aria-valuenow={Math.round(value)}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={e => onChange(Math.max(min, Math.min(max, value + (e.nativeEvent.actionName === 'increment' ? 1 : -1))))}
-        {...(Platform.OS === 'web' ? { tabIndex: 0, onKeyDown: (event: { key: string; preventDefault: () => void }) => {
+        {...(Platform.OS === 'web' ? { tabIndex: 0, onKeyDown: (nativeEvent: Parameters<NonNullable<React.ComponentProps<typeof View>['onKeyDown']>>[0]) => {
+          // react-native-web supplies a DOM keyboard event; RN's strict API uses a native event type.
+          const event = nativeEvent as unknown as React.KeyboardEvent;
           const direction = event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowDown' ? -1 : 0;
           if (!direction && event.key !== 'Home' && event.key !== 'End') return;
           event.preventDefault();

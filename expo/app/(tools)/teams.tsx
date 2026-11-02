@@ -47,7 +47,7 @@ const playError = () => {
   const [teams, setTeams] = useState<string[][]>([]);
   const [isShuffling, setIsShuffling] = useState(false);
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
 
   const addName = () => {
     const trimmed = draft.trim();

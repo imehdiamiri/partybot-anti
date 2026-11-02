@@ -5,11 +5,16 @@ const mockPlayer = {
   setPlaybackRate: jest.fn(), addListener: jest.fn(() => ({ remove: jest.fn() })),
 };
 const mockSetMode = jest.fn();
+const mockStream = {
+  start: jest.fn(async () => {}), stop: jest.fn(), release: jest.fn(),
+  addListener: jest.fn((_event: string, _callback: (buffer: { data: ArrayBuffer; sampleRate: number; channels: number }) => void) => ({ remove: jest.fn() })),
+};
+const mockWrite = jest.fn(async (_data: Uint8Array) => {});
 jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(() => mockPlayer), setAudioModeAsync: (...args: unknown[]) => mockSetMode(...args),
-  requestRecordingPermissionsAsync: jest.fn(), AudioModule: {},
+  requestRecordingPermissionsAsync: jest.fn(), AudioModule: { AudioStream: jest.fn(() => mockStream) },
 }));
-jest.mock('expo-file-system', () => ({ File: jest.fn(), Paths: { cache: 'cache' } }));
+jest.mock('expo-file-system', () => ({ File: jest.fn(() => ({ uri: 'cache/recording.wav', write: mockWrite })), Paths: { cache: 'cache' } }));
 import { Audio } from '../services/GameAudio';
 
 beforeEach(() => { jest.clearAllMocks(); mockPlayer.isLoaded = true; });
@@ -43,4 +48,29 @@ test('failed audio loading releases its player', async () => {
   await pending;
   expect(mockPlayer.remove).toHaveBeenCalledTimes(1);
   jest.useRealTimers();
+});
+
+test('recording does not expose its URI until the asynchronous WAV write completes', async () => {
+  let finishWrite!: () => void;
+  mockWrite.mockImplementationOnce(() => new Promise(resolve => { finishWrite = resolve; }));
+  const { recording } = await Audio.Recording.createAsync();
+  mockStream.addListener.mock.calls[0][1]({ data: new Int16Array([200, -200, 100, -100]).buffer, sampleRate: 44100, channels: 1 });
+  const stopped = recording.stopAndUnloadAsync();
+  expect(recording.stopAndUnloadAsync()).toBe(stopped);
+  expect(recording.getURI()).toBeNull();
+  expect(mockStream.release).not.toHaveBeenCalled();
+  expect(String.fromCharCode(...mockWrite.mock.calls[0][0].subarray(0, 4))).toBe('RIFF');
+  finishWrite();
+  await stopped;
+  expect(recording.getURI()).toBe('cache/recording.wav');
+  expect(mockStream.release).toHaveBeenCalledTimes(1);
+});
+
+test('a failed WAV write releases the microphone and never advertises a playable file', async () => {
+  mockWrite.mockRejectedValueOnce(new Error('No disk space'));
+  const { recording } = await Audio.Recording.createAsync();
+  mockStream.addListener.mock.calls[0][1]({ data: new Int16Array([200, -200]).buffer, sampleRate: 44100, channels: 1 });
+  await expect(recording.stopAndUnloadAsync()).rejects.toThrow('No disk space');
+  expect(recording.getURI()).toBeNull();
+  expect(mockStream.release).toHaveBeenCalledTimes(1);
 });

@@ -1,9 +1,12 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
+import { ScrollViewStyleReset, useServerDocumentContext } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
 export default function Root({ children }: PropsWithChildren) {
-  return <html lang="en">
+  const { htmlAttributes, bodyAttributes, headNodes, bodyNodes } = useServerDocumentContext();
+  return <html {...htmlAttributes} lang="en">
     <head>
+      {headNodes}
+      <title>8Playo — Party Games with Friends</title>
       <meta charSet="utf-8" />
       <meta name="description" content="Play quick party games with friends on 8Playo. Memory, timing, color and sound challenges, plus tools for your next get-together." />
       <meta name="application-name" content="8Playo" />
@@ -29,6 +32,11 @@ export default function Root({ children }: PropsWithChildren) {
         }
         html { -webkit-text-size-adjust: 100%; }
         html, body { overscroll-behavior-y: none; }
+        [data-testid="web-safe-area-shell"] {
+          padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+            env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+          box-sizing: border-box;
+        }
         [data-testid="library-scroll"],
         [data-testid="tools-scroll"],
         [data-testid="friends-scroll"] { overscroll-behavior-y: contain; }
@@ -47,6 +55,6 @@ export default function Root({ children }: PropsWithChildren) {
         input, textarea, select { font-size: max(16px, 1em) !important; }
       ` }} />
     </head>
-    <body>{children}</body>
+    <body {...bodyAttributes}>{children}{bodyNodes}</body>
   </html>;
 }

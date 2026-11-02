@@ -154,7 +154,7 @@ function WebContainer({ children }: ResponsiveWebContainerProps) {
   }, []);
 
   return (
-    <View ref={rootRef} style={styles.webRoot}>
+    <View testID="web-safe-area-shell" ref={rootRef} style={styles.webRoot}>
       <View ref={contentRef} style={styles.webContentWrapper}>
         {children}
       </View>

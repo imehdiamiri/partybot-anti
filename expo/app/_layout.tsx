@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useRef } from 'react';
-import { AppState, AppStateStatus, View } from 'react-native';
+import { AppState, View } from 'react-native';
 import 'react-native-reanimated';
 import { Audio } from '@/src/services/GameAudio';
 import {
@@ -46,7 +46,7 @@ export default function RootLayout() {
   }, []);
   const registered = !!currentUser && !currentUser.isAnonymous && currentUser.uid !== 'guest_local';
 
-  const appState = useRef<AppStateStatus>(AppState.currentState);
+  const appState = useRef(AppState.currentState ?? 'unknown');
 
   // Load unified rounded display font; aliased to legacy 'Viral-*' names so all
   // existing screens render the same chunky rounded face on iOS and Android.

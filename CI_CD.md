@@ -19,13 +19,15 @@
   changes and manual runs conservatively build web. No new backend IAM permissions
   or automatic backend deployments are introduced.
 - **Mobile update** is manual, main-only, and requires successful CI for the exact
-  commit. Choose `expo-go-sdk57` or `native-preview`; the default only inspects
-  compatibility. Set `publish=true` to send the update. Expo Go is SDK 57; custom
+  commit. Choose `expo-go-sdk58` or `native-preview`; the default only inspects
+  compatibility. Set `publish=true` to send the update. Expo Go is SDK 58; custom
   native binaries use appVersion. Native OTA requires a finished matching preview
   build for both platforms and unchanged native configuration/dependencies since
   those builds. Missing/rewritten build Git history fails closed; create a new
   compatible binary rather than bypassing the guard. Store submission and native
   signing are intentionally separate from OTA.
+  SDK 58 uses native appVersion/runtime 1.4.0; old 1.3.0 binaries remain on SDK 57.
+  The historical expo-go-sdk57 branch/channel is preserved and is not repointed.
 
 Open https://github.com/imehdiamiri/partybot-anti/actions for results and manual runs.
 There is no model call inside these workflows. Reading and repairing failed runs
