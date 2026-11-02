@@ -46,6 +46,10 @@
 - Interactive browser verification is unavailable: CUA reports local browser use
   disabled in Work settings. No physical iPhone/Android test is claimed; automated
   checks, exported artifacts and service receipts remain the verification basis.
+- Source 2b742b5 / CI 41490636443 passed the backend suite, TypeScript, 8
+  standalone security tests and all 354 app tests. Jest 30 additionally discovered
+  the node:test .cjs suite, then rejected it as an empty Jest suite. Excluded only
+  that file from Jest discovery; its dedicated CI security step stays mandatory.
 
 ### November 2: louder Reverse Singing replay on all supported platforms
 
