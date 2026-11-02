@@ -37,6 +37,15 @@
   This is not an SDK 58 binary. Native iOS signing remains incomplete. No new
   native build/store submission or backend deployment in this migration batch.
   Final web/Expo Go receipts and device verification limits follow.
+- Initial migration source 5ef1c55 reached CI 41489823942; publication stayed
+  blocked. The CLI regression still used SDK 57 internal module paths and Zod
+  plugin schemas. Updated it to SDK 58's JSON Schema validator and injected Zod
+  MCP schema API; all 8 security-fork tests now pass locally with invalid input
+  rejection retained. The unchanged backend suite had one 20-second transaction
+  retry timeout (80/81 passed); verify it again in the corrected-source run.
+- Interactive browser verification is unavailable: CUA reports local browser use
+  disabled in Work settings. No physical iPhone/Android test is claimed; automated
+  checks, exported artifacts and service receipts remain the verification basis.
 
 ### November 2: louder Reverse Singing replay on all supported platforms
 

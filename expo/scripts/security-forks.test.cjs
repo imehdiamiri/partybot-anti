@@ -10,25 +10,29 @@ test('patched CLI validator retains Expo plugin and command schema behavior', ()
  const cliEntry = expoRequire.resolve('@expo/cli/package.json');
  const cliRequire = createRequire(cliEntry);
  assert.equal(cliRequire('zod/package.json').version, '4.6.7');
+ const z = cliRequire('zod');
+ const { validate, ValidationError } = cliRequire('@expo/schema-utils');
  const path = require('node:path');
  const base = path.dirname(cliEntry);
- const { PluginSchema, DevToolsPluginOutputSchema } = require(path.join(base, 'build/src/start/server/DevToolsPlugin.schema.js'));
- const { createMCPDevToolsExtensionSchema } = require(path.join(base, 'build/src/start/server/createMCPDevToolsExtensionSchema.js'));
- const plugin = PluginSchema.parse({ packageName: 'test-plugin', packageRoot: '/test',
+ const { PluginSchema, DevToolsPluginOutputSchema } = require(path.join(base, 'build/src/start/server/devtools/DevToolsPlugin.schema.js'));
+ const { createMCPDevToolsExtensionSchema } = require(path.join(base, 'build/src/start/server/mcp/createMCPDevToolsExtensionSchema.js'));
+ // SDK 58 uses JSON Schema for plugins, and the injected Zod version for MCP commands.
+ const plugin = { packageName: 'test-plugin', packageRoot: '/test',
   cliExtensions: { description: 'test', entryPoint: './test.js', commands: [
    { name: 'inspect', title: 'Inspect', environments: ['cli','mcp'], parameters: [
     { name: 'count', type: 'number' }, { name: 'enabled', type: 'confirm' }, { name: 'label', type: 'text' },
    ] },
   ] },
- });
- assert.equal(PluginSchema.safeParse({packageName:''}).success, false);
- const schema = createMCPDevToolsExtensionSchema(plugin);
+ };
+ assert.doesNotThrow(() => validate(PluginSchema, plugin));
+ assert.throws(() => validate(PluginSchema, {packageName:''}), ValidationError);
+ const schema = createMCPDevToolsExtensionSchema(plugin, z);
  assert.deepEqual(schema.parse({command:'inspect', count:2, enabled:true, label:'test'}),
   {command:'inspect', count:2, enabled:true, label:'test'});
  for (const invalid of [{command:'unknown'}, {command:'inspect', count:'2'}, {command:'inspect', extra:true}])
   assert.equal(schema.safeParse(invalid).success, false);
- assert.equal(DevToolsPluginOutputSchema.safeParse([{type:'text',text:'ok',level:'info'}]).success,true);
- assert.equal(DevToolsPluginOutputSchema.safeParse([{type:'audio',url:'not-a-url'}]).success,false);
+ assert.doesNotThrow(() => validate(DevToolsPluginOutputSchema, [{type:'text',text:'ok',level:'info'}]));
+ assert.throws(() => validate(DevToolsPluginOutputSchema, [{type:'audio',url:'not-a-url'}]), ValidationError);
 });
 
 test('all installed callers resolve to reviewed local forks', () => {
