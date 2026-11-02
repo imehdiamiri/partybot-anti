@@ -41,6 +41,28 @@
   build ID or artifact. EAS incremented remote iOS buildNumber from 5 to 6 before
   that failure. Physical iOS needs interactive credential setup and a new 1.3.0
   binary; no incompatible OTA is sent to old builds. No physical listening test.
+- Final source 7b0d682ccc7a9e28b4e1bc5c668a6bd63f80330c passed all CI jobs
+  (51 app suites / 353 tests, TypeScript, security regressions/runtime audit,
+  backend authorization tests and web export) and Hosting publication:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/41453808669.
+  Live https://8playo.com/ci-release.json confirms that source and
+  entry-9ee9c31969308357a4fdf30f15303590.js, SHA-256
+  c1bc5d518fb5d781198601ceb87d77e3ce19c761e894eb5013c3ba83dbc84f47.
+- Expo Go publication confirmed for both platforms by successful workflow
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/41454598216;
+  branch/channel expo-go-sdk57, runtime exposdk:57.0.0, same 7b0d682 source.
+  Group 09e74666-0735-4ebd-87e1-1aba179757b4; Android update
+  01a19c7f-b9cf-79e6-b3d5-31e846904907; iOS update
+  01a19c7f-b9cf-73e6-b209-e9891e5d52be. Expo Go remains a separate preview,
+  not an update for installed release binaries or an App Store release.
+- Replacement Android preview build d2442af2-3ef6-4d54-a2da-29cbbac70a25
+  accepted using existing remote keystore, source 7b0d682, version/runtime 1.3.0,
+  versionCode 2. At the final November 2 service check it remains IN_QUEUE;
+  no APK/download artifact or completed-install claim. Build status:
+  https://expo.dev/accounts/imehdiamiri/projects/expo-app/builds/d2442af2-3ef6-4d54-a2da-29cbbac70a25.
+  iOS signing blocker above remains; no native OTA or store submission this batch.
+  Receipt tag: 8playo-reverse-volume-2026-11-02. Reopen the updated web/Expo Go
+  app and record a fresh take to hear the new normalization.
 
 ### October 26: visible card stack and swipe affordance
 
