@@ -1,5 +1,7 @@
 import { stretchVoice } from './stretchVoice';
 import { getWebAudioContext } from './browserMediaAdapter';
+import { setBrowserAudioSession } from './browserAudioSession';
+import { normalizeVoiceChannels } from './voiceGain';
 
 /** Recording playback uses the PCM buffers already decoded at Stop.
  * It does not depend on a detached HTMLAudioElement accepting a blob URL.
@@ -20,6 +22,7 @@ export class BrowserRecordingPlayback {
   async play(uri: string, rate = 1, onEnded?: () => void): Promise<boolean> {
     this.stop();
     const generation = this.generation;
+    setBrowserAudioSession('playback');
     const ctx = this.getContext();
     if (!ctx) throw new Error('Audio playback is not available in this browser.');
     // Called directly from the Play gesture, before any fetch/decode await (Safari).
@@ -31,12 +34,14 @@ export class BrowserRecordingPlayback {
       if (!response.ok) throw new Error('The recording could not be loaded. Please try recording again.');
       buffer = await ctx.decodeAudioData(await response.arrayBuffer());
       if (generation !== this.generation) return false;
+      normalizeVoiceChannels(Array.from({ length: buffer.numberOfChannels }, (_, index) => buffer!.getChannelData(index)), buffer.sampleRate);
       this.buffers.set(uri, buffer);
     }
     if (rate === 0.5) {
       let slow = this.slowBuffers.get(uri);
       if (!slow) {
         const channels = stretchVoice(Array.from({ length: buffer.numberOfChannels }, (_, index) => buffer!.getChannelData(index)), buffer.sampleRate);
+        normalizeVoiceChannels(channels, buffer.sampleRate);
         slow = ctx.createBuffer(channels.length, channels[0].length, buffer.sampleRate);
         channels.forEach((channel, index) => slow!.getChannelData(index).set(channel));
         this.slowBuffers.set(uri, slow);

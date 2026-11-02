@@ -158,11 +158,13 @@ describe('Browser Media Adapter', () => {
   });
 
   test('WebAudioRecorder start and stop creates reversed audio buffer and manages URLs', async () => {
+    const stopped = jest.fn();
     const mockStream = {
-      getTracks: jest.fn(() => [{ stop: jest.fn() }]),
+      getTracks: jest.fn(() => [{ stop: stopped }]),
     };
 
     (global as any).navigator = {
+      audioSession: { type: 'playback' },
       mediaDevices: {
         getUserMedia: jest.fn().mockResolvedValue(mockStream),
       },
@@ -196,9 +198,14 @@ describe('Browser Media Adapter', () => {
 
     const recorder = new WebAudioRecorder();
     await recorder.start();
+    expect((global as any).navigator.audioSession.type).toBe('play-and-record');
     expect((global as any).navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: { autoGainControl: false, noiseSuppression: false, echoCancellation: false } });
 
+    const decodingContext = getWebAudioContext() as any;
     const result = await recorder.stop();
+    expect(stopped).toHaveBeenCalledTimes(1);
+    expect(stopped.mock.invocationCallOrder[0]).toBeLessThan(decodingContext.decodeAudioData.mock.invocationCallOrder[0]);
+    expect((global as any).navigator.audioSession.type).toBe('playback');
     expect(result.durationMs).toBe(1000);
     expect(recorder.originalBuffer).toBeDefined();
     expect(recorder.reversedBuffer).toBeDefined();

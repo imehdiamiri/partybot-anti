@@ -1,4 +1,5 @@
 import { normalizeVoiceChannels } from './voiceGain';
+import { setBrowserAudioSession } from './browserAudioSession';
 import { isWeb } from './platform';
 
 /**
@@ -225,6 +226,7 @@ export class WebAudioRecorder {
     this.reversedBuffer = null;
 
     try {
+      setBrowserAudioSession('play-and-record');
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: { autoGainControl: false, noiseSuppression: false, echoCancellation: false } });
       const MR = (typeof window !== 'undefined' ? (window as any).MediaRecorder : (globalThis as any).MediaRecorder);
       const options = MR?.isTypeSupported?.('audio/webm')
@@ -266,6 +268,9 @@ export class WebAudioRecorder {
       this.mediaRecorder.onstop = async () => {
         try {
           const rawBlob = new Blob(this.chunks, { type: this.mediaRecorder?.mimeType || 'audio/webm' });
+          // MediaRecorder has delivered its last chunk. Release the microphone
+          // before decoding, so playback cannot inherit a quiet capture route.
+          this.releaseMicrophone();
           const arrayBuffer = await rawBlob.arrayBuffer();
 
           const ctx = getWebAudioContext();
@@ -363,11 +368,16 @@ export class WebAudioRecorder {
     this.createdUrls.clear();
   }
 
-  cleanup(): void {
+  private releaseMicrophone(): void {
     if (this.stream) {
       this.stream.getTracks().forEach((t) => t.stop());
       this.stream = null;
     }
+    setBrowserAudioSession('playback');
+  }
+
+  cleanup(): void {
+    this.releaseMicrophone();
     this.stopPlayback();
     this.mediaRecorder = null;
     this.chunks = [];

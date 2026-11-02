@@ -1,5 +1,6 @@
 import { stretchVoice } from './stretchVoice';
 import { pcm16ToWav } from './pcmWav';
+import { normalizeVoiceChannels } from './voiceGain';
 
 /** Pitch-preserving 0.5x playback as ordinary PCM: identical on native and web. */
 export function slowVoiceWav(input: Uint8Array): Uint8Array {
@@ -25,6 +26,7 @@ export function slowVoiceWav(input: Uint8Array): Uint8Array {
     return values;
   });
   const stretched = stretchVoice(channels, rate);
+  normalizeVoiceChannels(stretched, rate);
   const pcm = new Uint8Array(dataSize * 2), samples = new DataView(pcm.buffer);
   for (let i = 0; i < length * 2; i++) for (let channel = 0; channel < count; channel++) {
     samples.setInt16((i * count + channel) * 2, Math.max(-32768, Math.min(32767, Math.round(stretched[channel][i] * 32768))), true);

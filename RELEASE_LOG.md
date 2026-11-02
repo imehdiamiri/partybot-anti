@@ -1,5 +1,33 @@
 # Release log
 
+### November 2: louder Reverse Singing replay on all supported platforms
+
+- Owner requested louder original/reversed replay on every platform. Fetched
+  clean main/origin 344878e; checkpoint/2026-11-02-before-reverse-volume.
+- Increased active-voice RMS target from 0.28 to 0.45 (+4.1 dB where unconstrained)
+  and maximum weak-capture gain from 64 to 256 (+12 dB additional headroom).
+  Kept the 0.89 linked look-ahead peak ceiling and silence threshold; no sample
+  saturation, arbitrary player-volume multiplier or microphone hardware changes.
+  Shared PCM processing serves web and native original/reversed recordings;
+  pitch-preserving half-speed output is levelled again after time stretching.
+- Browser recording explicitly selects capture mode, stops microphone tracks
+  before decoding and restores playback mode on supported Audio Session APIs.
+  Replay reasserts playback mode; unsupported/read-only APIs safely no-op. This
+  addresses a possible Safari capture-volume route, not a claim of a physical
+  device reproduction: https://bugs.webkit.org/show_bug.cgi?id=236219#c10.
+  Newly decoded fallback recordings are normalized once and cached for replay.
+- Local TypeScript passed. 35 focused tests passed across voice gain, native/web
+  interaction, WAV/half-speed pitch and browser playback/session suites, including
+  16/44.1/48 kHz weak signals, transient headroom, linked stereo, no repeated
+  boosting, unchanged duration/pitch and capture-stop ordering. Fixed a test's
+  reference to the adapter's cached context after its initial assertion failure.
+- Inspected active preview/expo-go-sdk57 channels. Latest Android preview is
+  09edb25b-c6aa-4872-b579-6cccdf7ec618, source ec9f8a6, version 1.3.0.
+  Package overrides/lockfile changed since that build; preserve the conservative
+  native-OTA guard and create a fresh Android preview. No matching physical iOS
+  1.3.0 binary exists (latest physical preview 1.0.0; simulator 1.1.1).
+  No backend changes. Web/mobile deployment receipts and signing limits follow.
+
 ### October 26: visible card stack and swipe affordance
 
 - Owner requested that the ready-card deck clearly show more cards behind it

@@ -1,7 +1,10 @@
 /** Speech loudness, rather than a single peak, determines recording gain. */
 export function voiceGain(activeRms: number): number {
   if (!Number.isFinite(activeRms) || activeRms < 0.00015) return 1;
-  return Math.max(1, Math.min(64, 0.28 / activeRms));
+  // +4.1 dB for ordinary quiet takes, and up to +12 dB more for very weak
+  // microphones. The linked look-ahead limiter below still owns peak headroom;
+  // never turn up the player past 1 or saturate individual PCM samples.
+  return Math.max(1, Math.min(256, 0.45 / activeRms));
 }
 
 /** Offline look-ahead gain limiting preserves wave shapes instead of saturating samples. */

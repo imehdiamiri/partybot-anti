@@ -17,14 +17,36 @@ test('a handling transient no longer prevents quiet singing from becoming audibl
 test('silence and already loud audio are preserved; very quiet speech has bounded gain', () => {
   expect(voiceGain(0)).toBe(1);
   expect(voiceGain(0.0001)).toBe(1);
-  expect(voiceGain(0.001)).toBe(64);
-  expect(voiceGain(0.4)).toBe(1);
+  expect(voiceGain(0.001)).toBe(256);
+  expect(voiceGain(0.6)).toBe(1);
   const silent = new Float32Array(1000);
   normalizeVoiceChannels([silent]);
   expect(silent.every(x => x === 0)).toBe(true);
   const loud = speech(0.8), copy = loud.slice();
   normalizeVoiceChannels([loud]);
   expect(loud).toEqual(copy);
+});
+
+test.each([16000, 44100, 48000])('very quiet takes are audible in both directions at %i Hz without clipped peaks', sampleRate => {
+  const quiet = Float32Array.from({ length: sampleRate }, (_, i) => 0.002 * Math.sin(2 * Math.PI * 220 * i / sampleRate));
+  quiet[0] = 0.9; // A handling bump must not set the gain of the whole take.
+  const originalRms = rms(quiet.slice(sampleRate / 5));
+  normalizeVoiceChannels([quiet], sampleRate);
+  const audible = rms(quiet.slice(sampleRate / 5));
+  expect(audible).toBeGreaterThan(0.34);
+  expect(audible / originalRms).toBeGreaterThan(240);
+  expect(quiet.every(x => Number.isFinite(x) && Math.abs(x) <= 0.89001)).toBe(true);
+  expect(rms(quiet.slice().reverse())).toBeCloseTo(rms(quiet), 6);
+});
+
+test('typical soft singing reaches the louder playback target, without boosting digital silence', () => {
+  const soft = speech(0.03);
+  normalizeVoiceChannels([soft]);
+  expect(rms(soft)).toBeGreaterThan(0.44);
+  expect(rms(soft)).toBeLessThan(0.46);
+  const silent = new Float32Array(44100);
+  normalizeVoiceChannels([silent]);
+  expect(silent.every(x => x === 0)).toBe(true);
 });
 
 test('linked channels preserve stereo balance below the limiter knee', () => {
