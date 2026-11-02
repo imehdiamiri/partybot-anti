@@ -1,0 +1,11 @@
+{
+  "name": "@8playo/decode-uri-component",
+  "version": "0.5.1-8playo.1",
+  "description": "Upstream decode-uri-component 0.5.1 with a CommonJS export for query-string 7",
+  "private": true,
+  "main": "index.js",
+  "license": "MIT",
+  "repository": "SamVerschueren/decode-uri-component",
+  "sideEffects": false,
+  "files": ["index.js", "LICENSE", "README.md"]
+}

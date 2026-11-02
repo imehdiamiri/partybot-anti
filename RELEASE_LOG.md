@@ -27,6 +27,20 @@
   native-OTA guard and create a fresh Android preview. No matching physical iOS
   1.3.0 binary exists (latest physical preview 1.0.0; simulator 1.1.1).
   No backend changes. Web/mobile deployment receipts and signing limits follow.
+- Audio source c36d948 passed all 351 app tests and backend checks in CI
+  41452557307, but Hosting was correctly skipped after new high-severity runtime
+  advisories blocked npm audit. Updated re2js to 2.8.7 and used upstream
+  decode-uri-component 0.5.1 with only a CommonJS export adapter for Router 57's
+  query-string 7. MIT license, source integrity and consumer regression retained;
+  no audit exclusion, Expo SDK or native module upgrade. Local runtime audit now
+  passes with 0 high/critical (17 moderate, 1 low remain), two decoder regressions
+  and TypeScript pass. Full final-source CI follows.
+- Cancelled queued Android build f3172b92-4f56-4bff-928c-d45a960d3dcf so the
+  replacement includes those security patches. iOS testflight noninteractive
+  build could not start: distribution/signing credentials are incomplete; no
+  build ID or artifact. EAS incremented remote iOS buildNumber from 5 to 6 before
+  that failure. Physical iOS needs interactive credential setup and a new 1.3.0
+  binary; no incompatible OTA is sent to old builds. No physical listening test.
 
 ### October 26: visible card stack and swipe affordance
 
