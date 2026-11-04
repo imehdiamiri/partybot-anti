@@ -1,5 +1,6 @@
 import { tabBarBottom } from '@/src/utils/mobileLayout';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,7 +43,8 @@ function TabIndicator({ focused, color }: { focused: boolean; color: string }) {
   );
 }
 
-function CustomTabBar({ state, descriptors, navigation }: any) {
+function CustomTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottom = tabBarBottom(insets.bottom);
 
@@ -78,11 +80,11 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         >
           <View style={styles.tabBarContent}>
             {state.routes
-              .filter((r: any) => TAB_ITEMS.some((t) => t.name === r.name))
-              .map((route: any) => {
+              .filter((r) => TAB_ITEMS.some((t) => t.name === r.name))
+              .map((route) => {
                 const item = TAB_ITEMS.find((t) => t.name === route.name);
                 if (!item) return null;
-                const realIndex = state.routes.findIndex((r: any) => r.key === route.key);
+                const realIndex = state.routes.findIndex((r) => r.key === route.key);
                 const isFocused = state.index === realIndex;
                 const { options } = descriptors[route.key];
 
@@ -94,16 +96,16 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                         : Haptics.ImpactFeedbackStyle.Medium
                     );
                   }
-                  const event = navigation.emit({
+                  const event = emitter.emit({
                     type: 'tabPress',
                     target: route.key,
                     canPreventDefault: true,
                   });
                   if (!event.defaultPrevented) {
                     if (route.name === 'index') {
-                      navigation.navigate(route.name, { defaultTab: 'Games', resetAt: Date.now().toString() });
+                      router.navigate({ pathname: '/(tabs)', params: { defaultTab: 'Games', resetAt: Date.now().toString() } });
                     } else if (!isFocused) {
-                      navigation.navigate(route.name);
+                      navigateToTab(route.key);
                     }
                   }
                 };
@@ -150,6 +152,8 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ title: 'Games' }} />
       <Tabs.Screen name="tools" options={{ title: 'Tools' }} />
       <Tabs.Screen name="friends" options={{ title: 'Friends' }} />
+      {/* Keep details navigable. CustomTabBar filters the buttons; href:null now redirects in SDK 58. */}
+      <Tabs.Screen name="game/[id]" options={{ title: 'Game' }} />
     </Tabs>
   );
 }

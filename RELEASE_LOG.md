@@ -1,5 +1,29 @@
 # Release log
 
+### November 4: repair SDK 58 game and bottom-tab navigation
+
+- Fetched clean main/origin b7e1dd8; checkpoint/2026-11-04-before-navigation-fix
+  preserves the previous release. Browser access is available again. Reproduced
+  a Color Match card returning to the library, then reproduced Tools throwing
+  "Cannot read properties of undefined (reading 'emit')" in the deployed bundle.
+- Registered game/[id] explicitly in the JS tabs layout. SDK 58 redirects focused
+  undeclared routes AND href:null/hidden routes to an accessible tab. Keep the
+  detail route navigable; the custom bar still exposes only Games/Tools/Friends.
+  Migrated the bar from its removed navigation prop to typed BottomTabBarProps,
+  emitter and navigateToTab. Games uses a full href via useRouter and retains the
+  reset from Ideas to Games. Cancelled tabPress events remain respected.
+- Reviewed the official SDK 58 migration guide and the installed Router's actual
+  option processing/redirect hook:
+  https://docs.expo.dev/router/migrate/sdk-57-to-58/.
+  No remaining application usage of legacy navigation.emit/navigate, custom
+  drawer/navigator implementations or beforeRemove was found.
+- Local TypeScript passed. Eight focused regressions passed after correcting the
+  test harness imports: real SDK screen processing and redirect rules reproduce
+  both failure modes, and the actual custom bar works without a navigation prop
+  for web/iOS/Android, keeps three buttons and respects prevented presses.
+  No native dependency/config change or backend correction in this batch.
+  Full CI, deployed browser verification and mobile receipts follow.
+
 ### November 2: migrate preview to Expo Go SDK 58
 
 - Owner's iPhone reports Expo Go 58 cannot open our SDK 57 update. Fetched clean
