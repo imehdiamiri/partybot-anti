@@ -22,7 +22,54 @@
   both failure modes, and the actual custom bar works without a navigation prop
   for web/iOS/Android, keeps three buttons and respects prevented presses.
   No native dependency/config change or backend correction in this batch.
-  Full CI, deployed browser verification and mobile receipts follow.
+  Source: 2818faff23de1e5db673e274e78c9b56b8fe68dd;
+  release tag: release/2026-11-04-navigation-fix.
+- Exact-source CI and Hosting deployment succeeded:
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/41747812618.
+  TypeScript, 362 app tests (52 suites), 81 backend/authorization tests, eight
+  vendored exploit regressions and high/critical production dependency gates
+  passed. The app production audit still reports 10 moderate advisories; the
+  complete development tree has additional findings, so this is not a zero-risk
+  dependency claim. No load benchmark or backend deployment was performed.
+- Live https://8playo.com/ci-release.json reports source 2818faf. HTTP verification
+  confirms HTML references entry-cb7c337c6f56f76a11bd6e00bfc59559.js, served SHA-256
+  cd96cb92d503ef5381f9f3e7f391a0e0c2e385c963b5d33eded6377f027bb798, 11,060,625 bytes.
+- Deployed Chrome verification: all 16 game cards reach their matching detail
+  pages and return; Games/Tools/Friends work; Games resets Ideas; Dice rolls and
+  returns; ready-made cards advance and return to the same original text. At
+  390x844, Color Match and Sound Match start from their cards, accept slider
+  drags, submit and show results. Color Match reaches final standings. Sound
+  Match target-tone playback changes state, fine tuning works, browser Back
+  stays in the active game and confirmed Exit returns home. Cancelled Exit was
+  also checked. No new application console error during these interactions.
+  Temporary viewport override reset. Visual proof retained locally in ignored
+  .security/navigation-color-match.jpg. This is responsive Chrome verification,
+  not a physical iPhone/Android or microphone/audio-quality certification.
+- Independent iOS build recheck with existing credentials failed before upload:
+  `eas build --platform ios --profile testflight --non-interactive --no-wait`:
+  "Credentials are not set up ... interactive mode." EAS incremented its remote
+  build number from 6 to 7; no iOS build or store submission was created. Apple
+  signing/account input remains required for the standalone SDK 58 binary.
+- Expo Go SDK 58 publication succeeded through
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/41748493679:
+  group a743569e-434d-4d39-96a8-6c016d218040, Android update
+  01a1a404-8364-7883-a385-679013faa9ec, iOS update
+  01a1a404-8364-7df6-b13d-6f23cdf7f404. Branch/channel expo-go-sdk58,
+  environment preview, APP_VARIANT=expo-go, runtime exposdk:58.0.0.
+  Both update manifests return HTTP 200 with the expected project/SDK/IDs;
+  authorized launch-bundle range requests return 206. Historical SDK 57 and
+  native appVersion update tracks were not changed. Open with:
+  exp://u.expo.dev/b7949f49-aef7-4963-9d95-5eb35280136e?channel-name=expo-go-sdk58.
+- Android preview build 90ac686e-abf2-4f87-8126-7f4c41801efc FINISHED from
+  source 2818faf with SDK 58, appVersion/runtime 1.4.0 and the existing signing
+  keystore (`eas build --platform android --profile preview --non-interactive
+  --no-wait`). Download:
+  https://expo.dev/artifacts/eas/DhgID6rM5Y1qNwAtUG4nmqcETS_YPtKH0EeW2oJ8s_g.apk.
+  Verified artifact HTTP 206, ZIP/APK signature and total size 129,080,749 bytes.
+  This is a new internally distributed APK, not a Google Play submission or an
+  OTA for older runtimes. No physical-device installation was available here.
+  Standalone iOS remains blocked on signing as noted above; Expo Go's email-login
+  and game preview guards remain, including no native Google login/real purchases.
 
 ### November 2: migrate preview to Expo Go SDK 58
 
