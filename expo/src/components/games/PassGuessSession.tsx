@@ -1,7 +1,6 @@
 import { AudioManager } from '@/src/services/AudioManager';
 import { useGameActivity, GAME_UI } from './GameActivity';
 import { Colors } from '@/src/theme/Colors';
-import { GameStartGuide } from './GameStartGuide';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { GameSession } from '@/src/store/useGameStore';
@@ -68,7 +67,6 @@ function getPlayerColor(index: number) {
 
 export function PassGuessSession({ session }: Props) {
   const [phase, setPhase] = useState<Phase>('intro');
-  const [guideOpen, setGuideOpen] = useState(false);
   const [roundNumber, setRoundNumber] = useState(1);
   const totalRounds = (session.gameConfig?.rounds as number) || 1;
   const [playMode, setPlayMode] = useState<PlayMode>('classic');
@@ -95,7 +93,7 @@ export function PassGuessSession({ session }: Props) {
   const [currentAnswer, setCurrentAnswer] = useState('');
 
   const currentPlayer = session.players[activePlayerIndex];
-  useGameActivity(currentPlayer?.displayName, guideOpen ? 'guide' : showPrivacyScreen ? 'ready' : phase);
+  useGameActivity(currentPlayer?.displayName, showPrivacyScreen ? 'ready' : phase);
   const activeQuestion = useCustom ? customQuestion : question;
 
   // Filter out the active guesser's own answer so they only see and guess on others
@@ -261,7 +259,6 @@ export function PassGuessSession({ session }: Props) {
     return { correct, wrong };
   };
 
-  if (guideOpen) return <GameStartGuide gameId="pass_guess" mode={playMode} onStart={() => { setGuideOpen(false); handleStartRound(); }} />;
   if (showPrivacyScreen) {
     const color = getPlayerColor(activePlayerIndex);
     const isGuessingPhase = phase === 'hostGuessing';
@@ -366,7 +363,7 @@ export function PassGuessSession({ session }: Props) {
             </ScrollView>
 
             <View style={styles.stickyBottom}>
-              <Pressable testID="pass-guess-start-round" accessibilityRole="button" style={[styles.primaryBtn, (playMode === 'classic' && useCustom && !customQuestion.trim()) && { opacity: 0.5 }]} onPress={() => setGuideOpen(true)} disabled={playMode === 'classic' && useCustom && !customQuestion.trim()}>
+              <Pressable testID="pass-guess-start-round" accessibilityRole="button" style={[styles.primaryBtn, (playMode === 'classic' && useCustom && !customQuestion.trim()) && { opacity: 0.5 }]} onPress={handleStartRound} disabled={playMode === 'classic' && useCustom && !customQuestion.trim()}>
                 <IconSymbol name="play.fill" size={18} color="white" />
                 <Text style={styles.primaryBtnText}>Start Round</Text>
               </Pressable>

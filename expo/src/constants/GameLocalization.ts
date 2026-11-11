@@ -1,3 +1,5 @@
+import { getGameHint } from './GameModeHints';
+
 /**
  * GameLocalization — matches iOS GameLocalization.swift
  * Game-specific instructions (how-to-play) for each game.
@@ -48,10 +50,8 @@ export const GameInstructions: Record<string, string[]> = {
     "Find all pairs as fast as possible to win."
   ],
   tap_in_order: [
-    "Two memory modes: Number Memory and Pattern Memory.",
-    "You get 5 seconds to memorize the board.",
-    "Number Memory: tap the tiles in order (1 → N) from memory.",
-    "Pattern Memory: tap every highlighted tile — order doesn't matter.",
+    "Memorize where each number is before the preview ends.",
+    "Tap the tiles in order (1 → N) from memory.",
     "Most correct taps with the fewest mistakes wins."
   ],
   spin_bottle: [
@@ -97,7 +97,7 @@ export const GameInstructions: Record<string, string[]> = {
 
 /** Get game instructions, with fallback */
 export function getGameInstructions(gameId: string): string[] {
-  return GameInstructions[gameId] || [
+  return GameInstructions[gameId] || getGameHint(gameId).tip?.split(' | ') || [
     "This game is ready to play!",
     "Set up players and tap Start.",
   ];

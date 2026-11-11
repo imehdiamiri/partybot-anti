@@ -28,7 +28,7 @@ const assert = require('assert');
     const click = async id => { await page.waitForSelector(`[data-testid="${id}"]`); await page.waitForFunction(id => document.querySelector(`[data-testid="${id}"]`)?.getAttribute('aria-disabled') !== 'true', {}, id); await page.click(`[data-testid="${id}"]`); };
     const wait = ms => new Promise(resolve=>setTimeout(resolve,ms));
     await page.goto('https://layout.invalid/game/reverse_singing/setup',{waitUntil:'networkidle0'});
-    await click('setup-start-button'); await click('game-guide-start');
+    await click('setup-start-button');
     await click('reverse-singing-p1-record'); await wait(2500); await click('reverse-singing-p1-record');
     await page.waitForFunction(()=>document.querySelector('[data-testid="reverse-singing-p1-play-slow"]')?.getAttribute('aria-disabled')!=='true');
     await click('reverse-singing-p1-play'); await wait(600); await click('reverse-singing-stop-playback');

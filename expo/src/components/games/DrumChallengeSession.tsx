@@ -1,5 +1,5 @@
 import { useGameActivity, GAME_UI } from './GameActivity';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import Animated, {
   SharedValue,
@@ -14,6 +14,7 @@ import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
 import * as Haptics from '@/src/utils/safeHaptics';
 import { PhaseTransition } from './PhaseTransition';
 import { GamePassPhoneView, GamePlayerCompleteView } from './SharedGameComponents';
+import { SinglePlayerContext } from './SinglePlayerContext';
 import { useRegisterSkip } from '@/src/contexts/GameSkipContext';
 import { isWeb } from '@/src/utils/platform';
 import { playWebTick, playWebDrumHit } from '@/src/utils/browserMediaAdapter';
@@ -54,6 +55,7 @@ const METRONOME_TICK_AUDIO = require('@/assets/sounds/metronome_challenge.wav');
 
 export function DrumChallengeSession({ session }: Props) {
   const players = session.players;
+  const solo = useContext(SinglePlayerContext);
   const registerSkip = useRegisterSkip();
   const modeKey: DrumMode = (!whitneyAvailable || session.gameConfig?.drumMode === 'metronome') ? 'metronome' : 'whitney';
   const modeConfig = MODES[modeKey];
@@ -444,6 +446,18 @@ export function DrumChallengeSession({ session }: Props) {
   const glowStyle = useAnimatedStyle(() => ({ opacity: drumGlow.value }));
 
   if (phase === 'ready') {
+    // Web audio needs a user gesture. A failed attempt also needs a manual retry.
+    if (solo && (isWeb || audioError)) {
+      return (
+        <View style={st.center}>
+          <Text style={st.sub}>{audioError || modeConfig.title}</Text>
+          <Pressable testID="drum-start-listening" accessibilityRole="button"
+            style={[st.startBtn, { backgroundColor: '#B51C62' }]} onPress={startListening}>
+            <Text style={st.startBtnTx}>Start Listening</Text>
+          </Pressable>
+        </View>
+      );
+    }
     return (
       <PhaseTransition phaseKey={`ready-${playerIdx}`} style={{ flex: 1 }}>
         <GamePassPhoneView

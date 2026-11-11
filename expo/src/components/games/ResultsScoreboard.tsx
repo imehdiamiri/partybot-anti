@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Share, Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useReplayGuide } from './GameStartGuide';
 
 /**
  * Shared modern final scoreboard primitive used across mini-games.
@@ -39,7 +38,6 @@ export function ResultsScoreboard({
   entries, title = 'Final Results', subtitle, onPlayAgain, shareGameName,
   playAgainTitle = 'Play Again', playAgainIcon = 'arrow.clockwise', badgeLabel = 'STANDINGS',
 }: Props) {
-  const showReplayGuide = useReplayGuide();
   const completed = entries.filter(e => !e.isSkipped && e.primary !== 'Skipped' && e.primary !== '—');
   const skipped = entries.filter(e => e.isSkipped || e.primary === 'Skipped' || e.primary === '—');
   // Callers own game-specific ranking and units. Never sort formatted scores here.
@@ -90,7 +88,7 @@ export function ResultsScoreboard({
       </View><Text style={styles.skipped}>Skipped</Text>
     </View>)}
     <View style={styles.actions}>
-      {!!onPlayAgain && <TouchableOpacity accessibilityRole="button" style={styles.primaryButton} onPress={() => showReplayGuide(onPlayAgain)}>
+      {!!onPlayAgain && <TouchableOpacity accessibilityRole="button" style={styles.primaryButton} onPress={onPlayAgain}>
         <IconSymbol name={playAgainIcon as any} size={20} color="#10151E" />
         <Text style={styles.buttonText}>{playAgainTitle}</Text>
       </TouchableOpacity>}

@@ -1,5 +1,24 @@
 # Release log
 
+### November 11: direct solo start and remove in-game teaching screens
+
+- Clean main matched origin c8299fc. Checkpoint/2026-11-11-before-solo-start
+  preserves the previous release. The hero now offers Play Solo in each of the
+  eight games with one-player support. It launches one round with the saved
+  profile name and game options without rewriting the saved group roster.
+  Game Setup remains available for custom settings and group play.
+- Removed the shared introductory screen and Pass & Guess's separate guide
+  for every player count. Hero help now includes real Color Match and Sound
+  Match steps and corrects Tap in Order's modes. Solo sessions hide the turn
+  owner and skip-turn confirmation entry. Shared handoffs auto-advance for
+  local solo play. Color Trap keeps its forbidden-color preview and goes
+  directly to results. Drum Challenge keeps a browser audio start and a
+  manual audio retry without a player handoff.
+- Local `npm run typecheck` passed. Seven focused suites passed (51 tests),
+  including the solo header, exit protection, shared handoffs, replay, Eye
+  Sight and native drum exit. Updated browser regression scripts for the
+  shorter flow. Cloud release receipts follow after verification.
+
 ### November 4: repair SDK 58 game and bottom-tab navigation
 
 - Fetched clean main/origin b7e1dd8; checkpoint/2026-11-04-before-navigation-fix

@@ -14,6 +14,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Games, GamesDefinitions, GameMode, GameModeDetails } from '@/src/models/AppModels';
 import { getGameInstructions } from '@/src/constants/GameLocalization';
 import { useEconomyStore } from '@/src/store/useEconomyStore';
+import { useGameStore } from '@/src/store/useGameStore';
+import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { isWeb } from '@/src/utils/platform';
 import { showToast } from '@/src/components/ToastOverlay';
 
@@ -113,7 +115,14 @@ export default function GameDetailScreen() {
   };
 
   const isLocked = !isWeb && gameDef.id.isPremium && !isPremium;
+  const supportsSolo = game.minPlayers === 1 && game.supportedModes.includes(GameMode.singleDevice);
   const accentColor = getAccentColor(gameDef.accentName);
+
+  const playSolo = () => {
+    const { playerName, lastGameConfigs } = useSettingsStore.getState();
+    useGameStore.getState().startSingleDeviceSession(game, [playerName.trim() || 'Player 1'], 1, lastGameConfigs[game.id]);
+    router.push({ pathname: '/game/[id]/session', params: { id: game.id } });
+  };
 
   const handleModeSelect = (mode: GameMode) => {
     if (mode === GameMode.multiDevice) {
@@ -233,19 +242,29 @@ export default function GameDetailScreen() {
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{isWeb ? 'Ready to play?' : 'Choose a Mode'}</Text>
+            {!supportsSolo && <Text style={styles.sectionTitle}>{isWeb ? 'Ready to play?' : 'Choose a Mode'}</Text>}
             
             <View style={styles.modesContainer}>
+              {supportsSolo && (
+                <TouchableOpacity testID="game-detail-play-solo" accessibilityRole="button"
+                  style={[styles.modeCard, styles.soloCard]} activeOpacity={0.7} onPress={playSolo}>
+                  <View style={styles.modeTextContainer}>
+                    <Text style={[styles.modeTitle, styles.soloTitle]}>Play Solo</Text>
+                  </View>
+                  <IconSymbol name="play.fill" size={28} color="white" />
+                </TouchableOpacity>
+              )}
               {(isWeb ? [GameMode.singleDevice] : game.supportedModes).map(mode => {
                 const modeDetails = GameModeDetails[mode];
                 const modeAccent = modeDetails.accentColor;
+                const isSoloSetup = supportsSolo && mode === GameMode.singleDevice;
                 
                 return (
                   <TouchableOpacity 
                     key={mode} 
                     testID={`game-detail-mode-${mode}`}
                     accessibilityRole="button"
-                    style={[styles.modeCard, isWeb && { minHeight: 104, backgroundColor: '#2465DC', borderRadius: 20 }]}
+                    style={[styles.modeCard, isWeb && !isSoloSetup && { minHeight: 104, backgroundColor: '#2465DC', borderRadius: 20 }]}
                     activeOpacity={0.7}
                     onPress={() => handleModeSelect(mode)}
                   >
@@ -262,14 +281,16 @@ export default function GameDetailScreen() {
                     </View>
                     
                     <View style={styles.modeTextContainer}>
-                      <Text style={[styles.modeTitle, isWeb && { fontSize: 22, fontWeight: '700' }]}>{isWeb ? 'Play Now' : modeDetails.title}</Text>
-                      <Text style={[styles.modeSubtitle, isWeb && { color: '#EAF1FF' }]} numberOfLines={2}>
-                        {isWeb ? 'One device · Play solo or with friends' : modeDetails.subtitle}
+                      <Text style={[styles.modeTitle, isWeb && !isSoloSetup && styles.soloTitle]}>
+                        {isSoloSetup ? 'Game Setup' : isWeb ? 'Play Now' : modeDetails.title}
+                      </Text>
+                      <Text style={[styles.modeSubtitle, isWeb && !isSoloSetup && { color: '#EAF1FF' }]} numberOfLines={2}>
+                        {isSoloSetup ? 'Choose players and settings' : isWeb ? 'Play together on one device' : modeDetails.subtitle}
                       </Text>
                     </View>
                     
                     <View style={styles.modePlayIcon}>
-                      <IconSymbol name="play.fill" size={28} color="white" />
+                      <IconSymbol name={isSoloSetup ? 'chevron.right' : 'play.fill'} size={isSoloSetup ? 20 : 28} color="white" />
                     </View>
                   </TouchableOpacity>
                 );
@@ -299,6 +320,8 @@ export default function GameDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  soloCard: { minHeight: 80, backgroundColor: '#2465DC', borderRadius: 20 },
+  soloTitle: { fontSize: 22, fontWeight: '700' },
   container: {
     flex: 1,
     backgroundColor: 'black',

@@ -40,8 +40,6 @@ const assert = require('assert');
       await page.goto('https://layout.invalid/game/memory_grid/setup', { waitUntil: 'networkidle0' });
       await page.evaluate(() => [...document.querySelectorAll('div')].find(el => el.textContent === '6×6' && el.children.length === 0).click());
       await page.click('[data-testid="setup-start-button"]');
-      await page.waitForSelector('[data-testid="game-guide-start"]');
-      await page.click('[data-testid="game-guide-start"]');
       await page.waitForSelector('[data-testid="game-ready-button"]');
       await page.click('[data-testid="game-ready-button"]');
       await page.waitForSelector('[data-testid="memory-tile-35"]');

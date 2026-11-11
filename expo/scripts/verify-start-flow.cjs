@@ -24,44 +24,49 @@ const assert = require('assert');
     });
 
     const click = async id => { await page.waitForSelector(`[data-testid="${id}"]`); await page.click(`[data-testid="${id}"]`); };
-    const start = async (game, grid) => {
-      await page.goto('https://layout.invalid/game/'+game+'/setup', {waitUntil:'networkidle0'});
-      if(grid) await page.evaluate(text => [...document.querySelectorAll('div')].find(el=>el.textContent===text&&el.children.length===0).click(),grid);
-      await click('setup-start-button');
-      await page.waitForSelector('[data-testid="game-start-guide"], [data-testid="handoff-screen"], [data-testid="game-active-player"]');
-      if (await page.$('[data-testid="game-guide-start"]')) await click('game-guide-start');
-      await page.waitForSelector('[data-testid="handoff-screen"], [data-testid="game-active-player"]');
-      if (await page.$('[data-testid="game-ready-button"]')) await click('game-ready-button');
+    const openGame = id => page.goto(`https://layout.invalid/game/${id}`, { waitUntil: 'networkidle0' });
+    const assertNoGuide = async () => assert.equal(await page.$('[data-testid="game-start-guide"]'), null);
+    const assertSolo = async id => {
+      await page.waitForFunction(game => location.pathname === `/game/${game}/session`, {}, id);
+      for (const testId of ['handoff-screen', 'game-active-player', 'session-skip-button', 'setup-start-button']) {
+        assert.equal(await page.$(`[data-testid="${testId}"]`), null, `solo hides ${testId}`);
+      }
+      await assertNoGuide();
     };
 
     await page.setViewport({width:393,height:771,hasTouch:true});
-    await page.goto('https://layout.invalid/game/color_match',{waitUntil:'networkidle0'});
-    await page.waitForSelector('[data-testid="game-detail-mode-singleDevice"]');
-    const cta=await page.$eval('[data-testid="game-detail-mode-singleDevice"]',el=>({text:el.textContent,height:el.getBoundingClientRect().height}));
-    assert(cta.text.includes('Play Now') && cta.height>=100);
+    await openGame('color_match');
+    await page.waitForSelector('[data-testid="game-detail-play-solo"]');
+    const help = await page.$eval('[data-testid="game-detail-instructions"]', el => el.textContent);
+    assert.match(help, /color/i);
+    assert.doesNotMatch(help, /This game is ready to play/);
     await page.screenshot({path:'.expo/start-flow-detail.png'});
-    await click('game-detail-mode-singleDevice');
-    await click('setup-player-minus');
-    await click('setup-start-button'); await click('game-guide-start');
+    await click('game-detail-play-solo');
     await page.waitForSelector('[data-testid="color-slider-hue"]');
-    assert.equal(await page.$('[data-testid="handoff-screen"]'),null,'solo skips handoff');
+    await assertSolo('color_match');
     await click('color-match-submit-button'); await click('color-match-continue-button');
-    // Reload the app: guide history must survive a full document load.
-    await page.goto('https://layout.invalid/game/color_match/setup',{waitUntil:'networkidle0'});
-    await click('setup-player-minus'); await click('setup-start-button'); await page.waitForSelector('[data-testid="color-slider-hue"]');
-    assert.equal(await page.$('[data-testid="game-start-guide"]'),null,'guide stays dismissed after reload');
-    assert.equal(await page.$('[data-testid="handoff-screen"]'),null);
-    await page.goto('https://layout.invalid/game/color_match/setup',{waitUntil:'networkidle0'});
-    await click('setup-player-plus'); await click('setup-start-button');
+    await page.waitForSelector('[data-testid="final-results"]');
+
+    await openGame('color_match');
+    await click('game-detail-mode-singleDevice');
+    await click('setup-start-button');
     await page.waitForSelector('[data-testid="handoff-screen"]');
-    assert.equal(await page.$('[data-testid="game-start-guide"]'),null);
+    await assertNoGuide();
     await click('game-ready-button'); await page.waitForSelector('[data-testid="color-slider-hue"]');
-    await page.goto('https://layout.invalid/game/sound_match/setup',{waitUntil:'networkidle0'});
-    await click('setup-player-minus'); await click('setup-start-button');
-    await click('game-guide-start');
+
+    await openGame('sound_match');
+    await click('game-detail-play-solo');
     await page.waitForSelector('[data-testid="sound-match-ready-button"]');
-    assert.equal(await page.$('[data-testid="handoff-screen"]'),null);
+    await assertSolo('sound_match');
+
+    await openGame('pass_guess');
+    await click('game-detail-mode-singleDevice');
+    assert.equal(await page.$('[data-testid="game-detail-play-solo"]'), null);
+    await click('setup-start-button');
+    await click('pass-guess-start-round');
+    await page.waitForSelector('[data-testid="handoff-screen"]');
+    await assertNoGuide();
     assert.deepEqual(errors,[]);
-    console.log('PASS: prominent web Play, first guide, persisted skip, solo bypass and multiplayer handoff');
+    console.log('PASS: direct solo launch, hero instructions, no entry guide and group handoff');
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

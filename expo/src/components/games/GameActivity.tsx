@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, StyleSheet, Text, View } from 'react-native';
 
 import { GameDesign as D } from '@/src/theme/GameDesign';
+import { SinglePlayerContext } from './SinglePlayerContext';
 
 type Activity = { name: string; phase: string } | null;
 const ActivityContext = createContext<{ activity: Activity; setActivity: (value: Activity) => void }>({ activity: null, setActivity: () => {} });
@@ -27,7 +28,9 @@ export function useNameInActivityBanner(name?: string) {
 
 /** Keep standalone views usable, but do not repeat the header's turn owner. */
 export function SecondaryPlayerLabel({ name, children }: { name?: string; children: React.ReactNode }) {
-  return useNameInActivityBanner(name) ? null : <>{children}</>;
+  const solo = useContext(SinglePlayerContext);
+  const nameInHeader = useNameInActivityBanner(name);
+  return solo || nameInHeader ? null : <>{children}</>;
 }
 
 export function activityLabel(phase: string): string | null {

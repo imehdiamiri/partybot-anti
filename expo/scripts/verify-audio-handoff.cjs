@@ -42,7 +42,7 @@ const assert = require('assert');
       await page.setViewport({width,height,isMobile:true,hasTouch:true,deviceScaleFactor:1});
       for (const game of ['color_match','imposter']) {
         await page.goto('https://layout.invalid/game/'+game+'/setup',{waitUntil:'networkidle0'});
-        await click('setup-start-button'); await click('game-guide-start');
+        await click('setup-start-button');
         await page.waitForSelector('[data-testid="handoff-screen"]');
         await new Promise(r=>setTimeout(r,1200));
         const rect = await page.$eval('[data-testid="handoff-screen"]',el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,bottom:r.bottom,height:r.height};});
@@ -80,7 +80,7 @@ const assert = require('assert');
     await page.setViewport({width:393,height:852,isMobile:true,hasTouch:true,deviceScaleFactor:1});
     await page.goto('https://layout.invalid/game/drum_challenge/setup',{waitUntil:'networkidle0'});
     assert(!(await page.content()).includes('Whitney Houston'));
-    await click('setup-start-button'); await click('game-guide-start');
+    await click('setup-start-button');
     await click('game-ready-button');
     await page.screenshot({path:'.expo/metronome-playing.png'});
     await click('session-exit-button');

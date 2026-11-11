@@ -3,7 +3,6 @@ const {act, create} = require('react-test-renderer');
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 jest.mock('react-native',()=>({View:'View',Text:'Text',TouchableOpacity:'Button',StyleSheet:{create:s=>s},Platform:{OS:'web'},Share:{share:jest.fn()}}));
 jest.mock('@/components/ui/icon-symbol',()=>({IconSymbol:'Icon'}));
-jest.mock('@/src/components/games/GameStartGuide',()=>({useReplayGuide:()=>f=>f()}));
 jest.mock('@/src/services/AudioManager',()=>({AudioManager:{play:jest.fn()}}));
 jest.mock('@/src/components/games/GameActivity',()=>({GameActivityProvider:({children})=>children}));
 const {ResultsScoreboard}=require('@/src/components/games/ResultsScoreboard');

@@ -286,7 +286,7 @@ export function ColorTrapSession({ session }: Props) {
     setResults(prev => [...prev, {
       playerId: players[turnIndex].id, hits: h, misses: mi, mistakes: mk, score,
     }]);
-    setPhase('playerComplete');
+    setPhase(players.length === 1 ? 'results' : 'playerComplete');
   }, [players]);
 
   const handleTap = (tileId: number) => {
@@ -338,18 +338,19 @@ export function ColorTrapSession({ session }: Props) {
 
   // ═══ READY ═══
   if (phase === 'ready') {
+    const solo = players.length === 1;
     const forbiddenColor = PALETTE[forbiddenIdx];
     const forbiddenName = PALETTE_NAMES[forbiddenIdx];
     return (
       <PhaseTransition phaseKey="ready" style={st.container}>
         <ScrollView contentContainerStyle={st.readyScreen}>
           {/* Big forbidden color display */}
-          <View style={st.readyTop}>
+          {!solo && <View style={st.readyTop}>
             <Text style={st.readyTitle}>
-              {players.length > 1 && playerIdx > 0 ? 'Pass the phone to' : 'GET READY'}
+              {playerIdx > 0 ? 'Pass the phone to' : 'GET READY'}
             </Text>
             <SecondaryPlayerLabel name={player.displayName}><Text style={st.readyPlayerName}>{player.displayName}</Text></SecondaryPlayerLabel>
-          </View>
+          </View>}
 
           <View style={st.readyCenter}>
             {/* Glowing forbidden circle */}
@@ -391,7 +392,7 @@ export function ColorTrapSession({ session }: Props) {
           </View>
 
           <Pressable testID="color-trap-ready-button" style={[st.readyBtn, { backgroundColor: forbiddenColor }]} onPress={() => startGame()} accessibilityRole="button">
-            <Text style={st.readyBtnText}>I'm Ready</Text>
+            <Text style={st.readyBtnText}>{solo ? 'Start' : "I'm Ready"}</Text>
             <IconSymbol name="arrow.right" size={18} color="white" weight="bold" />
           </Pressable>
           <Pressable

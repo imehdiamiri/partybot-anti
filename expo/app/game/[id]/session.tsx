@@ -1,12 +1,13 @@
 import { ScreenHeader } from '@/src/components/ScreenHeader';
 import { SCREEN_LAYOUT, screenLayout } from '@/src/theme/ScreenLayout';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, BackHandler, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useFocusEffect, usePreventRemove } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useActionConfirmation } from '@/src/components/ActionConfirmation';
 import { GameActivityBanner } from '@/src/components/games/GameActivity';
+import { SinglePlayerContext } from '@/src/components/games/SinglePlayerContext';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useGameStore, MatchPhase } from '@/src/store/useGameStore';
 import { useMultiplayerStore } from '@/src/store/useMultiplayerStore';
@@ -96,21 +97,17 @@ export default function GameSessionScreen() {
   };
 
   return (
-    <GameSkipProvider>
-      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
-        <Stack.Screen options={{ headerShown: false, gestureEnabled: false, fullScreenGestureEnabled: false }} />
-        <AppBackgroundView />
-        <MultiplayerStatusBanner />
-
-        {/* Header */}
-        <SessionHeader
-          gameName={activeSession.game.name}
-          onExit={handleExit}
-        />
-
-        <GameSessionRenderer key={activeSession.id} session={activeSession} game={activeSession.game} />
-      </View>
-    </GameSkipProvider>
+    <SinglePlayerContext.Provider value={activeSession.mode === GameMode.singleDevice && activeSession.players.length === 1}>
+      <GameSkipProvider>
+        <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
+          <Stack.Screen options={{ headerShown: false, gestureEnabled: false, fullScreenGestureEnabled: false }} />
+          <AppBackgroundView />
+          <MultiplayerStatusBanner />
+          <SessionHeader gameName={activeSession.game.name} onExit={handleExit} />
+          <GameSessionRenderer key={activeSession.id} session={activeSession} game={activeSession.game} />
+        </View>
+      </GameSkipProvider>
+    </SinglePlayerContext.Provider>
   );
 }
 
@@ -118,7 +115,10 @@ function SessionHeader({ gameName, onExit }: {
   gameName: string;
   onExit: () => void;
 }) {
-  const { skipHandler, skipPlayerName, skipLabel } = useSkipState();
+  const solo = useContext(SinglePlayerContext);
+  const skip = useSkipState();
+  const skipHandler = solo ? null : skip.skipHandler;
+  const { skipPlayerName, skipLabel } = skip;
 
   const { ask, dismiss, dialog } = useActionConfirmation();
   const pendingSkip = useRef<(() => void) | null>(null);
@@ -152,7 +152,7 @@ function SessionHeader({ gameName, onExit }: {
         rightTestID="session-skip-button" onRightPress={skipHandler ? handleSkip : undefined}
         rightAccessibilityLabel={skipLabel}
         rightColor="#CFD5E3" />
-      <View style={[screenLayout.frame, { maxWidth: SCREEN_LAYOUT.content }]}><GameActivityBanner /></View>
+      {!solo && <View style={[screenLayout.frame, { maxWidth: SCREEN_LAYOUT.content }]}><GameActivityBanner /></View>}
     </View>
   );
 }

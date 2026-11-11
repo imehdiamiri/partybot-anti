@@ -18,7 +18,8 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }) }));
 jest.mock('@/src/store/useGameStore', () => ({ useGameStore: require('zustand').create(set => ({
-  activeSession: { id: 's1', game: { name: 'Color Match' } }, exitActiveSession: () => set({ activeSession: null }),
+  activeSession: { id: 's1', game: { name: 'Color Match' }, mode: 'singleDevice', players: [{ id: 'solo' }] },
+  exitActiveSession: () => set({ activeSession: null }),
 })) }));
 jest.mock('@/src/store/useMultiplayerStore', () => ({ useMultiplayerStore: () => ({ currentRoom: null }) }));
 jest.mock('@/src/components/ScreenHeader', () => ({ ScreenHeader: 'ScreenHeader' }));
@@ -26,7 +27,10 @@ jest.mock('@/src/components/games/GameActivity', () => ({ GameActivityBanner: 'B
 jest.mock('@/src/components/games/GameSessionRenderer', () => ({ GameSessionRenderer: 'Game' }));
 jest.mock('@/src/components/AppBackgroundView', () => ({ AppBackgroundView: 'Background' }));
 jest.mock('@/src/components/MultiplayerStatusBanner', () => ({ MultiplayerStatusBanner: 'Multiplayer' }));
-jest.mock('@/src/contexts/GameSkipContext', () => ({ GameSkipProvider: ({ children }) => children, useSkipState: () => ({}) }));
+jest.mock('@/src/contexts/GameSkipContext', () => ({
+  GameSkipProvider: ({ children }) => children,
+  useSkipState: () => ({ skipHandler: jest.fn(), skipPlayerName: 'Player 1', skipLabel: 'Skip' }),
+}));
 jest.mock('@/src/components/ResponsiveWebContainer', () => ({ resetWebScrollOffsets: () => {} }));
 const Session = require('../../app/game/[id]/session').default;
 const { useGameStore } = require('@/src/store/useGameStore');
@@ -37,6 +41,8 @@ test('SDK 58 removal protection survives cancelled Exit and permits only confirm
   let screen;
   await act(async () => { screen = create(React.createElement(Session)); });
   expect(mockPrevented).toBe(true);
+  expect(screen.root.findByType('ScreenHeader').props.onRightPress).toBeUndefined();
+  expect(screen.root.findAllByType('Banner')).toHaveLength(0);
   expect(screen.root.findByType('StackScreen').props.options.gestureEnabled).toBe(false);
   await act(async () => screen.root.findByType('ScreenHeader').props.onLeftPress());
   await act(async () => screen.root.findByProps({ testID: 'action-cancel' }).props.onPress());
