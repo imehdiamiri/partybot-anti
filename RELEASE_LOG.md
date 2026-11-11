@@ -2,9 +2,9 @@
 
 ### November 11: direct solo start and remove in-game teaching screens
 
-- Clean main matched origin c8299fc. Checkpoint/2026-11-11-before-solo-start
+- Clean main matched origin c8299fc. checkpoint/2026-11-11-before-solo-start
   preserves the previous release. The hero now offers Play Solo in each of the
-  eight games with one-player support. It launches one round with the saved
+  eight games with one-player support. It starts with one configured round and the saved
   profile name and game options without rewriting the saved group roster.
   Game Setup remains available for custom settings and group play.
 - Removed the shared introductory screen and Pass & Guess's separate guide
@@ -17,7 +17,42 @@
 - Local `npm run typecheck` passed. Seven focused suites passed (51 tests),
   including the solo header, exit protection, shared handoffs, replay, Eye
   Sight and native drum exit. Updated browser regression scripts for the
-  shorter flow. Cloud release receipts follow after verification.
+  shorter flow. Initial source 18165d1 deployed to web, then live QA found
+  Color Trap still had its own skip-player button. Final source
+  edf16d21d8d03d66276e4ebbdaab183ac8f080ea hides it for solo players and updates
+  the Draw & Rush and Pass & Guess hero instructions. Canceled superseded
+  mobile run 43018112685 and Android build f7a34e35-222b-4263-93f7-d8a002e5d2ec.
+- Final exact-source CI: https://github.com/imehdiamiri/partybot-anti/actions/runs/43018619323.
+  TypeScript, 358 app tests, backend tests and production audit gates passed.
+  The first Hosting verification saw a release receipt mismatch immediately
+  after upload. The live served bundle matched locally, and retrying the
+  failed CI job verified the deployment. The mobile job retried after its
+  initial exact-source CI check correctly blocked publication.
+- Live https://8playo.com/ci-release.json and the served bundle match source
+  edf16d2, entry-7d95b31e5eea79c1246afad76ef8753b.js, SHA-256
+  2bb4a47a6dd9c1d77cd2b14ec44f3fa0a496fc5440d657f4df786b8682634240.
+- Chrome at 390x844 verified direct session entry for all eight solo games,
+  Color Match scoring and replay, Color Trap preview/game/results, Drum
+  Challenge audio start and the Pass & Guess private-answer handoff.
+  Rechecked the final deploy for removal of Color Trap's solo skip button.
+  No application bundle errors were captured during the interactions.
+  Hero proof: .security/solo-start-hero.jpg (local, ignored). Mobile testing
+  here is limited to artifact delivery and responsive browser verification.
+- Latest finished iOS builds are SDK 57 or earlier. No compatible signed
+  standalone iOS 1.4.0 build exists, so the native OTA guard remains in place.
+- Expo Go SDK 58 update succeeded at
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/43019263395.
+  Group c31d99c4-a607-4b98-a878-5c8a516512dd, Android update
+  01a1ca92-9ae4-7fa0-ae7b-5dec91caa74c, iOS update
+  01a1ca92-9ae4-79f0-aef2-d504997ba33f. Both manifests and launch bundles
+  verified at runtime exposdk:58.0.0 on the expo-go-sdk58 channel, with
+  preview environment and APP_VARIANT=expo-go. No older runtime was targeted.
+- Android preview APK build 53e1a9ea-cd35-47b7-87ab-abafd9d231bb completed
+  from edf16d2 with SDK 58 and runtime 1.4.0 (`eas build --platform android
+  --profile preview --non-interactive --no-wait`). Verified APK signature and
+  download range HTTP 206, total 129,075,585 bytes:
+  https://expo.dev/artifacts/eas/3BVgmT5kNCg_iwXgMKVKjo9JYe2QIXEbPOPuDWgVX_0.apk.
+  Release tag: release/2026-11-11-solo-start (edf16d2).
 
 ### November 4: repair SDK 58 game and bottom-tab navigation
 
