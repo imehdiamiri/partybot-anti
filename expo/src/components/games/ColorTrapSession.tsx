@@ -395,7 +395,7 @@ export function ColorTrapSession({ session }: Props) {
             <Text style={st.readyBtnText}>{solo ? 'Start' : "I'm Ready"}</Text>
             <IconSymbol name="arrow.right" size={18} color="white" weight="bold" />
           </Pressable>
-          <Pressable
+          {!solo && <Pressable
             style={{ alignItems: 'center', marginTop: 16, paddingVertical: 8 }}
             onPress={() => {
               // Record score 0 / skipped result for this player
@@ -412,7 +412,7 @@ export function ColorTrapSession({ session }: Props) {
             }}
           >
             <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: '600' }}>Skip this player</Text>
-          </Pressable>
+          </Pressable>}
         </ScrollView>
       </PhaseTransition>
     );

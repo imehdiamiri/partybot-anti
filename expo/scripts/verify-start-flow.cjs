@@ -59,6 +59,12 @@ const assert = require('assert');
     await page.waitForSelector('[data-testid="sound-match-ready-button"]');
     await assertSolo('sound_match');
 
+    await openGame('color_trap');
+    await click('game-detail-play-solo');
+    await page.waitForSelector('[data-testid="color-trap-ready-button"]');
+    await assertSolo('color_trap');
+    assert.doesNotMatch(await page.$eval('body', el => el.innerText), /Skip this player/);
+
     await openGame('pass_guess');
     await click('game-detail-mode-singleDevice');
     assert.equal(await page.$('[data-testid="game-detail-play-solo"]'), null);

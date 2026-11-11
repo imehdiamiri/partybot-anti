@@ -38,7 +38,7 @@ export const GameInstructions: Record<string, string[]> = {
     "Use your one-time hint to reveal the full path for 5 seconds."
   ],
   pass_guess: [
-    "A question is shown — each player writes their answer in turn.",
+    "In Classic Q&A, everyone answers the same question. In Who Said It?, everyone writes a fact or story about themselves.",
     "Pass the phone to the next player so they can write theirs.",
     "Once everyone has answered, all answers are revealed and players guess who wrote what.",
     "Correct guess = points! Most points wins."
@@ -82,9 +82,9 @@ export const GameInstructions: Record<string, string[]> = {
   ],
   draw_rush: [
     "Each player takes turns as the drawer. Others guess.",
-    "The drawer gets a secret word and 60 seconds to draw it.",
-    "Each guesser types their answer one at a time.",
-    "The drawer judges each guess. Correct guesses earn points!"
+    "Draw the secret prompt, or pick your own subject in Free Draw. You have 60 seconds.",
+    "Show the finished drawing and let the others guess aloud.",
+    "Mark whether they guessed correctly, then pass to the next drawer."
   ],
   drum_challenge: [
     "Listen to four bars of your chosen rhythm. The accented click starts each group.",
