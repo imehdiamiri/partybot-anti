@@ -1,7 +1,7 @@
 # Shared screen layout
 
 `expo/src/theme/ScreenLayout.ts` owns page geometry. Widths include 16-point
-gutters: library 1200, tool library 900, detail/session 720, setup forms 680.
+gutters: library 1200, tool library 680, detail/session 720, setup forms 680.
 Different content types keep readable widths; each page's navigation and action
 footer use the same frame as its content. Do not place a viewport-wide native
 navigation row above a constrained desktop form.
@@ -22,6 +22,10 @@ Games/Tools/Friends use the same toolbar spacing and 44-point profile control.
 `BrandWordmark` frames the visible letters of the existing PNG, removing the
 apparent offset caused by the bitmap's transparent margins without changing the
 approved artwork. Update its bounds if the canonical wordmark PNG changes.
+
+The six Tools share two explicit rows of three equal square buttons at all
+widths and font scales. Art shrinks to leave room for the label. Both rows use
+the same gaps and source order on native and web, including during rotation.
 
 ## Verification
 

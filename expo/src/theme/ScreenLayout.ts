@@ -7,7 +7,7 @@ export const SCREEN_LAYOUT = {
   headerSlot: 76,
   form: 680,
   content: 720,
-  tools: 900,
+  tools: 680,
   library: 1200,
 } as const;
 

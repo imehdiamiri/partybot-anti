@@ -10,7 +10,8 @@ const sources = {
   wheel: require('@/assets/images/tools/wheel.png'),
 };
 /** Bundled RGBA cutouts: identical assets on web, iOS and Android. */
-export function ToolIllustration({ tool, size = 68 }: { tool: PartyToolType; color?: string; size?: number }) {
+export function ToolIllustration({ tool }: { tool: PartyToolType }) {
   return <Image testID={`tool-illustration-${tool}`} source={sources[tool]}
-    style={{ width: size, height: size }} resizeMode="contain" accessible={false} fadeDuration={0} />;
+    style={{ width: '100%', maxWidth: 60, height: 60, maxHeight: '52%', flexShrink: 1 }}
+    resizeMode="contain" accessible={false} fadeDuration={0} />;
 }

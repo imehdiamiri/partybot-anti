@@ -1,6 +1,7 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { SCREEN_LAYOUT } from '@/src/theme/ScreenLayout';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -110,7 +111,7 @@ export function ToastOverlay() {
   if (toasts.length === 0) return null;
 
   return (
-    <View style={[st.overlay, { top: insets.top + 8 }]} pointerEvents="box-none">
+    <View style={[st.overlay, { top: insets.top + 8, left: insets.left, right: insets.right }]} pointerEvents="box-none">
       {toasts.map(t => (
         <ToastBanner key={t.id} item={t} onDismiss={() => dismiss(t.id)} />
       ))}
@@ -120,11 +121,11 @@ export function ToastOverlay() {
 
 const st = StyleSheet.create({
   overlay: {
-    position: 'absolute', left: 0, right: 0, zIndex: 9999,
+    position: 'absolute', zIndex: 9999, paddingHorizontal: SCREEN_LAYOUT.gutter,
     alignItems: 'center', gap: 8,
   },
   banner: {
-    width: Dimensions.get('window').width - 32,
+    width: '100%', maxWidth: SCREEN_LAYOUT.content,
   },
   bannerInner: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

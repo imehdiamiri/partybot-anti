@@ -1,13 +1,12 @@
 import { Colors } from '@/src/theme/Colors';
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ToolIllustration } from './ToolIllustration';
 import { useRouter } from 'expo-router';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 import { LiquidGlass } from '../LiquidGlass';
-import { toolGridColumns } from '@/src/utils/mobileLayout';
 
 export type PartyToolType = 'dice' | 'bottle' | 'hourglass' | 'coin' | 'teams' | 'wheel';
 
@@ -32,24 +31,14 @@ interface PartyToolsSectionProps {
   showsHeader?: boolean;
 }
 
+const toolRows = [PARTY_TOOLS.slice(0, 3), PARTY_TOOLS.slice(3)];
+
 export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps) {
   const router = useRouter();
-  const { width, fontScale } = useWindowDimensions();
-  const columns = toolGridColumns(width, fontScale);
-  const columnWidth = columns === 2 ? '48.5%' : '32%';
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
   };
-
-  const renderCardInner = (tool: PartyTool) => (
-    <>
-      <View style={styles.iconContainer}>
-        <ToolIllustration tool={tool.id} color={tool.tint} size={68} />
-      </View>
-      <Text style={styles.title}>{tool.title}</Text>
-    </>
-  );
 
   return (
     <View style={styles.container}>
@@ -61,19 +50,24 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
       )}
 
       <View style={styles.grid}>
-        {PARTY_TOOLS.map((tool) => (
-          <Pressable
-            key={tool.id}
-            testID={`tool-card-${tool.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={tool.title}
-            style={({ pressed }) => [{ width: columnWidth, aspectRatio: 1 }, styles.cardContainer, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}
-            onPress={() => handlePress(tool.id)}
-          >
-            <LiquidGlass variant="low" radius={22} shadow={false} style={styles.card}>
-              {renderCardInner(tool)}
-            </LiquidGlass>
-          </Pressable>
+        {toolRows.map(row => (
+          <View key={row[0].id} style={styles.row}>
+            {row.map(tool => (
+              <Pressable
+                key={tool.id}
+                testID={`tool-card-${tool.id}`}
+                accessibilityRole="button"
+                accessibilityLabel={tool.title}
+                style={({ pressed }) => [styles.cardContainer, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}
+                onPress={() => handlePress(tool.id)}
+              >
+                <LiquidGlass variant="low" radius={22} shadow={false} style={styles.card}>
+                  <ToolIllustration tool={tool.id} />
+                  <Text adjustsFontSizeToFit numberOfLines={2} style={styles.title}>{tool.title}</Text>
+                </LiquidGlass>
+              </Pressable>
+            ))}
+          </View>
         ))}
       </View>
     </View>
@@ -97,14 +91,17 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   grid: {
+    gap: 10,
+  },
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 12,
     alignItems: 'flex-start',
-    alignContent: 'flex-start',
+    gap: 10,
   },
   cardContainer: {
+    flex: 1,
+    minWidth: 0,
+    aspectRatio: 1,
     borderRadius: 22,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -115,8 +112,9 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    gap: 4,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -124,23 +122,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.07)',
     borderRadius: 22,
   },
-  iconContainer: {
-    width: 72,
-    height: 72,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
   title: {
+    alignSelf: 'stretch',
     color: 'white',
     fontSize: 14,
     textAlign: 'center',
     fontWeight: '700',
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 5,
   },
 });

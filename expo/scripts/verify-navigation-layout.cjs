@@ -39,7 +39,9 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     await page.goto('https://layout.invalid/onboarding',{waitUntil:'networkidle0'});
     for(let i=0;i<2;i++){await click('onboarding-continue');await wait(500);}
     await page.type('[data-testid="onboarding-name"]','UI Reviewer');
-    await click('onboarding-continue');await wait(500);await click('onboarding-continue');
+    await click('onboarding-continue');
+    await page.waitForSelector('[data-testid="auth-username"], [data-testid="web-install-continue"]');
+    if (await page.$('[data-testid="web-install-continue"]')) await click('web-install-continue');
     await page.waitForSelector('[data-testid="auth-username"]');
     await page.type('[data-testid="auth-username"]','layout-review');
     await page.type('[data-testid="auth-password"]','test-password-only');await click('auth-submit');
@@ -49,6 +51,30 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     await page.goto('https://layout.invalid/tools',{waitUntil:'networkidle0'});
     await page.waitForSelector('[data-testid^="cards-category-"]');
     const categories=await page.$$eval('[data-testid^="cards-category-"]',es=>es.map(e=>e.dataset.testid.replace('cards-category-','')));
+    // Resize the mounted screen as well as testing fresh route entries below.
+    for (const width of [320, 360, 375, 390, 430, 768, 844, 1440]) {
+      await page.setViewport({width, height: width === 844 ? 390 : 844});
+      await page.waitForFunction(w => innerWidth === w, {}, width);
+      const tiles = await page.$$eval('[data-testid^="tool-card-"]', elements => elements.map(el => {
+        const rect = el.getBoundingClientRect();
+        const label = [...el.querySelectorAll('*')].find(child =>
+          child.childElementCount === 0 && child.textContent === el.getAttribute('aria-label'));
+        const box = label?.getBoundingClientRect();
+        return {x:rect.x, y:rect.y, width:rect.width, height:rect.height,
+          labelFits: !!box && box.top >= rect.top && box.bottom <= rect.bottom + 1
+            && label.scrollHeight <= label.clientHeight + 1 && label.scrollWidth <= label.clientWidth + 1};
+      }));
+      assert.equal(tiles.length, 6);
+      tiles.forEach((tile, i) => {
+        assert(Math.abs(tile.width - tile.height) <= 1 && tile.width >= 44, 'square touch target at '+width);
+        assert(tile.labelFits, 'tool label fits at '+width);
+        assert(Math.abs(tile.y - tiles[i < 3 ? 0 : 3].y) <= 1, 'three tools per row at '+width);
+        assert(Math.abs(tile.x - tiles[i % 3].x) <= 1, 'columns align at '+width);
+        if (i % 3) assert(tile.x > tiles[i-1].x + tiles[i-1].width, 'column gap at '+width);
+      });
+      assert(tiles[3].y > tiles[0].y + tiles[0].height, 'separate tool rows at '+width);
+      if (width === 320 || width === 390) await page.screenshot({path:'.expo/review-tools-'+width+'.png'});
+    }
     async function header(width, route){
       const box=await page.evaluate(()=>{
         const h=[...document.querySelectorAll('[data-testid="screen-header"]')].find(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.left>=-1&&r.right<=innerWidth+1;});
@@ -96,7 +122,17 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
         reviewed.push(width+':'+game);
         if(game==='drum_challenge')await page.screenshot({path:'.expo/review-setup-'+width+'.png'});
       }
-      for(const route of ['/game/color_match','/dice','/bottle','/hourglass','/coin','/wheel','/teams','/profile','/invite',...categories.map(id=>'/cards/'+id)]){
+      await page.goto('https://layout.invalid/friends',{waitUntil:'networkidle0'});
+      await page.waitForSelector('[data-testid="friends-scroll"]');
+      const segments = await page.$$eval('[data-testid^="friends-segment-"]', elements =>
+        elements.map(element => {
+          const box = element.getBoundingClientRect();
+          return box.width > 0 && box.left >= 0 && box.right <= innerWidth + 1
+            && element.scrollWidth <= element.clientWidth + 1;
+        }));
+      assert(segments.length > 0 && segments.every(Boolean), 'friends tabs fit at '+width);
+      const detailGames = [320,1440].includes(width) ? games : ['color_match'];
+      for(const route of [...detailGames.map(id=>'/game/'+id),'/dice','/bottle','/hourglass','/coin','/wheel','/teams','/profile','/invite','/paywall','/purchase-detail',...categories.map(id=>'/cards/'+id)]){
         await page.goto('https://layout.invalid'+route,{waitUntil:'networkidle0'});
         await page.waitForSelector('[data-testid="screen-header"]');await header(width,route);
       }

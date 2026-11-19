@@ -55,7 +55,7 @@ const assert = require('assert');
       await page.goto('https://layout.invalid/tools',{waitUntil:'networkidle0'});
       await page.waitForSelector('[data-testid^="tool-card-"]');
       const cards=await page.$$eval('[data-testid^="tool-card-"]',els=>els.map(el=>el.getBoundingClientRect().height));
-      assert.equal(cards.length,6); assert(cards.every(height=>height>=150&&height<=220),'bounded tool cards');
+      assert.equal(cards.length,6); assert(cards.every(height=>height>=44&&height<=220),'bounded tool cards');
       await page.screenshot({path:`.expo/device-tools-${width}.png`});
       await start('tap_in_order','6×6');
       await page.waitForSelector('[data-testid="tap-cell-35"]');

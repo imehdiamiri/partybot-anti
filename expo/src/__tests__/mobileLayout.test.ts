@@ -1,14 +1,8 @@
-import { arenaCoordinate, memoryTileSize, tabBarBottom, tabContentBottom, toolGridColumns } from '../utils/mobileLayout';
+import { arenaCoordinate, memoryTileSize, tabBarBottom, tabContentBottom } from '../utils/mobileLayout';
 
 test.each([0, 24, 34, 48])('navigation clears the system inset %s', inset => {
   expect(tabBarBottom(inset)).toBeGreaterThanOrEqual(inset);
   expect(tabContentBottom(inset) - tabBarBottom(inset)).toBeGreaterThanOrEqual(64 + 16);
-});
-
-test('narrow phones and enlarged text get readable tool cards', () => {
-  expect(toolGridColumns(320, 1)).toBe(2);
-  expect(toolGridColumns(430, 1.3)).toBe(2);
-  expect(toolGridColumns(430, 1)).toBe(3);
 });
 
 test.each([[320, 568], [375, 667], [390, 844], [768, 1024]])('all memory grid sizes fit a %sx%s device', (width, height) => {
