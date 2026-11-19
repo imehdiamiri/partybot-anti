@@ -34,6 +34,13 @@
   01a1ca92-9ae4-7fa0-ae7b-5dec91caa74c. Verified Android APK availability for build
   53e1a9ea-cd35-47b7-87ab-abafd9d231bb. No new binary or OTA. No physical-device
   testing, purchase or account deletion was performed on production.
+- Final rules commit 66605b4 passed https://github.com/imehdiamiri/partybot-anti/actions/runs/44432772069.
+  The concurrent RevenueCat credit regression exceeded 20 seconds on the first
+  CI attempt. Rerunning only the failed job on identical source passed. Both
+  wallet balance and receipt assertions were retained. Hosting was skipped
+  for this rules-only follow-up. Public privacy, terms, PWA manifest and ads
+  declarations returned HTTP 200. Android App Links currently returns an empty
+  association list. The Play signing fingerprint is still needed for verification.
 
 ### November 11: direct solo start and remove in-game teaching screens
 
