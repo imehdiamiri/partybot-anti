@@ -1,5 +1,46 @@
 # Release log
 
+### November 19: three-column Tools on phones, tablets and desktop
+
+- Checkpoint `checkpoint/2026-11-19-before-tools-grid` preserves 3ec6f87.
+  Release tag `release/2026-11-19-unified-tools` points to 007a2e1.
+  b187b8b adjusts only the browser regression for the web store's own layout.
+- Six square buttons now use two explicit rows with equal columns on React
+  Native and web. Narrow screens and larger type previously fell into a
+  two-column branch. Long names can use two lines; the artwork yields space.
+  The tool library has a bounded desktop width. The Friends controls now
+  accommodate narrow widths and the global notification banner reacts to
+  viewport and safe-area changes.
+- Local type checking, tracked source guard, static web export and Chrome
+  layout suite passed. Mounted Tools was resized across 320, 360, 375, 390,
+  430, 768, 844 and 1440 CSS pixels. The six-viewport navigation suite checked
+  57 setup/viewport combinations, plus game detail and session screens,
+  six individual tools, card decks, Friends, profile, invite and store
+  pages. Login was simulated locally. Store transactions were outside scope.
+- CI passed 357 app tests across 52 suites, eight dependency regressions and
+  the backend checks. Hosting deployed b187b8b at https://8playo.com through
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/44498142631.
+  Confirmed /tools serves the released entry and independently verified SHA-256
+  c8c800ca14980404e67fbe30e969049958c704d6af3edc0d76fb8dc536da8ae0.
+- Expo Go published both SDK 58 previews in group
+  4c548a14-81a5-46b1-b12d-1d8b4ba96165, iOS 01a1f333-d3a9-7267-873e-b28f8b5caa04,
+  Android 01a1f333-d3a9-7df3-9730-4136ea83b0e5. Both manifests and launch
+  bundles returned HTTP 200 on expo-go-sdk58, runtime exposdk:58.0.0.
+  https://github.com/imehdiamiri/partybot-anti/actions/runs/44498758970.
+  Independent iOS 1.4.0 signing remains pending. No store submission.
+- Android preview APK 3081cfb0-1d1e-4806-9580-0085b6b897c1 finished from
+  007a2e1. Downloaded the artifact, installed it on a temporary read-only
+  Pixel 7 AVD, and confirmed a cold launch to onboarding at 360 dp with
+  system font scale 1.3. The cached app used a different signature, so this
+  was a fresh install in the disposable instance. Authenticated native Tools
+  and physical iPhone/Safari were not exercised. APK:
+  https://expo.dev/artifacts/eas/F2b2hQeYHOIhPSNg-C8n3lQ-QRR84BOV4zg1PHTEvKs.apk
+- On the Android emulator, Chrome 157 ran the web export with the offline
+  fixture identity at its actual 360 CSS pixel viewport. All six square
+  targets, row/column alignment, spacing and label bounds passed. Firefox
+  also rendered the captured Tools DOM and CSS in the required geometry at
+  360x800. Full Firefox navigation automation did not complete.
+
 ### November 19: security review of native, web, admin and backend
 
 - Checkpoint `checkpoint/2026-11-19-before-security-review` preserves f617fd6.
