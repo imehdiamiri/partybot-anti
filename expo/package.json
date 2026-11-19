@@ -67,7 +67,7 @@
     "eslint-config-expo": "~58.0.4",
     "jest": "~30.5.2",
     "node-wav": "^0.0.2",
-    "puppeteer": "25.10.0",
+    "puppeteer": "25.18.1",
     "react-test-renderer": "19.3.0",
     "ts-jest": "^29.4.9",
     "typescript": "~6.0.3"

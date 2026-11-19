@@ -9,7 +9,11 @@
     {
       "source": "functions",
       "codebase": "default",
-      "runtime": "nodejs22"
+      "runtime": "nodejs22",
+      "ignore": [
+        "node_modules", ".git", ".env*", "*.local", "*.log", "security-*.json",
+        "*.test.js", "benchmark*.cjs", "test-runner.js", "run-jest.js"
+      ]
     }
   ],
   "hosting": {

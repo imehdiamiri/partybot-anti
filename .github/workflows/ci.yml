@@ -68,8 +68,8 @@ jobs:
           cache: npm
           cache-dependency-path: expo/package-lock.json
       - run: node scripts/ci/source-guard.cjs
-      - name: Audit admin dashboard production dependencies
-        run: npm audit --package-lock-only --omit=dev --audit-level=high
+      - name: Audit admin dashboard dependencies
+        run: npm audit --package-lock-only --audit-level=high
         working-directory: website
       - run: npm ci
         working-directory: expo
@@ -80,7 +80,7 @@ jobs:
         working-directory: expo
       - run: npm test -- --runInBand
         working-directory: expo
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=high
         working-directory: expo
       - name: Configure public web client
         if: needs.scope.outputs.web == 'true'
@@ -123,7 +123,7 @@ jobs:
           java-version: '21'
       - run: npm ci
         working-directory: functions
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=high
         working-directory: functions
       - name: Unit and database authorization tests (no load tests)
         run: npx --yes firebase-tools@15.31.0 emulators:exec --only database,firestore --config firebase.security.json --project demo-partybot-ci "node functions/run-jest.js"

@@ -14,7 +14,8 @@
     "firebase-functions": "^6.3.0"
   },
   "overrides": {
-    "undici": "^6.28.1"
+    "@firebase/firestore": { "@grpc/grpc-js": "1.13.6" },
+    "undici": "^6.29.1"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",
