@@ -1098,6 +1098,15 @@ describe('Multiplayer RTDB Security & Authorization End-to-End', () => {
 
     // After joining, guest CAN read room
     await assertSucceeds(guestDb.ref('rooms/222333').once('value'));
+    await assertFails(guestDb.ref('rooms/222333/players/guest_bob/isHost').set(true));
+    for (const path of ['presence/guest_bob', 'rooms/222333/presence/guest_bob']) {
+      const presence = guestDb.ref(path);
+      await assertSucceeds(presence.set({ online: true, lastSeen: now }));
+      await assertFails(presence.set('invalid'));
+      await assertFails(presence.update({ other: true }));
+      await assertSucceeds(presence.update({ online: false }));
+      await assertSucceeds(presence.remove());
+    }
 
     // Guest cannot mutate gameState
     await assertFails(
@@ -1261,6 +1270,7 @@ describe('Multiplayer RTDB Security & Authorization End-to-End', () => {
     await assertSucceeds(
       memberDb.ref('rooms/666777').update({
         hostId: 'member_judy',
+        'players/member_judy/isHost': true,
         lastActivityAt: now + 10,
       })
     );

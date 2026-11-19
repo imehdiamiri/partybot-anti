@@ -1,5 +1,40 @@
 # Release log
 
+### November 19: security review of native, web, admin and backend
+
+- Checkpoint `checkpoint/2026-11-19-before-security-review` preserves f617fd6.
+  Initial security source 05596e4. Web and Functions release source 7bd1a27.
+  Final RTDB rules and regression source are tagged `release/2026-11-19-security-audit`.
+  Findings, remaining risks and limits are in SECURITY_AUDIT.md.
+- Firebase confirmed the deployment of both databases' rules and all 12 existing
+  Node 22 functions in us-central1. No functions were created or removed.
+  Compared the live baseline with the checkpoint before replacing rules.
+  Re-read final RTDB rules and Firestore ruleset 8ab58ef5-b249-4d89-97a9-615d3a6db98d
+  and matched both against source. The final rule-only follow-up fixes host
+  badge and presence validation. An initial boolean expression failed emulator
+  compilation, was corrected and passed the suite before deployment.
+- Local combined RTDB/Firestore emulator suite passed 82 tests. Next.js 15.5.29
+  admin production build passed. Tracked source guard passed for 888 files.
+  Full npm audit including development packages found zero high/critical
+  entries in expo, functions and website. CI now checks all three package trees.
+  Existing moderate advisories are itemized by component in SECURITY_AUDIT.md.
+- Web release CI succeeded at https://github.com/imehdiamiri/partybot-anti/actions/runs/44432081046
+  including type checking, 358 application tests, eight dependency regressions,
+  backend checks and Hosting deployment. The public release at https://8playo.com
+  reported 7bd1a272960a101a7bb6ec1282e1504a93bc0443. Downloaded entry
+  entry-a36b1188c04238240a9d4ab4420f7c13.js matched SHA-256
+  654d7d7331ecd145b78ba0a62c335701f8dab1261de9ee65cf434d3eab6ed321.
+  Checked security headers on home, tools, auth and game routes. Firebase's two
+  reserved auth helpers responded normally. Chrome smoke checks covered mobile
+  and desktop viewport onboarding, editable login fields and navigation to the
+  Google account page with no app exception observed. No account was created.
+- SDK 58 mobile client runtime code was unchanged. Rechecked both existing
+  Expo Go manifests and launch assets (HTTP 200), group c31d99c4-a607-4b98-a878-5c8a516512dd,
+  iOS 01a1ca92-9ae4-79f0-aef2-d504997ba33f and Android
+  01a1ca92-9ae4-7fa0-ae7b-5dec91caa74c. Verified Android APK availability for build
+  53e1a9ea-cd35-47b7-87ab-abafd9d231bb. No new binary or OTA. No physical-device
+  testing, purchase or account deletion was performed on production.
+
 ### November 11: direct solo start and remove in-game teaching screens
 
 - Clean main matched origin c8299fc. checkpoint/2026-11-11-before-solo-start

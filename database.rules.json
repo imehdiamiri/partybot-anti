@@ -30,6 +30,7 @@
       "$uid": {
         ".read":  "auth != null",
         ".write": "auth != null && auth.uid == $uid",
+        ".validate": "newData.hasChildren(['online', 'lastSeen'])",
         "online":   { ".validate": "newData.isBoolean()" },
         "lastSeen": { ".validate": "newData.isNumber()" },
         "$other": { ".validate": false }
@@ -87,7 +88,7 @@
             ".validate": "newData.hasChildren(['id','displayName']) || !newData.exists()",
             "id":          { ".validate": "newData.val() == $pid" },
             "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
-            "isHost":      { ".validate": "newData.isBoolean()" },
+            "isHost":      { ".validate": "newData.isBoolean() && (newData.val() == false || newData.parent().parent().parent().child('hostId').val() == $pid)" },
             "isReady":     { ".validate": "newData.isBoolean()" },
             "joinedAt":    { ".validate": "newData.isNumber()" }
           }
@@ -99,14 +100,11 @@
           "phase":         { ".validate": "newData.isString() && newData.val().length <= 32" },
           "lastUpdatedAt": { ".validate": "newData.isNumber()" },
           "turnData": {
-            // Bound the host-authoritative turn payload to keep RTDB cost in
-            // check and reject room-griefing attempts. Accept either:
-            //   - nothing (deletion),
-            //   - a serialized JSON string up to 16 KB, OR
-            //   - a nested object with at most 200 children (values ≤ 4 KB each).
+            // Hosts may send serialized state or nested game snapshots. These
+            // limits cover the serialized string and immediate string fields.
             ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 16384) || newData.hasChildren()",
             "$child": {
-              ".validate": "(!newData.isString() || newData.val().length <= 4096) && (!newData.isNumber() || true)"
+              ".validate": "!newData.isString() || newData.val().length <= 4096"
             }
           }
         },
@@ -134,8 +132,10 @@
         "presence": {
           "$pid": {
             ".write": "auth != null && ((auth.uid == $pid && data.parent().parent().child('players').hasChild(auth.uid)) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))",
+            ".validate": "newData.hasChildren(['online', 'lastSeen'])",
             "online":   { ".validate": "newData.isBoolean()" },
-            "lastSeen": { ".validate": "newData.isNumber()" }
+            "lastSeen": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
           }
         }
       }
