@@ -42,4 +42,18 @@ describeFirestore('Firestore private profile security', () => {
     await assertFails(ref.delete());
     await assertFails(env.authenticatedContext('new').firestore().doc('users/new').set({ username: 'New', isAdmin: true }));
   });
+
+  test('profile sync accepts optional fields and validates changes to legacy profiles', async () => {
+    const owner = env.authenticatedContext('owner').firestore().doc('users/owner');
+    await assertSucceeds(owner.set({
+      username: 'Owner', provider: 'google', email: null, avatarURL: null,
+      lastSeen: new Date(), updatedAt: new Date(),
+    }));
+    await assertFails(owner.update({ email: ['invalid'] }));
+    await assertFails(owner.update({ username: 'x'.repeat(33) }));
+    await env.withSecurityRulesDisabled(ctx => ctx.firestore().doc('users/owner').update({ updatedAt: 1 }));
+    await assertSucceeds(owner.update({ username: 'Renamed' }));
+    await assertSucceeds(owner.update({ updatedAt: new Date() }));
+    await assertFails(env.authenticatedContext('new').firestore().doc('users/new').set({ provider: {} }));
+  });
 });

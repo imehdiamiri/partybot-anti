@@ -1,4 +1,22 @@
-# Security review — September 8, 2026
+# Security review — November 19, 2026
+
+## Findings and disposition
+
+- **High, session privacy.** The legacy RTDB sessions path accepted self-enrollment in existing sessions despite restricting reads to members. Hosts now admit members. Existing members can rename themselves and leave. The active six-digit lobby uses the separate rooms path. Regression checks cover admission, normal member operations and revoked read access.
+- **Profile and presence integrity.** Firestore profile writes now validate the types and lengths of changed fields on creation and merge. Nullable email/avatar and timestamp transforms remain supported. Legacy values unrelated to a merge do not prevent that merge. RTDB public presence rejects unrecognized child fields.
+- **Admin dependencies.** The previous production npm lock reported one critical and seven high entries, including Next.js 15.5.25. The repaired Next.js 15.5.29 lock and updated transitive dependencies report zero critical/high entries. The admin dashboard now uses one npm lock and CI audits it. Firebase Hosting serves static Expo assets. This dashboard has a separate Next.js runtime.
+- **Admin actions.** Server-side mutation handlers now validate identifiers as single nonempty RTDB keys before constructing paths, including config deletion. Reviewed admin pages/actions require server-verified sessions and current claims. Verified that the session endpoint checks origin, recent auth and revocation.
+- **Browser boundaries.** Added a same-origin framing policy, MIME sniffing protection and an explicit referrer policy on Hosting. The reserved Firebase helper namespace is excluded for sign-in compatibility.
+- **Storage and credentials.** The Firebase Rules API listed only the Firestore release. Three Cloud Functions infrastructure buckets were listed, all with uniform access and zero public principals in bucket IAM. Project-wide inherited IAM and historic key rotation were outside this check. The tracked-source credential guard checks selected filenames and patterns.
+
+## Remaining exposure
+
+- Production npm audit counts after the admin fix: Expo nine moderate, Functions ten moderate and one low, admin eight moderate. Counts include dependent packages. The Expo chain concerns minimatch used by build tooling. Firebase Admin's uuid chain needs a compatibility review before a major SDK update. No production tree reported high or critical entries at the end of this review.
+- The admin ban action records an RTDB marker and revokes existing refresh tokens. It does not disable future Firebase sign-ins. Account deletion authenticates the caller but does not enforce recent reauthentication in the callable. Existing account moderation and sensitive-operation policies merit further work.
+- The Firestore history path permits owner-only append with no application-specific field/size limits. Nested multiplayer snapshots, diagnostics and new events can still generate storage and reads. Callable limits generally operate per UID. No aggregate budget or device-attestation enforcement was verified.
+- This review covered source, dependency locks, emulator tests, published web assets, browser smoke checks and live configuration. Physical devices, real purchase/refund flows, historical incident investigation and load tests were outside the observed coverage. See RELEASE_LOG.md for release receipts.
+
+## September 8, 2026 review
 
 Scope: app-owned client/server source, Firebase rules, account economy, social
 authorization, administrative sessions, production function inventory and npm

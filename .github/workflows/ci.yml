@@ -68,6 +68,9 @@ jobs:
           cache: npm
           cache-dependency-path: expo/package-lock.json
       - run: node scripts/ci/source-guard.cjs
+      - name: Audit admin dashboard production dependencies
+        run: npm audit --package-lock-only --omit=dev --audit-level=high
+        working-directory: website
       - run: npm ci
         working-directory: expo
       - run: npm run typecheck

@@ -44,8 +44,8 @@ ADMIN_SESSION_SECRET=<32+ char random string>
 
 ```bash
 cd website
-bun install
-bun run dev
+npm ci
+npm run dev
 # open http://localhost:3001/admin
 ```
 

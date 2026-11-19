@@ -16,12 +16,20 @@ import {
   setReportStatus,
 } from "./data";
 
+function databaseKey(value: string): string {
+  const key = typeof value === "string" ? value.trim() : "";
+  if (!key || key.length > 128 || /[.#$\[\]/\u0000-\u001f\u007f]/.test(key)) {
+    throw new Error("Invalid database identifier");
+  }
+  return key;
+}
+
 export async function actionAdjustStars(userId: string, delta: number, reason: string) {
   if (!userId || typeof userId !== "string" || !Number.isFinite(delta)) {
     throw new Error("Invalid arguments for adjustStars");
   }
   const admin = await requireAdmin();
-  await adjustStars(admin, userId.trim(), Math.round(delta), String(reason || "").slice(0, 200));
+  await adjustStars(admin, databaseKey(userId), Math.round(delta), String(reason || "").slice(0, 200));
   revalidatePath(`/admin/users/${userId}`);
 }
 
@@ -30,7 +38,7 @@ export async function actionSetSubscription(userId: string, active: boolean) {
     throw new Error("Invalid arguments for setSubscription");
   }
   const admin = await requireAdmin();
-  await setSubscription(admin, userId.trim(), active);
+  await setSubscription(admin, databaseKey(userId), active);
   revalidatePath(`/admin/users/${userId}`);
 }
 
@@ -39,7 +47,7 @@ export async function actionSetBan(userId: string, banned: boolean, reason = "")
     throw new Error("Invalid arguments for setBan");
   }
   const admin = await requireAdmin();
-  await setBan(admin, userId.trim(), banned, String(reason || "").slice(0, 500));
+  await setBan(admin, databaseKey(userId), banned, String(reason || "").slice(0, 500));
   revalidatePath(`/admin/users/${userId}`);
 }
 
@@ -48,7 +56,7 @@ export async function actionToggleUnlock(userId: string, gameKey: string, lock: 
     throw new Error("Invalid arguments for toggleUnlock");
   }
   const admin = await requireAdmin();
-  await toggleUnlock(admin, userId.trim(), gameKey.trim(), lock);
+  await toggleUnlock(admin, databaseKey(userId), databaseKey(gameKey), lock);
   revalidatePath(`/admin/users/${userId}`);
 }
 
@@ -65,7 +73,7 @@ export async function actionSetConfig(
     throw new Error("Invalid config key");
   }
   const admin = await requireAdmin();
-  await setConfig(admin, table, key.trim(), value, description ? String(description).slice(0, 500) : undefined);
+  await setConfig(admin, table, databaseKey(key), value, description ? String(description).slice(0, 500) : undefined);
   revalidatePath(table === "appConfig" ? "/admin/content" : "/admin/ui");
 }
 
@@ -77,7 +85,7 @@ export async function actionDeleteConfig(table: "appConfig" | "uiConfig", key: s
     throw new Error("Invalid config key");
   }
   const admin = await requireAdmin();
-  await deleteConfig(admin, table, key.trim());
+  await deleteConfig(admin, table, databaseKey(key));
   revalidatePath(table === "appConfig" ? "/admin/content" : "/admin/ui");
 }
 
@@ -108,7 +116,7 @@ export async function actionToggleAnnouncement(id: string, active: boolean) {
     throw new Error("Invalid arguments for toggleAnnouncement");
   }
   const admin = await requireAdmin();
-  await setAnnouncementActive(admin, id.trim(), active);
+  await setAnnouncementActive(admin, databaseKey(id), active);
   revalidatePath("/admin/announcements");
 }
 
@@ -120,7 +128,7 @@ export async function actionSetReportStatus(
     throw new Error("Invalid arguments for setReportStatus");
   }
   const admin = await requireAdmin();
-  await setReportStatus(admin, reportId.trim(), status);
+  await setReportStatus(admin, databaseKey(reportId), status);
   revalidatePath("/admin/reports");
 }
 

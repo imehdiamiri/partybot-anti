@@ -31,7 +31,8 @@
         ".read":  "auth != null",
         ".write": "auth != null && auth.uid == $uid",
         "online":   { ".validate": "newData.isBoolean()" },
-        "lastSeen": { ".validate": "newData.isNumber()" }
+        "lastSeen": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
       }
     },
 
@@ -153,7 +154,8 @@
 
         "players": {
           "$pid": {
-            ".write": "auth != null && ((auth.uid == $pid && ((!data.exists() && data.parent().parent().exists()) || data.exists())) || (data.parent().parent().child('hostId').val() == auth.uid && data.parent().parent().child('players').hasChild(auth.uid)))",
+            // Host membership management is granted at the session root.
+            ".write": "auth != null && auth.uid == $pid && data.exists()",
             ".validate": "newData.hasChildren(['id','displayName']) || !newData.exists()",
             "id":          { ".validate": "newData.val() == $pid" },
             "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" }

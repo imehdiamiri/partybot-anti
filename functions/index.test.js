@@ -1290,6 +1290,14 @@ describe('Multiplayer RTDB Security & Authorization End-to-End', () => {
     // Member guest CAN read session
     await assertSucceeds(guestDb.ref('sessions/sess_100').once('value'));
 
+    const entry = { id: 'outsider_sess', displayName: 'New player' };
+    const playerPath = 'sessions/sess_100/players/outsider_sess';
+    await assertFails(outsiderDb.ref(playerPath).set(entry));
+    await assertSucceeds(hostDb.ref(playerPath).set(entry));
+    await assertSucceeds(outsiderDb.ref(playerPath).update({ displayName: 'Renamed' }));
+    await assertSucceeds(outsiderDb.ref(playerPath).remove());
+    await assertFails(outsiderDb.ref('sessions/sess_100').once('value'));
+
     // Guest cannot mutate state
     await assertFails(guestDb.ref('sessions/sess_100/state').set('mutated_state'));
 

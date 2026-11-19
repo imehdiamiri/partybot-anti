@@ -8,11 +8,25 @@ service cloud.firestore {
       function profileFields() {
         return ['username', 'email', 'provider', 'avatarURL', 'lastSeen', 'updatedAt'];
       }
+      function optionalText(value, limit) {
+        return value == null || (value is string && value.size() <= limit);
+      }
+      function validProfile(changed) {
+        let p = request.resource.data;
+        return (!changed.hasAny(['username']) || (p.get('username', '') is string && p.get('username', '').size() <= 32))
+          && (!changed.hasAny(['provider']) || (p.get('provider', '') is string && p.get('provider', '').size() <= 32))
+          && (!changed.hasAny(['email']) || optionalText(p.get('email', null), 320))
+          && (!changed.hasAny(['avatarURL']) || optionalText(p.get('avatarURL', null), 2048))
+          && (!changed.hasAny(['lastSeen']) || p.get('lastSeen', request.time) is timestamp)
+          && (!changed.hasAny(['updatedAt']) || p.get('updatedAt', request.time) is timestamp);
+      }
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid
-                    && request.resource.data.keys().hasOnly(profileFields());
+                    && request.resource.data.keys().hasOnly(profileFields())
+                    && validProfile(request.resource.data.keys());
       allow update: if request.auth != null && request.auth.uid == uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields());
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileFields())
+                    && validProfile(request.resource.data.diff(resource.data).affectedKeys());
       allow delete: if false;
     }
 
