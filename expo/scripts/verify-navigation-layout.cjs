@@ -134,7 +134,16 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
       const detailGames = [320,1440].includes(width) ? games : ['color_match'];
       for(const route of [...detailGames.map(id=>'/game/'+id),'/dice','/bottle','/hourglass','/coin','/wheel','/teams','/profile','/invite','/paywall','/purchase-detail',...categories.map(id=>'/cards/'+id)]){
         await page.goto('https://layout.invalid'+route,{waitUntil:'networkidle0'});
-        await page.waitForSelector('[data-testid="screen-header"]');await header(width,route);
+        if (route === '/paywall') {
+          await page.waitForFunction(() => document.body.textContent.includes('Back to Games'));
+          assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
+            'web store fits at '+width);
+        } else {
+          await page.waitForSelector('[data-testid="screen-header"]').catch(() => {
+            throw new Error('Missing header on '+route+' at '+width);
+          });
+          await header(width,route);
+        }
       }
       if([320,1440].includes(width)) for(const game of games){
         await page.goto('https://layout.invalid/game/'+game+'/setup',{waitUntil:'networkidle0'});
