@@ -1,5 +1,26 @@
 # Release log
 
+### November 25: Instagram carousels with in-app covers
+
+- Checkpoint `checkpoint/before-instagram-carousel-redesign-20261125` at b6ae88c.
+  Release tag `release/2026-11-25-branded-carousels`.
+- Party tools uses the six bundled tool icons. Pick a card! uses three genuine
+  card faces from the app. Each cover leads into six separately captured app
+  screens with a short English instruction. The 14 finished images and both
+  captions are in social/instagram/2026-11-25/carousels.
+- Captured the local Expo web export with Puppeteer and a local fixture.
+  Checked all 14 JPEG dimensions with Sharp (1080 x 1080) and visually
+  reviewed both covers and all twelve feature slides.
+- Instagram confirmed both shares and displayed seven items per carousel.
+  Tools: https://www.instagram.com/8playo/p/DgKTg0ODjI0/
+  Cards: https://www.instagram.com/8playo/p/DgKTj0Yjkmx/
+- Archived the two November 24 guides DgJcE8yCBn7 and DgJb52IiC5S.
+  The previous four-deck guide DgJcJc4iAcY was already absent from the public
+  grid and its permalink returned to the profile. Its deletion history is unverified.
+- First-pass illustrated covers DgKTKL8Drum and DgKTOHGjuDH were superseded.
+  An additional archive confirmation is pending for these two posts.
+- Social assets only. No web deployment, mobile update or runtime change.
+
 ### November 25: remaining Instagram games, tools and card decks
 
 - Checkpoint `checkpoint/2026-11-25-before-instagram-wave-two` preserves
