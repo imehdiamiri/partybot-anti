@@ -1,5 +1,20 @@
 # Release log
 
+### November 25: 8Playo Instagram game collection
+
+- Checkpoint `checkpoint/2026-11-25-before-instagram`; campaign release
+  `release/2026-11-25-instagram`. Final export files and English copy are
+  under `social/instagram/2026-11-25/`. The avatar uses the canonical
+  8Playo wordmark. Nine 1080-square covers use the corresponding bundled
+  game illustrations and gameplay instructions from GameHints.
+- Instagram confirmed each post with “Your post has been shared.” Reloaded
+  https://www.instagram.com/8playo/ and verified the nine new post links,
+  English bio and existing website link. Inspected the uploaded circular avatar.
+  The original post remains. Post shortcodes in the same order as captions.md:
+  DgJY0rGCNyt, DgJY9IfCG4t, DgJZA64iIKr, DgJZDrpiPq_, DgJZHaLiPH5,
+  DgJZJiliLFI, DgJZMlYCLHb, DgJZOskiDNT, DgJZRSAiMri.
+- Social content only. No app runtime, web deployment or mobile release.
+
 ### November 19: three-column Tools on phones, tablets and desktop
 
 - Checkpoint `checkpoint/2026-11-19-before-tools-grid` preserves 3ec6f87.
