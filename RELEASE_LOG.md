@@ -1,5 +1,24 @@
 # Release log
 
+### November 25: remaining Instagram games, tools and card decks
+
+- Checkpoint `checkpoint/2026-11-25-before-instagram-wave-two` preserves
+  088aa0f. Campaign release tag: `release/2026-11-25-instagram-wave-two`.
+  Increased the official avatar wordmark width from 810 to 947 on the same
+  1080 canvas and checked the circular result on the published profile.
+- Completed all 16 individual game posters. Instagram confirmed seven new
+  game posts: Eye Sight DgJbkkViPun, Drum Challenge DgJbm0jiOnb, Tap in Order
+  DgJbpHOiJ5p, Color Trap DgJbsuWCNuC, Truth or Dare DgJbvCcCBqB,
+  Pass & Guess DgJbxb1CGo3 and Ten Tangle DgJb1jgiMng.
+- Captured the actual Tools and Act interfaces from the web export using a
+  local fixture. Published a three-slide guide to all six party tools at
+  https://www.instagram.com/8playo/p/DgJb52IiC5S/ and two two-slide card
+  guides at https://www.instagram.com/8playo/p/DgJcE8yCBn7/ (Act and Talk)
+  and https://www.instagram.com/8playo/p/DgJcJc4iAcY/ (four other categories).
+  Confirmed publication receipts and carousel markers on the profile.
+  English artwork and captions are in social/instagram/2026-11-25.
+  No app code change, Hosting or mobile deployment.
+
 ### November 25: 8Playo Instagram game collection
 
 - Checkpoint `checkpoint/2026-11-25-before-instagram`; campaign release

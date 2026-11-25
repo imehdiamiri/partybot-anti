@@ -69,3 +69,59 @@ Memory Grid — Turn over two tiles at a time and remember what you see. Match e
 Play at 8playo.com
 
 #8Playo #MemoryGrid #MatchingGame #GameNight
+
+## 10 — Eye Sight
+
+Eye Sight — A number flashes on screen. Type the digits you remember, in order. Each correct answer makes the next round harder.
+
+Play at 8playo.com
+
+#8Playo #VisualMemory #MemoryChallenge #GameNight
+
+## 11 — Drum Challenge
+
+Drum Challenge — Listen to the rhythm, then tap when you think the next beat will land. The closest tap wins.
+
+Play at 8playo.com
+
+#8Playo #DrumChallenge #RhythmGame #GameNight
+
+## 12 — Tap in Order
+
+Tap in Order — Memorize the numbered tiles before they hide. Tap their positions in order, starting with 1.
+
+Play at 8playo.com
+
+#8Playo #TapInOrder #MemoryGame #PartyGames
+
+## 13 — Color Trap
+
+Color Trap — Remember the forbidden color. Tap the other circles before they disappear, and leave the forbidden ones alone.
+
+Play at 8playo.com
+
+#8Playo #ColorTrap #ReflexGame #GameNight
+
+## 14 — Truth or Dare
+
+Truth or Dare — Spin to pick a player. Whoever the bottle points to chooses Truth or Dare, then answers the question or does the dare.
+
+Play at 8playo.com
+
+#8Playo #TruthOrDare #SpinTheBottle #PartyGames
+
+## 15 — Pass & Guess
+
+Pass & Guess — Everyone answers the same question in secret. Pass the phone, read the anonymous answers, and guess who wrote each one.
+
+Play at 8playo.com
+
+#8Playo #PassAndGuess #GuessingGame #GameNight
+
+## 16 — Ten Tangle
+
+Ten Tangle — Get a secret number from 1 to 10. Act out the prompt at that intensity and see if the guesser can name your number.
+
+Play at 8playo.com
+
+#8Playo #TenTangle #ActingGame #PartyGames
