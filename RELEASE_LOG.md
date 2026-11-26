@@ -1,5 +1,10 @@
 # Release log
 
+### November 26: Instagram avatar and brand hashtag
+
+- Checkpoint: checkpoint/2026-11-26-instagram-avatar. Release: release/2026-11-26-instagram-avatar.
+- Composited the official purple 8 and white Playo on mint, checked the circular crop, and uploaded the 1080-square JPEG. Reloaded https://www.instagram.com/8playo/ and verified the new profile image and #8Playo in the bio. Social-only update.
+
 ### November 26: Google and Bing search discovery
 
 - Checkpoint `checkpoint/2026-11-26-search-discovery`; deployed source
