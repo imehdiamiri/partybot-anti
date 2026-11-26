@@ -45,7 +45,18 @@ const expoIndex = path.join(expoDistDir, 'index.html');
 const rootIndex = path.join(websitePublicDir, 'index.html');
 const appHtml = path.join(websitePublicDir, 'app.html');
 if (fs.existsSync(expoIndex)) {
-  fs.copyFileSync(expoIndex, rootIndex);
+  const searchHead = [
+    '<link rel="canonical" href="https://8playo.com/">',
+    '<meta name="msvalidate.01" content="F71523780050F07BA6CFF335D7A8FBA0">',
+    '<meta name="google-site-verification" content="d2Lvhxc0F0X_xEBNdQtjlcsluhWdEFUqVvScLkIHC6k">',
+    '<script type="application/ld+json">' + JSON.stringify({
+      '@context': 'https://schema.org', '@type': 'WebSite', name: '8Playo', url: 'https://8playo.com/',
+    }) + '</script>',
+  ].join('\n');
+  const homepage = fs.readFileSync(expoIndex, 'utf8')
+    .replace('</head>', searchHead + '</head>')
+    .replace('</body>', '<noscript><h1>8Playo party games for friends</h1><p>Play Imposter, Reverse Singing and more on one phone. <a href="/games">Browse party games and rules</a>.</p></noscript></body>');
+  fs.writeFileSync(rootIndex, homepage);
   fs.copyFileSync(expoIndex, appHtml);
   console.log('Copied expo index.html to website/public/index.html and app.html');
 }
@@ -101,6 +112,7 @@ function ensureDirectoryIndex(dir) {
   }
 }
 ensureDirectoryIndex(websitePublicDir);
+require('./website/build-game-guides.cjs')(websitePublicDir);
 
 // 3. Patch assets/node_modules -> assets/vendor
 const publicAssets = path.join(websitePublicDir, 'assets');

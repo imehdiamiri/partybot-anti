@@ -194,6 +194,7 @@ export default function GamesScreen() {
             <OtherFunListView />
           </View>
         )}
+        {Platform.OS === 'web' && <a href="/games" style={{ color: '#c3b0ff', textAlign: 'center', padding: 16 }}>Browse all party games and rules</a>}
       </ScrollView>
     </View>
   );

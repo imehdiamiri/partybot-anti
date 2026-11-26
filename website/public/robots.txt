@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /lobby/
+Disallow: /profile
+Disallow: /purchase-detail
+
+Sitemap: https://8playo.com/sitemap.xml

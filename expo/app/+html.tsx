@@ -6,9 +6,9 @@ export default function Root({ children }: PropsWithChildren) {
   return <html {...htmlAttributes} lang="en">
     <head>
       {headNodes}
-      <title>8Playo — Party Games with Friends</title>
+      <title>8Playo – Party Games to Play with Friends on One Phone</title>
       <meta charSet="utf-8" />
-      <meta name="description" content="Play quick party games with friends on 8Playo. Memory, timing, color and sound challenges, plus tools for your next get-together." />
+      <meta name="description" content="Turn one phone into game night. Play Imposter, sing a recording backwards, or challenge friends to match a color from memory. Explore the games and rules on 8Playo." />
       <meta name="application-name" content="8Playo" />
       <meta name="theme-color" content="#08080F" />
       <meta name="color-scheme" content="dark" />

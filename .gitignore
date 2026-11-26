@@ -50,3 +50,6 @@ website/security-audit.json
 
 # Short-lived Google GitHub Actions credentials
 gha-creds-*.json
+/website/public/games.html
+/website/public/games/
+/website/public/sitemap.xml
