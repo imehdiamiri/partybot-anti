@@ -1,5 +1,10 @@
 # Release log
 
+### November 26: original horizontal Instagram wordmark
+
+- Checkpoint: checkpoint/2026-11-26-original-wordmark. Release: release/2026-11-26-original-wordmark.
+- Centered the complete official 8Playo asset on a rose-to-burgundy background, checked the circular crop, and confirmed the changed image on https://www.instagram.com/8playo/. Social artwork only.
+
 ### November 26: Instagram avatar and brand hashtag
 
 - Checkpoint: checkpoint/2026-11-26-instagram-avatar. Release: release/2026-11-26-instagram-avatar.
