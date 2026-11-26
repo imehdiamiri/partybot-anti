@@ -1,5 +1,22 @@
 # Release log
 
+### November 26: Google and Bing search discovery
+
+- Checkpoint `checkpoint/2026-11-26-search-discovery`; deployed source
+  `2c3d54b541a989b223e9892fe124ab3d1426a549`; tag `release/2026-11-26-search-discovery`.
+- CI run https://github.com/imehdiamiri/partybot-anti/actions/runs/45855929852
+  passed app, backend and Hosting deployment. Verified the live commit receipt,
+  both home verification tags, robots.txt, XML MIME type, all 21 live sitemap
+  URLs and the canonical link and instructions on each of the 16 game guides.
+- Published https://8playo.com/games and https://8playo.com/sitemap.xml.
+  Google Search Console confirmed URL-prefix ownership with the selected personal
+  account. Bing Webmaster Tools confirmed site ownership in the existing account.
+  Both dashboards processed the sitemap successfully and discovered 21 URLs.
+- Google inspection reported the homepage is indexed. Google accepted crawl
+  requests for the updated home and new games directory. Bing accepted an indexing
+  request for the directory. Search rankings, per-game indexing, generated snippets,
+  sitelinks and AI recommendations remain engine decisions. No mobile release.
+
 ### November 25: Instagram carousels with in-app covers
 
 - Checkpoint `checkpoint/before-instagram-carousel-redesign-20261125` at b6ae88c.
